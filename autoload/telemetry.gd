@@ -5,9 +5,17 @@ extends Node
 const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
-		"crashed"]
+		"crashed", "pilot"]
 
 var enabled := true
+var pilot := "human"      # "demo" quando o piloto automatico voa (nao misturar na calibracao)
+
+
+func _ready() -> void:
+	var args := OS.get_cmdline_user_args()
+	if "--demo" in args:
+		pilot = "demo"
+		enabled = "--telemetry" in args
 
 
 ## Grava uma entrega. result precisa das chaves de HEADER (distancias/gas nas unidades do modelo).
@@ -15,6 +23,7 @@ func record_delivery(result: Dictionary) -> void:
 	if not enabled:
 		return
 	DirAccess.make_dir_recursive_absolute(DIR)
+	_rotate_if_old_header()
 	var is_new := not FileAccess.file_exists(DELIVERIES)
 	var f := FileAccess.open(DELIVERIES, FileAccess.READ_WRITE if not is_new else FileAccess.WRITE)
 	if f == null:
@@ -25,6 +34,18 @@ func record_delivery(result: Dictionary) -> void:
 		f.store_csv_line(PackedStringArray(HEADER))
 	var row := PackedStringArray()
 	for key: String in HEADER:
-		var v: Variant = result.get(key, "")
+		var v: Variant = pilot if key == "pilot" else result.get(key, "")
 		row.append(str(int(v)) if v is bool else str(v))
 	f.store_csv_line(row)
+
+
+## Se o arquivo existente tem outro cabecalho (versao antiga), guarda como deliveries_old.csv.
+func _rotate_if_old_header() -> void:
+	if not FileAccess.file_exists(DELIVERIES):
+		return
+	var f := FileAccess.open(DELIVERIES, FileAccess.READ)
+	var head := f.get_csv_line()
+	f.close()
+	if Array(head) != HEADER:
+		var old := ProjectSettings.globalize_path(DIR.path_join("deliveries_old.csv"))
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(DELIVERIES), old)

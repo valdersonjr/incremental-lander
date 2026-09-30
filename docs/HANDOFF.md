@@ -4,24 +4,24 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0–6 concluídas: o jogo tem começo, meio e fim (mecânica completa, visual placeholder).**
-  Runs de entrega → hangar (planetas, upgrades, prestígio + loja da Poeira, **frota de drones**, **Expedição a
-  Titan** em 8 etapas persistentes com barra segmentada) → liberar Titan → **tela de final** (pode continuar).
-- Demo com recursos de dev verifica a reta final: frota rende ~53% da renda, 8 etapas sobrevivem ao prestígio,
-  GOAL_REACHED ao liberar Titan. 38 testes + paridade da economia; zero erros em 40.000 frames.
-- Falta: save/opções (Fase 7), arte (Fase 8), som (Fase 9), calibração/polimento/build (Fase 10).
+- **Fases 0–7 concluídas: mecânica completa + save + opções** (visual e som ainda placeholders/ausentes).
+  O progresso agora é salvo em `~/Library/Application Support/Godot/app_userdata/Incremental Lander/save.json`
+  (autosave; "Novo jogo" no hangar apaga). Demo/dev nunca salvam.
+- Verificação: `gdtool.py check` (39 scripts), `test` (41 unitários + integração do save + paridade da economia).
 
 ## Próximo passo
-**Fase 7 — Save/load e opções** (skill `godot-dev`, `references/save-telemetry.md`): `SaveManager` (autoload)
-com JSON versionado em `user://save.json` (escrita atômica + backup + migração), autosave no fim do run/compra/
-prestígio/sair; carregar ao abrir. Opções: volume por bus (Music/SFX/UI/Ambience). Depois: arte (usuário pediu
-mecânica antes da arte) e som.
+**Fase 8 — Arte** (skill `pixel-art`, obrigatória para toda imagem; usuário quis mecânica antes e achou o
+placeholder feio): começar por lander 32×32 (+ chama do propulsor animada), textura de terreno por planeta
+(polígono: preenchimento seamless + faixa de superfície), plataformas, fundo espacial; depois UI (fonte pixel,
+painéis). Seguir o fluxo da skill: pesquisa → prévia → aprovação do usuário → integrar trocando os `_draw()`.
+Alternativa: Fase 9 (som, skill `sound-design`).
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
 - Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
 - Nomes dos upgrades/planetas na spec sem acento — ajustar via economy-balance numa passada de texto.
+- Telemetria antiga (antes da coluna pilot) misturava demo e humano: foi para `deliveries_old.csv` — não usar na calibração.
 - Autopiloto do demo às vezes pousa fora da plataforma em Titan (gravidade 15) — só afeta verificação.
 - Em aberto no design: pós-jogo, menus, nome final (GDD §12).
 

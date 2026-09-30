@@ -182,11 +182,45 @@ def cmd_test(a) -> int:
     rc = 0
     if os.path.exists(os.path.join(root, "tests", "run_tests.gd")):
         godot(["--headless", "--path", root, "--import"], timeout=600)
-        r = godot(["--headless", "--path", root, "--script", "res://tests/run_tests.gd"], timeout=600)
-        out = clean(r.stdout + r.stderr)
-        print(out)
+        # stderr junto do stdout NA ORDEM real (para saber qual teste gerou cada erro)
+        r = subprocess.run([GODOT, "--headless", "--path", root, "--script", "res://tests/run_tests.gd"],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=600)
+        out = clean(r.stdout)
+        # GDScript nao tem try/catch: um teste que aborta por erro de script nao chama assert e o executor
+        # imprime "ok". Aqui, erros de script vistos antes de um "ok" marcam aquele teste como FALHOU.
+        lines, pending, script_fails = [], [], 0
+        for l in out.splitlines():
+            if ERR_RE.match(l.strip()):
+                pending.append(l.strip())
+                continue
+            if l.startswith("ok ") and pending:
+                lines.append(l.replace("ok ", "FALHOU (erro de script) ", 1) + "\n    " + "\n    ".join(pending[:4]))
+                pending, script_fails = [], script_fails + 1
+                continue
+            if l.strip().startswith(("at:", "GDScript backtrace", "[")):
+                continue
+            lines.append(l)
+        lines += [f"ERRO sem teste associado: {p}" for p in pending]
+        if script_fails:
+            lines.append(f"!! {script_fails} teste(s) abortaram por erro de script (contados como falha)")
+        print("\n".join(lines))
         if r.returncode != 0 or "FALHOU" in out or ERR_RE.search(out):
             rc = 1
+    # testes de integracao: cenas em tests/integration/ que imprimem "<NOME>_TEST OK" (ou FALHOU) e saem
+    integ = os.path.join(root, "tests", "integration")
+    if os.path.isdir(integ):
+        for f in sorted(os.listdir(integ)):
+            if not f.endswith(".tscn"):
+                continue
+            r = godot(["--headless", "--path", root, "--fixed-fps", "60", f"res://tests/integration/{f}",
+                       "--quit-after", "600", "--", "--no_save"], timeout=300)
+            out = clean(r.stdout + r.stderr)
+            ok = re.search(r"_TEST OK", out) is not None
+            errs = [l for l in out.splitlines() if ERR_RE.match(l.strip())]
+            print(("ok     " if ok and not errs else "FALHOU ") + f"integracao {f}" +
+                  ("" if ok else "\n    " + "\n    ".join((re.findall(r".*_TEST.*", out) + errs)[:4])))
+            if not ok or errs:
+                rc = 1
     parity = os.path.join(root, "tests", "test_econ_parity.py")
     if os.path.exists(parity):
         p = subprocess.run([sys.executable, parity], capture_output=True, text=True, cwd=root, timeout=600)

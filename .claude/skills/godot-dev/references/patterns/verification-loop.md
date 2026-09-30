@@ -32,6 +32,12 @@
 - `move_and_collide` com `recovery_as_collision=false` (padrão) não reporta contato quando o corpo já está
   dentro da margem (descendo devagar encostado) — o lander usa `true` para detectar pousos lentos.
 
+- Um teste que **aborta por erro de script** (ex.: dependência que não compila) não chama `assert` e o executor
+  imprime "ok". O `gdtool test` marca como `FALHOU (erro de script)` todo teste precedido de SCRIPT ERROR e
+  sai com código 1. Nunca confiar só na lista de "ok": olhar o resumo e o código de saída.
+- `Array.map()` devolve `Array` sem tipo: `var x := arr.map(...)` não compila ("Cannot infer the type");
+  declare `var x: Array = arr.map(...)`.
+
 ## Fontes
 - https://docs.godotengine.org/en/4.4/tutorials/editor/command_line_tutorial.html — flags de linha de comando
 - `godot --help` (4.7.2) — confirmação local de `--write-movie`, `--quit-after`, `--fixed-fps`, `--check-only`

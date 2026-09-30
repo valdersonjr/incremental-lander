@@ -13,11 +13,20 @@ var cycle_earned: Dictionary = {}     # ganhos desde o ultimo prestigio (base do
 var prestige_pending := false         # Poeira coletada; falta gastar na loja e concluir o recomeco
 var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (base da renda da frota)
 var reached_goal := false             # chegou ao planeta final (targets.goal)
+var play_seconds := 0.0               # tempo de jogo acumulado
+var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
+
+const BUSES := ["Music", "Ambience", "SFX", "UI"]
 
 
 func _ready() -> void:
 	EconMath.load_spec()
 	reset()
+	apply_settings()
+
+
+func _process(delta: float) -> void:
+	play_seconds += delta
 
 
 ## Volta ao estado inicial da spec (recursos iniciais, sem upgrades).
@@ -31,6 +40,11 @@ func reset() -> void:
 	cycle_earned.clear()
 	unlocked_planets = ["luna"]
 	current_planet = "luna"
+	prestige_pending = false
+	income_history = []
+	reached_goal = false
+	runs_done = 0
+	play_seconds = 0.0
 
 
 ## Quantidade de um recurso.
@@ -166,3 +180,51 @@ func check_goal(planet_id: String) -> bool:
 		Events.goal_reached.emit(planet_id)
 		return true
 	return false
+
+
+## Estado para o save (SaveData.serialize).
+func save_state() -> Dictionary:
+	return {"resources": resources, "levels": levels, "shop": shop, "prestige_points": prestige_points,
+			"prestige_pending": prestige_pending, "unlocked": unlocked_planets, "current_planet": current_planet,
+			"cycle_earned": cycle_earned, "income_history": income_history, "reached_goal": reached_goal,
+			"runs_done": runs_done, "play_seconds": play_seconds, "settings": settings}
+
+
+## Aplica um estado ja validado por SaveData.deserialize.
+func apply_save_state(st: Dictionary) -> void:
+	resources = st["resources"]
+	levels = st["levels"]
+	shop = st["shop"]
+	prestige_points = st["prestige_points"]
+	prestige_pending = st["prestige_pending"]
+	unlocked_planets = st["unlocked"]
+	current_planet = st["current_planet"]
+	cycle_earned = st["cycle_earned"]
+	income_history = st["income_history"]
+	reached_goal = st["reached_goal"]
+	runs_done = st["runs_done"]
+	play_seconds = st["play_seconds"]
+	settings = st["settings"]
+	apply_settings()
+	for res: String in resources:
+		Events.resources_changed.emit(res, resources[res])
+
+
+## Volume 0..1 de um bus (padrao 1).
+func volume(bus: String) -> float:
+	return float(settings.get("vol_" + bus, 1.0))
+
+
+func set_volume(bus: String, value: float) -> void:
+	settings["vol_" + bus] = clampf(value, 0.0, 1.0)
+	apply_settings()
+
+
+## Aplica as opcoes (volumes) nos buses de audio.
+func apply_settings() -> void:
+	for bus: String in BUSES:
+		var idx := AudioServer.get_bus_index(bus)
+		if idx >= 0:
+			var v := volume(bus)
+			AudioServer.set_bus_mute(idx, v <= 0.0)
+			AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))

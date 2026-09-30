@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–6 — voo, run, hangar, planetas, prestígio, frota, Expedição, final)
+## Jogo (Fases 1–7 — voo, run, hangar, planetas, prestígio, frota, Expedição, final, save/opções)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
                               # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo
@@ -59,22 +59,27 @@ game/hangar/hangar.*          # Hangar: EXPEDIÇÃO A TITAN (barra segmentada [#
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
-autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
+autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
+                              # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)
+autoload/save_manager.gd      # SaveManager: user://save.json (JSON versionado, tmp→rename, save.bak), autosave em
+                              # eventos + ao fechar; desligado em --demo/--dev_*/--no_save; new_game(); set_dir() p/ testes
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
-tests/visual/                 # cenas de prévia visual (ex.: ending_preview) para gdtool capture
+tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview) para gdtool capture
+tests/unit/save/              # test_save_data
+tests/integration/            # save_roundtrip.tscn (salva/carrega/backup numa pasta própria) — rodado por gdtool test
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
 
 ## Pastas ainda não criadas (padrão godot-dev)
 ```
-autoload/save_manager.gd                              # Fase 7
 game/hangar/, game/prestige/ ...                      # Fases 3–6
 assets/ (skills pixel-art / sound-design)             # Fases 8–9
 ```
 
 ## Autoloads
-- **Implementados** (ordem no project.godot): `Events`, `GameState`, `Telemetry`.
+- **Implementados** (ordem no project.godot): `Events`, `GameState`, `Telemetry`, `SaveManager`.
 
 Planejados (`godot-dev`):
 - `Events` — event bus (sinais globais, sem estado).

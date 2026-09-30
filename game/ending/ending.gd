@@ -14,7 +14,9 @@ func _ready() -> void:
 		closed.emit())
 
 
-func show_ending(play_seconds: float) -> void:
+func show_ending(play_seconds: float = -1.0) -> void:
+	if play_seconds < 0.0:
+		play_seconds = GameState.play_seconds
 	_text.text = "\n".join([
 		"VOCE CHEGOU A TITAN!",
 		"",

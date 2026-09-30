@@ -39,3 +39,8 @@ func test_pouso_perfeito_tem_qualidade_1() -> void:
 Telas que só aparecem tarde no jogo (final, prestígio avançado) não devem ser verificadas gravando dezenas de
 milhares de frames. Crie uma cena mínima que instancia só a tela com dados de exemplo e capture ~10 frames:
 `gdtool.py capture res://tests/visual/ending_preview.tscn --frames 10 --every 10 --cols 1`.
+
+## Testes de integração (`tests/integration/*.tscn`)
+Para o que depende de autoloads/arquivos (save, fluxo entre telas): uma cena que monta o cenário, verifica e
+imprime `<NOME>_TEST OK` (ou `FALHOU ...`) e chama `get_tree().quit()`. `gdtool.py test` roda todas com
+`--no_save`. Nunca usar o save real: `SaveManager.set_dir("user://itest")`.

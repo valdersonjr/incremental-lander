@@ -46,3 +46,6 @@
 | 2026-09-30 | Botão de prestígio pede confirmação (2 cliques) | ação destrutiva | `game/hangar/hangar.gd` |
 | 2026-09-30 | Frota paga ao **fim de cada run**: fleet_income_per_s(média dos últimos 5 runs) × duração do run (s do modelo); aparece no resumo | simples, determinístico e igual ao simulador (frota rende durante os runs) | `Fleet`, `GameState.settle_run` |
 | 2026-09-30 | Chegar a Titan (liberar o planeta objetivo) mostra a tela de final; dá para continuar jogando | objetivo final da spec (`targets.goal`) | `game/ending/`, `GameState.check_goal` |
+| 2026-09-30 | Save JSON versionado em user://save.json com escrita atômica + backup; demo/dev nunca salvam | proteger o progresso do jogador e permitir migração | `autoload/save_manager.gd`, `scripts/save/save_data.gd` |
+| 2026-09-30 | Telemetria marca o piloto (human/demo); demo só grava com --telemetry | não misturar voos do autopiloto na calibração | `autoload/telemetry.gd` |
+| 2026-09-30 | `gdtool test` conta como falha todo teste abortado por erro de script e roda os testes de integração | o executor imprimia "ok" para testes que nem compilavam | `godot-dev/scripts/gdtool.py` |

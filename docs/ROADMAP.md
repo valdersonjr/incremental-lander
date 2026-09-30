@@ -48,8 +48,8 @@
 - [x] 6.1 Frota de drones (renda = drones × autopilot × média da renda do jogador)
 - [x] 6.2 Expedição a Titan (8 etapas persistentes, barra segmentada) → Titan → final
 
-## Fase 7 — Save/load e opções · skill: `godot-dev`
-- [ ] 7.1 Save (versão da spec + migração), autosave · 7.2 Opções (volume por bus, controles)
+## Fase 7 — Save/load e opções ✅ (2026-09-30) · skill: `godot-dev`
+- [x] 7.1 Save (versão da spec + migração), autosave · [x] 7.2 Opções (volume por bus, controles)
 
 ## Fase 8 — Arte · skill: `pixel-art` (obrigatória para TODA imagem)
 - [ ] Lander 32×32 + animações (propulsor, pouso, explosão) · texturas de terreno por planeta ·

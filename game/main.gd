@@ -154,7 +154,7 @@ func _on_continue() -> void:
 
 func _on_goal_reached(_planet_id: String) -> void:
 	_hangar.visible = false
-	_ending.show_ending(Time.get_ticks_msec() / 1000.0)
+	_ending.show_ending()
 	print("GOAL_REACHED ", JSON.stringify({"runs": GameState.runs_done, "points": GameState.prestige_points}))
 
 

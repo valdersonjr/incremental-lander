@@ -20,6 +20,7 @@ config/features=PackedStringArray("4.7")
 Events="*res://autoload/events.gd"
 GameState="*res://autoload/game_state.gd"
 Telemetry="*res://autoload/telemetry.gd"
+SaveManager="*res://autoload/save_manager.gd"
 
 [debug]
 

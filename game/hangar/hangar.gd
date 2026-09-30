@@ -13,6 +13,7 @@ const COLOR_DIM := Color("#7f708a")      # lilac_grey
 const COLOR_DUST := Color("#a884f3")     # violet (Poeira Estelar)
 
 var _confirm_prestige := false
+var _confirm_new_game := false
 
 @onready var _header: Label = %Header
 @onready var _ship: Label = %Ship
@@ -27,6 +28,7 @@ func _ready() -> void:
 ## Mostra o hangar atualizado.
 func open() -> void:
 	_confirm_prestige = false
+	_confirm_new_game = false
 	visible = true
 	refresh()
 	_launch.grab_focus()
@@ -61,6 +63,36 @@ func refresh() -> void:
 	for r: Dictionary in rows:
 		if not _is_stage(str(r["id"])):
 			_rows.add_child(_make_row(r))
+	_add_options()
+
+
+## Opcoes: volume por bus (clique alterna 100/75/50/25/0%) e novo jogo (2 cliques).
+func _add_options() -> void:
+	_rows.add_child(_section("OPCOES"))
+	var line := HBoxContainer.new()
+	var names := {"Music": "Musica", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
+	for bus: String in GameState.BUSES:
+		var b := Button.new()
+		b.add_theme_font_size_override(&"font_size", 10)
+		b.text = "%s %d%%" % [names[bus], int(round(GameState.volume(bus) * 100.0))]
+		b.pressed.connect(func() -> void:
+			var v := GameState.volume(bus) - 0.25
+			GameState.set_volume(bus, 1.0 if v < -0.01 else v)
+			SaveManager.request_save()
+			refresh())
+		line.add_child(b)
+	var ng := Button.new()
+	ng.add_theme_font_size_override(&"font_size", 10)
+	ng.text = "CONFIRMA? apagar todo o progresso" if _confirm_new_game else "Novo jogo"
+	ng.pressed.connect(func() -> void:
+		if _confirm_new_game:
+			_confirm_new_game = false
+			SaveManager.new_game()
+		else:
+			_confirm_new_game = true
+		refresh())
+	line.add_child(ng)
+	_rows.add_child(line)
 
 
 func _is_stage(id: String) -> bool:
