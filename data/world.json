@@ -30,22 +30,34 @@
       "luna": {
         "amplitude_m": 70.0,
         "frequency": 0.003,
-        "octaves": 4
+        "octaves": 4,
+        "sky": "#2e222f",
+        "fill": "#3e3546",
+        "surface": "#9babb2"
       },
       "ares": {
         "amplitude_m": 110.0,
         "frequency": 0.004,
-        "octaves": 4
+        "octaves": 4,
+        "sky": "#45293f",
+        "fill": "#7a3045",
+        "surface": "#cd683d"
       },
       "kronos": {
         "amplitude_m": 140.0,
         "frequency": 0.0035,
-        "octaves": 5
+        "octaves": 5,
+        "sky": "#313638",
+        "fill": "#374e4a",
+        "surface": "#92a984"
       },
       "titan": {
         "amplitude_m": 180.0,
         "frequency": 0.003,
-        "octaves": 5
+        "octaves": 5,
+        "sky": "#323353",
+        "fill": "#484a77",
+        "surface": "#8fd3ff"
       }
     }
   },
@@ -79,5 +91,6 @@
   "demo": {
     "target_distance_m": 800.0,
     "seed": 7
-  }
+  },
+  "drag_scale": 0.02
 }

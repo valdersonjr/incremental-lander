@@ -77,3 +77,38 @@ static func max_reach_m(planet_id: String, stats: Dictionary, gas: float) -> flo
 		else:
 			hi = mid
 	return lo
+
+
+## A nave consegue voar no planeta? (motor vence a gravidade — mesma regra do modelo: delta-v finito)
+static func can_fly(planet_id: String, stats: Dictionary) -> bool:
+	return EconMath.estimated_hop_dv(planet_id, 1.0, stats) < INF
+
+
+## Libera um planeta (custo e requisitos da spec). Muta resources/unlocked. Retorna true se liberou.
+static func unlock_planet(resources: Dictionary, unlocked: Array, planet_id: String, shop: Dictionary,
+		levels: Dictionary) -> bool:
+	if planet_id in unlocked or not EconMath.planet_available(planet_id, unlocked, shop, levels):
+		return false
+	var cost: Dictionary = EconMath._find("planets", planet_id).get("unlock", {})
+	if not can_afford(resources, cost):
+		return false
+	for res: String in cost:
+		resources[res] = float(resources.get(res, 0.0)) - float(cost[res])
+	unlocked.append(planet_id)
+	return true
+
+
+## Linhas de planetas para o hangar: liberado?, disponivel para liberar?, custo, pode voar com a nave atual.
+static func planet_rows(resources: Dictionary, unlocked: Array, shop: Dictionary, levels: Dictionary,
+		stats: Dictionary) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	for p: Dictionary in EconMath.spec["planets"]:
+		var id: String = p["id"]
+		var cost: Dictionary = p.get("unlock", {})
+		rows.append({
+			"id": id, "name": p.get("name", id), "unlocked": id in unlocked,
+			"available": EconMath.planet_available(id, unlocked, shop, levels),
+			"cost": cost, "affordable": can_afford(resources, cost), "can_fly": can_fly(id, stats),
+			"gravity": float(p["gravity"]), "pay_mult": float(p.get("pay_mult", 1.0)),
+		})
+	return rows

@@ -39,3 +39,6 @@
 | 2026-09-30 | Lander só decola com uma entrega escolhida; pousar fora do alvo sem gás encerra o run ("sem gás") | fluxo claro de run | `game/flight/` |
 | 2026-09-30 | Fluxo: 1º run começa direto; depois de cada run: resumo → hangar → decolar | o primeiro run não tem o que comprar | `game/main.gd` |
 | 2026-09-30 | Hangar mostra "alcance max (ideal)" pelo Δv ideal | ensina o valor de tanque/eficiência; é otimista (sem desperdício) — rever com calibração | `game/hangar/hangar.gd` |
+| 2026-09-30 | Planeta só pode ser escolhido se o motor vence a gravidade (Δv finito, mesma regra do modelo); o hangar avisa "motor fraco" | Ares com motor base é impossível; evitar run inútil | `Purchases.can_fly`, hangar |
+| 2026-09-30 | Arrasto físico = drag do planeta × `drag_scale` (world.json) | a escala estava fixa no código | `data/world.json` |
+| 2026-09-30 | Autopiloto do demo = salto balístico + motor sigma-delta | voar pairando em cruzeiro gastava o tanque inteiro em Ares; o arco reproduz o piloto eficiente do modelo | `scripts/world/autopilot.gd` |

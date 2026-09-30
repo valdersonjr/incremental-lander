@@ -16,3 +16,12 @@
 - Pouso lento encostado não gera colisão com `recovery_as_collision=false` (padrão).
 - `run` headless sem `--fixed-fps` roda menos tempo de física do que parece (corrigido no gdtool).
 - Autopiloto desce devagar demais (0,3–0,6 m/s nos últimos metros) → gasta mais gás que o modelo prevê.
+
+## Atualização (Fase 4): autopiloto para gravidade forte
+- Voar "pairando em cruzeiro" custa g × tempo de Δv: barato na Lua, proibitivo em Ares (tanque inteiro).
+  Solução: **arco balístico** — velocidade desejada = a que leva ao alvo sob gravidade em T = sqrt(2|dx|/g)+1,
+  mirando um ponto ACIMA da plataforma (40 + 8g m) para sobrar espaço de frenagem; motor só corrige desvios.
+- Motor liga/desliga com limiar fixo fica "sempre ligado" quando pairar exige mais que o limiar (Ares) → sobe
+  sem parar. Solução: **sigma-delta** (acumula fração empuxo_pedido/empuxo_max; liga quando passa de 1).
+- Armadilha de verificação: no zsh, `$VAR` com vários argumentos NÃO é quebrado — o jogo recebeu um único
+  argumento. Passe os argumentos literalmente (ou use arrays). O jogo agora valida `--planet`.

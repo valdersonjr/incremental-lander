@@ -4,21 +4,24 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0–3 concluídas.** Loop jogável completo na Lua: run (ofertas 1–8, voar, pousar, encadear, fim) →
-  resumo → **hangar** (comprar upgrades da spec: motor, tanque, bocais, reputação, trem de pouso; "max") → decolar.
-- Demo (`-- --demo`) prova a progressão: ganhos por run 312 → 1.760 → 3.988 cr com upgrades comprados sozinho.
-- Sem save (Fase 7), sem outros planetas (Fase 4), sem prestígio (Fase 5). Visual placeholder (arte depois).
+- **Fases 0–4 concluídas.** Jogo: runs de entrega → hangar (upgrades + **planetas**: liberar Ares/Kronos com custo
+  da spec, trocar de planeta, aviso de motor fraco) → decolar. Cada planeta tem gravidade/arrasto da spec, relevo
+  e cores provisórias próprias; Ares/Kronos pagam minério (refinaria aparece com Ares).
+- Demo verifica a progressão Lua → Ares (com `--dev_credits`): 6 entregas por run em Ares, qualidade 0,85–0,98.
+- Autopiloto reescrito (arco balístico + motor sigma-delta): entrega nos três planetas testados.
+- Sem prestígio (Fase 5), sem frota/Expedição (Fase 6), sem save (Fase 7). Visual placeholder (arte depois).
 
 ## Próximo passo
-**Fase 4 — Planetas** (skills `godot-dev` + `economy-balance`): desbloqueio de Ares/Kronos no hangar (custo da
-spec, Kronos exige Ares + minério), seleção de planeta, física do planeta no voo (gravidade/arrasto já vêm da
-spec), relevo por planeta (`world.json`), minério nas recompensas (já sai do RunState) e refinaria.
+**Fase 5 — Prestígio e loja da Poeira Estelar** (skills `godot-dev` + `economy-balance`): botão de prestígio no
+hangar (após Ares) com ganho previsto (`EconMath.prestige_gain` sobre créditos do ciclo), reset via
+`EconMath.prestige_reset_state` (mantém etapas persistentes), nível passivo (bônus já entra em `ship_stats`),
+loja (capital, ficha, cartas, motor de dobra, premium) com `EconMath.shop_cost`.
 
 ## Pendências conhecidas
-- "Alcance max (ideal)" no hangar é otimista (ex.: 29 km com 176 de gás; o autopiloto gasta ~2× o ideal).
-- Calibração: autopiloto gasta ~2× o gás mínimo ideal. Dados humanos virão dos testes (Fase 10).
-- Terreno regenerado inteiro a cada entrega (sem chunks) — rever se ficar lento em 15–60 km.
-- Nomes dos upgrades na spec estão sem acento ("Tanque de gas") — ajustar via economy-balance numa passada de texto.
+- "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
+- Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
+- Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
+- Nomes dos upgrades/planetas na spec sem acento — ajustar via economy-balance numa passada de texto.
 - Em aberto no design: pós-jogo, menus, nome final (GDD §12).
 
 ## Como retomar (checklist de sessão nova)

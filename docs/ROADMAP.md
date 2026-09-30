@@ -36,9 +36,9 @@
 - [x] 3.2 Mapear `EconMath.ship_stats` → parâmetros físicos (thrust→aceleração, tank→gás, efficiency→Δv/gás, gear→tolerância)
 - [x] 3.3 Mostrar "alcance estimado" com o gás atual
 
-## Fase 4 — Planetas · skills: `godot-dev`, `economy-balance`, `pixel-art`
-- [ ] 4.1 Parâmetros por planeta (gravidade, arrasto/vento, distâncias) vindos da spec
-- [ ] 4.2 Desbloqueio de Ares/Kronos, seleção de planeta, minério
+## Fase 4 — Planetas ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance`, `pixel-art`
+- [x] 4.1 Parâmetros por planeta (gravidade, arrasto/vento, distâncias) vindos da spec
+- [x] 4.2 Desbloqueio de Ares/Kronos, seleção de planeta, minério
 
 ## Fase 5 — Prestígio e loja da Poeira Estelar · skills: `godot-dev`, `economy-balance`
 - [ ] 5.1 Tela de prestígio (ganho previsto, confirmação), reset via `EconMath.prestige_reset_state`

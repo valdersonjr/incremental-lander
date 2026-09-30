@@ -56,3 +56,24 @@ func test_alcance_cresce_com_tanque() -> void:
 	assert_true(r0 > 100.0)
 	assert_true(r5 > r0)
 	assert_almost(EconMath.estimated_hop_dv("luna", r0, s0) / float(s0["efficiency"]), float(s0["tank"]), 1e-3)
+
+
+func test_liberar_ares_desconta_e_libera() -> void:
+	var res := {"credits": 1e6}
+	var unlocked := ["luna"]
+	var custo: float = EconMath._find("planets", "ares")["unlock"]["credits"]
+	assert_true(Purchases.unlock_planet(res, unlocked, "ares", {}, {}))
+	assert_true("ares" in unlocked)
+	assert_almost(res["credits"], 1e6 - custo)
+
+
+func test_kronos_exige_ares() -> void:
+	var res := {"credits": 1e12, "ore": 1e9}
+	assert_false(Purchases.unlock_planet(res, ["luna"], "kronos", {}, {}))
+	assert_true(Purchases.unlock_planet(res, ["luna", "ares"], "kronos", {}, {}))
+
+
+func test_motor_base_nao_voa_em_ares() -> void:
+	assert_true(Purchases.can_fly("luna", EconMath.ship_stats({})))
+	assert_false(Purchases.can_fly("ares", EconMath.ship_stats({})), "motor 4 < 1,05 x gravidade 5")
+	assert_true(Purchases.can_fly("ares", EconMath.ship_stats({"thrust": 3})))

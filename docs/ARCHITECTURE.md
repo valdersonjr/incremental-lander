@@ -20,18 +20,21 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–3 — voo, loop do run, hangar)
+## Jogo (Fases 1–4 — voo, loop do run, hangar, planetas)
 ```
-data/world.json               # escala (px_per_m=1), time_scale=3, tolerâncias de pouso, relevo por planeta, teclas, demo
+data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
+                              # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo
 scripts/world/
   world_config.gd             # WorldConfig: lê world.json, m↔px, registra input (InputMap) a partir do JSON
   lander_physics.gd           # LanderPhysics.step(): gravidade + propulsor + arrasto; gás = Δv/eficiência (puro)
   landing_rules.gd            # LandingRules: tolerâncias (× gear^0.5), crash_reason(), quality() 0..1 (puro)
   terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias): relevo + plataformas planas (puro)
-  autopilot.gd                # Autopilot: modo --demo (decola vertical, cruza acima do relevo, desce no alvo)
+  autopilot.gd                # Autopilot (--demo): decolagem → arco balístico (mira acima do alvo) → frenagem/pouso;
+                              # motor por sigma-delta (fração exata de empuxo) — voa na Lua, Ares e Kronos
 game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
                               # → ofertas … → resumo → HANGAR → novo run. Args: --demo --seed=N --planet=id --hangar_wait=s.
-                              # Demo compra o upgrade acessível mais barato e imprime "HANGAR {json}".
+                              # Demo libera planetas, compra o upgrade mais barato, vai ao melhor planeta voável; "HANGAR {json}".
+                              # Args de dev: --dev_levels=id:n,... --dev_credits=N --dev_unlock=a,b --planet=id (validado)
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
                               # cria a próxima plataforma a partir da atual e estende o terreno;
@@ -40,11 +43,12 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
 game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked
 autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio, planetas liberados; ship_stats(),
                               # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
-scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows (atual→próximo, marco), max_reach_m
-game/hangar/hangar.*          # Hangar: upgrades disponíveis (clique/Enter compra, 'max'), stats e alcance; DECOLAR [Enter]
+scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
+                              # can_fly (motor vence a gravidade), unlock_planet, planet_rows
+game/hangar/hangar.*          # Hangar: PLANETAS (liberar / voar em / motor fraco) + UPGRADES (comprar, 'max'), stats, alcance; DECOLAR
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem

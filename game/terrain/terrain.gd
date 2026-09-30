@@ -20,6 +20,10 @@ var target_pad_id := -1
 func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) -> Dictionary:
 	var data := TerrainGen.generate(seed_value, planet_id, pad_distances_m)
 	ridge = data["ridge"]
+	var look: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(planet_id, {})
+	_fill.color = Color(str(look.get("fill", "#3e3546")))
+	_surface.default_color = Color(str(look.get("surface", "#9babb2")))
+	RenderingServer.set_default_clear_color(Color(str(look.get("sky", "#2e222f"))))
 	pads.assign(data["pads"])
 	_fill.polygon = data["polygon"]
 	_surface.points = ridge

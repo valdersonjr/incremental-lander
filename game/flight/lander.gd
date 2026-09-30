@@ -32,7 +32,7 @@ var gas_at_takeoff := 0.0
 func setup(stats: Dictionary, planet: Dictionary, terrain_pads: Array[Dictionary]) -> void:
 	params = {
 		"gravity": float(planet["gravity"]),
-		"drag": float(planet.get("drag", 0.0)) * 0.02,
+		"drag": float(planet.get("drag", 0.0)) * float(WorldConfig.load_config()["drag_scale"]),
 		"thrust": float(stats["thrust"]),
 		"efficiency": float(stats["efficiency"]),
 		"tank": float(stats["tank"]),

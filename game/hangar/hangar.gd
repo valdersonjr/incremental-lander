@@ -40,8 +40,51 @@ func refresh() -> void:
 			float(s["thrust"]), EconMath.fmt(float(s["tank"])), float(s["efficiency"]), EconMath.fmt(reach)]
 	for c in _rows.get_children():
 		c.queue_free()
+	_rows.add_child(_section("PLANETAS"))
+	for p: Dictionary in GameState.planet_rows():
+		if p["unlocked"] or p["available"]:
+			_rows.add_child(_make_planet_row(p))
+	_rows.add_child(_section("UPGRADES"))
 	for r: Dictionary in GameState.upgrade_rows():
 		_rows.add_child(_make_row(r))
+
+
+func _section(title: String) -> Label:
+	var l := Label.new()
+	l.text = title
+	l.add_theme_font_size_override(&"font_size", 10)
+	l.add_theme_color_override(&"font_color", COLOR_TITLE)
+	return l
+
+
+func _make_planet_row(p: Dictionary) -> Button:
+	var b := Button.new()
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override(&"font_size", 10)
+	var id: String = p["id"]
+	var info := "gravidade %.2f   pagamento x%s" % [float(p["gravity"]), EconMath.fmt(float(p["pay_mult"]))]
+	if id == GameState.current_planet:
+		b.text = "> %s (atual)   %s" % [p["name"], info]
+		b.disabled = true
+	elif p["unlocked"]:
+		if p["can_fly"]:
+			b.text = "Voar em %s   %s" % [p["name"], info]
+			b.pressed.connect(func() -> void:
+				GameState.current_planet = id
+				refresh())
+		else:
+			b.text = "%s: motor fraco para esta gravidade (compre Motor)   %s" % [p["name"], info]
+			b.disabled = true
+	else:
+		var cost_txt := []
+		for res: String in p["cost"]:
+			cost_txt.append("%s %s" % [EconMath.fmt(float(p["cost"][res])), "cr" if res == "credits" else res])
+		b.text = "Liberar %s   %s   %s" % [p["name"], " + ".join(cost_txt), info]
+		b.disabled = not p["affordable"]
+		b.pressed.connect(func() -> void:
+			GameState.unlock_planet(id)
+			refresh())
+	return b
 
 
 func _make_row(r: Dictionary) -> HBoxContainer:

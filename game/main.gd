@@ -1,6 +1,6 @@
 ## Entrada do jogo: Main -> World (voo) + GUI (HUD, ofertas, resumo). Orquestra o run (Fase 2):
 ## ofertas -> voo -> entrega -> recompensas (GameState) -> ofertas ... -> resumo -> novo run.
-## Args: --demo (piloto automatico escolhe, voa e compra), --seed=N, --planet=id, --hangar_wait=s. R reinicia.
+## Args: --demo (piloto automatico escolhe, voa e compra), --seed=N, --hangar_wait=s; dev: ver _apply_dev_args. R reinicia.
 extends Node
 
 const FLIGHT_SCENE := preload("res://game/flight/flight.tscn")
@@ -29,8 +29,7 @@ func _ready() -> void:
 	_args = _parse_args(OS.get_cmdline_user_args())
 	_demo = _args.has("demo")
 	_run_seed = int(_args.get("seed", WorldConfig.load_config()["demo"]["seed"]))
-	if _args.has("planet"):
-		GameState.current_planet = str(_args["planet"])
+	_apply_dev_args()
 	_hangar = HANGAR_SCENE.instantiate()
 	_gui.add_child(_hangar)
 	_hangar.visible = false
@@ -144,8 +143,12 @@ func _on_launch_requested() -> void:
 	_start_run()
 
 
-## Demo: compra repetidamente o upgrade acessivel mais barato (verificacao automatica da progressao).
+## Demo: libera planetas quando pode e compra o upgrade acessivel mais barato (verificacao da progressao).
 func _demo_shop() -> void:
+	# primeiro: liberar o proximo planeta e ir para o melhor planeta em que a nave consegue voar
+	for p: Dictionary in GameState.planet_rows():
+		if not p["unlocked"] and p["available"] and p["affordable"]:
+			GameState.unlock_planet(p["id"])
 	while true:
 		var best := ""
 		var best_cost := INF
@@ -156,9 +159,34 @@ func _demo_shop() -> void:
 				best_cost = c
 		if best == "" or not GameState.buy_upgrade(best):
 			break
+	for p: Dictionary in GameState.planet_rows():
+		if p["unlocked"] and p["can_fly"]:
+			GameState.current_planet = p["id"]
 	_hangar.refresh()
-	print("HANGAR ", JSON.stringify({"credits": GameState.amount("credits"), "levels": GameState.levels,
+	print("HANGAR ", JSON.stringify({"planet": GameState.current_planet, "credits": GameState.amount("credits"), "levels": GameState.levels,
 			"stats": GameState.ship_stats()}))
+
+
+## Argumentos so de desenvolvimento/verificacao: --dev_levels=thrust:10,tank:5  --dev_credits=N
+## --dev_unlock=ares,kronos  --planet=id. Nao existem no jogo normal (sem args).
+func _apply_dev_args() -> void:
+	if _args.has("dev_levels"):
+		for pair in str(_args["dev_levels"]).split(","):
+			GameState.levels[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
+	if _args.has("dev_credits"):
+		GameState.resources["credits"] = float(_args["dev_credits"])
+	if _args.has("dev_unlock"):
+		for pid in str(_args["dev_unlock"]).split(","):
+			if not pid in GameState.unlocked_planets:
+				GameState.unlocked_planets.append(pid)
+	if _args.has("planet"):
+		var pid := str(_args["planet"])
+		if EconMath.spec["planets"].any(func(p: Dictionary) -> bool: return p["id"] == pid):
+			GameState.current_planet = pid
+		else:
+			push_warning("--planet=%s nao existe na spec; usando luna" % pid)
+		if not GameState.current_planet in GameState.unlocked_planets:
+			GameState.unlocked_planets.append(GameState.current_planet)
 
 
 func _parse_args(args: PackedStringArray) -> Dictionary:

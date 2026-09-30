@@ -72,3 +72,18 @@ func _emit_changes(before: Dictionary) -> void:
 	for res: String in resources:
 		if not is_equal_approx(float(before.get(res, 0.0)), float(resources[res])):
 			Events.resources_changed.emit(res, resources[res])
+
+
+## Libera um planeta (custo/requisitos da spec). Retorna true se liberou.
+func unlock_planet(planet_id: String) -> bool:
+	var before := resources.duplicate()
+	if not Purchases.unlock_planet(resources, unlocked_planets, planet_id, shop, levels):
+		return false
+	_emit_changes(before)
+	Events.planet_unlocked.emit(planet_id)
+	return true
+
+
+## Linhas de planetas para o hangar.
+func planet_rows() -> Array[Dictionary]:
+	return Purchases.planet_rows(resources, unlocked_planets, shop, levels, ship_stats())
