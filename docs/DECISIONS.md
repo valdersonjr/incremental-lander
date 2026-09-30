@@ -42,3 +42,5 @@
 | 2026-09-30 | Planeta só pode ser escolhido se o motor vence a gravidade (Δv finito, mesma regra do modelo); o hangar avisa "motor fraco" | Ares com motor base é impossível; evitar run inútil | `Purchases.can_fly`, hangar |
 | 2026-09-30 | Arrasto físico = drag do planeta × `drag_scale` (world.json) | a escala estava fixa no código | `data/world.json` |
 | 2026-09-30 | Autopiloto do demo = salto balístico + motor sigma-delta | voar pairando em cruzeiro gastava o tanque inteiro em Ares; o arco reproduz o piloto eficiente do modelo | `scripts/world/autopilot.gd` |
+| 2026-09-30 | Prestígio em 2 passos: coletar Poeira → comprar na loja → concluir (reset com os itens) | padrão do gênero (Cookie Clicker) e do simulador; resetar antes da loja anulava capital/ficha | `Prestige.collect/reset`, hangar |
+| 2026-09-30 | Botão de prestígio pede confirmação (2 cliques) | ação destrutiva | `game/hangar/hangar.gd` |

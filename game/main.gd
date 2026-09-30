@@ -145,7 +145,20 @@ func _on_launch_requested() -> void:
 
 ## Demo: libera planetas quando pode e compra o upgrade acessivel mais barato (verificacao da progressao).
 func _demo_shop() -> void:
-	# primeiro: liberar o proximo planeta e ir para o melhor planeta em que a nave consegue voar
+	# prestigio pela regra "dobrar" (a mesma do jogador simulado da economy-balance) + loja por prioridade
+	var st := GameState.prestige_state()
+	if Prestige.can_prestige(st) and Prestige.gain(st) >= GameState.prestige_points:
+		var g := GameState.begin_prestige()
+		var items := EconMath.shop_items().duplicate()
+		items.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("priority", 99)) < int(b.get("priority", 99)))
+		for it: Dictionary in items:
+			while GameState.buy_shop_item(it["id"]):
+				pass
+			if int(GameState.shop.get(it["id"], 0)) < int(it.get("max_level", 1)):
+				break  # guarda Poeira para o proximo item da fila
+		GameState.finish_prestige()
+		print("PRESTIGE ", JSON.stringify({"gain": g, "points": GameState.prestige_points, "shop": GameState.shop}))
+	# liberar o proximo planeta e ir para o melhor planeta em que a nave consegue voar
 	for p: Dictionary in GameState.planet_rows():
 		if not p["unlocked"] and p["available"] and p["affordable"]:
 			GameState.unlock_planet(p["id"])

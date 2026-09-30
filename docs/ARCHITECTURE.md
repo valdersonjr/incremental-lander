@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–4 — voo, loop do run, hangar, planetas)
+## Jogo (Fases 1–5 — voo, run, hangar, planetas, prestígio)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
                               # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo
@@ -43,18 +43,21 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
 game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked
-autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio, planetas liberados; ship_stats(),
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged
+autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio (cycle_earned, prestige_pending,
+                              # begin_prestige/finish_prestige, buy_shop_item), planetas liberados; ship_stats(),
                               # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
+scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
-game/hangar/hangar.*          # Hangar: PLANETAS (liberar / voar em / motor fraco) + UPGRADES (comprar, 'max'), stats, alcance; DECOLAR
+game/hangar/hangar.*          # Hangar: PLANETAS (liberar / voar em / motor fraco) + PRESTÍGIO (recomeçar com confirmação;
+                              # modo 'recomeço em andamento' = só loja + CONCLUIR) + LOJA DA POEIRA + UPGRADES; DECOLAR
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
-tests/unit/run/               # test_run_state, test_purchases
+tests/unit/run/               # test_run_state, test_purchases, test_prestige
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
 

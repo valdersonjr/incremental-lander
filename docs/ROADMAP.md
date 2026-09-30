@@ -40,9 +40,9 @@
 - [x] 4.1 Parâmetros por planeta (gravidade, arrasto/vento, distâncias) vindos da spec
 - [x] 4.2 Desbloqueio de Ares/Kronos, seleção de planeta, minério
 
-## Fase 5 — Prestígio e loja da Poeira Estelar · skills: `godot-dev`, `economy-balance`
-- [ ] 5.1 Tela de prestígio (ganho previsto, confirmação), reset via `EconMath.prestige_reset_state`
-- [ ] 5.2 Loja da Poeira (capital, ficha, cartas, motor de dobra, premium)
+## Fase 5 — Prestígio e loja da Poeira Estelar ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance`
+- [x] 5.1 Tela de prestígio (ganho previsto, confirmação), reset via `EconMath.prestige_reset_state`
+- [x] 5.2 Loja da Poeira (capital, ficha, cartas, motor de dobra, premium)
 
 ## Fase 6 — Fase final · skills: `godot-dev`, `economy-balance`, `pixel-art`, `sound-design`
 - [ ] 6.1 Frota de drones (renda = drones × autopilot × média da renda do jogador)

@@ -9,6 +9,8 @@ var prestige_points := 0.0
 var current_planet := "luna"
 var unlocked_planets: Array = ["luna"]
 var runs_done := 0
+var cycle_earned: Dictionary = {}     # ganhos desde o ultimo prestigio (base do ganho de Poeira)
+var prestige_pending := false         # Poeira coletada; falta gastar na loja e concluir o recomeco
 
 
 func _ready() -> void:
@@ -24,6 +26,9 @@ func reset() -> void:
 	levels.clear()
 	shop.clear()
 	prestige_points = 0.0
+	cycle_earned.clear()
+	unlocked_planets = ["luna"]
+	current_planet = "luna"
 
 
 ## Quantidade de um recurso.
@@ -35,6 +40,7 @@ func amount(resource_id: String) -> float:
 func add_rewards(rewards: Dictionary) -> void:
 	for res: String in rewards:
 		resources[res] = amount(res) + float(rewards[res])
+		cycle_earned[res] = float(cycle_earned.get(res, 0.0)) + float(rewards[res])
 		Events.resources_changed.emit(res, resources[res])
 
 
@@ -87,3 +93,51 @@ func unlock_planet(planet_id: String) -> bool:
 ## Linhas de planetas para o hangar.
 func planet_rows() -> Array[Dictionary]:
 	return Purchases.planet_rows(resources, unlocked_planets, shop, levels, ship_stats())
+
+
+## Estado no formato usado por Prestige (referencias aos mesmos dicionarios).
+func prestige_state() -> Dictionary:
+	return {"resources": resources, "levels": levels, "shop": shop, "unlocked": unlocked_planets,
+			"current_planet": current_planet, "prestige_points": prestige_points, "cycle_earned": cycle_earned}
+
+
+## Recomeco, passo 1: coleta a Poeira. Enquanto prestige_pending, o jogador so compra na loja.
+func begin_prestige() -> float:
+	var st := prestige_state()
+	var g := Prestige.collect(st)
+	if g <= 0.0:
+		return 0.0
+	_pull(st)
+	prestige_pending = true
+	Events.prestiged.emit(g, prestige_points)
+	return g
+
+
+## Recomeco, passo 2: aplica o reset com o que foi comprado na loja.
+func finish_prestige() -> void:
+	if not prestige_pending:
+		return
+	var st := prestige_state()
+	Prestige.reset(st)
+	_pull(st)
+	prestige_pending = false
+	for res: String in resources:
+		Events.resources_changed.emit(res, resources[res])
+
+
+func _pull(st: Dictionary) -> void:
+	resources = st["resources"]
+	levels = st["levels"]
+	unlocked_planets = st["unlocked"]
+	current_planet = st["current_planet"]
+	prestige_points = st["prestige_points"]
+	cycle_earned = st["cycle_earned"]
+
+
+## Compra 1 nivel de item da loja da Poeira.
+func buy_shop_item(item_id: String) -> bool:
+	var st := prestige_state()
+	if not Prestige.buy_shop(st, item_id):
+		return false
+	Events.resources_changed.emit(EconMath.spec["prestige"]["resource"], amount(EconMath.spec["prestige"]["resource"]))
+	return true

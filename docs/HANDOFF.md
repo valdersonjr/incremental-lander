@@ -4,18 +4,18 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0–4 concluídas.** Jogo: runs de entrega → hangar (upgrades + **planetas**: liberar Ares/Kronos com custo
-  da spec, trocar de planeta, aviso de motor fraco) → decolar. Cada planeta tem gravidade/arrasto da spec, relevo
-  e cores provisórias próprias; Ares/Kronos pagam minério (refinaria aparece com Ares).
-- Demo verifica a progressão Lua → Ares (com `--dev_credits`): 6 entregas por run em Ares, qualidade 0,85–0,98.
-- Autopiloto reescrito (arco balístico + motor sigma-delta): entrega nos três planetas testados.
-- Sem prestígio (Fase 5), sem frota/Expedição (Fase 6), sem save (Fase 7). Visual placeholder (arte depois).
+- **Fases 0–5 concluídas.** Loop: runs → hangar (planetas, upgrades, **prestígio**: coletar Poeira Estelar →
+  loja [capital, ficha de piloto, cartas de navegação, Motor de dobra, premium] → concluir recomeço).
+  Nível de prestígio dá bônus passivo (já no ship_stats).
+- Demo (`--demo --dev_credits=400000`) verifica: Lua → Ares → prestígio (38 Poeira) → run pós-prestígio rende
+  128K cr (vs 290 no início do jogo).
+- Sem frota/Expedição (Fase 6), sem save (Fase 7). Visual placeholder (arte depois, decisão do usuário).
 
 ## Próximo passo
-**Fase 5 — Prestígio e loja da Poeira Estelar** (skills `godot-dev` + `economy-balance`): botão de prestígio no
-hangar (após Ares) com ganho previsto (`EconMath.prestige_gain` sobre créditos do ciclo), reset via
-`EconMath.prestige_reset_state` (mantém etapas persistentes), nível passivo (bônus já entra em `ship_stats`),
-loja (capital, ficha, cartas, motor de dobra, premium) com `EconMath.shop_cost`.
+**Fase 6 — Fase final** (skills `godot-dev` + `economy-balance`): upgrades `fleet`/`autopilot` já aparecem no
+hangar após o Motor de dobra (via spec); falta a **renda da frota** durante o run
+(`EconMath.fleet_income_per_s` × média da renda do jogador) e a **Expedição a Titan** (8 etapas persistentes,
+barra segmentada no hangar) → liberar Titan → tela de final.
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
