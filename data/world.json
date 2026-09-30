@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "notes": "Constantes de mundo/sensacao (skill godot-dev). Economia fica em economy.json. Unidades do modelo: m, s.",
+  "px_per_m": 1.0,
+  "time_scale": 3.0,
+  "rotate_speed": 2.5,
+  "landing": {
+    "max_vy": 3.0,
+    "max_vx": 2.0,
+    "max_tilt": 0.2,
+    "gear_exp": 0.5,
+    "weights": {"vy": 0.35, "vx": 0.25, "tilt": 0.2, "center": 0.2}
+  },
+  "lander": {"half_width_m": 7.0, "feet_offset_m": 8.0},
+  "terrain": {
+    "step_m": 16.0,
+    "pad_width_m": 64.0,
+    "margin_m": 600.0,
+    "bottom_m": 400.0,
+    "max_slope": 1.2,
+    "planets": {
+      "luna": {"amplitude_m": 70.0, "frequency": 0.003, "octaves": 4},
+      "ares": {"amplitude_m": 110.0, "frequency": 0.004, "octaves": 4},
+      "kronos": {"amplitude_m": 140.0, "frequency": 0.0035, "octaves": 5},
+      "titan": {"amplitude_m": 180.0, "frequency": 0.003, "octaves": 5}
+    }
+  },
+  "camera": {"smoothing_speed": 6.0},
+  "input": {
+    "thrust": ["W", "Up", "Space"],
+    "rotate_left": ["A", "Left"],
+    "rotate_right": ["D", "Right"],
+    "restart": ["R"]
+  },
+  "demo": {"target_distance_m": 800.0, "seed": 7}
+}

@@ -15,14 +15,14 @@
       testes; ferramenta `gdtool.py` (api/check/test/run/capture); executor de testes em `tests/`
 - [x] 0.7 Documentação de continuidade (CLAUDE.md, GDD, ROADMAP, HANDOFF, DECISIONS, ARCHITECTURE)
 
-## Fase 1 — Protótipo de voo (sem arte final) · skills: `godot-dev`, `economy-balance` (física ↔ modelo)
-- [ ] 1.1 Cena de voo: lander `CharacterBody2D` com integração própria (godot-dev `lander-physics.md`), gravidade, girar + propulsor; `data/world.json` + `WorldConfig`
-- [ ] 1.2 Consumo de gás por Δv (`efficiency`), tanque, HUD mínimo (gás, velocidade, altitude)
-- [ ] 1.3 Terreno em polígono irregular gerado (encostas + plataformas planas), colisão
-- [ ] 1.4 Detecção de pouso/batida + **qualidade q (0..1)** (velocidades, ângulo, centro da plataforma)
-- [ ] 1.5 Câmera lateral acompanhando o salto; escala do mundo `PX_PER_M` decidida e registrada em DECISIONS
-- [ ] 1.6 **Telemetria** de cada entrega → CSV (formato em `economy-balance/references/godot-integration.md`)
-- [ ] 1.7 Modo `--demo` (piloto automático) para verificação com `gdtool.py run/capture`
+## Fase 1 — Protótipo de voo (sem arte final) ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance` (física ↔ modelo)
+- [x] 1.1 Cena de voo: lander `CharacterBody2D` com integração própria (godot-dev `lander-physics.md`), gravidade, girar + propulsor; `data/world.json` + `WorldConfig`
+- [x] 1.2 Consumo de gás por Δv (`efficiency`), tanque, HUD mínimo (gás, velocidade, altitude)
+- [x] 1.3 Terreno em polígono irregular gerado (encostas + plataformas planas), colisão
+- [x] 1.4 Detecção de pouso/batida + **qualidade q (0..1)** (velocidades, ângulo, centro da plataforma)
+- [x] 1.5 Câmera lateral acompanhando o salto; escala do mundo `PX_PER_M` decidida e registrada em DECISIONS
+- [x] 1.6 **Telemetria** de cada entrega → CSV (formato em `economy-balance/references/godot-integration.md`)
+- [x] 1.7 Modo `--demo` (piloto automático) para verificação com `gdtool.py run/capture`
 - Pronto quando: dá para decolar, voar até uma plataforma a X m, pousar/bater, o CSV registra o salto, e `check`/`test`/`run`/`capture` passam.
 
 ## Fase 2 — Loop do run · skills: `godot-dev`, `economy-balance`

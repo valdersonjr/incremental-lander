@@ -20,16 +20,38 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Pastas (planejadas pela skill godot-dev — ainda não criadas)
+## Jogo (Fase 1 — protótipo de voo)
 ```
-autoload/                        # events.gd, game_state.gd, save_manager.gd, telemetry.gd
-game/<feature>/                  # cena + script juntos: main, flight, terrain, hud, hangar, prestige...
-data/world.json                  # escala px↔m, tolerâncias de pouso, relevo por planeta (não economia)
-assets/sprites|tiles|fx|ui|bg/   # exports da skill pixel-art
-assets/audio/sfx|ui|ambience|music/  # exports da skill sound-design
+data/world.json               # escala (px_per_m=1), time_scale=3, tolerâncias de pouso, relevo por planeta, teclas, demo
+scripts/world/
+  world_config.gd             # WorldConfig: lê world.json, m↔px, registra input (InputMap) a partir do JSON
+  lander_physics.gd           # LanderPhysics.step(): gravidade + propulsor + arrasto; gás = Δv/eficiência (puro)
+  landing_rules.gd            # LandingRules: tolerâncias (× gear^0.5), crash_reason(), quality() 0..1 (puro)
+  terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias): relevo + plataformas planas (puro)
+  autopilot.gd                # Autopilot: modo --demo (decola vertical, cruza acima do relevo, desce no alvo)
+game/main.tscn/.gd            # Main → World + GUI; args: --demo --seed=N --planet=id --distance=m; R reinicia;
+                              # imprime "DELIVERY_RESULT {json}" (verificação automática)
+game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, distância, stats, demo);
+                              # sinal delivery_finished(result) → Telemetry
+game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
+game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D/CollisionPolygon2D; plataformas em _draw
+game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, mensagem
+autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
+tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
+```
+Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
+
+## Pastas ainda não criadas (padrão godot-dev)
+```
+autoload/events.gd, game_state.gd, save_manager.gd   # Fases 2–7
+game/hangar/, game/prestige/ ...                      # Fases 3–6
+assets/ (skills pixel-art / sound-design)             # Fases 8–9
 ```
 
-## Autoloads (definidos pela `godot-dev`, a implementar)
+## Autoloads
+- **Implementado**: `Telemetry` (autoload em project.godot).
+
+Planejados (`godot-dev`):
 - `Events` — event bus (sinais globais, sem estado).
 - `GameState` — recursos, níveis de upgrades, loja, planetas, prestígio; usa `EconMath`.
 - `SaveManager` — salvar/carregar com versão da spec (`meta.version`) e migração.

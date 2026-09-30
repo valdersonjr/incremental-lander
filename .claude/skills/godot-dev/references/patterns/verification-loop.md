@@ -23,6 +23,15 @@
 - O Godot 4.4+ cria `<script>.gd.uid` para todo script: ao **apagar** um script (inclusive de teste/sondagem),
   apague também o `.uid`, senão ele fica órfão e acaba commitado. Conferir `git status` antes do commit.
 
+- `--check-only` roda isolado e **não carrega autoloads**: `Identifier not found: Telemetry` (e erros em
+  cascata "Failed to compile depended scripts") são falsos positivos. O `check` ignora nomes do `[autoload]`
+  do project.godot; a prova final é o `run` (execução real).
+
+- Headless **sem `--fixed-fps`** processa frames mais rápido que a física: `--quit-after 2400` cobriu só
+  ~32 s de jogo em vez de 40 s (o demo "não pousava"). `gdtool run` usa `--fixed-fps 60` (determinístico).
+- `move_and_collide` com `recovery_as_collision=false` (padrão) não reporta contato quando o corpo já está
+  dentro da margem (descendo devagar encostado) — o lander usa `true` para detectar pousos lentos.
+
 ## Fontes
 - https://docs.godotengine.org/en/4.4/tutorials/editor/command_line_tutorial.html — flags de linha de comando
 - `godot --help` (4.7.2) — confirmação local de `--write-movie`, `--quit-after`, `--fixed-fps`, `--check-only`

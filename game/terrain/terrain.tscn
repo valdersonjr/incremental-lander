@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/terrain/terrain.gd" id="1_terrain"]
+
+[node name="Terrain" type="Node2D"]
+script = ExtResource("1_terrain")
+
+[node name="Fill" type="Polygon2D" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+color = Color(0.243, 0.208, 0.275, 1)
+
+[node name="Surface" type="Line2D" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+width = 2.0
+default_color = Color(0.608, 0.671, 0.698, 1)
+
+[node name="Body" type="StaticBody2D" parent="."]
+
+[node name="Collision" type="CollisionPolygon2D" parent="Body"]
+unique_name_in_owner = true

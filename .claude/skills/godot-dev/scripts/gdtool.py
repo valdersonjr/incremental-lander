@@ -140,6 +140,12 @@ def gd_files(root: str, only: list[str]) -> list[str]:
     return sorted(out)
 
 
+def _section(path: str, name: str) -> str:
+    txt = open(path).read()
+    m = re.search(r"^\[%s\]\s*$(.*?)(?=^\[|\Z)" % re.escape(name), txt, re.M | re.S)
+    return m.group(1) if m else ""
+
+
 def cmd_check(a) -> int:
     root = project_root()
     imp = godot(["--headless", "--path", root, "--import"], timeout=600)
@@ -150,11 +156,18 @@ def cmd_check(a) -> int:
         r = godot(["--headless", "--path", root, "--script", "res://" + f, "--check-only"], timeout=120)
         return f, clean(r.stdout + r.stderr)
 
+    # --check-only roda isolado: autoloads nao existem -> "Identifier not found: <Autoload>" e erros em
+    # cascata sao falsos positivos (em execucao real funcionam). Ignora esses; o resto e erro de verdade.
+    autoloads = set(re.findall(r"^(\w+)=", _section(os.path.join(root, "project.godot"), "autoload"), re.M))
+    fake = re.compile(r"Identifier not found: (%s)\b|Failed to compile depended scripts|Failed to load script"
+                      % "|".join(map(re.escape, autoloads))) if autoloads else re.compile(r"$^")
+
     bad = 0
     with cf.ThreadPoolExecutor(max_workers=os.cpu_count() or 4) as ex:
         for f, out in ex.map(one, files):
             errs = [l for l in out.splitlines() if ERR_RE.match(l.strip()) or l.strip().startswith("at:")]
-            if any(ERR_RE.match(l.strip()) for l in errs):
+            real = [l for l in errs if ERR_RE.match(l.strip()) and not fake.search(l)]
+            if real:
                 bad += 1
                 print(f"ERRO {f}\n  " + "\n  ".join(errs[:12]))
     for l in imp_err:
@@ -185,7 +198,8 @@ def cmd_test(a) -> int:
 # ---------------------------------------------------------------- run
 def cmd_run(a) -> int:
     root = project_root()
-    args = ["--headless", "--path", root, a.scene, "--quit-after", str(a.frames)]
+    # --fixed-fps: sem ele, em headless os frames correm mais rapido que a fisica (N frames != N/60 s de jogo)
+    args = ["--headless", "--path", root, "--fixed-fps", "60", a.scene, "--quit-after", str(a.frames)]
     if a.game_args:
         args += ["--"] + a.game_args
     r = godot(args, timeout=a.timeout)

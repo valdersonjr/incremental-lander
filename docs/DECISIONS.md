@@ -28,3 +28,7 @@
 | 2026-09-30 | Testes com executor próprio mínimo (sem GUT/GdUnit4) | sem dependência, headless simples; reavaliar se precisar de mocks/input | `godot-dev/references/testing.md` |
 | 2026-09-30 | Verificação sem editor: `gdtool.py` (api/check/test/run/capture) + modo `--demo` nas cenas de gameplay | Claude não abre o editor; frames capturados permitem revisão visual | `godot-dev/SKILL.md` |
 | 2026-09-30 | Interpolação de física 2D ligada; aviso para declaração sem tipo | câmera suave com pixel snap; incentivar tipagem | `project.godot` |
+| 2026-09-30 | Escala do mundo provisória: **1 px = 1 m do modelo**, tempo ×3 (`world.json`) | salto de 800 m ≈ 1,3 tela e ~30 s reais; Δv/gás iguais ao modelo (a escala de tempo não muda a trajetória) | `data/world.json`; recalibrar na Fase 10 |
+| 2026-09-30 | Tolerâncias de pouso: V.VERT 3 m/s, V.HOR 2 m/s, inclinação 0,2 rad; trem de pouso amplia × gear^0,5; q = média ponderada (vert 35%, hor 25%, incl. 20%, centro 20%) | pouso exigente mas justo; q alimenta pagamento | `data/world.json`, `scripts/world/landing_rules.gd` |
+| 2026-09-30 | Teclas registradas por código a partir do `world.json` (W/↑/Espaço propulsor, A/D/←/→ girar, R reiniciar) | escrever o input map à mão no project.godot é frágil | `WorldConfig.register_input()` |
+| 2026-09-30 | Propulsor liga/desliga (sem acelerador analógico); rotação sem inércia; lander não gira pousado | simplicidade no protótipo; rever na Fase 10 (game feel) | `game/flight/lander.gd` |

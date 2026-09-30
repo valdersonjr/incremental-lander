@@ -4,26 +4,25 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fase 0 concluída** (inclui 0.6: skill `godot-dev` criada e validada).
-- Skills prontas: `pixel-art`, `sound-design`, `economy-balance`, `godot-dev` (ver CLAUDE.md).
-- Economia **v6** aplicada em `data/economy.json`. Histórico em `balance/CHANGELOG.md`.
-- Projeto Godot: `project.godot` (640×360, escala inteira, Nearest, snap, interpolação de física, aviso de
-  tipagem), buses de áudio, `EconMath` + testes (`tests/`: executor próprio + paridade). **Ainda sem cenas.**
-- Ferramenta de verificação: `python3 .claude/skills/godot-dev/scripts/gdtool.py check|test|run|capture|api`.
-- Nenhum asset de arte/som gerado ainda.
+- **Fases 0 e 1 concluídas.** Protótipo de voo jogável: `godot --path .` (ou F5 no editor).
+  Controles: W/↑/Espaço propulsor, A/D/←/→ girar, R reinicia. `-- --demo` liga o piloto automático.
+- O demo decola, cruza 800 m na Lua e pousa na plataforma alvo (qualidade ~95%, 58 de gás);
+  a telemetria vai para `~/Library/Application Support/Godot/app_userdata/Incremental Lander/telemetry/deliveries.csv`.
+- Economia v6 em `data/economy.json` (não mudou). Nenhum asset de arte/som ainda (placeholders geométricos).
+- Verificação: `gdtool.py check` (19 scripts ok), `test` (14 testes + paridade), `run`/`capture` com `-- --demo`.
 
 ## Próximo passo
-**Fase 1 — protótipo de voo**, seguindo a skill `godot-dev` (ler `SKILL.md` + `references/lander-physics.md`,
-`terrain.md`, `architecture.md`, `testing.md`):
-1. 1.1 `data/world.json` + `WorldConfig`; cena `game/flight/` com lander `CharacterBody2D` (placeholder `_draw()`),
-   gravidade, rotação, propulsor, gás = Δv/eficiência. 2. 1.3 terreno em polígono por seed com plataformas.
-3. 1.4 pouso/batida + qualidade q (função pura testada). 4. 1.5 câmera + escala `PX_PER_M` (registrar decisão).
-5. 1.6 telemetria CSV. 6. 1.7 modo `--demo`. Verificar com `check`/`test`/`run`/`capture` a cada passo.
+1. **Usuário testar o voo manual** e dar feedback de sensação (velocidade de rotação, força do motor, tolerâncias,
+   tempo ×3) — ajustes em `data/world.json`.
+2. **Fase 2 — loop do run** (skill `godot-dev` + `economy-balance`): ofertas de entrega (`EconMath.contract_pay`),
+   encadear entregas até o gás acabar (teto 6), resumo do run, `GameState` + `Events`.
 
 ## Pendências conhecidas
-- Economia: ~20 min juntando para Ares por volta de 1 h; runs de 6–8 min no modelo (calibrar com a escala
-  real do mapa na Fase 10); prestígio obrigatório por design.
-- Em aberto no design: controles exatos, geração de mapas, pós-jogo, menus, nome final (GDD §12).
+- Calibração: o autopiloto gastou 58 de gás em 800 m (modelo prevê 35 expert / 43 engaged / 52 casual) —
+  ele desce devagar demais; dado real do jogador humano virá dos testes manuais (Fase 10: `calibrate()`).
+- Terreno ainda é um polígono único (sem chunks); ok para distâncias da Lua do protótipo, rever para 15–60 km.
+- Economia: ~20 min juntando para Ares por volta de 1 h; prestígio obrigatório por design.
+- Em aberto no design: pós-jogo, menus, nome final (GDD §12).
 
 ## Como retomar (checklist de sessão nova)
 1. Ler `CLAUDE.md` (carregado automaticamente) → este arquivo → `docs/ROADMAP.md`.

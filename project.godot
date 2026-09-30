@@ -11,6 +11,11 @@ config_version=5
 config/name="Incremental Lander"
 config/description="Incremental estilo Lunar Lander, visao lateral. Ver docs/GDD.md."
 config/features=PackedStringArray("4.7")
+run/main_scene="res://game/main.tscn"
+
+[autoload]
+
+Telemetry="*res://autoload/telemetry.gd"
 
 [audio]
 
