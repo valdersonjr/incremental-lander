@@ -11,6 +11,8 @@ var unlocked_planets: Array = ["luna"]
 var runs_done := 0
 var cycle_earned: Dictionary = {}     # ganhos desde o ultimo prestigio (base do ganho de Poeira)
 var prestige_pending := false         # Poeira coletada; falta gastar na loja e concluir o recomeco
+var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (base da renda da frota)
+var reached_goal := false             # chegou ao planeta final (targets.goal)
 
 
 func _ready() -> void:
@@ -87,6 +89,7 @@ func unlock_planet(planet_id: String) -> bool:
 		return false
 	_emit_changes(before)
 	Events.planet_unlocked.emit(planet_id)
+	check_goal(planet_id)
 	return true
 
 
@@ -141,3 +144,25 @@ func buy_shop_item(item_id: String) -> bool:
 		return false
 	Events.resources_changed.emit(EconMath.spec["prestige"]["resource"], amount(EconMath.spec["prestige"]["resource"]))
 	return true
+
+
+## Fecha a contabilidade de um run: registra a renda (para a frota) e paga a frota pelo tempo do run.
+## seconds = duracao do run em segundos do modelo. Retorna o que a frota rendeu.
+func settle_run(earned: Dictionary, seconds: float) -> Dictionary:
+	income_history.append({"earned": earned.duplicate(), "seconds": maxf(seconds, 1.0)})
+	if income_history.size() > Fleet.HISTORY:
+		income_history = income_history.slice(income_history.size() - Fleet.HISTORY)
+	var fleet := Fleet.payout(ship_stats(), income_history, seconds)
+	if not fleet.is_empty():
+		add_rewards(fleet)
+	return fleet
+
+
+## Libera o planeta objetivo? Chamado apos unlock_planet para disparar o final.
+func check_goal(planet_id: String) -> bool:
+	var goal: String = EconMath.spec["targets"].get("goal", {}).get("planet", "")
+	if planet_id == goal and not reached_goal:
+		reached_goal = true
+		Events.goal_reached.emit(planet_id)
+		return true
+	return false

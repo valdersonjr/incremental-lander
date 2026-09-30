@@ -12,8 +12,12 @@ func show_summary(summary: Dictionary) -> void:
 	var lines := ["FIM DO RUN  (%s)" % _reason_text(str(summary["reason"])),
 			"entregas: %d" % int(summary["deliveries"]),
 			"qualidade media: %d%%" % int(float(summary["avg_quality"]) * 100.0)]
+	var labels := {"credits": "creditos", "ore": "minerio"}
 	for res: String in earned:
-		lines.append("%s: +%s" % [res, EconMath.fmt(float(earned[res]))])
+		lines.append("%s: +%s" % [labels.get(res, res), EconMath.fmt(float(earned[res]))])
+	var fleet: Dictionary = summary.get("fleet", {})
+	for res: String in fleet:
+		lines.append("frota de drones: +%s %s" % [EconMath.fmt(float(fleet[res])), labels.get(res, res)])
 	lines.append("")
 	lines.append("[Enter] novo run")
 	_text.text = "\n".join(lines)

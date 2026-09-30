@@ -53,8 +53,42 @@ func refresh() -> void:
 		if p["unlocked"] or p["available"]:
 			_rows.add_child(_make_planet_row(p))
 	_add_prestige_section()
+	var rows := GameState.upgrade_rows()
+	var stages := rows.filter(func(r: Dictionary) -> bool: return _is_stage(str(r["id"])))
+	if not stages.is_empty() or _stages_done() > 0:
+		_add_expedition(stages)
 	_rows.add_child(_section("UPGRADES"))
-	for r: Dictionary in GameState.upgrade_rows():
+	for r: Dictionary in rows:
+		if not _is_stage(str(r["id"])):
+			_rows.add_child(_make_row(r))
+
+
+func _is_stage(id: String) -> bool:
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		if u["id"] == id:
+			return bool(u.get("progress", false))
+	return false
+
+
+func _stages_done() -> int:
+	var n := 0
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		if u.get("progress", false) and int(GameState.levels.get(u["id"], 0)) > 0:
+			n += 1
+	return n
+
+
+## Expedicao a Titan: barra segmentada (gradiente de meta) + proxima etapa.
+func _add_expedition(stages: Array) -> void:
+	var total := 0
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		if u.get("progress", false):
+			total += 1
+	var done := _stages_done()
+	var head := _section("EXPEDICAO A TITAN   [%s%s]  %d/%d" % ["#".repeat(done), "-".repeat(total - done), done, total])
+	head.add_theme_color_override(&"font_color", Color("#8fd3ff"))
+	_rows.add_child(head)
+	for r: Dictionary in stages:
 		_rows.add_child(_make_row(r))
 
 

@@ -44,3 +44,5 @@
 | 2026-09-30 | Autopiloto do demo = salto balístico + motor sigma-delta | voar pairando em cruzeiro gastava o tanque inteiro em Ares; o arco reproduz o piloto eficiente do modelo | `scripts/world/autopilot.gd` |
 | 2026-09-30 | Prestígio em 2 passos: coletar Poeira → comprar na loja → concluir (reset com os itens) | padrão do gênero (Cookie Clicker) e do simulador; resetar antes da loja anulava capital/ficha | `Prestige.collect/reset`, hangar |
 | 2026-09-30 | Botão de prestígio pede confirmação (2 cliques) | ação destrutiva | `game/hangar/hangar.gd` |
+| 2026-09-30 | Frota paga ao **fim de cada run**: fleet_income_per_s(média dos últimos 5 runs) × duração do run (s do modelo); aparece no resumo | simples, determinístico e igual ao simulador (frota rende durante os runs) | `Fleet`, `GameState.settle_run` |
+| 2026-09-30 | Chegar a Titan (liberar o planeta objetivo) mostra a tela de final; dá para continuar jogando | objetivo final da spec (`targets.goal`) | `game/ending/`, `GameState.check_goal` |

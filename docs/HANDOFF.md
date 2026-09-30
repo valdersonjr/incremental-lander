@@ -4,24 +4,25 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0–5 concluídas.** Loop: runs → hangar (planetas, upgrades, **prestígio**: coletar Poeira Estelar →
-  loja [capital, ficha de piloto, cartas de navegação, Motor de dobra, premium] → concluir recomeço).
-  Nível de prestígio dá bônus passivo (já no ship_stats).
-- Demo (`--demo --dev_credits=400000`) verifica: Lua → Ares → prestígio (38 Poeira) → run pós-prestígio rende
-  128K cr (vs 290 no início do jogo).
-- Sem frota/Expedição (Fase 6), sem save (Fase 7). Visual placeholder (arte depois, decisão do usuário).
+- **Fases 0–6 concluídas: o jogo tem começo, meio e fim (mecânica completa, visual placeholder).**
+  Runs de entrega → hangar (planetas, upgrades, prestígio + loja da Poeira, **frota de drones**, **Expedição a
+  Titan** em 8 etapas persistentes com barra segmentada) → liberar Titan → **tela de final** (pode continuar).
+- Demo com recursos de dev verifica a reta final: frota rende ~53% da renda, 8 etapas sobrevivem ao prestígio,
+  GOAL_REACHED ao liberar Titan. 38 testes + paridade da economia; zero erros em 40.000 frames.
+- Falta: save/opções (Fase 7), arte (Fase 8), som (Fase 9), calibração/polimento/build (Fase 10).
 
 ## Próximo passo
-**Fase 6 — Fase final** (skills `godot-dev` + `economy-balance`): upgrades `fleet`/`autopilot` já aparecem no
-hangar após o Motor de dobra (via spec); falta a **renda da frota** durante o run
-(`EconMath.fleet_income_per_s` × média da renda do jogador) e a **Expedição a Titan** (8 etapas persistentes,
-barra segmentada no hangar) → liberar Titan → tela de final.
+**Fase 7 — Save/load e opções** (skill `godot-dev`, `references/save-telemetry.md`): `SaveManager` (autoload)
+com JSON versionado em `user://save.json` (escrita atômica + backup + migração), autosave no fim do run/compra/
+prestígio/sair; carregar ao abrir. Opções: volume por bus (Music/SFX/UI/Ambience). Depois: arte (usuário pediu
+mecânica antes da arte) e som.
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
 - Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
 - Nomes dos upgrades/planetas na spec sem acento — ajustar via economy-balance numa passada de texto.
+- Autopiloto do demo às vezes pousa fora da plataforma em Titan (gravidade 15) — só afeta verificação.
 - Em aberto no design: pós-jogo, menus, nome final (GDD §12).
 
 ## Como retomar (checklist de sessão nova)

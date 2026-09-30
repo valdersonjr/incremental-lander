@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–5 — voo, run, hangar, planetas, prestígio)
+## Jogo (Fases 1–6 — voo, run, hangar, planetas, prestígio, frota, Expedição, final)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
                               # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo
@@ -34,7 +34,8 @@ scripts/world/
 game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
                               # → ofertas … → resumo → HANGAR → novo run. Args: --demo --seed=N --planet=id --hangar_wait=s.
                               # Demo libera planetas, compra o upgrade mais barato, vai ao melhor planeta voável; "HANGAR {json}".
-                              # Args de dev: --dev_levels=id:n,... --dev_credits=N --dev_unlock=a,b --planet=id (validado)
+                              # Args de dev: --dev_levels=id:n,... --dev_credits=N --dev_ore=N --dev_shop=id:n,...
+                              # --dev_unlock=a,b --planet=id (validado). Imprime também GOAL_REACHED/PRESTIGE.
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
                               # cria a próxima plataforma a partir da atual e estende o terreno;
@@ -43,21 +44,25 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
 game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged, goal_reached
 autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio (cycle_earned, prestige_pending,
-                              # begin_prestige/finish_prestige, buy_shop_item), planetas liberados; ship_stats(),
+                              # begin_prestige/finish_prestige, buy_shop_item), planetas liberados, income_history,
+                              # settle_run() (paga a frota ao fim do run), check_goal()/reached_goal; ship_stats(),
                               # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
+scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
-game/hangar/hangar.*          # Hangar: PLANETAS (liberar / voar em / motor fraco) + PRESTÍGIO (recomeçar com confirmação;
+game/ending/ending.*          # Ending: "VOCÊ CHEGOU A TITAN!" + resumo; Continuar jogando (Events.goal_reached)
+game/hangar/hangar.*          # Hangar: EXPEDIÇÃO A TITAN (barra segmentada [###-----] + próxima etapa) + PLANETAS (liberar / voar em / motor fraco) + PRESTÍGIO (recomeçar com confirmação;
                               # modo 'recomeço em andamento' = só loja + CONCLUIR) + LOJA DA POEIRA + UPGRADES; DECOLAR
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
-tests/unit/run/               # test_run_state, test_purchases, test_prestige
+tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
+tests/visual/                 # cenas de prévia visual (ex.: ending_preview) para gdtool capture
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
 

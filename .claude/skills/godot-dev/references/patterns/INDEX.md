@@ -7,3 +7,4 @@ Antes de implementar algo, procure aqui; ao resolver algo não óbvio, registre.
 |---|---|---|---|
 | verification-loop | Ferramentas | check/test/run/capture validados no Godot 4.7.2 (erros detectados, frames legíveis) | 2026-09-30 |
 | flight-prototype | Voo | autopiloto precisa decolar na vertical (pousado não gira); pouso lento exige recovery_as_collision; demo só chega ao fim com --fixed-fps | 2026-09-30 |
+| visual-preview-scenes | Verificação | telas tardias (final etc.) verificadas com cena de prévia mínima em tests/visual/, não com capturas enormes | 2026-09-30 |

@@ -8,6 +8,7 @@ const HUD_SCENE := preload("res://game/hud/hud.tscn")
 const OFFER_SCENE := preload("res://game/run/offer_panel.tscn")
 const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
+const ENDING_SCENE := preload("res://game/ending/ending.tscn")
 
 var _args: Dictionary = {}
 var _demo := false
@@ -18,6 +19,8 @@ var _hud: Hud = null
 var _offers: OfferPanel = null
 var _summary: RunSummary = null
 var _hangar: Hangar = null
+var _ending: Ending = null
+var _run_start_ms := 0
 
 @onready var _world: Node2D = %World
 @onready var _gui: CanvasLayer = %GUI
@@ -34,6 +37,11 @@ func _ready() -> void:
 	_gui.add_child(_hangar)
 	_hangar.visible = false
 	_hangar.launch_requested.connect(_on_launch_requested)
+	_ending = ENDING_SCENE.instantiate()
+	_gui.add_child(_ending)
+	_ending.visible = false
+	_ending.closed.connect(func() -> void: _hangar.open())
+	Events.goal_reached.connect(_on_goal_reached)
 	_start_run()
 
 
@@ -59,6 +67,7 @@ func _start_run() -> void:
 	_gui.add_child(_summary)
 	_summary.visible = false
 	_gui.move_child(_hangar, -1)  # hangar sempre por cima
+	_gui.move_child(_ending, -1)
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
@@ -66,6 +75,7 @@ func _start_run() -> void:
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
 	_summary.continue_requested.connect(_on_continue)
+	_run_start_ms = Time.get_ticks_msec()
 	Events.run_started.emit(GameState.current_planet)
 	_show_offers()
 
@@ -117,7 +127,11 @@ func _on_stranded() -> void:
 
 func _end_run() -> void:
 	_offers.visible = false
+	# duracao do run em segundos do modelo (a frota trabalha enquanto voce voa)
+	var model_s := (Time.get_ticks_msec() - _run_start_ms) / 1000.0 * float(WorldConfig.load_config()["time_scale"])
+	var fleet := GameState.settle_run(_run.earned, model_s)
 	var s := _run.summary()
+	s["fleet"] = fleet
 	_summary.show_summary(s)
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
@@ -136,6 +150,12 @@ func _on_continue() -> void:
 		_demo_shop()
 		await get_tree().create_timer(float(_args.get("hangar_wait", 0.5))).timeout
 		_on_launch_requested()
+
+
+func _on_goal_reached(_planet_id: String) -> void:
+	_hangar.visible = false
+	_ending.show_ending(Time.get_ticks_msec() / 1000.0)
+	print("GOAL_REACHED ", JSON.stringify({"runs": GameState.runs_done, "points": GameState.prestige_points}))
 
 
 func _on_launch_requested() -> void:
@@ -158,6 +178,11 @@ func _demo_shop() -> void:
 				break  # guarda Poeira para o proximo item da fila
 		GameState.finish_prestige()
 		print("PRESTIGE ", JSON.stringify({"gain": g, "points": GameState.prestige_points, "shop": GameState.shop}))
+	# etapas da Expedicao primeiro (progressao, como o jogador simulado)
+	for r: Dictionary in GameState.upgrade_rows():
+		for u: Dictionary in EconMath.spec["upgrades"]:
+			if u["id"] == r["id"] and u.get("progress", false) and r["affordable"]:
+				GameState.buy_upgrade(r["id"])
 	# liberar o proximo planeta e ir para o melhor planeta em que a nave consegue voar
 	for p: Dictionary in GameState.planet_rows():
 		if not p["unlocked"] and p["available"] and p["affordable"]:
@@ -180,7 +205,8 @@ func _demo_shop() -> void:
 			"stats": GameState.ship_stats()}))
 
 
-## Argumentos so de desenvolvimento/verificacao: --dev_levels=thrust:10,tank:5  --dev_credits=N
+## Argumentos so de desenvolvimento/verificacao: --dev_levels=thrust:10,tank:5  --dev_credits=N  --dev_ore=N
+## --dev_shop=warp_drive:1,star_charts:1
 ## --dev_unlock=ares,kronos  --planet=id. Nao existem no jogo normal (sem args).
 func _apply_dev_args() -> void:
 	if _args.has("dev_levels"):
@@ -188,6 +214,11 @@ func _apply_dev_args() -> void:
 			GameState.levels[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
 	if _args.has("dev_credits"):
 		GameState.resources["credits"] = float(_args["dev_credits"])
+	if _args.has("dev_ore"):
+		GameState.resources["ore"] = float(_args["dev_ore"])
+	if _args.has("dev_shop"):
+		for pair in str(_args["dev_shop"]).split(","):
+			GameState.shop[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
 	if _args.has("dev_unlock"):
 		for pid in str(_args["dev_unlock"]).split(","):
 			if not pid in GameState.unlocked_planets:

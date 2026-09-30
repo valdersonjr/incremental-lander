@@ -1,0 +1,14 @@
+## Previa visual da tela de final (verificacao com gdtool capture, sem jogar ate o fim).
+extends Node
+
+const ENDING_SCENE := preload("res://game/ending/ending.tscn")
+
+
+func _ready() -> void:
+	GameState.runs_done = 42
+	GameState.prestige_points = 285.0
+	var layer := CanvasLayer.new()
+	add_child(layer)
+	var e: Ending = ENDING_SCENE.instantiate()
+	layer.add_child(e)
+	e.show_ending(5.0 * 3600.0 + 17.0 * 60.0)

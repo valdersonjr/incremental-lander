@@ -34,3 +34,8 @@ func test_pouso_perfeito_tem_qualidade_1() -> void:
   `--seed=N` fixa o terreno. Assim `run`/`capture` verificam o voo sem teclado.
 - `capture` grava frames com tempo fixo (reprodutível), monta `.godot/captures/<cena>_sheet.png`.
   Abrir com Read e descrever: posições, HUD legível, pixels nítidos (sem borrão), cores da paleta.
+
+## Cenas de prévia visual (`tests/visual/*_preview.tscn`)
+Telas que só aparecem tarde no jogo (final, prestígio avançado) não devem ser verificadas gravando dezenas de
+milhares de frames. Crie uma cena mínima que instancia só a tela com dados de exemplo e capture ~10 frames:
+`gdtool.py capture res://tests/visual/ending_preview.tscn --frames 10 --every 10 --cols 1`.

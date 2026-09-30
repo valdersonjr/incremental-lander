@@ -44,9 +44,9 @@
 - [x] 5.1 Tela de prestígio (ganho previsto, confirmação), reset via `EconMath.prestige_reset_state`
 - [x] 5.2 Loja da Poeira (capital, ficha, cartas, motor de dobra, premium)
 
-## Fase 6 — Fase final · skills: `godot-dev`, `economy-balance`, `pixel-art`, `sound-design`
-- [ ] 6.1 Frota de drones (renda = drones × autopilot × média da renda do jogador)
-- [ ] 6.2 Expedição a Titan (8 etapas persistentes, barra segmentada) → Titan → final
+## Fase 6 — Fase final ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance`, `pixel-art`, `sound-design`
+- [x] 6.1 Frota de drones (renda = drones × autopilot × média da renda do jogador)
+- [x] 6.2 Expedição a Titan (8 etapas persistentes, barra segmentada) → Titan → final
 
 ## Fase 7 — Save/load e opções · skill: `godot-dev`
 - [ ] 7.1 Save (versão da spec + migração), autosave · 7.2 Opções (volume por bus, controles)
