@@ -1,5 +1,6 @@
 ## Lander: fisica propria (LanderPhysics) em unidades do modelo, pouso/batida por LandingRules.
-## Controlado pelo teclado ou por um Autopilot (modo --demo). Placeholder desenhado com _draw().
+## Controlado pelo teclado ou por um Autopilot (modo --demo). Visual: AnimatedSprite2D %Visual com
+## assets/sprites/lander_frames.tres (skill pixel-art, estilo futurista): "idle" / "thrust".
 class_name Lander
 extends CharacterBody2D
 
@@ -9,12 +10,7 @@ signal crashed(reason: String, info: Dictionary)
 
 enum State {LANDED, FLYING, CRASHED}
 
-const COLOR_HULL := Color("#9babb2")    # steel
-const COLOR_DARK := Color("#2e222f")    # ink
-const COLOR_GLASS := Color("#4d9be6")   # sky
-const COLOR_LEGS := Color("#625565")    # slate
-const COLOR_FLAME := Color("#f79617")   # amber
-const COLOR_CORE := Color("#f9c22b")    # gold
+const COLOR_CRASH := Color("#e83b3b")   # red (marca de batida ate existir a explosao em pixel art)
 
 var state: State = State.LANDED
 var vel_m := Vector2.ZERO               # velocidade em m/s do modelo
@@ -26,6 +22,8 @@ var thrusting := false
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
+
+@onready var _visual: AnimatedSprite2D = %Visual
 
 
 ## Configura a nave (stats do EconMath + planeta da spec) e as plataformas do terreno.
@@ -74,20 +72,15 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
+func _process(_delta: float) -> void:
+	var anim := &"thrust" if thrusting else &"idle"
+	if _visual.animation != anim:
+		_visual.play(anim)
+
+
 func _draw() -> void:
-	var w := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["half_width_m"]))
-	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
-	if thrusting:
-		var flicker := 3.0 + float(Engine.get_physics_frames() % 3)
-		draw_colored_polygon(PackedVector2Array([Vector2(-3, 4), Vector2(3, 4), Vector2(0, 8 + flicker * 2.0)]), COLOR_FLAME)
-		draw_colored_polygon(PackedVector2Array([Vector2(-1.5, 4), Vector2(1.5, 4), Vector2(0, 6 + flicker)]), COLOR_CORE)
-	draw_line(Vector2(-w + 2, 2), Vector2(-w, feet), COLOR_LEGS, 1.0)
-	draw_line(Vector2(w - 2, 2), Vector2(w, feet), COLOR_LEGS, 1.0)
-	draw_colored_polygon(PackedVector2Array([Vector2(-5, 4), Vector2(-6, -2), Vector2(-3, -7), Vector2(3, -7),
-			Vector2(6, -2), Vector2(5, 4)]), COLOR_HULL)
-	draw_rect(Rect2(-2, -5, 4, 3), COLOR_GLASS)
 	if state == State.CRASHED:
-		draw_circle(Vector2.ZERO, 9.0, Color("#e83b3b"))
+		draw_circle(Vector2.ZERO, 9.0, COLOR_CRASH)
 
 
 ## Estado do voo atual (m/s do modelo, rad, gas gasto desde a decolagem, tempo do modelo).

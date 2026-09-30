@@ -38,6 +38,11 @@
 - `Array.map()` devolve `Array` sem tipo: `var x := arr.map(...)` não compila ("Cannot infer the type");
   declare `var x: Array = arr.map(...)`.
 
+- **Captura congelada no macOS**: com a janela do Godot coberta/em segundo plano a gravação às vezes repete o
+  mesmo quadro por centenas de frames (o jogo em si estava certo — o run sem janela era determinístico e entregava).
+  `capture` agora usa `--always-on-top` e acusa `AVISO ... congelou` (código 1) se houver > 3 s de quadros
+  idênticos. Com o aviso, refaça — nunca tire conclusões de uma folha congelada.
+
 ## Fontes
 - https://docs.godotengine.org/en/4.4/tutorials/editor/command_line_tutorial.html — flags de linha de comando
 - `godot --help` (4.7.2) — confirmação local de `--write-movie`, `--quit-after`, `--fixed-fps`, `--check-only`

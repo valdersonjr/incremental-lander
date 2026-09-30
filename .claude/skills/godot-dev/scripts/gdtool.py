@@ -253,8 +253,9 @@ def cmd_capture(a) -> int:
     from PIL import Image, ImageDraw
     root = project_root()
     tmp = tempfile.mkdtemp(prefix="gdcap_")
+    # --always-on-top: no macOS uma janela coberta pode ser "adormecida" e a gravacao congela
     args = ["--path", root, "--write-movie", os.path.join(tmp, "f.png"), "--fixed-fps", str(a.fps),
-            "--quit-after", str(a.frames), "--resolution", a.resolution, a.scene]
+            "--quit-after", str(a.frames), "--resolution", a.resolution, "--always-on-top", a.scene]
     if a.game_args:
         args += ["--"] + a.game_args
     r = godot(args, timeout=a.timeout)
@@ -264,6 +265,14 @@ def cmd_capture(a) -> int:
     if not frames:
         print(out[-4000:])
         die("nenhum frame gravado", 1)
+    # detector de congelamento: muitos quadros identicos seguidos = gravacao nao confiavel
+    import hashlib
+    hashes = [hashlib.md5(open(os.path.join(tmp, f), "rb").read()).hexdigest() for f in frames]
+    longest, cur = 1, 1
+    for h0, h1 in zip(hashes, hashes[1:]):
+        cur = cur + 1 if h0 == h1 else 1
+        longest = max(longest, cur)
+    frozen = longest > a.fps * 3
     pick = frames[::max(1, a.every)]
     if frames[-1] not in pick:
         pick.append(frames[-1])
@@ -291,7 +300,10 @@ def cmd_capture(a) -> int:
     for l in errs:
         print("ERRO", l)
     print(f"{len(frames)} frames gravados; folha: {sheet_path}\nultimo frame: {last}")
-    return 1 if errs else 0
+    if frozen:
+        print(f"AVISO: {longest} quadros identicos seguidos (> 3 s) — a gravacao provavelmente congelou "
+              f"(janela coberta/segundo plano no macOS). NAO confie nesta folha: refaca a captura.")
+    return 1 if (errs or frozen) else 0
 
 
 def main() -> int:

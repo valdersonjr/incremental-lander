@@ -56,7 +56,10 @@ scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgr
 game/ending/ending.*          # Ending: "VOCÊ CHEGOU A TITAN!" + resumo; Continuar jogando (Events.goal_reached)
 game/hangar/hangar.*          # Hangar: EXPEDIÇÃO A TITAN (barra segmentada [###-----] + próxima etapa) + PLANETAS (liberar / voar em / motor fraco) + PRESTÍGIO (recomeçar com confirmação;
                               # modo 'recomeço em andamento' = só loja + CONCLUIR) + LOJA DA POEIRA + UPGRADES; DECOLAR
-game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
+game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info);
+                              # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
+assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
+art/src/sprites/              # lander.py (fonte do sprite), lander_styles.py (5 estilos propostos), lander_apollo.py
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
@@ -70,7 +73,7 @@ tests/visual/                 # cenas de prévia visual (ending_preview, hangar_
 tests/unit/save/              # test_save_data
 tests/integration/            # save_roundtrip.tscn (salva/carrega/backup numa pasta própria) — rodado por gdtool test
 ```
-Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
+Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 — exceto o lander (sprite final).
 
 ## Pastas ainda não criadas (padrão godot-dev)
 ```

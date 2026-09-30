@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://game/flight/flight.gd" id="1_flight"]
 [ext_resource type="Script" path="res://game/flight/lander.gd" id="2_lander"]
 [ext_resource type="PackedScene" path="res://game/terrain/terrain.tscn" id="3_terrain"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/lander_frames.tres" id="4_frames"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lander"]
 size = Vector2(12, 15)
@@ -16,6 +17,11 @@ unique_name_in_owner = true
 [node name="Lander" type="CharacterBody2D" parent="."]
 unique_name_in_owner = true
 script = ExtResource("2_lander")
+
+[node name="Visual" type="AnimatedSprite2D" parent="Lander"]
+unique_name_in_owner = true
+sprite_frames = ExtResource("4_frames")
+animation = &"idle"
 
 [node name="Shape" type="CollisionShape2D" parent="Lander"]
 position = Vector2(0, 0.5)

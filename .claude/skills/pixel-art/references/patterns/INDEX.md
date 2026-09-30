@@ -6,3 +6,4 @@ procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e reg
 | Slug | Objeto | Tipo | Grade | Assets gerados | Atualizado |
 |---|---|---|---|---|---|
 <!-- ex.: | lunar-rock-terrain | Terreno de rocha lunar | tileset blob47 | 16 | assets/tiles/moonrock.png | 2026-09-29 | -->
+| lander | Nave do jogador (futurista, 32x32 + plasma; Apollo = alternativa) | sprite + anim | 32 | assets/sprites/lander.png | 2026-09-30 |

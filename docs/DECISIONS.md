@@ -49,3 +49,4 @@
 | 2026-09-30 | Save JSON versionado em user://save.json com escrita atômica + backup; demo/dev nunca salvam | proteger o progresso do jogador e permitir migração | `autoload/save_manager.gd`, `scripts/save/save_data.gd` |
 | 2026-09-30 | Telemetria marca o piloto (human/demo); demo só grava com --telemetry | não misturar voos do autopiloto na calibração | `autoload/telemetry.gd` |
 | 2026-09-30 | `gdtool test` conta como falha todo teste abortado por erro de script e roda os testes de integração | o executor imprimia "ok" para testes que nem compilavam | `godot-dev/scripts/gdtool.py` |
+| 2026-09-30 | **Direção de arte futurista** (lander B: branco + turquesa, propulsor de plasma ciano) | escolha do usuário entre 5 propostas | `pixel-art/references/style-guide.md`, `art/previews/lander_styles_compare.png` |

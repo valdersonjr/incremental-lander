@@ -52,7 +52,8 @@
 - [x] 7.1 Save (versão da spec + migração), autosave · [x] 7.2 Opções (volume por bus, controles)
 
 ## Fase 8 — Arte · skill: `pixel-art` (obrigatória para TODA imagem)
-- [ ] Lander 32×32 + animações (propulsor, pouso, explosão) · texturas de terreno por planeta ·
+- [x] Lander 32×32 futurista + propulsor de plasma (2026-09-30; estilo escolhido entre 5 propostas)
+- [ ] Explosão/batida · pouso (poeira) · texturas de terreno por planeta ·
       plataformas · fundos/parallax · UI (painéis, ícones de upgrade) · FX
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)

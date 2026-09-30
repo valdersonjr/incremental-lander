@@ -16,7 +16,7 @@
 - Mesma escala de pixel para todos os assets (sem misturar resoluções na tela).
 
 ## Luz
-- Sprites: luz vinda de **cima-esquerda** (`light_dir=(-1, -1)`). **(provisório)**
+- Sprites: luz vinda de **cima-esquerda** (`light_dir=(-1, -1)`) — confirmada com o lander (2026-09-30).
 - Tiles: luz **de cima** (permite espelhar tiles horizontalmente).
 
 ## Contorno
@@ -30,9 +30,15 @@
 - 16x16: até 6–8 cores. 32x32: até 12–16. 64x64: até 24. Tileset inteiro: até 8–10.
 
 ## Materiais padrão (rampas)
-- Rocha lunar: `neutral`. Chama/propulsor: `fire`. Vidro/cockpit: `blue`. Casco do lander: **(a definir)**.
+- Rocha lunar: `neutral`. Vidro/visor: `teal` (aqua/teal). **Casco do lander: branco/`neutral` (white, mist, steel,
+  lilac_grey) com faixa turquesa (`sea`)**. **Propulsor do lander: plasma ciano** (white → ice → aqua → sea → teal →
+  deep_teal → navy), não fogo. `fire` fica para explosões/queima.
+- **Direção de arte: FUTURISTA limpa** (escolhida pelo usuário entre 5 propostas: Apollo, Futurista, Industrial,
+  Fofo/retrô, Vetorial — `art/previews/lander_styles_compare.png`). Formas pontiagudas/lisas, branco + turquesa,
+  brilhos ciano; evitar ferrugem/sujeira e formas "fofas".
 - Fundo espacial: `space` (+ estrelas `mist`/`white` esparsas, `scatter` com `min_dist`).
 
 ## Decisões registradas
 <!-- Adicione aqui: data — decisão — motivo -->
+- 2026-09-30 — estilo futurista (lander B) define a arte do jogo; propulsor de plasma ciano — escolha do usuário entre 5 propostas
 - 2026-09-29 — resolução 640×360 e terreno em polígono irregular — respostas do usuário / padrão da skill (§7) + modelo de run da economy-balance

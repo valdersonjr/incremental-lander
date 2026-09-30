@@ -4,17 +4,18 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0–7 concluídas: mecânica completa + save + opções** (visual e som ainda placeholders/ausentes).
-  O progresso agora é salvo em `~/Library/Application Support/Godot/app_userdata/Incremental Lander/save.json`
-  (autosave; "Novo jogo" no hangar apaga). Demo/dev nunca salvam.
-- Verificação: `gdtool.py check` (39 scripts), `test` (41 unitários + integração do save + paridade da economia).
+- **Fases 0–7 concluídas + Fase 8 iniciada.** Mecânica completa, save e opções.
+- **Arte**: usuário escolheu a **direção futurista** (entre 5 propostas; folha em `art/previews/lander_styles_compare.png`).
+  Lander futurista (branco + turquesa, propulsor de plasma ciano) **já está no jogo** (AnimatedSprite2D).
+  Terreno, plataformas, céu, HUD e telas ainda são placeholders.
+- Ferramenta: `gdtool capture` agora usa `--always-on-top` e detecta gravação congelada (macOS).
 
 ## Próximo passo
-**Fase 8 — Arte** (skill `pixel-art`, obrigatória para toda imagem; usuário quis mecânica antes e achou o
-placeholder feio): começar por lander 32×32 (+ chama do propulsor animada), textura de terreno por planeta
-(polígono: preenchimento seamless + faixa de superfície), plataformas, fundo espacial; depois UI (fonte pixel,
-painéis). Seguir o fluxo da skill: pesquisa → prévia → aprovação do usuário → integrar trocando os `_draw()`.
-Alternativa: Fase 9 (som, skill `sound-design`).
+**Continuar a Fase 8 — arte** (skill `pixel-art`, estilo futurista do style-guide; mostrar prévia e pedir aprovação):
+1. Terreno por planeta (polígono: textura de preenchimento seamless + faixa de superfície) — Lua primeiro.
+2. Plataformas de pouso (luzes/sinalização turquesa) e fundo espacial (estrelas, parallax).
+3. Explosão da batida e poeira do pouso; depois UI (fonte pixel, painéis do hangar).
+Integração no Godot pela skill `godot-dev` (trocar os `_draw()`/Polygon2D pelos assets).
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.

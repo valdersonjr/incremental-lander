@@ -17,7 +17,7 @@
     }
   },
   "lander": {
-    "half_width_m": 7.0,
+    "half_width_m": 13.0,
     "feet_offset_m": 8.0
   },
   "terrain": {
