@@ -25,6 +25,20 @@
 - https://pixnote.net/en/learn/shading — 3 estágios em 32x32, hue shift nas sombras
 - https://opengameart.org/content/rocket-thruster-effect-animations — quadros de chama de propulsor
 - https://babel.speldesign.uu.se/?p=21849 — molde de forma da chama reaproveitado entre quadros
+- (estilo futurista, pesquisa feita em 2026-09-30, depois da escolha — ver "Futurista: regras")
+- https://opengameart.org/node/4788 — processo de nave sci-fi: silhueta → cinzas (3 tons) → cor → linhas de painel escuras
+  → brilhos em linha → brilho vivo do motor por último
+- https://community.flowlab.io/t/how-i-draw-pixel-sprites-big-and-small/36694 — silhueta no maior tamanho possível primeiro
+- https://pixie.haus/pixelart/504903/sleek-white-rocket-launch-ready-sprite — nave branca "limpa": cinzas frios + branco,
+  sombreamento chapado, linhas limpas
+
+## Futurista: regras (pesquisa)
+- Silhueta pontiaguda/lisa lida como "rápido e avançado"; formas volumosas e angulosas leem como "industrial".
+- Casco claro com **poucos tons chapados** (luz, base, sombra fria) — sem textura de sujeira; o "detalhe" vem de
+  1–2 **linhas de painel** (tom escuro fino) e poucos greebles, não de ruído.
+- **Uma** cor de destaque saturada (aqui turquesa `sea`) + **brilho vivo** só no motor/visor: é o que o olho procura.
+- Conferência ao revisar: o lander atual tem casco em 3 tons, faixa `sea`, visor aqua e plasma ciano → segue as regras;
+  linhas de painel ficaram implícitas pela faixa. Não refazer sem pedido do usuário.
 
 ## Decisões do usuário (2026-09-30)
 - 1ª proposta (Apollo, metal + folha dourada) → "ajustar"; pediu **opções de estilo**. Gerei 5 (A Apollo, B Futurista,
