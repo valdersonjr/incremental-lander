@@ -1,0 +1,479 @@
+{
+  "meta": {
+    "version": 5,
+    "notes": "v4: prestigio no padrao do genero - nivel passivo (+1%/ponto) + loja da Poeira Estelar (capital, ficha de piloto, cartas de navegacao=manter planetas, motor de dobra=acesso a Titan, contratos premium); formula pow 0.25; max 6 entregas/run. Unidades: m, m/s, m/s2, gas."
+  },
+  "physics": {
+    "mode": "arcade",
+    "gas_mass": 0.01
+  },
+  "resources": [
+    {
+      "id": "credits",
+      "name": "Creditos",
+      "start": 0
+    },
+    {
+      "id": "ore",
+      "name": "Minerio",
+      "start": 0
+    },
+    {
+      "id": "stardust",
+      "name": "Poeira Estelar",
+      "start": 0,
+      "prestige": true
+    }
+  ],
+  "resource_value": {
+    "credits": 1,
+    "ore": 60,
+    "stardust": 0
+  },
+  "ship": {
+    "base": {
+      "thrust": 4.0,
+      "tank": 100.0,
+      "efficiency": 3.0,
+      "pay_mult": 1.0,
+      "gear": 1.0,
+      "dry_mass": 1.0,
+      "drones": 0.0,
+      "autopilot": 0.08
+    }
+  },
+  "upgrades": [
+    {
+      "id": "thrust",
+      "name": "Motor (velocidade)",
+      "effect": {
+        "stat": "thrust",
+        "op": "add",
+        "value": 0.6
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 40,
+          "growth": 1.17
+        }
+      },
+      "max_level": 80,
+      "milestones": [
+        {
+          "every": 25,
+          "stat": "pay_mult",
+          "mult": 1.5
+        }
+      ]
+    },
+    {
+      "id": "tank",
+      "name": "Tanque de gas",
+      "effect": {
+        "stat": "tank",
+        "op": "mult",
+        "value": 1.12
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 30,
+          "growth": 1.16
+        }
+      },
+      "max_level": 80,
+      "milestones": [
+        {
+          "every": 25,
+          "stat": "pay_mult",
+          "mult": 1.5
+        }
+      ]
+    },
+    {
+      "id": "efficiency",
+      "name": "Bocais (eficiencia)",
+      "effect": {
+        "stat": "efficiency",
+        "op": "mult",
+        "value": 1.07
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 60,
+          "growth": 1.2
+        }
+      },
+      "max_level": 80,
+      "milestones": [
+        {
+          "every": 25,
+          "stat": "pay_mult",
+          "mult": 1.5
+        }
+      ]
+    },
+    {
+      "id": "contracts",
+      "name": "Reputacao (pagamento)",
+      "effect": {
+        "stat": "pay_mult",
+        "op": "mult",
+        "value": 1.1
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 120,
+          "growth": 1.22
+        }
+      },
+      "max_level": 80,
+      "milestones": [
+        {
+          "every": 25,
+          "stat": "pay_mult",
+          "mult": 1.5
+        }
+      ]
+    },
+    {
+      "id": "gear",
+      "name": "Trem de pouso",
+      "effect": {
+        "stat": "gear",
+        "op": "hyper",
+        "max": 3.0,
+        "k": 8
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 80,
+          "growth": 1.25
+        }
+      },
+      "max_level": 30
+    },
+    {
+      "id": "refinery",
+      "name": "Refinaria (eficiencia com minerio)",
+      "requires_planet": "ares",
+      "effect": {
+        "stat": "efficiency",
+        "op": "mult",
+        "value": 1.15
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 4000,
+          "growth": 1.3
+        },
+        "ore": {
+          "type": "exp",
+          "base": 15,
+          "growth": 1.3
+        }
+      },
+      "max_level": 40
+    },
+    {
+      "id": "fleet",
+      "name": "Frota de drones",
+      "requires_shop": "warp_drive",
+      "effect": {
+        "stat": "drones",
+        "op": "add",
+        "value": 1.0
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 20000000000.0,
+          "growth": 1.6
+        }
+      },
+      "max_level": 10
+    },
+    {
+      "id": "autopilot",
+      "name": "Software de piloto automatico",
+      "requires_shop": "warp_drive",
+      "effect": {
+        "stat": "autopilot",
+        "op": "hyper",
+        "max": 0.09,
+        "k": 6
+      },
+      "cost": {
+        "credits": {
+          "type": "exp",
+          "base": 40000000000.0,
+          "growth": 1.7
+        }
+      },
+      "max_level": 15
+    }
+  ],
+  "planets": [
+    {
+      "id": "luna",
+      "name": "Lua",
+      "gravity": 1.62,
+      "drag": 0.0,
+      "distance": [
+        100,
+        15000
+      ],
+      "pay_mult": 1.0,
+      "crash_base": 0.02,
+      "contracts_per_run": 8,
+      "rewards": {
+        "credits": 1.0
+      }
+    },
+    {
+      "id": "ares",
+      "name": "Ares (gravidade forte)",
+      "gravity": 5.0,
+      "drag": 0.1,
+      "distance": [
+        150,
+        25000
+      ],
+      "pay_mult": 12.0,
+      "crash_base": 0.04,
+      "rewards": {
+        "credits": 1.0,
+        "ore": 0.02
+      },
+      "unlock": {
+        "credits": 480000.0
+      }
+    },
+    {
+      "id": "kronos",
+      "name": "Kronos (atmosfera densa)",
+      "gravity": 9.0,
+      "drag": 0.3,
+      "distance": [
+        200,
+        40000
+      ],
+      "pay_mult": 150.0,
+      "crash_base": 0.05,
+      "rewards": {
+        "credits": 1.0,
+        "ore": 0.03
+      },
+      "unlock": {
+        "credits": 1500000000.0,
+        "ore": 2000
+      },
+      "requires": "ares"
+    },
+    {
+      "id": "titan",
+      "name": "Titan (gigante)",
+      "gravity": 15.0,
+      "drag": 0.2,
+      "distance": [
+        300,
+        60000
+      ],
+      "pay_mult": 2500.0,
+      "crash_base": 0.06,
+      "rewards": {
+        "credits": 1.0,
+        "ore": 0.04
+      },
+      "unlock": {
+        "credits": 280000000000000.0,
+        "ore": 200000
+      },
+      "requires": "kronos",
+      "requires_shop": "warp_drive"
+    }
+  ],
+  "contracts": {
+    "pay_base": 10.0,
+    "distance_unit": 100.0,
+    "distance_exp": 1.1,
+    "per_run": 8,
+    "quality_bonus": 1.5,
+    "cargo_mass": 0.0,
+    "regenerate": true,
+    "max_per_run": 6,
+    "quality_exp": 2.0
+  },
+  "profiles_override": {
+    "expert": {
+      "prestige_ratio": 1.0
+    }
+  },
+  "targets": {
+    "goal": {
+      "planet": "titan",
+      "stop": true
+    },
+    "finish_h": [
+      10,
+      30
+    ],
+    "first_purchase_max_s": 240,
+    "run_s": [
+      45,
+      240
+    ],
+    "max_level_share_pct": 55,
+    "planet_unlock_h": {
+      "ares": [
+        0.75,
+        2.5
+      ],
+      "kronos": [
+        4,
+        10
+      ],
+      "titan": [
+        10,
+        25
+      ]
+    },
+    "first_prestige_h": [
+      2,
+      6
+    ],
+    "max_gap_min": [
+      {
+        "until_h": 1,
+        "minutes": 3
+      },
+      {
+        "until_h": 5,
+        "minutes": 10
+      },
+      {
+        "until_h": 15,
+        "minutes": 20
+      },
+      {
+        "until_h": 40,
+        "minutes": 45
+      }
+    ],
+    "prestige_count": [
+      4,
+      6
+    ],
+    "max_idle_share_pct": 60
+  },
+  "prestige": {
+    "resource": "stardust",
+    "based_on": "credits",
+    "formula": "pow",
+    "scale": 800,
+    "mult": 1.0,
+    "min_gain": 20,
+    "requires_planet": "ares",
+    "keep": [],
+    "bonuses": [
+      {
+        "stat": "pay_mult",
+        "per_point": 0.01
+      },
+      {
+        "stat": "thrust",
+        "per_point": 0.001
+      }
+    ],
+    "exponent": 0.25,
+    "shop": [
+      {
+        "id": "capital",
+        "name": "Capital inicial",
+        "priority": 1,
+        "max_level": 3,
+        "cost": {
+          "type": "exp",
+          "base": 2,
+          "growth": 2.0
+        },
+        "effect": {
+          "type": "start_resources",
+          "amounts": {
+            "credits": 20000
+          }
+        }
+      },
+      {
+        "id": "pilot_file",
+        "name": "Ficha de piloto",
+        "priority": 2,
+        "max_level": 3,
+        "cost": {
+          "type": "exp",
+          "base": 4,
+          "growth": 2.0
+        },
+        "effect": {
+          "type": "start_levels",
+          "levels": {
+            "thrust": 3,
+            "tank": 3,
+            "efficiency": 2
+          }
+        }
+      },
+      {
+        "id": "star_charts",
+        "name": "Cartas de navegacao (manter planetas)",
+        "priority": 3,
+        "max_level": 1,
+        "cost": {
+          "type": "exp",
+          "base": 20,
+          "growth": 1.0
+        },
+        "effect": {
+          "type": "keep",
+          "what": "planets"
+        }
+      },
+      {
+        "id": "warp_drive",
+        "name": "Motor de dobra (acesso a Titan)",
+        "priority": 4,
+        "max_level": 1,
+        "cost": {
+          "type": "exp",
+          "base": 60,
+          "growth": 1.0
+        },
+        "effect": {
+          "type": "unlock"
+        }
+      },
+      {
+        "id": "premium",
+        "name": "Contratos premium",
+        "priority": 5,
+        "max_level": 40,
+        "cost": {
+          "type": "exp",
+          "base": 8,
+          "growth": 2.0
+        },
+        "effect": {
+          "type": "stat",
+          "stat": "pay_mult",
+          "op": "mult",
+          "value": 1.1
+        }
+      }
+    ]
+  }
+}

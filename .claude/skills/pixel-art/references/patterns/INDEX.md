@@ -1,0 +1,8 @@
+# Biblioteca de padrões
+
+Um arquivo por objeto/família (`<slug>.md`, modelo em `_TEMPLATE.md`). Antes de criar qualquer asset,
+procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e registre.
+
+| Slug | Objeto | Tipo | Grade | Assets gerados | Atualizado |
+|---|---|---|---|---|---|
+<!-- ex.: | lunar-rock-terrain | Terreno de rocha lunar | tileset blob47 | 16 | assets/tiles/moonrock.png | 2026-09-29 | -->

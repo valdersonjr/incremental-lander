@@ -1,0 +1,15 @@
+# Godot
+.godot/
+*.translation
+export/
+builds/
+export_presets.cfg.bak
+
+# Python / sistema
+__pycache__/
+*.pyc
+.DS_Store
+
+# Prévias regeneráveis pelas skills (os scripts geradores em art/src e audio/src são a fonte)
+art/previews/
+audio/previews/

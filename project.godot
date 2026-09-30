@@ -1,0 +1,31 @@
+; Engine configuration file.
+; Configuracoes-base seguindo as skills locais:
+;  - pixel-art (references/terrain-tiles.md §6): filtro Nearest, snap de pixel, viewport com escala inteira
+;  - sound-design (references/godot-audio.md): buses em default_bus_layout.tres
+;  - economy-balance (references/godot-integration.md): spec em res://data/economy.json, formulas em EconMath
+config_version=5
+
+[application]
+
+config/name="Incremental Lander"
+config/description="Incremental estilo Lunar Lander, visao lateral. Ver docs/GDD.md."
+config/features=PackedStringArray("4.7")
+
+[audio]
+
+buses/default_bus_layout="res://default_bus_layout.tres"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="viewport"
+window/stretch/scale_mode="integer"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+2d/snap/snap_2d_transforms_to_pixel=true
+2d/snap/snap_2d_vertices_to_pixel=true

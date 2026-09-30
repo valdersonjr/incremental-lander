@@ -1,0 +1,1240 @@
+"""
+econ.py - modelagem, simulacao e relatorio da economia do Incremental Lander.
+
+Fonte unica da verdade: data/economy.json (lido pelo jogo no Godot E por este simulador).
+
+Uso tipico (script em balance/sims/<nome>.py, rodando da raiz do projeto):
+
+    import sys; sys.path.insert(0, ".claude/skills/economy-balance/scripts")
+    from econ import *
+
+    E = load("data/economy.json")
+    res = simulate(E, PROFILES["engaged"], hours=30, seed=1)
+    rep = pacing_report(E, res)                 # metricas + avisos contra os alvos
+    write_report(E, [res], "balance/reports/v1") # markdown + graficos PNG
+    print(fmt(1.234e15))                        # '1.23Qa'
+
+Modelo de um run (o coracao do jogo):
+  gas limitado -> cada entrega e um 'salto' balistico entre plataformas; o custo em delta-v depende
+  da gravidade, distancia, aceleracao do motor e habilidade do piloto; o pagamento cresce com a
+  distancia. O run termina quando o gas nao alcanca mais nenhuma entrega (ou quando o lander bate).
+  Upgrades mudam os stats da nave; planetas mudam a fisica e o pagamento; prestigio reseta com bonus.
+"""
+from __future__ import annotations
+
+import copy
+import csv
+import json
+import math
+import os
+import random
+import statistics as st
+from dataclasses import dataclass, field
+from typing import Any, Callable
+
+# ---------------------------------------------------------------------------
+# Carregar / salvar / acessar a spec
+# ---------------------------------------------------------------------------
+
+def load(path: str) -> dict:
+    with open(path) as f:
+        E = json.load(f)
+    validate(E)
+    return E
+
+
+def save(E: dict, path: str) -> str:
+    validate(E)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(E, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    return path
+
+
+def get_path(E: dict, path: str) -> Any:
+    """get_path(E, 'planets.1.gravity') ou 'upgrades.tank.cost.credits.growth' (ids resolvem listas)."""
+    cur = E
+    for part in path.split("."):
+        cur = _step(cur, part)
+    return cur
+
+
+def set_path(E: dict, path: str, value: Any) -> dict:
+    parts = path.split(".")
+    cur = E
+    for part in parts[:-1]:
+        cur = _step(cur, part)
+    last = parts[-1]
+    if isinstance(cur, list):
+        idx = _list_index(cur, last)
+        cur[idx] = value
+    else:
+        cur[last] = value
+    return E
+
+
+def _list_index(lst: list, key: str) -> int:
+    if key.isdigit():
+        return int(key)
+    for i, it in enumerate(lst):
+        if isinstance(it, dict) and it.get("id") == key:
+            return i
+    raise KeyError(f"id {key!r} nao encontrado")
+
+
+def _step(cur, part):
+    if isinstance(cur, list):
+        return cur[_list_index(cur, part)]
+    return cur[part]
+
+
+def validate(E: dict) -> None:
+    """Checagens estruturais basicas (falha cedo com mensagem clara)."""
+    for k in ("resources", "ship", "upgrades", "planets", "contracts", "targets"):
+        if k not in E:
+            raise ValueError(f"economy.json sem a chave obrigatoria '{k}'")
+    res_ids = {r["id"] for r in E["resources"]}
+    stats = set(E["ship"]["base"])
+    for u in E["upgrades"]:
+        for c in u["cost"]:
+            if c not in res_ids:
+                raise ValueError(f"upgrade {u['id']}: custo em recurso desconhecido '{c}'")
+        if u["effect"]["stat"] not in stats:
+            raise ValueError(f"upgrade {u['id']}: stat desconhecido '{u['effect']['stat']}'")
+    shop_ids = {it["id"] for it in shop_items(E)}
+    for it in shop_items(E):
+        t = it["effect"]["type"]
+        if t not in ("stat", "start_levels", "start_resources", "keep", "unlock"):
+            raise ValueError(f"item da loja {it['id']}: effect.type desconhecido '{t}'")
+        if t == "stat" and it["effect"]["stat"] not in stats:
+            raise ValueError(f"item da loja {it['id']}: stat desconhecido '{it['effect']['stat']}'")
+    up_ids = {u["id"] for u in E["upgrades"]}
+    for x in E["upgrades"] + E["planets"]:
+        for rid in x.get("requires_upgrade", {}):
+            if rid not in up_ids:
+                raise ValueError(f"{x['id']}: requires_upgrade '{rid}' nao existe")
+    for u in E["upgrades"]:
+        if u.get("requires_shop") and u["requires_shop"] not in shop_ids:
+            raise ValueError(f"upgrade {u['id']}: requires_shop '{u['requires_shop']}' nao existe na loja")
+    for p in E["planets"]:
+        if p.get("requires_shop") and p["requires_shop"] not in shop_ids:
+            raise ValueError(f"planeta {p['id']}: requires_shop '{p['requires_shop']}' nao existe na loja")
+        for c in p.get("unlock", {}):
+            if c not in res_ids:
+                raise ValueError(f"planeta {p['id']}: desbloqueio em recurso desconhecido '{c}'")
+        for c in p.get("rewards", {"credits": 1}):
+            if c not in res_ids:
+                raise ValueError(f"planeta {p['id']}: recompensa em recurso desconhecido '{c}'")
+
+
+# ---------------------------------------------------------------------------
+# Curvas (custos, efeitos, prestigio)
+# ---------------------------------------------------------------------------
+
+def cost_at(spec: dict, level: int) -> float:
+    """Custo do PROXIMO nivel, estando em `level`.
+    type: exp (base*growth^level, padrao idle 1.07-1.15), poly (base*(level+1)^growth),
+    linear (base + growth*level)."""
+    t = spec.get("type", "exp")
+    b, g = spec["base"], spec["growth"]
+    if t == "exp":
+        return b * g ** level
+    if t == "poly":
+        return b * (level + 1) ** g
+    if t == "linear":
+        return b + g * level
+    raise ValueError(f"tipo de custo desconhecido: {t}")
+
+
+def bulk_cost(spec: dict, level: int, n: int) -> float:
+    """Custo de comprar n niveis a partir de `level` (formula fechada para exp)."""
+    if spec.get("type", "exp") == "exp" and spec["growth"] != 1:
+        b, r = spec["base"], spec["growth"]
+        return b * r ** level * (r ** n - 1) / (r - 1)
+    return sum(cost_at(spec, level + i) for i in range(n))
+
+
+def max_affordable(spec: dict, level: int, money: float) -> int:
+    """Quantos niveis da pra comprar com `money` (formula fechada para exp)."""
+    if spec.get("type", "exp") == "exp" and spec["growth"] != 1:
+        b, r = spec["base"], spec["growth"]
+        x = money * (r - 1) / (b * r ** level) + 1
+        return max(0, int(math.floor(math.log(x) / math.log(r) + 1e-9)))
+    n = 0
+    while bulk_cost(spec, level, n + 1) <= money:
+        n += 1
+    return n
+
+
+def effect_value(eff: dict, level: int) -> float:
+    """Contribuicao de um upgrade no nivel `level`.
+    op: add (value*level), mult (value^level), hyper (max*level/(level+k): retorno decrescente
+    com teto), milestone (multiplica `value` a cada `every` niveis - estilo AdCap x2 em 25/50/100)."""
+    op = eff["op"]
+    if op == "add":
+        return eff["value"] * level
+    if op == "mult":
+        return eff["value"] ** level
+    if op == "hyper":
+        return eff["max"] * level / (level + eff["k"])
+    if op == "milestone":
+        return eff["value"] ** (level // eff["every"])
+    raise ValueError(f"op desconhecida: {op}")
+
+
+def prestige_gain(spec: dict, earned: float) -> float:
+    """Moeda de prestigio por ganhos. formula: sqrt (AdCap: dobrar pede 4x), cbrt (Cookie Clicker:
+    8x), pow (expoente livre, Egg Inc ~0.14), log10."""
+    x = max(0.0, earned / spec["scale"])
+    f = spec.get("formula", "sqrt")
+    if f == "sqrt":
+        v = math.sqrt(x)
+    elif f == "cbrt":
+        v = x ** (1 / 3)
+    elif f == "pow":
+        v = x ** spec["exponent"]
+    elif f == "log10":
+        v = math.log10(x) if x >= 1 else 0.0
+    else:
+        raise ValueError(f)
+    return math.floor(v * spec.get("mult", 1.0))
+
+
+# ---------------------------------------------------------------------------
+# Stats da nave
+# ---------------------------------------------------------------------------
+
+def shop_items(E: dict) -> list[dict]:
+    return E.get("prestige", {}).get("shop", [])
+
+
+def ship_stats(E: dict, levels: dict[str, int], prestige_points: float = 0.0,
+               shop: dict[str, int] | None = None) -> dict[str, float]:
+    """Stats finais = base -> + somas (add/hyper) -> x multiplicadores (mult/milestone) -> x prestigio.
+    Itens da loja de prestigio com effect.type == 'stat' entram como upgrades comuns."""
+    s = dict(E["ship"]["base"])
+    adds: dict[str, float] = {}
+    mults: dict[str, float] = {}
+    sources = [(u, levels.get(u["id"], 0)) for u in E["upgrades"]]
+    sources += [(it, (shop or {}).get(it["id"], 0)) for it in shop_items(E) if it["effect"]["type"] == "stat"]
+    for u, lv in sources:
+        if lv == 0:
+            continue
+        eff = u["effect"]
+        v = effect_value(eff, lv)
+        if eff["op"] in ("add", "hyper"):
+            adds[eff["stat"]] = adds.get(eff["stat"], 0.0) + v
+        else:
+            mults[eff["stat"]] = mults.get(eff["stat"], 1.0) * v
+    # marcos (AdCap/Guan): a cada `every` niveis de um upgrade, `stat` e multiplicado por `mult`
+    for u in E["upgrades"]:
+        lv = levels.get(u["id"], 0)
+        for m in u.get("milestones", []):
+            if lv >= m["every"]:
+                mults[m["stat"]] = mults.get(m["stat"], 1.0) * m["mult"] ** (lv // m["every"])
+    for k, v in adds.items():
+        s[k] += v
+    for k, v in mults.items():
+        s[k] *= v
+    P = E.get("prestige")
+    if P and prestige_points:
+        for b in P["bonuses"]:
+            s[b["stat"]] *= 1 + b["per_point"] * prestige_points
+    return s
+
+
+# ---------------------------------------------------------------------------
+# Perfis de jogador
+# ---------------------------------------------------------------------------
+
+@dataclass
+class Profile:
+    """Como o jogador joga. skill 0..1 afeta desperdicio de gas, qualidade do pouso e batidas."""
+    name: str
+    skill: float = 0.7            # media de qualidade de pouso (0..1)
+    skill_sd: float = 0.12        # variacao entre pousos
+    waste: float = 1.35           # multiplicador de delta-v (trajetoria imperfeita); 1.0 = perfeito
+    hover_s: float = 1.5          # segundos pairando por pouso/decolagem (custa g*hover_s de delta-v)
+    hop_overhead_s: float = 6.0   # tempo extra por entrega (mirar, alinhar, descarregar)
+    run_overhead_s: float = 20.0  # tempo entre runs (loja, menu, preparar)
+    strategy: str = "roi"         # roi | cheapest | random
+    prestige_ratio: float = 1.0   # faz prestigio quando o ganho >= ratio * pontos atuais (e >= min)
+    session_minutes: float = 0    # 0 = continuo; senao simula sessoes (so para relatorio)
+
+
+PROFILES: dict[str, Profile] = {
+    "casual":  Profile("casual", skill=0.55, waste=1.6, hover_s=2.5, hop_overhead_s=9, run_overhead_s=35,
+                       prestige_ratio=1.5),
+    "engaged": Profile("engaged", skill=0.72, waste=1.35, hover_s=1.5, hop_overhead_s=6, run_overhead_s=20),
+    "expert":  Profile("expert", skill=0.9, skill_sd=0.06, waste=1.12, hover_s=0.7, hop_overhead_s=4,
+                       run_overhead_s=10, prestige_ratio=0.7),
+}
+
+
+def profile_from(E: dict, name: str) -> Profile:
+    """Perfil padrao com overrides opcionais de E['profiles_override'][name] (calibrados por telemetria)."""
+    p = copy.deepcopy(PROFILES[name])
+    for k, v in E.get("profiles_override", {}).get(name, {}).items():
+        setattr(p, k, v)
+    return p
+
+
+# ---------------------------------------------------------------------------
+# Fisica do salto (modelo do run)
+# ---------------------------------------------------------------------------
+
+def hop_dv(planet: dict, d: float, stats: dict, prof: Profile) -> float:
+    """Delta-v para uma entrega de distancia d.
+    Salto balistico otimo (45 graus): v0 = sqrt(g*d); acelerar + frear = 2*v0.
+    Perda gravitacional durante as queimas ~ 0.707*g/a por queima (motor fraco gasta mais).
+    Arrasto/vento do planeta e desperdicio do piloto multiplicam; pairar custa g*hover_s em cada ponta.
+    Se a aceleracao nao vence a gravidade, e impossivel (inf)."""
+    g = planet["gravity"]
+    a = stats["thrust"]
+    if a <= g * 1.05:
+        return math.inf
+    v0 = math.sqrt(g * d)
+    dv = 2 * v0 * (1 + 0.707 * g / a)
+    dv *= (1 + planet.get("drag", 0.0)) * prof.waste
+    dv += 2 * g * prof.hover_s
+    return dv
+
+
+def hop_time(planet: dict, d: float, stats: dict, prof: Profile) -> float:
+    g, a = planet["gravity"], stats["thrust"]
+    v0 = math.sqrt(g * d)
+    return math.sqrt(2) * v0 / g + 2 * v0 / a + prof.hop_overhead_s
+
+
+def gas_for(E: dict, dv: float, stats: dict, gas_left: float, cargo_mass: float = 0.0) -> float:
+    """Gas gasto para um delta-v. physics.mode:
+      arcade - massa constante: gas = dv / efficiency  (efficiency = m/s por unidade de gas)
+      rocket - Tsiolkovsky: m1 = m0*exp(-dv/ve), ve = efficiency; tanque maior pesa (retorno decrescente)."""
+    mode = E.get("physics", {}).get("mode", "arcade")
+    eff = stats["efficiency"]
+    if mode == "arcade":
+        return dv / eff
+    gm = E["physics"].get("gas_mass", 0.01)
+    m0 = stats["dry_mass"] + cargo_mass + gas_left * gm
+    m1 = m0 * math.exp(-dv / eff)
+    return (m0 - m1) / gm
+
+
+def crash_prob(planet: dict, stats: dict, quality: float) -> float:
+    base = planet.get("crash_base", 0.02)
+    return min(0.95, base * (1 - quality) * 2 / max(stats.get("gear", 1.0), 1e-6))
+
+
+def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
+    C = E["contracts"]
+    return C["pay_base"] * (d / C.get("distance_unit", 100.0)) ** C["distance_exp"] * planet.get("pay_mult", 1.0) \
+        * stats.get("pay_mult", 1.0)
+
+
+def contracts_for(E: dict, planet: dict, rng: random.Random) -> list[float]:
+    """Distancias ofertadas no run (log-uniforme entre min e max do planeta)."""
+    C = E["contracts"]
+    n = planet.get("contracts_per_run", C.get("per_run", 8))
+    lo, hi = planet["distance"]
+    return sorted(math.exp(rng.uniform(math.log(lo), math.log(hi))) for _ in range(n))
+
+
+@dataclass
+class RunResult:
+    rewards: dict[str, float]
+    time_s: float
+    deliveries: int
+    max_distance: float
+    total_distance: float
+    crashed: bool
+    gas_left_pct: float
+
+
+_STREAM_CACHE: dict = {}
+
+
+def _offer_stream(E: dict, planet: dict, seed: int, extra: int = 256) -> tuple[list[float], list[float]]:
+    """Ofertas iniciais (ordenadas) + distancias das ofertas regeneradas, na mesma ordem de sorteio que
+    do_run faria com random.Random(seed). Runs 'esperados' so sorteiam distancias, entao reusar a
+    sequencia da resultado identico e evita re-sortear centenas de milhares de vezes."""
+    lo, hi = planet["distance"]
+    n = planet.get("contracts_per_run", E["contracts"].get("per_run", 8))
+    key = (id(E), planet["id"], seed, n, lo, hi)
+    st_ = _STREAM_CACHE.get(key)
+    if st_ is None:
+        rng = random.Random(seed)
+        first = sorted(math.exp(rng.uniform(math.log(lo), math.log(hi))) for _ in range(n))
+        more = [math.exp(rng.uniform(math.log(lo), math.log(hi))) for _ in range(extra)]
+        st_ = _STREAM_CACHE[key] = (first, more)
+    return st_
+
+
+def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random, expected: bool = False,
+           stream: tuple[list[float], list[float]] | None = None) -> RunResult:
+    """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
+    pega a de maior pagamento por gas. expected=True usa valores medios (sem sorte) - para ROI.
+    stream (so com expected) = sequencia de ofertas pre-sorteada (_offer_stream)."""
+    gas = stats["tank"]
+    offers = list(stream[0]) if stream else contracts_for(E, planet, rng)
+    more_i = 0
+    rewards_w = planet.get("rewards", {"credits": 1.0})
+    total = {k: 0.0 for k in rewards_w}
+    t = 0.0
+    n = 0
+    maxd = 0.0
+    dist = 0.0
+    crashed = False
+    C = E["contracts"]
+    qbonus = C.get("quality_bonus", 0.5)
+    qexp = C.get("quality_exp", 1.0)          # >1 = precisao alta vale desproporcionalmente mais
+    regenerate = C.get("regenerate", False)   # nova oferta aparece apos cada entrega (gas vira o limite)
+    max_per_run = C.get("max_per_run", 10 ** 9)
+    lo_d, hi_d = planet["distance"]
+    log_lo, log_hi = math.log(lo_d), math.log(hi_d)
+    cargo = C.get("cargo_mass", 0.0)
+    arcade = E.get("physics", {}).get("mode", "arcade") == "arcade"
+    eff = stats["efficiency"]
+
+    def info(d):  # custo e pagamento de uma oferta nao mudam durante o run: calcula uma vez so
+        dv = hop_dv(planet, d, stats, prof)
+        return (d, dv / eff if arcade else dv, contract_pay(E, planet, d, stats))
+
+    items = [info(d) for d in offers]
+    while items and n < max_per_run:
+        bi, best_score, best_gas = -1, 0.0, 0.0
+        for i, (d, g_or_dv, pay0) in enumerate(items):
+            g_need = g_or_dv if arcade else gas_for(E, g_or_dv, stats, gas, cargo)  # rocket: depende da massa
+            if g_need <= gas:
+                score = pay0 / max(g_need, 1e-9)
+                if score > best_score:
+                    bi, best_score, best_gas = i, score, g_need
+        if bi < 0:
+            break
+        best, _, pay0 = items.pop(bi)
+        if regenerate:
+            if stream and more_i < len(stream[1]):
+                items.append(info(stream[1][more_i]))
+                more_i += 1
+            else:
+                items.append(info(math.exp(rng.uniform(log_lo, log_hi))))
+        gas -= best_gas
+        q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
+        pay = pay0 * (1 + qbonus * q ** qexp)
+        pc = crash_prob(planet, stats, q)
+        t += hop_time(planet, best, stats, prof)
+        if expected:
+            pay *= (1 - pc)
+        elif rng.random() < pc:
+            crashed = True
+            break
+        for k, w in rewards_w.items():
+            total[k] += pay * w
+        n += 1
+        maxd = max(maxd, best)
+        dist += best
+    t += prof.run_overhead_s
+    return RunResult(total, t, n, maxd, dist, crashed, 100 * gas / stats["tank"])
+
+
+_INCOME_CACHE: dict = {}
+
+
+def expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int = 4, seed: int = 999) -> dict:
+    """Renda media por segundo (por recurso) usando runs 'esperados' com ofertas fixas por seed.
+    Memoizado por (spec, planeta, stats, perfil) - o simulador reavalia os mesmos estados muitas vezes."""
+    key = (id(E), planet["id"], tuple(sorted((k, round(v, 9)) for k, v in stats.items())),
+           tuple(sorted(vars(prof).items())), samples, seed)
+    if key in _INCOME_CACHE:
+        return _INCOME_CACHE[key]
+    out = _expected_income(E, planet, stats, prof, samples, seed)
+    if len(_INCOME_CACHE) > 200000:
+        _INCOME_CACHE.clear()
+    _INCOME_CACHE[key] = out
+    return out
+
+
+def _expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int, seed: int) -> dict:
+    tot: dict[str, float] = {}
+    tt = 0.0
+    for i in range(samples):
+        r = do_run(E, planet, stats, prof, None, expected=True, stream=_offer_stream(E, planet, seed + i))
+        for k, v in r.rewards.items():
+            tot[k] = tot.get(k, 0.0) + v
+        tt += r.time_s
+    return {k: v / tt for k, v in tot.items()}
+
+
+# ---------------------------------------------------------------------------
+# Simulacao do jogador ao longo de horas
+# ---------------------------------------------------------------------------
+
+@dataclass
+class SimResult:
+    profile: str
+    seed: int
+    events: list[dict] = field(default_factory=list)     # compras, desbloqueios, prestigios
+    samples: list[dict] = field(default_factory=list)    # serie temporal por run
+    finished_at_h: float | None = None
+    final: dict = field(default_factory=dict)
+
+
+def _value(E: dict, rewards_per_s: dict[str, float]) -> float:
+    """Converte renda multi-recurso num valor escalar (pesos em E['resource_value'])."""
+    w = E.get("resource_value", {})
+    return sum(v * w.get(k, 1.0) for k, v in rewards_per_s.items())
+
+
+def _affordable(cost: dict[str, float], money: dict[str, float]) -> bool:
+    return all(money.get(k, 0.0) >= v for k, v in cost.items())
+
+
+def _upgrade_cost(u: dict, lv: int) -> dict[str, float]:
+    return {k: cost_at(spec, lv) for k, spec in u["cost"].items()}
+
+
+def _requires_ok(x: dict, levels: dict[str, int] | None) -> bool:
+    """requires_upgrade = {id: nivel_minimo} (ex.: etapa 3 do megaprojeto exige a etapa 2)."""
+    return all((levels or {}).get(k, 0) >= v for k, v in x.get("requires_upgrade", {}).items())
+
+
+def _available(u: dict, lv: int, unlocked: set[str], shop: dict[str, int] | None = None,
+               levels: dict[str, int] | None = None) -> bool:
+    if lv >= u.get("max_level", 10 ** 9):
+        return False
+    if not _requires_ok(u, levels):
+        return False
+    if u.get("requires_shop") and (shop or {}).get(u["requires_shop"], 0) == 0:
+        return False
+    req = u.get("requires_planet")
+    return req is None or req in unlocked
+
+
+def fleet_mult(stats: dict) -> float:
+    """Renda total / renda do piloto. Frota: cada drone repete as rotas do jogador com eficiencia
+    `autopilot` (fracao da renda media do proprio jogador)."""
+    return 1.0 + stats.get("drones", 0.0) * stats.get("autopilot", 0.0)
+
+
+def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, max_runs: int = 200000) -> SimResult:
+    """Joga o jogo por `hours` com um perfil. Loop: run -> recebe -> compra (estrategia) -> talvez
+    desbloqueie planeta / prestigie. Termina cedo se o objetivo final (targets.goal) for atingido."""
+    if isinstance(prof, str):
+        prof = profile_from(E, prof)
+    _INCOME_CACHE.clear()
+    rng = random.Random(seed)
+    res = SimResult(prof.name, seed)
+    money = {r["id"]: float(r.get("start", 0.0)) for r in E["resources"]}
+    lifetime = {k: 0.0 for k in money}
+    run_earned = {k: 0.0 for k in money}
+    levels = {u["id"]: 0 for u in E["upgrades"]}
+    planets = {p["id"]: p for p in E["planets"]}
+    unlocked = {p["id"] for p in E["planets"] if not p.get("unlock")}
+    current = E["planets"][0]["id"]
+    ppoints = 0.0          # poeira ganha na vida toda (nivel de prestigio: bonus passivo, nunca diminui)
+    shop = {it["id"]: 0 for it in shop_items(E)}
+    P = E.get("prestige")
+    goal = E["targets"].get("goal", {})
+    t = 0.0
+    runs = 0
+    last_buy_t = 0.0
+
+    def stats_now():
+        return ship_stats(E, levels, ppoints, shop)
+
+    def shop_effect(kind: str) -> list[tuple[dict, int]]:
+        return [(it, shop[it["id"]]) for it in shop_items(E) if it["effect"]["type"] == kind and shop[it["id"]] > 0]
+
+    def best_planet(stats):
+        return max(unlocked, key=lambda pid: _value(E, expected_income(E, planets[pid], stats, prof)))
+
+    while t < hours * 3600 and runs < max_runs:
+        stats = stats_now()
+        r = do_run(E, planets[current], stats, prof, rng)
+        runs += 1
+        t += r.time_s
+        for k, v in r.rewards.items():
+            money[k] += v
+            lifetime[k] += v
+            run_earned[k] += v
+        fleet_val = 0.0
+        fm = fleet_mult(stats) - 1.0
+        if fm > 0:  # frota rendeu durante o run: fm x renda media esperada do piloto
+            for k, v in expected_income(E, planets[current], stats, prof).items():
+                gained = v * fm * r.time_s
+                money[k] += gained
+                lifetime[k] += gained
+                run_earned[k] += gained
+                fleet_val += gained * E.get("resource_value", {}).get(k, 1.0)
+        res.samples.append({"t": t, "planet": current, "money": dict(money), "rewards": r.rewards, "fleet": fleet_val,
+                            "run_s": r.time_s, "deliveries": r.deliveries, "max_d": r.max_distance,
+                            "crashed": r.crashed, "stats": stats, "ppoints": ppoints})
+        # ---- compras
+        while True:
+            stats = stats_now()
+            base_inc = _value(E, expected_income(E, planets[current], stats, prof)) * fleet_mult(stats)
+            opts = []
+            for u in E["upgrades"]:
+                lv = levels[u["id"]]
+                if not _available(u, lv, unlocked, shop, levels):
+                    continue
+                cost = _upgrade_cost(u, lv)
+                # olha alguns niveis a frente: ganhos de alcance sao 'degraus' (1 nivel pode nao bastar
+                # para alcancar a proxima entrega). Valor = melhor ganho/custo entre k niveis, por nivel.
+                best_ratio = 0.0
+                for k in (1, 2, 4, 8):
+                    if lv + k > u.get("max_level", 10 ** 9):
+                        break
+                    lv2 = dict(levels)
+                    lv2[u["id"]] += k
+                    s2 = ship_stats(E, lv2, ppoints, shop)
+                    inc = max(_value(E, expected_income(E, planets[pid], s2, prof)) for pid in unlocked) * fleet_mult(s2)
+                    ck = _value(E, {r: bulk_cost(spec, lv, k) for r, spec in u["cost"].items()})
+                    best_ratio = max(best_ratio, (inc - base_inc) / (ck + 1e-9))
+                score = best_ratio * _value(E, cost)
+                if u.get("progress"):  # etapa de megaprojeto: vale como progressao (igual planetas)
+                    score = max(score, 0.0) + base_inc * 0.5
+                opts.append(("upgrade", u["id"], cost, score))
+            for p in E["planets"]:
+                if p["id"] in unlocked or not p.get("unlock"):
+                    continue
+                if p.get("requires") and p["requires"] not in unlocked:
+                    continue
+                if not _requires_ok(p, levels):
+                    continue
+                if p.get("requires_shop") and shop.get(p["requires_shop"], 0) == 0:
+                    continue
+                inc = _value(E, expected_income(E, p, stats, prof)) * fleet_mult(stats)
+                # planetas tem valor de progressao alem da renda (sao o objetivo): bonus de prioridade
+                opts.append(("planet", p["id"], dict(p["unlock"]), max(inc - base_inc, 0) + base_inc * 0.5))
+            if not opts:
+                break
+            cost_val = lambda c: _value(E, c) + 1e-9
+            if prof.strategy == "cheapest":
+                opts.sort(key=lambda o: cost_val(o[2]))
+                pick = opts[0] if _affordable(opts[0][2], money) else None
+            elif prof.strategy == "random":
+                aff = [o for o in opts if _affordable(o[2], money)]
+                pick = rng.choice(aff) if aff else None
+            else:  # roi: melhor ganho por custo; enquanto junta para o melhor, compra o que "se paga" antes
+                scored = sorted(opts, key=lambda o: -o[3] / cost_val(o[2]))
+                best = scored[0]
+                pick = None
+                if _affordable(best[2], money):
+                    pick = best
+                else:
+                    # tempo para conseguir pagar o melhor com a renda atual
+                    missing = sum(max(0.0, v - money.get(k, 0.0)) * E.get("resource_value", {}).get(k, 1.0)
+                                  for k, v in best[2].items())
+                    t_afford = missing / max(base_inc, 1e-9)
+                    for o in scored[1:]:
+                        if not _affordable(o[2], money) or o[3] <= 0:
+                            continue
+                        good_ratio = o[3] / cost_val(o[2]) >= 0.5 * best[3] / cost_val(best[2])
+                        pays_back = cost_val(o[2]) / o[3] < t_afford  # se paga antes de juntar o valor da meta
+                        if good_ratio or pays_back:
+                            pick = o
+                            break
+            if pick is None:
+                break
+            kind, oid, cost, _ = pick
+            for k, v in cost.items():
+                money[k] -= v
+            if kind == "upgrade":
+                levels[oid] += 1
+                res.events.append({"t": t, "type": "upgrade", "id": oid, "level": levels[oid], "cost": cost,
+                                   "gap_s": t - last_buy_t})
+            else:
+                unlocked.add(oid)
+                res.events.append({"t": t, "type": "planet", "id": oid, "cost": cost, "gap_s": t - last_buy_t})
+            last_buy_t = t
+            current = best_planet(stats_now())
+        # ---- prestigio
+        if P:
+            gain = prestige_gain(P, run_earned[P.get("based_on", "credits")])
+            req = P.get("requires_planet")
+            # jogador racional nao recomeca quando a meta final esta perto (< goal_hold_h de juntar)
+            near_goal = False
+            gp = goal.get("planet")
+            if gp and gp not in unlocked:
+                gpl = planets[gp]
+                # etapas de megaprojeto que faltam (progress) contam como parte do custo da meta
+                todo = [u for u in E["upgrades"] if u.get("progress") and levels[u["id"]] < u.get("max_level", 1)]
+                first_ok = all(_available(u, levels[u["id"]], unlocked, shop, levels) or levels[u["id"]] > 0
+                               for u in todo[:1])
+                avail = (not gpl.get("requires") or gpl["requires"] in unlocked) and \
+                        (not gpl.get("requires_shop") or shop.get(gpl["requires_shop"], 0) > 0) and first_ok
+                if avail:
+                    inc_now = _value(E, expected_income(E, planets[current], stats_now(), prof)) * fleet_mult(stats_now())
+                    need = dict(gpl.get("unlock", {}))
+                    for u in todo:
+                        for k, v in _upgrade_cost(u, levels[u["id"]]).items():
+                            need[k] = need.get(k, 0.0) + v
+                    missing = sum(max(0.0, v - money.get(k, 0.0)) * E.get("resource_value", {}).get(k, 1.0)
+                                  for k, v in need.items())
+                    near_goal = missing / max(inc_now, 1e-9) < goal.get("hold_h", 2.0) * 3600
+            if not near_goal and gain >= max(P.get("min_gain", 1), prof.prestige_ratio * ppoints) \
+                    and (req is None or req in unlocked):
+                ppoints += gain
+                money[P["resource"]] = money.get(P["resource"], 0.0) + gain
+                res.events.append({"t": t, "type": "prestige", "gain": gain, "points": ppoints,
+                                   "gap_s": t - last_buy_t})
+                # loja: compra por prioridade; se o proximo item da fila nao cabe, guarda poeira para ele
+                for it in sorted(shop_items(E), key=lambda x: x.get("priority", 99)):
+                    while shop[it["id"]] < it.get("max_level", 1):
+                        c = cost_at(it["cost"], shop[it["id"]])
+                        if money[P["resource"]] < c:
+                            break
+                        money[P["resource"]] -= c
+                        shop[it["id"]] += 1
+                        res.events.append({"t": t, "type": "shop", "id": it["id"], "level": shop[it["id"]],
+                                           "cost": {P["resource"]: c}, "gap_s": 0.0})
+                    if shop[it["id"]] < it.get("max_level", 1) and not it.get("optional", False):
+                        break
+                keep = set(P.get("keep", [])) | {it["effect"]["what"] for it, _ in shop_effect("keep")}
+                for k in money:
+                    if k != P["resource"] and "money" not in keep:
+                        money[k] = float(next(r.get("start", 0.0) for r in E["resources"] if r["id"] == k))
+                for it, lv in shop_effect("start_resources"):
+                    for k, v in it["effect"]["amounts"].items():
+                        money[k] += v * lv
+                if "upgrades" not in keep:  # upgrades 'persistent' (etapas do megaprojeto) sobrevivem
+                    levels = {u["id"]: (levels[u["id"]] if u.get("persistent") else 0) for u in E["upgrades"]}
+                    for it, lv in shop_effect("start_levels"):
+                        for k, v in it["effect"]["levels"].items():
+                            levels[k] = max(levels[k], v * lv)
+                if "planets" not in keep:
+                    unlocked = {p["id"] for p in E["planets"] if not p.get("unlock")}
+                    current = E["planets"][0]["id"]
+                else:
+                    current = best_planet(stats_now())
+                run_earned = {k: 0.0 for k in money}
+                last_buy_t = t
+        # ---- objetivo final
+        if goal.get("planet") and goal["planet"] in unlocked and res.finished_at_h is None:
+            res.finished_at_h = t / 3600
+            if goal.get("stop", True):
+                break
+    res.final = {"t_h": t / 3600, "runs": runs, "levels": levels, "unlocked": sorted(unlocked), "shop": shop,
+                 "money": money, "lifetime": lifetime, "prestige_points": ppoints, "stats": stats_now()}
+    return res
+
+
+# ---------------------------------------------------------------------------
+# Relatorio de ritmo (pacing)
+# ---------------------------------------------------------------------------
+
+def _phase_limit(targets: dict, t_h: float) -> float:
+    """Maior intervalo aceitavel entre compras (min) na fase atual."""
+    for ph in targets.get("max_gap_min", []):
+        if t_h <= ph["until_h"]:
+            return ph["minutes"]
+    return math.inf
+
+
+def pacing_report(E: dict, res: SimResult) -> dict:
+    T = E["targets"]
+    ev = res.events
+    buys = [e for e in ev if e["type"] in ("upgrade", "planet")]
+    rep: dict[str, Any] = {"profile": res.profile, "seed": res.seed, "hours_simulated": round(res.final["t_h"], 2),
+                           "runs": res.final["runs"], "finished_at_h": None if res.finished_at_h is None
+                           else round(res.finished_at_h, 2)}
+    w: list[str] = []
+    # primeiro upgrade
+    first = buys[0]["t"] if buys else None
+    rep["first_purchase_s"] = None if first is None else round(first)
+    if first is None or first > T.get("first_purchase_max_s", 90):
+        w.append(f"primeira compra em {rep['first_purchase_s']}s (alvo <= {T.get('first_purchase_max_s', 90)}s)")
+    # paredes
+    walls = []
+    for e in ev:
+        lim = _phase_limit(T, e["t"] / 3600)
+        if e["gap_s"] / 60 > lim:
+            walls.append({"at_h": round(e["t"] / 3600, 2), "gap_min": round(e["gap_s"] / 60, 1), "limit_min": lim,
+                          "before": e.get("id", e["type"])})
+    rep["walls"] = walls
+    if walls:
+        worst = max(walls, key=lambda x: x["gap_min"])
+        w.append(f"{len(walls)} paredes (intervalo acima do limite da fase); pior: {worst['gap_min']} min "
+                 f"antes de '{worst['before']}' em {worst['at_h']}h (limite {worst['limit_min']} min)")
+    gaps = [e["gap_s"] / 60 for e in buys if e["gap_s"] > 0 or e is buys[0]]  # momentos distintos de compra
+    rep["gap_min_median"] = round(st.median(gaps), 2) if gaps else None
+    rep["gap_min_p90"] = round(sorted(gaps)[int(0.9 * (len(gaps) - 1))], 2) if gaps else None
+    # planetas
+    unlock_times: dict[str, float] = {}
+    for e in ev:  # primeiro desbloqueio (prestigio reseta e o planeta e desbloqueado de novo)
+        if e["type"] == "planet":
+            unlock_times.setdefault(e["id"], round(e["t"] / 3600, 2))
+    rep["planet_unlock_h"] = unlock_times
+    for pid, (lo, hi) in T.get("planet_unlock_h", {}).items():
+        got = unlock_times.get(pid)
+        if got is None:
+            w.append(f"planeta '{pid}' nao desbloqueado (alvo {lo}-{hi}h)")
+        elif not (lo <= got <= hi):
+            w.append(f"planeta '{pid}' desbloqueado em {got}h (alvo {lo}-{hi}h)")
+    # duracao total
+    lo, hi = T.get("finish_h", [0, math.inf])
+    if res.finished_at_h is None:
+        w.append(f"objetivo final nao atingido em {rep['hours_simulated']}h (alvo {lo}-{hi}h)")
+    elif not (lo <= res.finished_at_h <= hi):
+        w.append(f"objetivo final em {res.finished_at_h:.1f}h (alvo {lo}-{hi}h)")
+    # prestigio
+    pres = [e for e in ev if e["type"] == "prestige"]
+    rep["prestiges"] = [{"at_h": round(e["t"] / 3600, 2), "gain": e["gain"], "points": e["points"]} for e in pres]
+    if E.get("prestige") and T.get("prestige_count") and res.finished_at_h is not None:
+        lo_c, hi_c = T["prestige_count"]
+        if not (lo_c <= len(pres) <= hi_c):
+            w.append(f"{len(pres)} prestigios ate o fim (alvo {lo_c}-{hi_c})")
+    rep["shop_final"] = res.final.get("shop", {})
+    if E.get("prestige") and T.get("first_prestige_h"):
+        lo, hi = T["first_prestige_h"]
+        fp = pres[0]["t"] / 3600 if pres else None
+        if fp is None or not (lo <= fp <= hi):
+            w.append(f"primeiro prestigio em {None if fp is None else round(fp, 2)}h (alvo {lo}-{hi}h)")
+    # uso dos upgrades
+    spent: dict[str, float] = {}
+    for e in buys:
+        if e["type"] == "upgrade":
+            spent[e["id"]] = spent.get(e["id"], 0.0) + _value(E, e["cost"])
+    tot = sum(spent.values()) or 1.0
+    rep["spend_share_pct"] = {k: round(100 * v / tot, 1) for k, v in sorted(spent.items(), key=lambda kv: -kv[1])}
+    # niveis comprados (contagem): o gasto em creditos e dominado pelas compras caras do fim do jogo,
+    # entao a dominancia e medida pela fracao de NIVEIS comprados
+    cnt: dict[str, int] = {}
+    for e in buys:
+        if e["type"] == "upgrade":
+            cnt[e["id"]] = cnt.get(e["id"], 0) + 1
+    ctot = sum(cnt.values()) or 1
+    rep["levels_share_pct"] = {k: round(100 * v / ctot, 1) for k, v in sorted(cnt.items(), key=lambda kv: -kv[1])}
+    never = [u["id"] for u in E["upgrades"] if u["id"] not in cnt]
+    if never:
+        w.append(f"upgrades nunca comprados (inuteis ou caros demais?): {never}")
+    dom = [k for k, v in rep["levels_share_pct"].items() if v > T.get("max_level_share_pct", 60)]
+    if dom:
+        w.append(f"estrategia dominante: {dom} recebe(m) > {T.get('max_level_share_pct', 60)}% dos niveis comprados")
+    maxed = [u["id"] for u in E["upgrades"] if res.final["levels"].get(u["id"], 0) >= u.get("max_level", 10 ** 9)]
+    rep["maxed_upgrades"] = maxed
+    # run
+    runs = res.samples
+    if runs:
+        rep["run_s_median"] = round(st.median(r["run_s"] for r in runs), 1)
+        rep["deliveries_median"] = st.median(r["deliveries"] for r in runs)
+        rep["crash_rate_pct"] = round(100 * sum(r["crashed"] for r in runs) / len(runs), 1)
+        rlo, rhi = T.get("run_s", [0, math.inf])
+        if not (rlo <= rep["run_s_median"] <= rhi):
+            w.append(f"run mediano de {rep['run_s_median']}s (alvo {rlo}-{rhi}s)")
+        zero = sum(1 for r in runs if r["deliveries"] == 0 and not r["crashed"])
+        if zero:
+            w.append(f"{zero} runs sem nenhuma entrega (gas nao alcanca nem a menor distancia?)")
+        mx = max(max(r["money"].values()) for r in runs)
+        rep["max_number"] = mx
+        if mx > 1e300:
+            w.append("numeros passam de 1e300: usar BigNumber no Godot (ver godot-integration.md)")
+        rep["number_class"] = "float64 ok" if mx < 1e15 else ("float64 ok (formatar com sufixos)" if mx < 1e300
+                                                              else "BigNumber")
+    # fatia da renda vinda da frota (automacao): total e no ultimo quarto do jogo
+    if runs and any(r.get("fleet", 0) for r in runs):
+        def share(rs):
+            fl = sum(r.get("fleet", 0.0) for r in rs)
+            act = sum(_value(E, r["rewards"]) for r in rs)
+            return round(100 * fl / max(fl + act, 1e-9), 1)
+        tail = [r for r in runs if r["t"] >= 0.75 * runs[-1]["t"]]
+        rep["idle_share_pct"] = share(runs)
+        rep["idle_share_final_pct"] = share(tail)
+        mx = T.get("max_idle_share_pct")
+        if mx and rep["idle_share_final_pct"] > mx:
+            w.append(f"frota gera {rep['idle_share_final_pct']}% da renda no fim (max {mx}%): pilotar perde peso")
+    rep["warnings"] = w
+    return rep
+
+
+# ---------------------------------------------------------------------------
+# Paralelismo (varios nucleos). Usa 'fork': a funcao e a spec sao herdadas pelos processos filhos,
+# entao lambdas funcionam e nada precisa ser serializado na ida (so os resultados na volta).
+# ---------------------------------------------------------------------------
+_PAR_CTX: dict = {}
+
+
+def _par_run(i: int):
+    return _PAR_CTX["fn"](_PAR_CTX["items"][i])
+
+
+def parallel_map(fn: Callable, items: list, workers: int | None = None) -> list:
+    """map(fn, items) em paralelo (1 processo por nucleo). Cai para sequencial se 'fork' nao existir."""
+    import multiprocessing as mp
+    items = list(items)
+    n = min(workers or os.cpu_count() or 1, len(items))
+    if n <= 1:
+        return [fn(x) for x in items]
+    try:
+        ctx = mp.get_context("fork")
+    except ValueError:
+        return [fn(x) for x in items]
+    _PAR_CTX["fn"], _PAR_CTX["items"] = fn, items
+    with ctx.Pool(n) as pool:
+        return pool.map(_par_run, range(len(items)))
+
+
+def simulate_many(E: dict, jobs: list[tuple[str, float, int]], workers: int | None = None) -> list[SimResult]:
+    """Varias simulacoes em paralelo. jobs = [(perfil, horas, seed), ...]."""
+    return parallel_map(lambda j: simulate(E, j[0], j[1], seed=j[2]), jobs, workers)
+
+
+def screen(E: dict, profiles: tuple[str, ...] = ("engaged", "casual", "expert"), hours: float = 40.0,
+           seed: int = 1, show: bool = True) -> dict[str, tuple[SimResult, dict]]:
+    """Triagem rapida: 1 seed por perfil, todos em paralelo. Retorna {perfil: (resultado, relatorio)}."""
+    rs = simulate_many(E, [(p, hours, seed) for p in profiles])
+    out = {p: (r, pacing_report(E, r)) for p, r in zip(profiles, rs)}
+    if show:
+        for p, (r, rep) in out.items():
+            print(f"== {p}: fim {rep['finished_at_h']}h | planetas {rep['planet_unlock_h']} | prestigios "
+                  f"{len(rep['prestiges'])} | idle {rep.get('idle_share_final_pct')}% | paredes {len(rep['walls'])} "
+                  f"(pior {max((w['gap_min'] for w in rep['walls']), default=0)} min) | run {rep.get('run_s_median')}s")
+            for w in rep["warnings"]:
+                print("   AVISO:", w)
+    return out
+
+
+def monte_carlo(E: dict, profiles: list[str] = ("casual", "engaged", "expert"), seeds: int = 5,
+                hours: float = 40.0) -> dict[str, list[SimResult]]:
+    """Varias seeds por perfil (em paralelo): mostra a dispersao (sorte, habilidade)."""
+    jobs = [(p, hours, s) for p in profiles for s in range(seeds)]
+    rs = simulate_many(E, jobs)
+    out: dict[str, list[SimResult]] = {p: [] for p in profiles}
+    for (p, _, _), r in zip(jobs, rs):
+        out[p].append(r)
+    return out
+
+
+def summarize_mc(E: dict, mc: dict[str, list[SimResult]]) -> dict:
+    out = {}
+    for p, rs in mc.items():
+        fin = [r.finished_at_h for r in rs if r.finished_at_h is not None]
+        out[p] = {"finished": f"{len(fin)}/{len(rs)}",
+                  "finish_h_median": round(st.median(fin), 2) if fin else None,
+                  "finish_h_range": [round(min(fin), 2), round(max(fin), 2)] if fin else None}
+        planets: dict[str, list[float]] = {}
+        for r in rs:
+            seen = set()
+            for e in r.events:  # so o PRIMEIRO desbloqueio de cada planeta por simulacao
+                if e["type"] == "planet" and e["id"] not in seen:
+                    seen.add(e["id"])
+                    planets.setdefault(e["id"], []).append(e["t"] / 3600)
+        out[p]["planet_unlock_h_median"] = {k: round(st.median(v), 2) for k, v in planets.items()}
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Ajuste automatico (tuning)
+# ---------------------------------------------------------------------------
+
+def solve(E: dict, path: str, metric: Callable[[dict], float], target: float, lo: float, hi: float,
+          iters: int = 10, log: bool = True, increasing: bool | None = None, workers: int | None = None,
+          verbose: bool = False) -> float:
+    """Acha o valor do parametro `path` para que metric(E) ~= target (nao altera E).
+    metric recebe uma copia da spec (ex.: lambda e: planet_unlock_hour(e, 'ares')).
+    Em rodadas paralelas: cada rodada avalia N valores (1 por nucleo) entre lo e hi, estreita o intervalo
+    em torno do alvo e no fim interpola. `iters` = precisao equivalente a N passos de busca binaria
+    (10 ~ intervalo reduzido 1000x), convertida no numero de rodadas necessario."""
+    n = max(3, min(workers or os.cpu_count() or 4, 16))
+    rounds = max(1, math.ceil(iters * math.log(2) / math.log(n - 1)))
+
+    def at(v):
+        e = copy.deepcopy(E)
+        set_path(e, path, v)
+        return metric(e)
+
+    pts: dict[float, float] = {}
+    a, b = lo, hi
+    for _ in range(rounds):
+        grid = [a * (b / a) ** (i / (n - 1)) if log else a + (b - a) * i / (n - 1) for i in range(n)]
+        grid = [g for g in grid if g not in pts]
+        pts.update(zip(grid, parallel_map(at, grid, workers=n)))
+        xs = sorted(pts)
+        fs = [pts[x] for x in xs]
+        if verbose:
+            print("  solve:", [(fmt(x), round(f, 2)) for x, f in zip(xs, fs)])
+        brackets = [(xs[i], xs[i + 1]) for i in range(len(xs) - 1)
+                    if (fs[i] - target) * (fs[i + 1] - target) <= 0]
+        if brackets:
+            a, b = brackets[0]
+        else:  # alvo fora do intervalo: fica no extremo mais proximo
+            j = min(range(len(xs)), key=lambda i: abs(fs[i] - target))
+            return xs[j]
+    fa, fb = pts[a], pts[b]
+    if fb == fa:
+        return math.sqrt(a * b) if log else (a + b) / 2
+    u = (target - fa) / (fb - fa)
+    return a * (b / a) ** u if log else a + (b - a) * u
+
+
+def planet_unlock_hour(E: dict, pid: str, profile: str = "engaged", seed: int = 1, hours: float = 60) -> float:
+    r = simulate(E, profile, hours, seed)
+    for e in r.events:
+        if e["type"] == "planet" and e["id"] == pid:
+            return e["t"] / 3600
+    return hours * 2
+
+
+# ---------------------------------------------------------------------------
+# Calibracao com telemetria do jogo real
+# ---------------------------------------------------------------------------
+
+def calibrate(E: dict, csv_path: str, profile: str = "engaged") -> dict:
+    """Ajusta 'waste' e 'hover_s' do perfil comparando o gas previsto com o gas real por entrega.
+    CSV (exportado pelo jogo): planet,distance,thrust,efficiency,tank,gas_used,hop_time_s,quality,crashed
+    Retorna os overrides sugeridos para E['profiles_override'][profile]."""
+    rows = list(csv.DictReader(open(csv_path)))
+    planets = {p["id"]: p for p in E["planets"]}
+    prof = profile_from(E, profile)
+    best = (math.inf, prof.waste, prof.hover_s)
+    for waste in [1.0 + i * 0.025 for i in range(41)]:
+        for hover in [i * 0.25 for i in range(17)]:
+            prof.waste, prof.hover_s = waste, hover
+            err = 0.0
+            for r in rows:
+                s = {"thrust": float(r["thrust"]), "efficiency": float(r["efficiency"]), "tank": float(r["tank"]),
+                     "dry_mass": E["ship"]["base"].get("dry_mass", 1.0)}
+                pred = gas_for(E, hop_dv(planets[r["planet"]], float(r["distance"]), s, prof), s, float(r["tank"]))
+                err += (math.log(max(pred, 1e-9)) - math.log(max(float(r["gas_used"]), 1e-9))) ** 2
+            if err < best[0]:
+                best = (err, waste, hover)
+    q = [float(r["quality"]) for r in rows if r.get("quality")]
+    out = {"waste": round(best[1], 3), "hover_s": best[2]}
+    if q:
+        out["skill"] = round(st.mean(q), 3)
+        out["skill_sd"] = round(st.pstdev(q), 3)
+    ht = [float(r["hop_time_s"]) for r in rows if r.get("hop_time_s")]
+    if ht:
+        pred_t = [hop_time(planets[r["planet"]], float(r["distance"]), {"thrust": float(r["thrust"])},
+                           Profile("x", hop_overhead_s=0)) for r in rows]
+        out["hop_overhead_s"] = round(max(0.0, st.mean(a - b for a, b in zip(ht, pred_t))), 2)
+    out["fit_rmse_log"] = round(math.sqrt(best[0] / max(1, len(rows))), 3)
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Formatacao de numeros (mesma logica do GDScript exportado)
+# ---------------------------------------------------------------------------
+SUFFIXES = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"]
+
+
+def fmt(x: float, style: str = "suffix", digits: int = 3) -> str:
+    """suffix: 1.23K ... 4.56Dc, depois letras aa, ab... | sci: 1.23e45 | eng: 123e42.
+    Abaixo de 1000 mostra inteiro (ou 1 casa se < 10 e fracionario)."""
+    if x != x:
+        return "NaN"
+    if math.isinf(x):
+        return "inf"
+    neg = x < 0
+    x = abs(x)
+    if x < 1000:
+        s = f"{x:.1f}" if (x < 10 and x != int(x)) else f"{int(x)}"
+        return ("-" if neg else "") + s
+    e3 = int(math.floor(math.log10(x) / 3))
+    if style == "sci":
+        e = int(math.floor(math.log10(x)))
+        s = f"{x / 10 ** e:.{digits - 1}f}e{e}"
+    elif style == "eng":
+        m = x / 10 ** (3 * e3)
+        s = f"{m:.{max(0, digits - len(str(int(m))))}f}e{3 * e3}"
+    else:
+        m = x / 10 ** (3 * e3)
+        if e3 < len(SUFFIXES):
+            suf = SUFFIXES[e3]
+        else:
+            k = e3 - len(SUFFIXES)
+            suf = chr(97 + (k // 26) % 26) + chr(97 + k % 26)
+        s = f"{m:.{max(0, digits - len(str(int(m))))}f}{suf}"
+    return ("-" if neg else "") + s
+
+
+def fmt_time(seconds: float) -> str:
+    s = int(seconds)
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m{s % 60:02d}s"
+    return f"{s // 3600}h{(s % 3600) // 60:02d}m"
+
+
+# ---------------------------------------------------------------------------
+# Tabelas e graficos
+# ---------------------------------------------------------------------------
+
+def upgrade_table(E: dict, uid: str, levels: range = range(0, 21, 2)) -> str:
+    """Tabela markdown nivel -> custo, valor do stat (para revisar a curva de um upgrade)."""
+    u = next(x for x in E["upgrades"] if x["id"] == uid)
+    head = "| nivel | " + " | ".join(f"custo {k}" for k in u["cost"]) + f" | {u['effect']['stat']} |\n"
+    head += "|---" * (len(u["cost"]) + 2) + "|\n"
+    rows = []
+    for lv in levels:
+        costs = " | ".join(fmt(cost_at(s, lv)) for s in u["cost"].values())
+        stat = ship_stats(E, {uid: lv})[u["effect"]["stat"]]
+        rows.append(f"| {lv} | {costs} | {stat:.3g} |")
+    return head + "\n".join(rows)
+
+
+_PAL = [(77, 155, 230), (251, 185, 84), (30, 188, 115), (240, 79, 120), (168, 132, 243), (48, 225, 185),
+        (249, 194, 43), (232, 59, 59)]
+
+
+def line_chart(series: dict[str, list[tuple[float, float]]], path: str, title: str = "", logy: bool = False,
+               xlabel: str = "horas", markers: list[tuple[float, str]] | None = None, W: int = 1000,
+               H: int = 420, stems: bool = False) -> str:
+    """Grafico de linhas simples (PIL). markers = [(x, rotulo)] linhas verticais (desbloqueios/prestigio)."""
+    from PIL import Image, ImageDraw
+    img = Image.new("RGB", (W, H), (20, 16, 24))
+    d = ImageDraw.Draw(img)
+    L, R, Tp, B = 70, 20, 30, 40
+    pts_all = [p for s in series.values() for p in s if (not logy or p[1] > 0)]
+    if not pts_all:
+        img.save(path)
+        return path
+    xs = [p[0] for p in pts_all]
+    ys = [math.log10(p[1]) if logy else p[1] for p in pts_all]
+    x0, x1 = min(xs), max(xs) or 1
+    y0, y1 = min(ys), max(ys)
+    if y1 == y0:
+        y1 = y0 + 1
+    X = lambda x: L + (x - x0) / ((x1 - x0) or 1) * (W - L - R)
+    Y = lambda y: H - B - (y - y0) / (y1 - y0) * (H - Tp - B)
+    d.text((10, 8), title, fill=(230, 230, 230))
+    for i in range(6):
+        yy = y0 + (y1 - y0) * i / 5
+        d.line([(L, Y(yy)), (W - R, Y(yy))], fill=(46, 40, 56))
+        lab = f"1e{yy:.0f}" if logy else fmt(yy)
+        d.text((5, Y(yy) - 6), lab, fill=(150, 150, 165))
+    for i in range(6):
+        xx = x0 + (x1 - x0) * i / 5
+        d.text((X(xx) - 10, H - B + 8), f"{xx:.1f}", fill=(150, 150, 165))
+    d.text((W - 60, H - 18), xlabel, fill=(150, 150, 165))
+    for (mx, lab) in markers or []:
+        d.line([(X(mx), Tp), (X(mx), H - B)], fill=(98, 85, 101))
+        d.text((X(mx) + 3, Tp + 2), lab, fill=(199, 220, 208))
+    for i, (name, s) in enumerate(series.items()):
+        col = _PAL[i % len(_PAL)]
+        p = [(X(a), Y(math.log10(b) if logy else b)) for a, b in s if (not logy or b > 0)]
+        if stems:  # barras verticais (eventos discretos, ex.: intervalo antes de cada compra)
+            for px_, py_ in p:
+                d.line([(px_ + i, H - B), (px_ + i, py_)], fill=col, width=1)
+        elif len(p) > 1:
+            d.line(p, fill=col, width=2)
+        d.text((L + 10 + i * 150, Tp + 16), name, fill=col)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    img.save(path)
+    return path
+
+
+def write_report(E: dict, results: list[SimResult], out_dir: str, title: str = "Relatorio de balanceamento") -> str:
+    """Gera <out_dir>/report.md + graficos (dinheiro log, renda/min, intervalos entre compras, stats)."""
+    os.makedirs(out_dir, exist_ok=True)
+    main_res = "credits"
+    md = [f"# {title}\n", f"Versao da spec: {E.get('meta', {}).get('version', '?')}\n"]
+    series_money, series_inc, series_gap = {}, {}, {}
+    markers = []
+    for r in results:
+        key = f"{r.profile}#{r.seed}"
+        series_money[key] = [(s["t"] / 3600, max(sum(s["money"].values()), 1e-9)) for s in r.samples]
+        inc = []
+        for s in r.samples:
+            inc.append((s["t"] / 3600, sum(s["rewards"].values()) / s["run_s"] * 60))
+        # media movel para legibilidade
+        k = max(1, len(inc) // 150)
+        series_inc[key] = [(inc[i][0], st.mean(v for _, v in inc[max(0, i - k):i + 1])) for i in range(0, len(inc), k)]
+        series_gap[key] = [(e["t"] / 3600, e["gap_s"] / 60) for e in r.events if e["type"] in ("upgrade", "planet")]
+        if r is results[0]:  # marcadores: 1o desbloqueio de cada planeta + prestigios ('P')
+            seen: set[str] = set()
+            for e in r.events:
+                if e["type"] == "planet" and e["id"] not in seen:
+                    seen.add(e["id"])
+                    markers.append((e["t"] / 3600, e["id"]))
+                elif e["type"] == "prestige":
+                    markers.append((e["t"] / 3600, "P"))
+    line_chart(series_money, os.path.join(out_dir, "money.png"), f"{main_res} + recursos em caixa (log)", True,
+               markers=markers)
+    line_chart(series_inc, os.path.join(out_dir, "income.png"), "renda por minuto (log)", True, markers=markers)
+    line_chart(series_gap, os.path.join(out_dir, "gaps.png"), "minutos entre compras (paredes = picos)", False,
+               markers=markers, stems=True)
+    r0 = results[0]
+    stat_names = list(E["ship"]["base"])
+    series_stats = {n: [(s["t"] / 3600, s["stats"][n] / max(E["ship"]["base"][n], 1e-9)) for s in r0.samples]
+                    for n in stat_names}
+    line_chart(series_stats, os.path.join(out_dir, "stats.png"), "stats da nave (x base, log)", True, markers=markers)
+    md.append("![dinheiro](money.png)\n![renda](income.png)\n![intervalos](gaps.png)\n![stats](stats.png)\n")
+    for r in results:
+        rep = pacing_report(E, r)
+        md.append(f"## Perfil {r.profile} (seed {r.seed})\n")
+        md.append(f"- Horas simuladas: {rep['hours_simulated']} | runs: {rep['runs']} | "
+                  f"objetivo final: {rep['finished_at_h']}h")
+        md.append(f"- Primeira compra: {rep['first_purchase_s']}s | intervalo mediano: {rep['gap_min_median']} min "
+                  f"| p90: {rep['gap_min_p90']} min")
+        md.append(f"- Run mediano: {rep.get('run_s_median')}s, {rep.get('deliveries_median')} entregas, "
+                  f"batidas {rep.get('crash_rate_pct')}%")
+        md.append(f"- Planetas: {rep['planet_unlock_h']}")
+        md.append(f"- Prestigios: {rep['prestiges'][:6]}{' ...' if len(rep['prestiges']) > 6 else ''}")
+        md.append(f"- Niveis comprados por upgrade (%): {rep['levels_share_pct']}")
+        md.append(f"- Gasto por upgrade (%): {rep['spend_share_pct']}")
+        md.append(f"- Maior numero: {fmt(rep.get('max_number', 0))} -> {rep.get('number_class')}")
+        md.append("- **Avisos:**" if rep["warnings"] else "- Sem avisos")
+        md += [f"  - {w}" for w in rep["warnings"]]
+        md.append("")
+    md.append("## Curvas dos upgrades\n")
+    for u in E["upgrades"]:
+        md.append(f"### {u.get('name', u['id'])}\n")
+        md.append(upgrade_table(E, u["id"], range(0, min(u.get("max_level", 30), 30) + 1, 5)) + "\n")
+    path = os.path.join(out_dir, "report.md")
+    with open(path, "w") as f:
+        f.write("\n".join(md))
+    return path
+
+
+def print_summary(E: dict, res: SimResult) -> dict:
+    rep = pacing_report(E, res)
+    keys = ["profile", "hours_simulated", "runs", "finished_at_h", "first_purchase_s", "gap_min_median",
+            "gap_min_p90", "run_s_median", "deliveries_median", "crash_rate_pct", "planet_unlock_h", "prestiges",
+            "levels_share_pct", "spend_share_pct", "idle_share_pct", "idle_share_final_pct", "number_class"]
+    for k in keys:
+        if k in rep:
+            v = rep[k]
+            if k == "prestiges":
+                v = f"{len(v)} (primeiro: {v[0] if v else None})"
+            print(f"{k:18s} {v}")
+    for w in rep["warnings"]:
+        print("  AVISO:", w)
+    if not rep["warnings"]:
+        print("  OK: sem avisos")
+    return rep
+
+
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("uso: econ.py sim <economy.json> [perfil] [horas] [seed]\n"
+              "     econ.py mc <economy.json> [seeds] [horas]\n"
+              "     econ.py screen <economy.json> [horas]      (3 perfis em paralelo)\n"
+              "     econ.py report <economy.json> <out_dir> [horas]\n"
+              "     econ.py table <economy.json> <upgrade_id>\n"
+              "     econ.py fmt <numero> [suffix|sci|eng]")
+        sys.exit(0)
+    cmd = sys.argv[1]
+    if cmd == "fmt":
+        print(fmt(float(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "suffix"))
+        sys.exit(0)
+    E_ = load(sys.argv[2])
+    if cmd == "sim":
+        print_summary(E_, simulate(E_, sys.argv[3] if len(sys.argv) > 3 else "engaged",
+                                   float(sys.argv[4]) if len(sys.argv) > 4 else 40,
+                                   int(sys.argv[5]) if len(sys.argv) > 5 else 1))
+    elif cmd == "mc":
+        mc_ = monte_carlo(E_, seeds=int(sys.argv[3]) if len(sys.argv) > 3 else 5,
+                          hours=float(sys.argv[4]) if len(sys.argv) > 4 else 40)
+        print(json.dumps(summarize_mc(E_, mc_), indent=2, ensure_ascii=False))
+    elif cmd == "report":
+        hrs = float(sys.argv[4]) if len(sys.argv) > 4 else 40
+        rs_ = simulate_many(E_, [(p, hrs, 1) for p in ("engaged", "casual", "expert")])
+        print(write_report(E_, rs_, sys.argv[3]))
+    elif cmd == "screen":
+        screen(E_, hours=float(sys.argv[3]) if len(sys.argv) > 3 else 40)
+    elif cmd == "table":
+        print(upgrade_table(E_, sys.argv[3]))
