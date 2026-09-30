@@ -40,5 +40,6 @@
 
 ## Decisões registradas
 <!-- Adicione aqui: data — decisão — motivo -->
+- 2026-09-30 — **riqueza de detalhe**: cenas em camadas com perspectiva atmosférica, céu em faixas, relevo facetado, textura no chão; arte minimalista/chapada foi reprovada ("muito feia", "todos horríveis") — referências do usuário em patterns/moon-scene.md
 - 2026-09-30 — estilo futurista (lander B) define a arte do jogo; propulsor de plasma ciano — escolha do usuário entre 5 propostas
 - 2026-09-29 — resolução 640×360 e terreno em polígono irregular — respostas do usuário / padrão da skill (§7) + modelo de run da economy-balance
