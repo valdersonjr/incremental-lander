@@ -33,3 +33,7 @@
 | 2026-09-30 | Teclas registradas por código a partir do `world.json` (W/↑/Espaço propulsor, A/D/←/→ girar, R reiniciar) | escrever o input map à mão no project.godot é frágil | `WorldConfig.register_input()` |
 | 2026-09-30 | Propulsor liga/desliga (sem acelerador analógico); rotação sem inércia; lander não gira pousado | simplicidade no protótipo; rever na Fase 10 (game feel) | `game/flight/lander.gd` |
 | 2026-09-30 | Sensação de voo: tempo ×3 → ×4,5 e giro 2,5 → 4 rad/s | feedback do usuário: "motor fraco e giro pesado"; relação motor/gravidade é da economia e não mudou | `data/world.json` |
+| 2026-09-30 | Entregas encadeadas: a próxima plataforma nasce a `d` metros à frente da atual e o terreno é regenerado (mesma seed ⇒ trecho já visto não muda) | segue o run-model (ofertas são distâncias); simples e determinístico | `game/flight/flight.gd` |
+| 2026-09-30 | Colisão do terreno por segmentos (`ConcavePolygonShape2D`) em vez de polígono | leve e robusta para terrenos de vários km | `game/terrain/terrain.gd` |
+| 2026-09-30 | Oferta mostra "mín ~X gás" (Δv ideal/eficiência, sem desperdício); demo exige folga 2,2× | o gasto real é maior que o ideal; evita o jogador achar que a estimativa é exata | `game/run/offer_panel.gd`, `RunState.best_offer` |
+| 2026-09-30 | Lander só decola com uma entrega escolhida; pousar fora do alvo sem gás encerra o run ("sem gás") | fluxo claro de run | `game/flight/` |

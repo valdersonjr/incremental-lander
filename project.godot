@@ -17,6 +17,8 @@ config/features=PackedStringArray("4.7")
 
 [autoload]
 
+Events="*res://autoload/events.gd"
+GameState="*res://autoload/game_state.gd"
 Telemetry="*res://autoload/telemetry.gd"
 
 [debug]

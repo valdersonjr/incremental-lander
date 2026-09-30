@@ -4,23 +4,21 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-09-30)
-- **Fases 0 e 1 concluídas.** Protótipo de voo jogável: `godot --path .` (ou F5 no editor).
-  Controles: W/↑/Espaço propulsor, A/D/←/→ girar, R reinicia. `-- --demo` liga o piloto automático.
-- O demo decola, cruza 800 m na Lua e pousa na plataforma alvo (qualidade ~95%, 58 de gás);
-  a telemetria vai para `~/Library/Application Support/Godot/app_userdata/Incremental Lander/telemetry/deliveries.csv`.
-- Economia v6 em `data/economy.json` (não mudou). Nenhum asset de arte/som ainda (placeholders geométricos).
-- Verificação: `gdtool.py check` (19 scripts ok), `test` (14 testes + paridade), `run`/`capture` com `-- --demo`.
+- **Fases 0, 1 e 2 concluídas.** Jogo roda com `godot --path .`: escolher entrega (1–8), voar, pousar, receber
+  créditos, encadear até 6 entregas; o run acaba por falta de gás, batida, limite ou [E]; resumo; [Enter] novo run.
+- Sensação ajustada pelo feedback do usuário (tempo ×4,5, giro 4 rad/s). Relação motor/gravidade é da economia.
+- Créditos acumulam na sessão (`GameState`), **ainda não há onde gastar** (Fase 3) nem save (Fase 7).
+- Demo (`-- --demo`): 5 runs seguidos sem erros; 1–2 entregas por run com a nave inicial, 54–537 créditos.
+- Visual ainda é placeholder geométrico (usuário achou feio; arte fica para depois da mecânica — decisão dele).
 
 ## Próximo passo
-1. **Usuário testar o voo manual** e dar feedback de sensação (velocidade de rotação, força do motor, tolerâncias,
-   tempo ×3) — ajustes em `data/world.json`.
-2. **Fase 2 — loop do run** (skill `godot-dev` + `economy-balance`): ofertas de entrega (`EconMath.contract_pay`),
-   encadear entregas até o gás acabar (teto 6), resumo do run, `GameState` + `Events`.
+**Fase 3 — Hangar e upgrades** (skills `godot-dev` + `economy-balance` + `pixel-art` só se precisar de imagem):
+tela entre runs com os upgrades da spec (custo `EconMath.upgrade_cost`, comprar, comprar máx.), aplicar
+`GameState.ship_stats()` ao voo (já é usado ao criar o run), mostrar alcance estimado.
 
 ## Pendências conhecidas
-- Calibração: o autopiloto gastou 58 de gás em 800 m (modelo prevê 35 expert / 43 engaged / 52 casual) —
-  ele desce devagar demais; dado real do jogador humano virá dos testes manuais (Fase 10: `calibrate()`).
-- Terreno ainda é um polígono único (sem chunks); ok para distâncias da Lua do protótipo, rever para 15–60 km.
+- Calibração: autopiloto gasta ~2× o gás mínimo ideal (desce devagar). Dados humanos virão dos testes (Fase 10).
+- Terreno regenerado inteiro a cada entrega (sem chunks) — ok até agora; rever se ficar lento em 15–60 km.
 - Economia: ~20 min juntando para Ares por volta de 1 h; prestígio obrigatório por design.
 - Em aberto no design: pós-jogo, menus, nome final (GDD §12).
 

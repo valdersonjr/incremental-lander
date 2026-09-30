@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fase 1 — protótipo de voo)
+## Jogo (Fases 1–2 — voo + loop do run)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=3, tolerâncias de pouso, relevo por planeta, teclas, demo
 scripts/world/
@@ -29,27 +29,36 @@ scripts/world/
   landing_rules.gd            # LandingRules: tolerâncias (× gear^0.5), crash_reason(), quality() 0..1 (puro)
   terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias): relevo + plataformas planas (puro)
   autopilot.gd                # Autopilot: modo --demo (decola vertical, cruza acima do relevo, desce no alvo)
-game/main.tscn/.gd            # Main → World + GUI; args: --demo --seed=N --planet=id --distance=m; R reinicia;
-                              # imprime "DELIVERY_RESULT {json}" (verificação automática)
-game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, distância, stats, demo);
-                              # sinal delivery_finished(result) → Telemetry
+game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
+                              # → ofertas … → resumo → novo run. Args: --demo --seed=N --planet=id. R reinicia.
+                              # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
+game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
+                              # cria a próxima plataforma a partir da atual e estende o terreno;
+                              # sinais delivery_finished(result) (→ Telemetry) e stranded (pousou sem gás fora do alvo)
+scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram), take_offer, complete_delivery
+                              # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
+game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
+game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
+autoload/events.gd            # Events: resources_changed, run_started, run_finished
+autoload/game_state.gd        # GameState: recursos da sessão, níveis, loja, prestígio; ship_stats() via EconMath
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
-game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D/CollisionPolygon2D; plataformas em _draw
-game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, mensagem
+game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
+game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
+tests/unit/run/               # test_run_state
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
 
 ## Pastas ainda não criadas (padrão godot-dev)
 ```
-autoload/events.gd, game_state.gd, save_manager.gd   # Fases 2–7
+autoload/save_manager.gd                              # Fase 7
 game/hangar/, game/prestige/ ...                      # Fases 3–6
 assets/ (skills pixel-art / sound-design)             # Fases 8–9
 ```
 
 ## Autoloads
-- **Implementado**: `Telemetry` (autoload em project.godot).
+- **Implementados** (ordem no project.godot): `Events`, `GameState`, `Telemetry`.
 
 Planejados (`godot-dev`):
 - `Events` — event bus (sinais globais, sem estado).

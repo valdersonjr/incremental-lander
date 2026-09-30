@@ -8,6 +8,7 @@ const COLOR_BAD := Color("#e83b3b")     # red
 const COLOR_TEXT := Color("#c7dcd0")    # mist
 
 var flight: Flight = null
+var run: RunState = null
 var _status := ""
 
 @onready var _gas: Label = %Gas
@@ -16,11 +17,13 @@ var _status := ""
 @onready var _alt: Label = %Alt
 @onready var _dist: Label = %Dist
 @onready var _msg: Label = %Message
+@onready var _credits: Label = %Credits
 
 
-## Liga o HUD a uma cena de voo (referencia atribuida pelo pai).
-func bind(p_flight: Flight) -> void:
+## Liga o HUD a uma cena de voo e ao run atual (referencias atribuidas pelo pai).
+func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
+	run = p_run
 	flight.delivery_finished.connect(_on_delivery_finished)
 	_status = "W/Espaco: propulsor  A/D: girar  R: reiniciar"
 
@@ -36,9 +39,14 @@ func _process(_delta: float) -> void:
 	_set_speed(_vx, "V.HOR ", absf(l.vel_m.x), tol["max_vx"])
 	var ground := TerrainGen.height_at(flight.terrain.ridge, l.global_position.x)
 	_alt.text = "ALT %d m" % int(WorldConfig.px_to_m(ground - l.global_position.y))
-	var pad := flight.target_pad()
-	_dist.text = "ALVO %d m" % int(WorldConfig.px_to_m(float(pad["x"]) - l.global_position.x))
+	if flight.target_pad_id >= 0:
+		var pad := flight.target_pad()
+		_dist.text = "ALVO %d m" % int(WorldConfig.px_to_m(float(pad["x"]) - l.global_position.x))
+	else:
+		_dist.text = "ESCOLHA UMA ENTREGA"
 	_msg.text = _status
+	var entregas := "ENTREGA %d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
+	_credits.text = "%s cr   %s" % [EconMath.fmt(GameState.amount("credits")), entregas]
 
 
 func _set_speed(label: Label, title: String, value: float, limit: float) -> void:
@@ -51,4 +59,4 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	if result["crashed"]:
 		_status = "BATEU (%s) - R para tentar de novo" % result["reason"]
 	else:
-		_status = "ENTREGA! qualidade %d%% - gas usado %.1f" % [int(result["quality"] * 100.0), result["gas_used"]]
+		_status = "ENTREGA! qualidade %d%%  gas usado %.1f" % [int(result["quality"] * 100.0), result["gas_used"]]

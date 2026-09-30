@@ -1,54 +1,128 @@
-## Entrada do jogo: Main -> World (voo) + GUI (HUD). Le args: --demo (piloto automatico), --seed=N,
-## --planet=id, --distance=m. Fase 1: um voo de entrega; R reinicia.
+## Entrada do jogo: Main -> World (voo) + GUI (HUD, ofertas, resumo). Orquestra o run (Fase 2):
+## ofertas -> voo -> entrega -> recompensas (GameState) -> ofertas ... -> resumo -> novo run.
+## Args: --demo (piloto automatico escolhe e voa), --seed=N, --planet=id. R reinicia o run.
 extends Node
 
 const FLIGHT_SCENE := preload("res://game/flight/flight.tscn")
 const HUD_SCENE := preload("res://game/hud/hud.tscn")
+const OFFER_SCENE := preload("res://game/run/offer_panel.tscn")
+const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 
 var _args: Dictionary = {}
+var _demo := false
+var _run_seed := 0
+var _run: RunState = null
 var _flight: Flight = null
 var _hud: Hud = null
+var _offers: OfferPanel = null
+var _summary: RunSummary = null
 
 @onready var _world: Node2D = %World
 @onready var _gui: CanvasLayer = %GUI
 
 
 func _ready() -> void:
-	EconMath.load_spec()
 	WorldConfig.load_config()
 	WorldConfig.register_input()
 	_args = _parse_args(OS.get_cmdline_user_args())
-	_start_flight()
+	_demo = _args.has("demo")
+	_run_seed = int(_args.get("seed", WorldConfig.load_config()["demo"]["seed"]))
+	if _args.has("planet"):
+		GameState.current_planet = str(_args["planet"])
+	_start_run()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"restart"):
-		_start_flight()
+		_start_run()
 
 
-func _start_flight() -> void:
-	if _flight != null:
-		_flight.queue_free()
-		_hud.queue_free()
-	var demo_cfg: Dictionary = WorldConfig.load_config()["demo"]
+func _start_run() -> void:
+	for n: Node in [_flight, _hud, _offers, _summary]:
+		if n != null:
+			n.queue_free()
+	var stats := GameState.ship_stats()
+	_run = RunState.create(GameState.current_planet, stats, _run_seed)
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
 	_hud = HUD_SCENE.instantiate()
 	_gui.add_child(_hud)
-	_hud.bind(_flight)
+	_offers = OFFER_SCENE.instantiate()
+	_gui.add_child(_offers)
+	_summary = SUMMARY_SCENE.instantiate()
+	_gui.add_child(_summary)
+	_summary.visible = false
+	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
+	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
-	var stats := EconMath.ship_stats({})
-	_flight.start(
-		str(_args.get("planet", "luna")),
-		int(_args.get("seed", demo_cfg["seed"])),
-		float(_args.get("distance", demo_cfg["target_distance_m"])),
-		stats,
-		_args.has("demo"))
+	_flight.stranded.connect(_on_stranded)
+	_offers.offer_chosen.connect(_on_offer_chosen)
+	_offers.end_requested.connect(_on_end_requested)
+	_summary.continue_requested.connect(_on_continue)
+	Events.run_started.emit(GameState.current_planet)
+	_show_offers()
+
+
+func _show_offers() -> void:
+	var gas := _flight.lander.gas
+	if not _run.over and not _run.can_continue(gas):
+		_run.finish("sem_gas")
+	if _run.over:
+		_end_run()
+		return
+	_offers.show_offers(_run, gas)
+	if _demo:
+		await get_tree().create_timer(0.5).timeout
+		var i := _run.best_offer(_flight.lander.gas)
+		if i < 0:
+			_run.finish("sem_gas")
+			_end_run()
+		else:
+			_on_offer_chosen(i)
+
+
+func _on_offer_chosen(index: int) -> void:
+	var d := _run.take_offer(index)
+	_offers.visible = false
+	_flight.set_target(d)
+
+
+func _on_end_requested() -> void:
+	_run.finish("encerrado")
+	_end_run()
 
 
 func _on_delivery_finished(result: Dictionary) -> void:
-	# linha para verificacao automatica (gdtool run/capture)
-	print("DELIVERY_RESULT ", JSON.stringify(result))
+	print("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
+	if result["crashed"]:
+		_run.crash(str(result["reason"]))
+		_end_run()
+		return
+	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"])
+	GameState.add_rewards(rewards)
+	_show_offers()
+
+
+func _on_stranded() -> void:
+	_run.finish("sem_gas")
+	_end_run()
+
+
+func _end_run() -> void:
+	_offers.visible = false
+	var s := _run.summary()
+	_summary.show_summary(s)
+	GameState.runs_done += 1
+	Events.run_finished.emit(s)
+	print("RUN_SUMMARY ", JSON.stringify(s))
+	if _demo:
+		await get_tree().create_timer(2.0).timeout
+		_on_continue()
+
+
+func _on_continue() -> void:
+	_run_seed += 1
+	_start_run()
 
 
 func _parse_args(args: PackedStringArray) -> Dictionary:

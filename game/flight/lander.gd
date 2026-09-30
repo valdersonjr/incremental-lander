@@ -23,6 +23,7 @@ var params: Dictionary = {}             # gravity, thrust, efficiency, drag, tan
 var pads: Array[Dictionary] = []
 var autopilot: Autopilot = null
 var thrusting := false
+var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
 
@@ -50,7 +51,7 @@ func _physics_process(delta: float) -> void:
 	var cfg: Dictionary = WorldConfig.load_config()
 	var controls := _read_controls()
 	if state == State.LANDED:
-		if controls["thrust"] and gas > 0.0:
+		if controls["thrust"] and gas > 0.0 and can_takeoff:
 			state = State.FLYING
 			flight_time_m = 0.0
 			gas_at_takeoff = gas

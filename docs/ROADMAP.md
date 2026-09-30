@@ -25,11 +25,11 @@
 - [x] 1.7 Modo `--demo` (piloto automático) para verificação com `gdtool.py run/capture`
 - Pronto quando: dá para decolar, voar até uma plataforma a X m, pousar/bater, o CSV registra o salto, e `check`/`test`/`run`/`capture` passam.
 
-## Fase 2 — Loop do run · skills: `godot-dev`, `economy-balance`
-- [ ] 2.1 Ofertas de entrega (distância × pagamento via `EconMath.contract_pay`), escolha pelo jogador
-- [ ] 2.2 Encadear entregas no mesmo run, renovação de ofertas, teto de 6, fim por gás/batida
-- [ ] 2.3 Resumo do run (entregas, qualidade média, créditos)
-- [ ] 2.4 `GameState` (autoload): recursos, níveis, planetas; formatação `EconMath.fmt`
+## Fase 2 — Loop do run ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance`
+- [x] 2.1 Ofertas de entrega (distância × pagamento via `EconMath.contract_pay`), escolha pelo jogador
+- [x] 2.2 Encadear entregas no mesmo run, renovação de ofertas, teto de 6, fim por gás/batida
+- [x] 2.3 Resumo do run (entregas, qualidade média, créditos)
+- [x] 2.4 `GameState` (autoload): recursos, níveis, planetas; formatação `EconMath.fmt`
 
 ## Fase 3 — Hangar e upgrades · skills: `godot-dev`, `economy-balance`, `pixel-art` (UI)
 - [ ] 3.1 Tela de hangar entre runs: lista de upgrades, custo, comprar, comprar máx.

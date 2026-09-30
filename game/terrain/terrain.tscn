@@ -18,5 +18,5 @@ default_color = Color(0.608, 0.671, 0.698, 1)
 
 [node name="Body" type="StaticBody2D" parent="."]
 
-[node name="Collision" type="CollisionPolygon2D" parent="Body"]
+[node name="Collision" type="CollisionShape2D" parent="Body"]
 unique_name_in_owner = true

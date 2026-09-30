@@ -13,7 +13,7 @@ var target_pad_id := -1
 
 @onready var _fill: Polygon2D = %Fill
 @onready var _surface: Line2D = %Surface
-@onready var _collision: CollisionPolygon2D = %Collision
+@onready var _collision: CollisionShape2D = %Collision
 
 
 ## Gera o terreno e devolve os dados (ridge, pads, polygon).
@@ -23,7 +23,14 @@ func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) ->
 	pads.assign(data["pads"])
 	_fill.polygon = data["polygon"]
 	_surface.points = ridge
-	_collision.polygon = data["polygon"]
+	# colisao por segmentos da superficie: leve e robusta para terrenos de varios km
+	var segs := PackedVector2Array()
+	for i in ridge.size() - 1:
+		segs.append(ridge[i])
+		segs.append(ridge[i + 1])
+	var shape := ConcavePolygonShape2D.new()
+	shape.segments = segs
+	_collision.shape = shape
 	queue_redraw()
 	return data
 
