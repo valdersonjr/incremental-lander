@@ -31,10 +31,10 @@
 - [x] 2.3 Resumo do run (entregas, qualidade média, créditos)
 - [x] 2.4 `GameState` (autoload): recursos, níveis, planetas; formatação `EconMath.fmt`
 
-## Fase 3 — Hangar e upgrades · skills: `godot-dev`, `economy-balance`, `pixel-art` (UI)
-- [ ] 3.1 Tela de hangar entre runs: lista de upgrades, custo, comprar, comprar máx.
-- [ ] 3.2 Mapear `EconMath.ship_stats` → parâmetros físicos (thrust→aceleração, tank→gás, efficiency→Δv/gás, gear→tolerância)
-- [ ] 3.3 Mostrar "alcance estimado" com o gás atual
+## Fase 3 — Hangar e upgrades ✅ (2026-09-30) · skills: `godot-dev`, `economy-balance`, `pixel-art` (UI)
+- [x] 3.1 Tela de hangar entre runs: lista de upgrades, custo, comprar, comprar máx.
+- [x] 3.2 Mapear `EconMath.ship_stats` → parâmetros físicos (thrust→aceleração, tank→gás, efficiency→Δv/gás, gear→tolerância)
+- [x] 3.3 Mostrar "alcance estimado" com o gás atual
 
 ## Fase 4 — Planetas · skills: `godot-dev`, `economy-balance`, `pixel-art`
 - [ ] 4.1 Parâmetros por planeta (gravidade, arrasto/vento, distâncias) vindos da spec

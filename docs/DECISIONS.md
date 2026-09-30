@@ -37,3 +37,5 @@
 | 2026-09-30 | Colisão do terreno por segmentos (`ConcavePolygonShape2D`) em vez de polígono | leve e robusta para terrenos de vários km | `game/terrain/terrain.gd` |
 | 2026-09-30 | Oferta mostra "mín ~X gás" (Δv ideal/eficiência, sem desperdício); demo exige folga 2,2× | o gasto real é maior que o ideal; evita o jogador achar que a estimativa é exata | `game/run/offer_panel.gd`, `RunState.best_offer` |
 | 2026-09-30 | Lander só decola com uma entrega escolhida; pousar fora do alvo sem gás encerra o run ("sem gás") | fluxo claro de run | `game/flight/` |
+| 2026-09-30 | Fluxo: 1º run começa direto; depois de cada run: resumo → hangar → decolar | o primeiro run não tem o que comprar | `game/main.gd` |
+| 2026-09-30 | Hangar mostra "alcance max (ideal)" pelo Δv ideal | ensina o valor de tanque/eficiência; é otimista (sem desperdício) — rever com calibração | `game/hangar/hangar.gd` |

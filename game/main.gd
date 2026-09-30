@@ -1,12 +1,13 @@
 ## Entrada do jogo: Main -> World (voo) + GUI (HUD, ofertas, resumo). Orquestra o run (Fase 2):
 ## ofertas -> voo -> entrega -> recompensas (GameState) -> ofertas ... -> resumo -> novo run.
-## Args: --demo (piloto automatico escolhe e voa), --seed=N, --planet=id. R reinicia o run.
+## Args: --demo (piloto automatico escolhe, voa e compra), --seed=N, --planet=id, --hangar_wait=s. R reinicia.
 extends Node
 
 const FLIGHT_SCENE := preload("res://game/flight/flight.tscn")
 const HUD_SCENE := preload("res://game/hud/hud.tscn")
 const OFFER_SCENE := preload("res://game/run/offer_panel.tscn")
 const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
+const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
 
 var _args: Dictionary = {}
 var _demo := false
@@ -16,6 +17,7 @@ var _flight: Flight = null
 var _hud: Hud = null
 var _offers: OfferPanel = null
 var _summary: RunSummary = null
+var _hangar: Hangar = null
 
 @onready var _world: Node2D = %World
 @onready var _gui: CanvasLayer = %GUI
@@ -29,15 +31,20 @@ func _ready() -> void:
 	_run_seed = int(_args.get("seed", WorldConfig.load_config()["demo"]["seed"]))
 	if _args.has("planet"):
 		GameState.current_planet = str(_args["planet"])
+	_hangar = HANGAR_SCENE.instantiate()
+	_gui.add_child(_hangar)
+	_hangar.visible = false
+	_hangar.launch_requested.connect(_on_launch_requested)
 	_start_run()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"restart"):
+	if event.is_action_pressed(&"restart") and not _hangar.visible:
 		_start_run()
 
 
 func _start_run() -> void:
+	_hangar.visible = false
 	for n: Node in [_flight, _hud, _offers, _summary]:
 		if n != null:
 			n.queue_free()
@@ -52,6 +59,7 @@ func _start_run() -> void:
 	_summary = SUMMARY_SCENE.instantiate()
 	_gui.add_child(_summary)
 	_summary.visible = false
+	_gui.move_child(_hangar, -1)  # hangar sempre por cima
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
@@ -120,9 +128,37 @@ func _end_run() -> void:
 		_on_continue()
 
 
+## Fim do run -> hangar (comprar upgrades) -> decolar novo run.
 func _on_continue() -> void:
+	_summary.visible = false
+	_hud.visible = false
+	_hangar.open()
+	if _demo:
+		_demo_shop()
+		await get_tree().create_timer(float(_args.get("hangar_wait", 0.5))).timeout
+		_on_launch_requested()
+
+
+func _on_launch_requested() -> void:
 	_run_seed += 1
 	_start_run()
+
+
+## Demo: compra repetidamente o upgrade acessivel mais barato (verificacao automatica da progressao).
+func _demo_shop() -> void:
+	while true:
+		var best := ""
+		var best_cost := INF
+		for r: Dictionary in GameState.upgrade_rows():
+			var c := float(r["cost"].get("credits", 0.0))
+			if r["affordable"] and c < best_cost:
+				best = r["id"]
+				best_cost = c
+		if best == "" or not GameState.buy_upgrade(best):
+			break
+	_hangar.refresh()
+	print("HANGAR ", JSON.stringify({"credits": GameState.amount("credits"), "levels": GameState.levels,
+			"stats": GameState.ship_stats()}))
 
 
 func _parse_args(args: PackedStringArray) -> Dictionary:

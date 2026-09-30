@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–2 — voo + loop do run)
+## Jogo (Fases 1–3 — voo, loop do run, hangar)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=3, tolerâncias de pouso, relevo por planeta, teclas, demo
 scripts/world/
@@ -30,7 +30,8 @@ scripts/world/
   terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias): relevo + plataformas planas (puro)
   autopilot.gd                # Autopilot: modo --demo (decola vertical, cruza acima do relevo, desce no alvo)
 game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
-                              # → ofertas … → resumo → novo run. Args: --demo --seed=N --planet=id. R reinicia.
+                              # → ofertas … → resumo → HANGAR → novo run. Args: --demo --seed=N --planet=id --hangar_wait=s.
+                              # Demo compra o upgrade acessível mais barato e imprime "HANGAR {json}".
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
                               # cria a próxima plataforma a partir da atual e estende o terreno;
@@ -39,14 +40,17 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
 game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
-autoload/events.gd            # Events: resources_changed, run_started, run_finished
-autoload/game_state.gd        # GameState: recursos da sessão, níveis, loja, prestígio; ship_stats() via EconMath
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought
+autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio, planetas liberados; ship_stats(),
+                              # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
+scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows (atual→próximo, marco), max_reach_m
+game/hangar/hangar.*          # Hangar: upgrades disponíveis (clique/Enter compra, 'max'), stats e alcance; DECOLAR [Enter]
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info)
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + Line2D (Surface) + StaticBody2D com ConcavePolygonShape2D (segmentos); plataformas em _draw
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance)
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
-tests/unit/run/               # test_run_state
+tests/unit/run/               # test_run_state, test_purchases
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 (sem imagens).
 
