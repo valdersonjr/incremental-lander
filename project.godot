@@ -1,25 +1,23 @@
 ; Engine configuration file.
-; Configuracoes-base seguindo as skills locais:
-;  - pixel-art (references/terrain-tiles.md §6): filtro Nearest, snap de pixel, viewport com escala inteira
-;  - sound-design (references/godot-audio.md): buses em default_bus_layout.tres
-;  - economy-balance (references/godot-integration.md): spec em res://data/economy.json, formulas em EconMath
-;  - godot-dev (references/lander-physics.md, gdscript-style.md): interpolacao de fisica 2D, aviso de tipagem
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]
 
 config/name="Incremental Lander"
 config/description="Incremental estilo Lunar Lander, visao lateral. Ver docs/GDD.md."
-config/features=PackedStringArray("4.7")
 run/main_scene="res://game/main.tscn"
+config/features=PackedStringArray("4.7")
 
 [autoload]
 
 Telemetry="*res://autoload/telemetry.gd"
-
-[audio]
-
-buses/default_bus_layout="res://default_bus_layout.tres"
 
 [debug]
 
@@ -34,12 +32,12 @@ window/size/window_height_override=720
 window/stretch/mode="viewport"
 window/stretch/scale_mode="integer"
 
+[physics]
+
+common/physics_interpolation=true
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
-
-[physics]
-
-common/physics_interpolation=true

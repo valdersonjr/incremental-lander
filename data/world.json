@@ -2,8 +2,8 @@
   "version": 1,
   "notes": "Constantes de mundo/sensacao (skill godot-dev). Economia fica em economy.json. Unidades do modelo: m, s.",
   "px_per_m": 1.0,
-  "time_scale": 3.0,
-  "rotate_speed": 2.5,
+  "time_scale": 4.5,
+  "rotate_speed": 4.0,
   "landing": {
     "max_vy": 3.0,
     "max_vx": 2.0,

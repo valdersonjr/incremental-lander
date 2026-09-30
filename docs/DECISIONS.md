@@ -32,3 +32,4 @@
 | 2026-09-30 | Tolerâncias de pouso: V.VERT 3 m/s, V.HOR 2 m/s, inclinação 0,2 rad; trem de pouso amplia × gear^0,5; q = média ponderada (vert 35%, hor 25%, incl. 20%, centro 20%) | pouso exigente mas justo; q alimenta pagamento | `data/world.json`, `scripts/world/landing_rules.gd` |
 | 2026-09-30 | Teclas registradas por código a partir do `world.json` (W/↑/Espaço propulsor, A/D/←/→ girar, R reiniciar) | escrever o input map à mão no project.godot é frágil | `WorldConfig.register_input()` |
 | 2026-09-30 | Propulsor liga/desliga (sem acelerador analógico); rotação sem inércia; lander não gira pousado | simplicidade no protótipo; rever na Fase 10 (game feel) | `game/flight/lander.gd` |
+| 2026-09-30 | Sensação de voo: tempo ×3 → ×4,5 e giro 2,5 → 4 rad/s | feedback do usuário: "motor fraco e giro pesado"; relação motor/gravidade é da economia e não mudou | `data/world.json` |
