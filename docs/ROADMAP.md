@@ -5,24 +5,25 @@
 > Arte e som podem ser intercalados a partir da Fase 1 (placeholders geométricos até lá — sem imagens
 > fora da skill `pixel-art`).
 
-## Fase 0 — Fundação ✅ (2026-09-29, exceto 0.6)
+## Fase 0 — Fundação ✅ (2026-09-29/30)
 - [x] 0.1 Skills: `pixel-art`, `sound-design`, `economy-balance` (com biblioteca de padrões)
 - [x] 0.2 Economia v6 aplicada em `data/economy.json` (simulada e validada)
 - [x] 0.3 Git local + `.gitignore`
 - [x] 0.4 `project.godot` (640×360, escala inteira, Nearest, snap) + `default_bus_layout.tres`
 - [x] 0.5 `scripts/economy/econ_math.gd` validado contra o Python (`python3 tests/test_econ_parity.py`)
-- [ ] 0.6 **Criar a skill `godot-dev`** (mesma pegada: pesquisa → padrões de arquitetura/código Godot 4,
-      cenas, autoloads, sinais, save, testes headless, telemetria) — **pré-requisito da Fase 1**
+- [x] 0.6 Skill `godot-dev` (2026-09-30): arquitetura, estilo, física do lander, terreno, UI, save/telemetria,
+      testes; ferramenta `gdtool.py` (api/check/test/run/capture); executor de testes em `tests/`
 - [x] 0.7 Documentação de continuidade (CLAUDE.md, GDD, ROADMAP, HANDOFF, DECISIONS, ARCHITECTURE)
 
 ## Fase 1 — Protótipo de voo (sem arte final) · skills: `godot-dev`, `economy-balance` (física ↔ modelo)
-- [ ] 1.1 Cena de voo: lander (RigidBody2D ou física própria — decidir pela skill), gravidade, girar + propulsor
+- [ ] 1.1 Cena de voo: lander `CharacterBody2D` com integração própria (godot-dev `lander-physics.md`), gravidade, girar + propulsor; `data/world.json` + `WorldConfig`
 - [ ] 1.2 Consumo de gás por Δv (`efficiency`), tanque, HUD mínimo (gás, velocidade, altitude)
 - [ ] 1.3 Terreno em polígono irregular gerado (encostas + plataformas planas), colisão
 - [ ] 1.4 Detecção de pouso/batida + **qualidade q (0..1)** (velocidades, ângulo, centro da plataforma)
-- [ ] 1.5 Câmera lateral acompanhando o salto; escala do mundo (metros ↔ pixels) documentada
+- [ ] 1.5 Câmera lateral acompanhando o salto; escala do mundo `PX_PER_M` decidida e registrada em DECISIONS
 - [ ] 1.6 **Telemetria** de cada entrega → CSV (formato em `economy-balance/references/godot-integration.md`)
-- Pronto quando: dá para decolar, voar até uma plataforma a X m, pousar/bater, e o CSV registra o salto.
+- [ ] 1.7 Modo `--demo` (piloto automático) para verificação com `gdtool.py run/capture`
+- Pronto quando: dá para decolar, voar até uma plataforma a X m, pousar/bater, o CSV registra o salto, e `check`/`test`/`run`/`capture` passam.
 
 ## Fase 2 — Loop do run · skills: `godot-dev`, `economy-balance`
 - [ ] 2.1 Ofertas de entrega (distância × pagamento via `EconMath.contract_pay`), escolha pelo jogador

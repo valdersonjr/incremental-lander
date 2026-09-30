@@ -14,13 +14,14 @@ construção que ela propõe**. Não fuja desses padrões e não pergunte ao usu
 | Qualquer imagem: sprite, tile, terreno, UI, FX, fundo, animação | `pixel-art` |
 | Qualquer áudio: SFX, UI, propulsor, ambiência, música | `sound-design` |
 | Qualquer número de economia/progressão: custos, efeitos, planetas, prestígio, ritmo | `economy-balance` |
-| Código/cenas Godot, arquitetura, save, telemetria, testes | `godot-dev` (**a criar — ROADMAP 0.6**) |
+| Código/cenas Godot, arquitetura, save, telemetria, testes, build | `godot-dev` |
 
 Regras herdadas das skills:
 - Arte: paleta **Resurrect 64** travada; fonte = scripts em `art/src/**.py`; exports em `assets/`; nunca
   editar PNG de `assets/` à mão.
 - Áudio: 100% sintetizado (retro-synth espacial), escala em D, loudness por categoria; fonte em
   `audio/src/**.py`; aprovação do usuário ouvindo (`afplay`).
+- Código: seguir `godot-dev` (arquitetura, estilo, física, verificação com `gdtool.py` antes de dizer que funciona).
 - Economia: spec única `data/economy.json` (lida pelo jogo e pelo simulador); nada de números de economia
   hardcoded no GDScript; `scripts/economy/econ_math.gd` espelha `econ.py` — mudou um, mude o outro e rode
   `python3 tests/test_econ_parity.py`.

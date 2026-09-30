@@ -21,3 +21,10 @@
 | 2026-09-29 | Git local com **commit ao fim de cada etapa** | não perder progresso entre sessões | CLAUDE.md |
 | 2026-09-29 | **Sempre consultar as skills locais antes de qualquer operação**; não fugir dos padrões delas | pedido do usuário | CLAUDE.md |
 | 2026-09-29 | Scripts longos incomodam o usuário → simulador otimizado/paralelo; triagem antes de validação | preferência do usuário | memória + `economy-balance/SKILL.md` |
+| 2026-09-30 | Skill `godot-dev` criada; código segue seus padrões (arquitetura Main/World/GUI, sinais sobem/chamadas descem, event bus só entre ramos distantes) | regra de sempre seguir as skills | `.claude/skills/godot-dev/` |
+| 2026-09-30 | Lander = `CharacterBody2D` com integração própria (não RigidBody2D) | gás = Δv/eficiência exato como o modelo econômico; pouso determinístico; demo/testes reproduzíveis | `godot-dev/references/lander-physics.md` |
+| 2026-09-30 | Pastas por feature (`game/<feature>/` cena+script), `autoload/`, `data/world.json` para constantes de mundo | organização recomendada (docs Godot/GDQuest) | `godot-dev/references/architecture.md` |
+| 2026-09-30 | Identificadores em inglês, comentários/docstrings em português; tipagem estática obrigatória | combina com a API; legível para o usuário | `godot-dev/references/gdscript-style.md` |
+| 2026-09-30 | Testes com executor próprio mínimo (sem GUT/GdUnit4) | sem dependência, headless simples; reavaliar se precisar de mocks/input | `godot-dev/references/testing.md` |
+| 2026-09-30 | Verificação sem editor: `gdtool.py` (api/check/test/run/capture) + modo `--demo` nas cenas de gameplay | Claude não abre o editor; frames capturados permitem revisão visual | `godot-dev/SKILL.md` |
+| 2026-09-30 | Interpolação de física 2D ligada; aviso para declaração sem tipo | câmera suave com pixel snap; incentivar tipagem | `project.godot` |
