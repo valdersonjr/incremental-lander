@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Pre-commit: o resultado tem que seguir o padrão das skills (ativado por `git config core.hooksPath .githooks`).
+
+Para cada arquivo adicionado/alterado no commit:
+  assets/**.png (imagem)  -> paleta Resurrect 64 (pixelart.py check); script-fonte em art/src/ que cite o caminho;
+                             linha no patterns/INDEX.md da pixel-art citando o caminho, e o padrão com "## Fontes" + URL.
+  assets/audio/**         -> script-fonte em audio/src/ que cite o caminho; padrão da sound-design com Fontes + URL.
+  data/economy.json       -> balance/CHANGELOG.md no mesmo commit + paridade GDScript = Python.
+  scripts/economy/*.gd    -> paridade GDScript = Python.
+Pular (emergência, com o aval do usuário): git commit --no-verify
+"""
+import glob
+import os
+import re
+import subprocess
+import sys
+
+ROOT = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
+os.chdir(ROOT)
+AUDIO_EXT = (".wav", ".ogg", ".mp3")
+
+
+def staged() -> list:
+    out = subprocess.run(["git", "diff", "--cached", "--name-only", "--diff-filter=AMR"],
+                         capture_output=True, text=True).stdout
+    return [p for p in out.splitlines() if p]
+
+
+def source_scripts(src_dir: str, asset: str) -> list:
+    hits = []
+    for py in glob.glob(f"{src_dir}/**/*.py", recursive=True):
+        with open(py, encoding="utf-8") as f:
+            if asset in f.read():
+                hits.append(py)
+    return hits
+
+
+def pattern_problem(skill: str, asset: str) -> str:
+    pdir = f".claude/skills/{skill}/references/patterns"
+    with open(f"{pdir}/INDEX.md", encoding="utf-8") as f:
+        rows = [l for l in f if l.startswith("|") and not l.lstrip().startswith("<!--") and asset in l]
+    if not rows:
+        return f"sem linha em {pdir}/INDEX.md citando {asset} (Etapa 7: alimentar a biblioteca)"
+    slug = rows[0].split("|")[1].strip()
+    path = f"{pdir}/{slug}.md"
+    if not os.path.exists(path):
+        return f"INDEX cita o padrão '{slug}', mas {path} não existe"
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.search(r"^## Fontes\s*\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+    if not m or "http" not in m.group(1):
+        return f"{path} sem seção '## Fontes' com URL (Etapa 2: pesquisa obrigatória)"
+    return ""
+
+
+def main() -> int:
+    files = staged()
+    errors = []
+    images = [f for f in files if f.startswith("assets/") and not f.startswith("assets/audio/") and f.endswith(".png")]
+    sounds = [f for f in files if f.startswith("assets/audio/") and f.endswith(AUDIO_EXT)]
+
+    if images:
+        r = subprocess.run([sys.executable, ".claude/skills/pixel-art/scripts/pixelart.py", "check", *images],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            errors.append("paleta (pixel-art):\n" + (r.stdout + r.stderr).strip())
+    for img in images:
+        if not source_scripts("art/src", img):
+            errors.append(f"{img}: nenhum script em art/src/ gera este arquivo (a fonte do asset é o script)")
+        p = pattern_problem("pixel-art", img)
+        if p:
+            errors.append(f"{img}: {p}")
+    for snd in sounds:
+        if not source_scripts("audio/src", snd):
+            errors.append(f"{snd}: nenhum script em audio/src/ gera este arquivo")
+        p = pattern_problem("sound-design", snd)
+        if p:
+            errors.append(f"{snd}: {p}")
+
+    if "data/economy.json" in files and "balance/CHANGELOG.md" not in files:
+        errors.append("data/economy.json mudou sem balance/CHANGELOG.md no commit (economy-balance, Etapa 8)")
+    if any(f == "data/economy.json" or f.startswith("scripts/economy/") for f in files):
+        if not os.path.exists(".godot/global_script_class_cache.cfg"):  # clone novo: gerar cache de class_name
+            subprocess.run(["godot", "--headless", "--import", "--path", "."], capture_output=True)
+        r = subprocess.run([sys.executable, "tests/test_econ_parity.py"], capture_output=True, text=True)
+        if r.returncode != 0:
+            errors.append("paridade GDScript x Python falhou:\n" + (r.stdout + r.stderr).strip()[-800:])
+
+    if errors:
+        print("pre-commit BLOQUEOU o commit (padrões das skills locais):", file=sys.stderr)
+        for e in errors:
+            print("  - " + e.replace("\n", "\n    "), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

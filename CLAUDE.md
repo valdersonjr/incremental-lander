@@ -26,6 +26,18 @@ Regras herdadas das skills:
   hardcoded no GDScript; `scripts/economy/econ_math.gd` espelha `econ.py` — mudou um, mude o outro e rode
   `python3 tests/test_econ_parity.py`.
 
+### Travas automáticas (não contornar)
+- **Hooks do Claude Code** (`.claude/settings.json` → `.claude/hooks/skill_guard.py`): editar/rodar algo em `art/`,
+  `assets/` → `pixel-art`; `audio/`, `assets/audio/` → `sound-design`; `data/economy.json`, `balance/`,
+  `scripts/economy/` → `economy-balance`; `game/`, `scripts/`, `autoload/`, `tests/`, `*.gd/.tscn`, `gdtool` → `godot-dev`.
+  Sem a skill invocada na sessão, a ação é **bloqueada**; após compactar o contexto, é preciso invocar de novo.
+  Pedidos com palavras de arte/som/economia/código geram lembrete. Testes: `python3 .claude/hooks/test_skill_guard.py`.
+  Comandos Bash que só **citam** esses caminhos em texto (ex.: heredoc editando docs) também são barrados —
+  edite docs com a ferramenta Edit/Write.
+- **Pre-commit** (`.githooks/`, ativar com `git config core.hooksPath .githooks`): PNG em `assets/` precisa de paleta
+  Resurrect 64, script-fonte em `art/src/` e padrão no INDEX com `## Fontes` + URL (idem áudio); `economy.json` exige
+  `balance/CHANGELOG.md` no commit + paridade. Testes: `python3 .claude/hooks/test_pre_commit.py`.
+
 ## Protocolo de sessão (continuidade)
 **Início**: ler `docs/HANDOFF.md` (onde paramos + próximo passo) e `docs/ROADMAP.md`; `git log --oneline | head`.
 **Durante**: registrar decisões novas em `docs/DECISIONS.md`; ao mudar design, atualizar `docs/GDD.md`.

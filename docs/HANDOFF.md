@@ -31,3 +31,5 @@ Integração no Godot pela skill `godot-dev` (trocar os `_draw()`/Polygon2D pelo
 2. Identificar a skill da tarefa e ler o `SKILL.md` dela antes de agir (código → `godot-dev`).
 3. `git log --oneline | head` para ver o último commit; `git status` para mudanças não commitadas.
 4. `python3 .claude/skills/godot-dev/scripts/gdtool.py check && ... test` para confirmar que está tudo verde.
+5. Clone novo? Ativar o pre-commit: `git config core.hooksPath .githooks` (os hooks do Claude Code já vêm em `.claude/settings.json`).
+   Se uma ação for BLOQUEADA pela Regra 0, invoque a skill indicada (ferramenta Skill) e repita — não contorne a trava.
