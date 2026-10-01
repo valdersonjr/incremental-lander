@@ -117,7 +117,7 @@ func _add_expedition(stages: Array) -> void:
 		if u.get("progress", false):
 			total += 1
 	var done := _stages_done()
-	var head := _section("EXPEDICAO A TITAN   [%s%s]  %d/%d" % ["#".repeat(done), "-".repeat(total - done), done, total])
+	var head := _section("EXPEDIÇÃO AO QUARTO   [%s%s]  %d/%d" % ["#".repeat(done), "-".repeat(total - done), done, total])
 	head.add_theme_color_override(&"font_color", Color("#8fd3ff"))
 	_rows.add_child(head)
 	for r: Dictionary in stages:

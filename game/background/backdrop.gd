@@ -32,7 +32,9 @@ func setup(planet_id: String, ref_y: float) -> void:
 	var bg: Dictionary = WorldConfig.load_config()["background"]
 	var shift := float(bg["horizon_screen"]) - float(meta["horizon"])
 	var clouds: Dictionary = meta.get("clouds", {})
-	var tops := {"sky": Vector2.ZERO, "planet": _vec(meta["planet_pos"]), "far": Vector2(0, meta["far_y"]),
+	# wall_mode (ex.: o quarto): parede e janela fazem parte do mesmo espaco dos moveis -> acompanham o horizonte
+	var wall_mode := bool(meta.get("wall_mode", false))
+	var tops := {"sky": Vector2(0, float(meta.get("sky_y", 0.0))), "planet": _vec(meta["planet_pos"]), "far": Vector2(0, meta["far_y"]),
 		"mid": Vector2(0, meta["mid_y"]), "plain": Vector2(0, meta["plain_y"]),
 		"clouds": Vector2(0, float(clouds.get("y", 0.0)))}
 	var anim: Dictionary = meta.get("anim", {})
@@ -58,9 +60,11 @@ func setup(planet_id: String, ref_y: float) -> void:
 		if layer_name == "clouds":
 			_scroll[layer_name] = float(clouds.get("speed", 0.0))
 		# ceu e nuvens ficam presos a tela; o resto acompanha o horizonte deslocado para perto do chao
-		var screen_fixed := layer_name in ["sky", "clouds"]
+		var screen_fixed := layer_name in ["sky", "clouds"] and not wall_mode
 		_base[layer_name] = tops[layer_name] + (Vector2.ZERO if screen_fixed else Vector2(0, shift))
 		_factors[layer_name] = _vec(bg["layers"][layer_name])
+		if wall_mode and layer_name in ["sky", "planet"]:
+			_factors[layer_name] = Vector2(0.0, _vec(bg["layers"]["far"]).y)   # sobe/desce junto com os moveis
 	# a planicie (camada mais baixa) precisa sempre cobrir o pe da tela: o fundo desce no maximo ate sobrar
 	# ground_margin px de planicie, e sobe no maximo ate o fim da textura da planicie
 	var view_h := float(ProjectSettings.get_setting("display/window/size/viewport_height"))

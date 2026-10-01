@@ -18,7 +18,7 @@ func show_ending(play_seconds: float = -1.0) -> void:
 	if play_seconds < 0.0:
 		play_seconds = GameState.play_seconds
 	_text.text = "\n".join([
-		"VOCE CHEGOU A TITAN!",
+		"VOCÊ CHEGOU AO QUARTO!",
 		"",
 		"A Nave-mae Aurora pousou no gigante.",
 		"runs: %d   Poeira Estelar acumulada: %s" % [GameState.runs_done, EconMath.fmt(GameState.prestige_points)],

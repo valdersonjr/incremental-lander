@@ -36,6 +36,7 @@ P = {"sky": "assets/bg/titan_sky.png", "planet": "assets/bg/titan_planet.png", "
 PROP_CELL, PROP_BASE, PROP_SPACING = (16, 16), 14, (12, 34)
 N_FRAMES, FRAME_MS = 6, 200
 LAMP = (150, 118)                 # centro da poça de luz quente (lâmpada do abajur)
+WALL_EXTRA = 200                  # parede continua para cima até o teto (a parede acompanha os móveis no jogo)
 WINDOW = (452, 14, 116, 92)       # x, y, largura, altura da janela (acima do guarda-roupa)
 INV = {}
 
@@ -127,6 +128,23 @@ def wall(cv: Canvas, fr: int = 0) -> None:
 
 
 # ------------------------------------------------------------------ janela (planet)
+def tall_wall(fr: int) -> Canvas:
+    """Parede exportada: a cena + WALL_EXTRA px de parede/teto acima (escurecendo para o teto, com moldura)."""
+    base = Canvas(W, H); wall(base, fr)
+    cv = Canvas(W, H + WALL_EXTRA)
+    for y in range(WALL_EXTRA):
+        for x in range(W):
+            stripe = (x // 14) % 2 == 0
+            c = mix("ink", "shadow" if not stripe else "slate", max(0.0, (y - 30) / (WALL_EXTRA - 30)) * 0.9, x, y)
+            if WALL_EXTRA - 40 <= y:
+                c = mix(c, "ink", (y - (WALL_EXTRA - 40)) / 40 * 0.3, x, y) if y < WALL_EXTRA else c
+            cv.px(x, y, c)
+    for x in range(W):                                           # moldura do teto
+        cv.px(x, 28, "slate"); cv.px(x, 29, "lilac_grey"); cv.px(x, 30, "shadow")
+    cv.stamp(base, 0, WALL_EXTRA)
+    return cv
+
+
 def window(cv: Canvas, fr: int = 0) -> tuple:
     wx, wy, ww, wh = WINDOW
     rng = random.Random(4)
@@ -511,7 +529,7 @@ def compose(L: dict, f: int = 0) -> Canvas:
 
 
 def export(L: dict) -> None:
-    au.stack(L["sky_frames"]).save(P["sky"])
+    au.stack([tall_wall(f) for f in range(N_FRAMES)]).save(P["sky"])
     au.stack(L["planet_frames"]).save(P["planet"])
     L["far"].save(P["far"])
     au.stack(L["mid_frames"]).save(P["mid"])
@@ -522,6 +540,7 @@ def export(L: dict) -> None:
     meta = {
         "notes": "Quarto bagunçado (mundo 4, id titan). Gerado por art/src/bg/room_scene.py (pixel-art).",
         "horizon": HORIZON, "planet_pos": list(L["planet_pos"]), "far_y": 0, "mid_y": 0, "plain_y": ms.PLAIN_TOP,
+        "sky_y": -WALL_EXTRA, "wall_mode": True,
         "deep_color": "#45293f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(PROP_CELL), "rock_base_row": PROP_BASE, "rock_count": len(PROP_ORDER),
         "rock_widths": [16] * len(PROP_ORDER), "rock_spacing": list(PROP_SPACING),

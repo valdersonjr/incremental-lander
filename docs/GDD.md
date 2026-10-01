@@ -9,7 +9,7 @@ Jogo **incremental** estilo **Lunar Lander**, **visão lateral**, feito em **God
 plataformas de pouso para ganhar dinheiro e melhorar a nave (motor/velocidade, tanque, eficiência…),
 indo cada vez mais longe até liberar **novos planetas** com física mais dura (ex.: Ares, gravidade forte,
 gasta mais gás). Meta-progressão com **prestígio** (loja da Poeira Estelar), **múltiplos recursos**
-(créditos, minério), **automação** no fim (frota de drones) e um **megaprojeto final** (Expedição a Titan).
+(créditos, minério), **automação** no fim (frota de drones) e um **megaprojeto final** (Expedição ao Quarto).
 
 Pilares:
 1. **Pilotar bem sempre vale mais** — precisão paga até ×2,2; piloto ruim gasta mais gás. Upgrades ampliam, não substituem.
@@ -48,7 +48,7 @@ art contínua (`Polygon2D` com textura seamless) + faixa de superfície na borda
 | Lua | 1,62 | 0 | 100–15.000 m | ×1 | — | inicial |
 | Ares (gravidade forte) | 5,0 | 0,1 | 150–25.000 m | ×12 | minério | 300K créditos |
 | Kronos (atmosfera densa) | 9,0 | 0,3 | 200–40.000 m | ×150 | minério | 1,5B créd. + 2K minério (após Ares) |
-| Titan (gigante) | 15,0 | 0,2 | 300–60.000 m | ×2.500 | minério | concluir a Expedição a Titan (8/8) |
+| Titan (gigante) | 15,0 | 0,2 | 300–60.000 m | ×2.500 | minério | concluir a Expedição ao Quarto (8/8) |
 Motor mínimo: o lander só decola se a aceleração do motor > ~1,05 × gravidade (Ares exige upgrades de motor).
 
 **Mundos (decisão do usuário, 2026-10-01): cada planeta é um ambiente TOTALMENTE diferente** (bioma, formas, objetos,
@@ -58,7 +58,7 @@ escala), não uma recoloração. Mesmo estilo de arte (rico em camadas, Resurrec
 | 1 | `luna` | Lua (montanhas facetadas, a Terra no céu) | Lua |
 | 2 | `ares` | **Floresta fechada** (árvores gigantes, cipós, névoa, vaga-lumes) | **Silvânia** |
 | 3 | `kronos` | **Planeta dos doces** (bengalas, pirulitos, algodão-doce, chocolate) | **Docelândia** |
-| 4 | `titan` | a decidir com o usuário (ideia citada: quarto bagunçado/gigante) | — |
+| 4 | `titan` | **Quarto bagunçado** (nave minúscula num quarto gigante: abajur, janela, brinquedos, cobertor) | **O Quarto** |
 Os ids continuam `ares`/`kronos`/`titan` no código e no save; só nomes exibidos e arte mudam.
 Os mundos são **animados** (vento, pirulitos girando, nuvens, estrelas) — pedido do usuário.
 
@@ -90,7 +90,7 @@ Os mundos são **animados** (vento, pirulitos girando, nuvens, estrelas) — ped
 - **Frota de drones** (mudança de fase): até 10 drones; cada drone rende uma fração da **sua** renda
   média (8% → ~17% com o Software de piloto automático). Pilotar bem treina uma frota melhor.
   Teto: frota ≈ 45–55% da renda.
-- **Expedição a Titan** — 8 etapas **persistentes** (não resetam), cada uma com bônus, custo em créditos + minério:
+- **Expedição ao Quarto** — 8 etapas **persistentes** (não resetam), cada uma com bônus, custo em créditos + minério:
   1. Estação Orbital de Apoio (pagamento ×1,2) · 2. Tanques Criogênicos (tanque ×1,25) ·
   3. Escudo Térmico Ablativo (pagamento ×1,2) · 4. Rede de Satélites de Navegação (eficiência ×1,15) ·
   5. Módulo de Habitação (pagamento ×1,2) · 6. Reator de Fusão Compacto (motor ×1,15) ·

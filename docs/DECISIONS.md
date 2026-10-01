@@ -55,4 +55,5 @@
 | 2026-10-01 | Terreno com faixa **cisalhada** por segmento (Polygon2D + uv) e fundo próprio em CanvasLayer (não Line2D nem Parallax2D) | pixel-perfect nas encostas; parallax vertical previsível e testável | `godot-dev/references/patterns/terrain-art.md` |
 | 2026-10-01 | **Cada planeta = mundo totalmente diferente** (Lua → Floresta fechada → Planeta dos doces → 4º a decidir); recolorir a mesma paisagem foi reprovado | usuário: "só me mostrou ambientes iguais com cores diferentes"; exemplos: lua, floresta fechada, planeta dos doces, quarto bagunçado | `docs/GDD.md` §5, pixel-art style-guide |
 | 2026-10-01 | Nomes temáticos dos mundos escolhidos pelo Claude; ids `ares`/`kronos`/`titan` mantidos no código | usuário escolheu a opção recomendada | nomes na spec da economia (skill economy-balance) |
+| 2026-10-01 | 4º mundo = **Quarto bagunçado** ("O Quarto"); meta final "Expedição ao Quarto" (só textos; ids/números iguais) | exemplo do próprio usuário, proposto quando ele disse "continue"; aprovado | `art/src/bg/room_scene.py`, spec da economia (nomes) |
 

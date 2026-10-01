@@ -11,16 +11,16 @@
 - **No jogo**: lander futurista + **cena da Lua completa** (fundo `Backdrop` em parallax + terreno com faixas
   cisalhadas lit/flat/shade + pedregulhos) + **plataformas** (sprite animado; alvo com feixe de luz, pista
   iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. **Mundos**: Lua (`moon_scene.py`), **Silvânia** = floresta fechada (id ares, `forest_scene.py`), **Docelândia** = planeta
-  dos doces (id kronos, `candy_scene.py`), todos **animados**. Titan ainda usa a cena de gelo de `planet_scenes.py` (4º mundo a decidir).
+  dos doces (id kronos, `candy_scene.py`), e **O Quarto** = quarto bagunçado (id titan, `room_scene.py`; meta final "Expedição ao Quarto"),
+  todos **animados**.
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
 **Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
-1. **Decidir com o usuário o 4º mundo** (id titan; ele citou "quarto bagunçado" como exemplo) e fazê-lo no mesmo padrão.
-2. **Decisão de design pendente (usuário, 2026-10-01): "o jogo é só sair de um lugar e pousar em outro?"** —
+1. **Decisão de design pendente (usuário, 2026-10-01): "o jogo é só sair de um lugar e pousar em outro?"** —
    ver plano em `~/.claude/plans/a-ideia-do-jogo-cryptic-boot.md` e a resposta na conversa; definir com o usuário
    antes de seguir (envolve economy-balance + godot-dev + pixel-art).
-3. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
+2. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
 Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
 
 ## Pendências conhecidas

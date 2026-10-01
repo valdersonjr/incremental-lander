@@ -74,7 +74,8 @@ assets/sprites/explosion*, landing_dust* # FX de batida e pouso ← art/src/fx/e
 tests/visual/crash_preview.*  # prévia da batida (e da poeira com -- --dust) para gdtool capture
 art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/src/terrain/ = versões reprovadas
 art/src/bg/forest_scene.py    # mundo 2 Silvânia (floresta, id ares) · candy_scene.py = mundo 3 Docelândia (doces, id kronos)
-art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito; ainda gera a cena de gelo de titan (4º mundo a decidir)
+art/src/bg/room_scene.py      # mundo 4 O Quarto (quarto bagunçado, id titan; wall_mode)
+art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito (referência; não gera mais assets do jogo)
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot

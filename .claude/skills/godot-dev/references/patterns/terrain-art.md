@@ -50,3 +50,8 @@
 - `Terrain`: enfeites animados redesenham a cada quadro (`queue_redraw` no `_process`), cada um com `phase` própria
   (não balançam em sincronia). Fonte do retângulo: x = variante, y = quadro.
 
+## Mundo "interno" (o quarto) — wall_mode — 2026-10-01
+- Céu preso à tela só serve para céu de verdade. Num ambiente fechado a parede é parte do espaço: `wall_mode: true` no
+  `<planeta>_layers.json` faz sky e planet usarem o deslocamento do horizonte e o fator y dos móveis (`far`), x parado.
+  A arte exporta a parede mais alta (`sky_y` negativo) para cobrir a subida da câmera.
+

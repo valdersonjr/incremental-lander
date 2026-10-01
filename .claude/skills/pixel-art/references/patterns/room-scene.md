@@ -33,7 +33,12 @@ gravidade 15 do planeta "gigante". Proposto como padrão quando o usuário disse
   transição curta.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: aprovado; nome exibido **O Quarto (mundo gigante)**; meta final vira "Expedição ao Quarto".
+
+## No jogo
+- A parede NÃO pode ser um céu preso à tela: os móveis sobem/descem e cobriam abajur/janela → `wall_mode` no
+  `titan_layers.json`: parede e janela acompanham o horizonte como os móveis. A parede é exportada com 200 px a mais
+  em cima (`sky_y` = -200), continuando até o teto (moldura), para não abrir buraco quando a nave sobe.
 
 ## Fontes
 - https://omidsaffari.com/resources/visible-sources — luz noturna motivada por um abajur: queda, cor derramada, oclusão

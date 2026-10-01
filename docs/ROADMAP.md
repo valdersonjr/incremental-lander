@@ -59,7 +59,7 @@
 - [x] ~~Cenas de Ares, Kronos e Titan recoloridas~~ → reprovadas como conceito: cada planeta é um mundo diferente
 - [x] Mundo 2 **Silvânia** (floresta fechada, id ares) e mundo 3 **Docelândia** (planeta dos doces, id kronos) (2026-10-01)
 - [x] Mapa animado: vento na floresta, pirulitos girando, nuvens passando, estrelas cintilando (2026-10-01)
-- [ ] 4º mundo (id titan): tema a decidir com o usuário (hoje usa a cena de gelo antiga)
+- [x] Mundo 4 **O Quarto** (quarto bagunçado, id titan), animado (2026-10-01)
 - [ ]
       UI (painéis, ícones de upgrade, fonte) · FX
 
