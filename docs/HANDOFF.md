@@ -13,6 +13,8 @@
   iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. **Mundos**: Lua (`moon_scene.py`), **Silvânia** = floresta fechada (id ares, `forest_scene.py`), **Docelândia** = planeta
   dos doces (id kronos, `candy_scene.py`), e **O Quarto** = quarto bagunçado (id titan, `room_scene.py`; meta final "Expedição ao Quarto"),
   todos **animados**.
+- **Interface**: kit pixel (fonte com acentos, painéis, botões, barras, ícones) em todos os menus; cor muda com o mundo
+  (`UiKit.theme_for`). Prévias: `tests/visual/{hangar,summary,ending}_preview` (args `--planet=`, `--top`).
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
@@ -23,7 +25,7 @@
    (Contexto: pergunta "o jogo é só sair de um lugar e pousar em outro?") —
    ver plano em `~/.claude/plans/a-ideia-do-jogo-cryptic-boot.md` e a resposta na conversa; definir com o usuário
    antes de seguir (envolve economy-balance + godot-dev + pixel-art).
-2. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
+2. Fase 9 — som (skill sound-design, aprovação ouvindo).
 Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
 
 ## Como jogar no editor (lembrar o usuário)
@@ -34,7 +36,6 @@ Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planíci
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
 - Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
-- Nomes dos upgrades/planetas na spec sem acento — ajustar via economy-balance numa passada de texto.
 - Telemetria antiga (antes da coluna pilot) misturava demo e humano: foi para `deliveries_old.csv` — não usar na calibração.
 - Autopiloto do demo às vezes pousa fora da plataforma em Titan (gravidade 15) — só afeta verificação.
 - Em aberto no design: pós-jogo, menus, nome final (GDD §12).

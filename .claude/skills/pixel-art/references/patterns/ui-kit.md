@@ -36,7 +36,8 @@
   Todo mundo novo ganha uma entrada em `WORLDS`. Fixos: fundo escuro, dourado (dinheiro), vermelho (perigo), âmbar
   (gás acabando), **barra de gás sempre ciano** (rosa nos doces confundia com perigo), ícones.
 - Assets por mundo em `assets/ui/<mundo>/` (painéis, botões, barra de progresso); fixos em `assets/ui/`.
-- (pendente: aprovação do estilo do kit)
+- 2026-10-01: kit aprovado ("ficou bom") e aplicado em todos os menus.
+- Glifo `%` refeito (o primeiro parecia uma barra).
 
 ## Fontes
 - https://www.wayline.io/learn/game-ui-art — 9-slice; ícone = silhueta primeiro; borda escura + um brilho; uma paleta/luz/escala

@@ -61,7 +61,9 @@
 - [x] Mapa animado: vento na floresta, pirulitos girando, nuvens passando, estrelas cintilando (2026-10-01)
 - [x] Mundo 4 **O Quarto** (quarto bagunçado, id titan), animado (2026-10-01)
 - [ ]
-      UI (painéis, ícones de upgrade, fonte) · FX
+      FX
+- [x] Interface: fonte pixel com acentos, painéis, botões, barras e ícones; cor de destaque por mundo; todos os
+      menus (HUD, entregas, resumo, hangar, final) (2026-10-01)
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [ ] Propulsor (loop controlado pela potência) · pouso/batida · UI (clique, compra com variações) ·

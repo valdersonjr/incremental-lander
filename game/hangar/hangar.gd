@@ -1,22 +1,22 @@
-## Hangar entre runs: comprar upgrades (clique/Enter no botao; "max" compra o maximo) e decolar.
-## Tudo que e numero vem de GameState/EconMath. Placeholder de UI (sem arte ainda).
+## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual): comprar upgrades (COMPRAR / MAX), planetas,
+## prestigio + loja da Poeira, Expedicao, opcoes e decolar. Tudo que e numero vem de GameState/EconMath.
 class_name Hangar
 extends PanelContainer
 
 signal launch_requested
 
-const UNITS := {"thrust": "m/s2", "tank": "gas", "efficiency": "m/s/gas", "pay_mult": "x", "gear": "x",
-		"drones": "", "autopilot": "x"}
-const COLOR_TITLE := Color("#fbb954")    # honey
-const COLOR_TEXT := Color("#c7dcd0")     # mist
-const COLOR_DIM := Color("#7f708a")      # lilac_grey
-const COLOR_DUST := Color("#a884f3")     # violet (Poeira Estelar)
+const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay_mult": "×", "gear": "×",
+		"drones": "", "autopilot": "×"}
+const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
+		"gear": "gear", "refinery": "refinery", "fleet": "fleet", "autopilot": "autopilot"}
+const RES := {"credits": ["credits", "MoneyLabel"], "ore": ["ore", "ValueLabel"], "stardust": ["stardust", "DustLabel"]}
 
 var _confirm_prestige := false
 var _confirm_new_game := false
 
-@onready var _header: Label = %Header
-@onready var _ship: Label = %Ship
+@onready var _planet: Label = %Planet
+@onready var _resources: HBoxContainer = %Resources
+@onready var _ship: HBoxContainer = %Ship
 @onready var _rows: VBoxContainer = %Rows
 @onready var _launch: Button = %Launch
 
@@ -36,16 +36,23 @@ func open() -> void:
 
 func refresh() -> void:
 	var planet := GameState.current_planet
-	var res := "%s cr" % EconMath.fmt(GameState.amount("credits"))
+	theme = UiKit.theme_for(planet)                            # a cor do hangar acompanha o mundo atual
+	_planet.text = _planet_name(planet)
+	_clear(_resources)
+	_resources.add_child(UiKit.icon_label("credits", EconMath.fmt(GameState.amount("credits")), &"MoneyLabel"))
 	if GameState.amount("ore") > 0.0:
-		res += "   %s minerio" % EconMath.fmt(GameState.amount("ore"))
-	_header.text = "HANGAR  -  %s        %s" % [planet.to_upper(), res]
+		_resources.add_child(UiKit.icon_label("ore", EconMath.fmt(GameState.amount("ore")), &"ValueLabel"))
+	var dust_id: String = EconMath.spec["prestige"]["resource"]
+	if GameState.amount(dust_id) > 0.0:
+		_resources.add_child(UiKit.icon_label("stardust", EconMath.fmt(GameState.amount(dust_id)), &"DustLabel"))
 	var s := GameState.ship_stats()
 	var reach := Purchases.max_reach_m(planet, s, float(s["tank"]))
-	_ship.text = "motor %.1f m/s2   tanque %s gas   bocais %.2f m/s/gas   alcance max ~%s m (ideal)" % [
-			float(s["thrust"]), EconMath.fmt(float(s["tank"])), float(s["efficiency"]), EconMath.fmt(reach)]
-	for c in _rows.get_children():
-		c.queue_free()
+	_clear(_ship)
+	_ship.add_child(UiKit.icon_label("thrust", "motor %.1f m/s2" % float(s["thrust"])))
+	_ship.add_child(UiKit.icon_label("tank", "tanque %s gás" % EconMath.fmt(float(s["tank"]))))
+	_ship.add_child(UiKit.icon_label("efficiency", "bocais %.2f m/s/gás" % float(s["efficiency"])))
+	_ship.add_child(UiKit.icon_label("distance", "alcance máx ~%s m" % EconMath.fmt(reach)))
+	_clear(_rows)
 	if GameState.prestige_pending:
 		_add_pending_prestige()
 		return
@@ -66,14 +73,28 @@ func refresh() -> void:
 	_add_options()
 
 
+func _clear(box: Node) -> void:
+	for c in box.get_children():
+		box.remove_child(c)
+		c.queue_free()
+
+
+func _planet_name(id: String) -> String:
+	for p: Dictionary in EconMath.spec["planets"]:
+		if p["id"] == id:
+			return str(p["name"]).to_upper()
+	return id.to_upper()
+
+
 ## Opcoes: volume por bus (clique alterna 100/75/50/25/0%) e novo jogo (2 cliques).
 func _add_options() -> void:
-	_rows.add_child(_section("OPCOES"))
+	_rows.add_child(_section("OPÇÕES"))
 	var line := HBoxContainer.new()
-	var names := {"Music": "Musica", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
+	line.add_theme_constant_override(&"separation", 3)
+	var names := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
 	for bus: String in GameState.BUSES:
 		var b := Button.new()
-		b.add_theme_font_size_override(&"font_size", 10)
+		b.icon = UiKit.icon("options") if bus == "Music" else null
 		b.text = "%s %d%%" % [names[bus], int(round(GameState.volume(bus) * 100.0))]
 		b.pressed.connect(func() -> void:
 			var v := GameState.volume(bus) - 0.25
@@ -82,7 +103,6 @@ func _add_options() -> void:
 			refresh())
 		line.add_child(b)
 	var ng := Button.new()
-	ng.add_theme_font_size_override(&"font_size", 10)
 	ng.text = "CONFIRMA? apagar todo o progresso" if _confirm_new_game else "Novo jogo"
 	ng.pressed.connect(func() -> void:
 		if _confirm_new_game:
@@ -110,21 +130,33 @@ func _stages_done() -> int:
 	return n
 
 
-## Expedicao a Titan: barra segmentada (gradiente de meta) + proxima etapa.
+## Expedicao ao Quarto: barra de progresso (gradiente de meta) + proxima etapa.
 func _add_expedition(stages: Array) -> void:
 	var total := 0
 	for u: Dictionary in EconMath.spec["upgrades"]:
 		if u.get("progress", false):
 			total += 1
 	var done := _stages_done()
-	var head := _section("EXPEDIÇÃO AO QUARTO   [%s%s]  %d/%d" % ["#".repeat(done), "-".repeat(total - done), done, total])
-	head.add_theme_color_override(&"font_color", Color("#8fd3ff"))
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override(&"separation", 6)
+	head.add_child(_section("EXPEDIÇÃO AO QUARTO"))
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(120, 8)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.max_value = total
+	bar.value = done
+	head.add_child(bar)
+	var n := Label.new()
+	n.text = "%d/%d" % [done, total]
+	n.theme_type_variation = &"ValueLabel"
+	head.add_child(n)
 	_rows.add_child(head)
 	for r: Dictionary in stages:
 		_rows.add_child(_make_row(r))
 
 
-## Secao de prestigio + loja da Poeira (aparece depois de Ares ou quando ja houve prestigio).
+## Secao de prestigio + loja da Poeira (aparece depois do 2o mundo ou quando ja houve prestigio).
 func _add_prestige_section() -> void:
 	var dust_id: String = EconMath.spec["prestige"]["resource"]
 	var req: String = EconMath.spec["prestige"].get("requires_planet", "")
@@ -134,18 +166,17 @@ func _add_prestige_section() -> void:
 	for b: Dictionary in EconMath.spec["prestige"]["bonuses"]:
 		if b["stat"] == "pay_mult":
 			bonus = float(b["per_point"]) * GameState.prestige_points * 100.0
-	var head := _section("PRESTIGIO   Poeira Estelar: %s   nivel %s (+%d%% pagamento)" % [
-			EconMath.fmt(GameState.amount(dust_id)), EconMath.fmt(GameState.prestige_points), int(bonus)])
-	head.add_theme_color_override(&"font_color", COLOR_DUST)
+	var head := UiKit.icon_label("prestige", "PRESTÍGIO   Poeira Estelar %s   nível %s (+%d%% pagamento)" % [
+			EconMath.fmt(GameState.amount(dust_id)), EconMath.fmt(GameState.prestige_points), int(bonus)], &"DustLabel")
 	_rows.add_child(head)
 	var st := GameState.prestige_state()
 	var g := Prestige.gain(st)
 	var b := Button.new()
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.add_theme_font_size_override(&"font_size", 10)
+	b.icon = UiKit.icon("stardust")
 	if Prestige.can_prestige(st):
-		b.text = ("CONFIRMA? recomecar do zero por +%s Poeira (clique de novo)" if _confirm_prestige
-				else "Recomecar (prestigio): +%s Poeira Estelar") % EconMath.fmt(g)
+		b.text = ("CONFIRMA? recomeçar do zero por +%s Poeira (clique de novo)" if _confirm_prestige
+				else "Recomeçar (prestígio): +%s Poeira Estelar") % EconMath.fmt(g)
 		b.pressed.connect(func() -> void:
 			if _confirm_prestige:
 				_confirm_prestige = false
@@ -154,7 +185,7 @@ func _add_prestige_section() -> void:
 				_confirm_prestige = true
 			refresh())
 	else:
-		b.text = "Recomecar: +%s Poeira agora (minimo %s) - ganhe mais creditos neste ciclo" % [
+		b.text = "Recomeçar: +%s Poeira agora (mínimo %s) - ganhe mais créditos neste ciclo" % [
 				EconMath.fmt(g), EconMath.fmt(float(EconMath.spec["prestige"].get("min_gain", 1)))]
 		b.disabled = true
 	_rows.add_child(b)
@@ -166,13 +197,15 @@ func _add_prestige_section() -> void:
 ## Recomeco em andamento: so a loja + concluir (o reset usa o que foi comprado).
 func _add_pending_prestige() -> void:
 	_launch.disabled = true
-	var head := _section("RECOMECO: gaste sua Poeira Estelar na loja e conclua. O progresso comum sera zerado.")
-	head.add_theme_color_override(&"font_color", COLOR_DUST)
+	var head := Label.new()
+	head.text = "RECOMEÇO: gaste sua Poeira Estelar na loja e conclua. O progresso comum será zerado."
+	head.theme_type_variation = &"DustLabel"
+	head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_rows.add_child(head)
 	_add_shop(GameState.prestige_state())
 	var done := Button.new()
-	done.text = "CONCLUIR RECOMECO"
-	done.add_theme_font_size_override(&"font_size", 12)
+	done.text = "CONCLUIR RECOMEÇO"
+	done.theme_type_variation = &"PrimaryButton"
 	done.pressed.connect(func() -> void:
 		GameState.finish_prestige()
 		refresh())
@@ -181,13 +214,12 @@ func _add_pending_prestige() -> void:
 
 func _add_shop(st: Dictionary) -> void:
 	var dust_id: String = EconMath.spec["prestige"]["resource"]
-	var shop_head := _section("LOJA DA POEIRA   (%s disponivel)" % EconMath.fmt(GameState.amount(dust_id)))
-	shop_head.add_theme_color_override(&"font_color", COLOR_DUST)
-	_rows.add_child(shop_head)
+	_rows.add_child(UiKit.icon_label("stardust", "LOJA DA POEIRA   (%s disponível)" % EconMath.fmt(
+			GameState.amount(dust_id)), &"DustLabel"))
 	for r: Dictionary in Prestige.shop_rows(st):
 		var sb := Button.new()
 		sb.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		sb.add_theme_font_size_override(&"font_size", 10)
+		sb.icon = UiKit.icon("prestige")
 		var lvl := "MAX" if r["maxed"] else "nv %d/%d" % [int(r["level"]), int(r["max_level"])]
 		sb.text = "%s  %s   %s" % [r["name"], lvl, "" if r["maxed"] else "%s poeira" % EconMath.fmt(float(r["cost"]))]
 		sb.disabled = not r["affordable"]
@@ -201,19 +233,18 @@ func _add_shop(st: Dictionary) -> void:
 func _section(title: String) -> Label:
 	var l := Label.new()
 	l.text = title
-	l.add_theme_font_size_override(&"font_size", 10)
-	l.add_theme_color_override(&"font_color", COLOR_TITLE)
+	l.theme_type_variation = &"SectionLabel"
 	return l
 
 
 func _make_planet_row(p: Dictionary) -> Button:
 	var b := Button.new()
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	b.add_theme_font_size_override(&"font_size", 10)
+	b.icon = UiKit.icon("planet")
 	var id: String = p["id"]
-	var info := "gravidade %.2f   pagamento x%s" % [float(p["gravity"]), EconMath.fmt(float(p["pay_mult"]))]
+	var info := "gravidade %.2f   pagamento ×%s" % [float(p["gravity"]), EconMath.fmt(float(p["pay_mult"]))]
 	if id == GameState.current_planet:
-		b.text = "> %s (atual)   %s" % [p["name"], info]
+		b.text = "%s (atual)   %s" % [p["name"], info]
 		b.disabled = true
 	elif p["unlocked"]:
 		if p["can_fly"]:
@@ -236,34 +267,55 @@ func _make_planet_row(p: Dictionary) -> Button:
 	return b
 
 
+## Linha de upgrade: icone | nome (+ marco) | nivel | atual > proximo | COMPRAR (custo) | MAX
 func _make_row(r: Dictionary) -> HBoxContainer:
+	var id: String = r["id"]
 	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	var ic := TextureRect.new()
+	ic.texture = UiKit.icon("expedition" if _is_stage(id) else ICONS.get(id, "options"))
+	ic.custom_minimum_size = Vector2(12, 12)
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	row.add_child(ic)
+	var name := Label.new()
+	name.text = str(r["name"])
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.clip_text = true
+	if not (r["milestone"] as Dictionary).is_empty():
+		name.tooltip_text = "marco no nível %d: pagamento ×%s" % [int(r["milestone"]["level"]), str(r["milestone"]["mult"])]
+		name.mouse_filter = Control.MOUSE_FILTER_PASS
+	row.add_child(name)
+	var lv := Label.new()
+	lv.text = "nv %d" % int(r["level"])
+	lv.theme_type_variation = &"DimLabel"
+	lv.custom_minimum_size = Vector2(34, 0)
+	row.add_child(lv)
+	var eff := Label.new()
+	var unit: String = UNITS.get(r["stat"], "")
+	eff.text = "%s > %s %s" % [_num(r["current"]), _num(r["next"]), unit]
+	eff.theme_type_variation = &"ValueLabel"
+	eff.custom_minimum_size = Vector2(118, 0)
+	row.add_child(eff)
 	var buy := Button.new()
-	buy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	var cost_txt := []
 	for res: String in r["cost"]:
-		cost_txt.append("%s %s" % [EconMath.fmt(float(r["cost"][res])), _res_label(res)])
-	var unit: String = UNITS.get(r["stat"], "")
-	var ms := ""
-	if not (r["milestone"] as Dictionary).is_empty():
-		ms = "  (marco nv %d: pag x%s)" % [int(r["milestone"]["level"]), str(r["milestone"]["mult"])]
-	buy.text = "%s  nv %d   %s -> %s %s   %s%s" % [r["name"], int(r["level"]), _num(r["current"]),
-			_num(r["next"]), unit, " + ".join(cost_txt), ms]
+		cost_txt.append(EconMath.fmt(float(r["cost"][res])) + ("" if res == "credits" else " " + _res_label(res)))
+	buy.text = " + ".join(cost_txt)
+	buy.icon = UiKit.icon(RES.get(r["cost"].keys()[0], ["credits"])[0]) if not (r["cost"] as Dictionary).is_empty() else null
+	buy.custom_minimum_size = Vector2(78, 15)
+	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	buy.disabled = not r["affordable"]
-	buy.add_theme_font_size_override(&"font_size", 10)
-	var id: String = r["id"]
 	buy.pressed.connect(func() -> void:
 		GameState.buy_upgrade(id)
 		refresh())
+	row.add_child(buy)
 	var mx := Button.new()
-	mx.text = "max"
+	mx.text = "MAX"
+	mx.custom_minimum_size = Vector2(30, 15)
 	mx.disabled = not r["affordable"]
-	mx.add_theme_font_size_override(&"font_size", 10)
 	mx.pressed.connect(func() -> void:
 		GameState.buy_upgrade_max(id)
 		refresh())
-	row.add_child(buy)
 	row.add_child(mx)
 	return row
 
@@ -279,4 +331,4 @@ func _num(v: float) -> String:
 
 
 func _res_label(res: String) -> String:
-	return {"credits": "cr", "ore": "minerio", "stardust": "poeira"}.get(res, res)
+	return {"credits": "cr", "ore": "minério", "stardust": "poeira"}.get(res, res)

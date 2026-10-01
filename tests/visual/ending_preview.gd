@@ -10,5 +10,6 @@ func _ready() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	var e: Ending = ENDING_SCENE.instantiate()
+	e.theme = UiKit.theme_for("titan")
 	layer.add_child(e)
 	e.show_ending(5.0 * 3600.0 + 17.0 * 60.0)

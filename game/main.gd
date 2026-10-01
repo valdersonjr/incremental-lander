@@ -68,6 +68,9 @@ func _start_run() -> void:
 	_summary.visible = false
 	_gui.move_child(_hangar, -1)  # hangar sempre por cima
 	_gui.move_child(_ending, -1)
+	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
+	for c: Control in [_hud, _offers, _summary, _ending]:
+		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)

@@ -77,6 +77,9 @@ art/src/bg/forest_scene.py    # mundo 2 Silvânia (floresta, id ares) · candy_s
 art/src/bg/room_scene.py      # mundo 4 O Quarto (quarto bagunçado, id titan; wall_mode)
 art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito (referência; não gera mais assets do jogo)
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
+art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
+assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
+scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo), icon(nome), icon_label(...), color(...)
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)

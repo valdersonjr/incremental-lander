@@ -1,70 +1,82 @@
-## Painel de ofertas de entrega (teclas 1..8 da fileira de cima ou do teclado numerico, ou clique, escolhem;
-## E encerra o run). Se o jogador tenta pilotar antes de escolher, o aviso pisca. Placeholder de texto.
+## Painel de ofertas de entrega (arte: UiKit). Teclas 1..9 (fileira de cima ou teclado numerico) ou clique na
+## linha escolhem; E encerra o run. Se o jogador tenta pilotar antes de escolher, o aviso pisca.
 class_name OfferPanel
 extends PanelContainer
 
 signal offer_chosen(index: int)
 signal end_requested
 
-const COLOR_OK := Color("#c7dcd0")      # mist
-const COLOR_BAD := Color("#e83b3b")     # red
-const COLOR_TITLE := Color("#fbb954")   # honey
-const COLOR_HINT := Color("#9babb2")    # steel
-const COLOR_HOVER := Color("#30e1b9")   # aqua
-const HINT := "Escolha: teclas 1-%d ou clique  >  depois W/Espaco decola"
+const HINT := "teclas 1-%d ou clique  >  depois W/Espaço decola"
 
 ## Segundos restantes do aviso piscando (tentou pilotar antes de escolher). Exposto para o teste de controles.
 var hint_flash := 0.0
-var _hint: Label
 var _count := 0
 
 @onready var _list: VBoxContainer = %List
+@onready var _hint: Label = %Hint
 
 
 ## Mostra as ofertas do run com o gas que resta.
 func show_offers(run: RunState, gas_left: float) -> void:
 	for c in _list.get_children():
+		_list.remove_child(c)
 		c.queue_free()
 	_count = run.offers.size()
-	_add_line("ENTREGAS  [1-%d] escolher   [E] encerrar run" % _count, COLOR_TITLE)
 	for i in _count:
 		var info := run.offer_info(i, gas_left)
-		var l := _add_line("%d  %5s m   min ~%s gas   +%s cr" % [i + 1, EconMath.fmt(info["distance"]),
-				EconMath.fmt(info["gas_est"]), EconMath.fmt(info["pay_typical"])],
-				COLOR_OK if info["reachable"] else COLOR_BAD)
-		_make_clickable(l, i, COLOR_OK if info["reachable"] else COLOR_BAD)
-	_hint = _add_line(HINT % _count, COLOR_HINT)
+		_list.add_child(_make_row(i, info))
 	hint_flash = 0.0
 	visible = true
 
 
 ## Centro (tela) da linha da oferta i — usado pelo teste de controles para simular o clique.
 func offer_line_center(i: int) -> Vector2:
-	var l := _list.get_child(i + 1) as Control
-	return l.get_global_rect().get_center()
+	return (_list.get_child(i) as Control).get_global_rect().get_center()
 
 
 func _process(delta: float) -> void:
-	if _hint == null or not is_instance_valid(_hint):
-		return
 	if hint_flash > 0.0:
 		hint_flash -= delta
 		_hint.text = "ESCOLHA UMA ENTREGA PRIMEIRO: tecla 1-%d ou clique" % _count
-		_hint.add_theme_color_override(&"font_color", COLOR_BAD if fmod(hint_flash, 0.4) > 0.2 else COLOR_TITLE)
+		_hint.theme_type_variation = &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel"
 	else:
 		_hint.text = HINT % _count
-		_hint.add_theme_color_override(&"font_color", COLOR_HINT)
+		_hint.theme_type_variation = &"DimLabel"
 
 
-func _make_clickable(l: Label, index: int, base: Color) -> void:
-	l.mouse_filter = Control.MOUSE_FILTER_STOP
-	l.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	l.mouse_entered.connect(func() -> void: l.add_theme_color_override(&"font_color", COLOR_HOVER))
-	l.mouse_exited.connect(func() -> void: l.add_theme_color_override(&"font_color", base))
-	l.gui_input.connect(func(ev: InputEvent) -> void:
+func _make_row(index: int, info: Dictionary) -> HBoxContainer:
+	var ok: bool = info["reachable"]
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 3)
+	row.mouse_filter = Control.MOUSE_FILTER_STOP
+	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var key := Button.new()
+	key.text = str(index + 1)
+	key.custom_minimum_size = Vector2(16, 15)
+	key.focus_mode = Control.FOCUS_NONE
+	key.disabled = not ok
+	key.pressed.connect(func() -> void: offer_chosen.emit(index))
+	row.add_child(key)
+	var cols := [["distance", "%s m" % EconMath.fmt(info["distance"]), 54],
+			["gas", EconMath.fmt(info["gas_est"]), 28], ["credits", "+" + EconMath.fmt(info["pay_typical"]), 0]]
+	for c: Array in cols:
+		var cell := UiKit.icon_label(c[0], c[1], &"BadLabel" if not ok else (&"MoneyLabel" if c[0] == "credits"
+				else &"ValueLabel"))
+		cell.custom_minimum_size = Vector2(int(c[2]) + 15, 0) if int(c[2]) > 0 else Vector2.ZERO
+		cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for ch in cell.get_children():
+			(ch as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(cell)
+	# linha inteira clicavel; destaque no botao ao passar o mouse
+	row.mouse_entered.connect(func() -> void:
+		if ok:
+			key.add_theme_stylebox_override(&"normal", key.get_theme_stylebox(&"hover")))
+	row.mouse_exited.connect(func() -> void: key.remove_theme_stylebox_override(&"normal"))
+	row.gui_input.connect(func(ev: InputEvent) -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and visible:
 			accept_event()
 			offer_chosen.emit(index))
+	return row
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -86,12 +98,3 @@ func _unhandled_input(event: InputEvent) -> void:
 		if n >= 0 and n < _count:
 			get_viewport().set_input_as_handled()
 			offer_chosen.emit(n)
-
-
-func _add_line(text: String, color: Color) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.add_theme_font_size_override(&"font_size", 10)
-	l.add_theme_color_override(&"font_color", color)
-	_list.add_child(l)
-	return l

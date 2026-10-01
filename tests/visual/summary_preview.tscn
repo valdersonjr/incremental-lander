@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/visual/summary_preview.gd" id="1_sum"]
+
+[node name="SummaryPreview" type="Node"]
+script = ExtResource("1_sum")

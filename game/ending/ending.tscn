@@ -2,39 +2,31 @@
 
 [ext_resource type="Script" path="res://game/ending/ending.gd" id="1_end"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_end"]
-bg_color = Color(0.196, 0.2, 0.325, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.561, 0.827, 1, 1)
-content_margin_left = 10.0
-content_margin_top = 8.0
-content_margin_right = 10.0
-content_margin_bottom = 8.0
-
 [node name="Ending" type="PanelContainer"]
 offset_left = 120.0
 offset_top = 80.0
 offset_right = 520.0
 offset_bottom = 280.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_end")
 script = ExtResource("1_end")
 
 [node name="VBox" type="VBoxContainer" parent="."]
 layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+horizontal_alignment = 1
 
 [node name="Text" type="Label" parent="VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.561, 0.827, 1, 1)
 horizontal_alignment = 1
 
 [node name="Continue" type="Button" parent="VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_type_variation = &"PrimaryButton"
 text = "Continuar jogando"

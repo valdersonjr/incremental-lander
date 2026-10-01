@@ -10,12 +10,12 @@
   "resources": [
     {
       "id": "credits",
-      "name": "Creditos",
+      "name": "Créditos",
       "start": 0
     },
     {
       "id": "ore",
-      "name": "Minerio",
+      "name": "Minério",
       "start": 0
     },
     {
@@ -69,7 +69,7 @@
     },
     {
       "id": "tank",
-      "name": "Tanque de gas",
+      "name": "Tanque de gás",
       "effect": {
         "stat": "tank",
         "op": "mult",
@@ -93,7 +93,7 @@
     },
     {
       "id": "efficiency",
-      "name": "Bocais (eficiencia)",
+      "name": "Bocais (eficiência)",
       "effect": {
         "stat": "efficiency",
         "op": "mult",
@@ -117,7 +117,7 @@
     },
     {
       "id": "contracts",
-      "name": "Reputacao (pagamento)",
+      "name": "Reputação (pagamento)",
       "effect": {
         "stat": "pay_mult",
         "op": "mult",
@@ -159,7 +159,7 @@
     },
     {
       "id": "refinery",
-      "name": "Refinaria (eficiencia com minerio)",
+      "name": "Refinaria (eficiência com minério)",
       "requires_planet": "ares",
       "effect": {
         "stat": "efficiency",
@@ -200,7 +200,7 @@
     },
     {
       "id": "autopilot",
-      "name": "Software de piloto automatico",
+      "name": "Software de piloto automático",
       "requires_shop": "warp_drive",
       "effect": {
         "stat": "autopilot",
@@ -219,7 +219,7 @@
     },
     {
       "id": "exp1_station",
-      "name": "Expedição ao Quarto 1/8: Estacao Orbital de Apoio",
+      "name": "Expedição ao Quarto 1/8: Estação Orbital de Apoio",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -244,7 +244,7 @@
     },
     {
       "id": "exp2_cryo",
-      "name": "Expedição ao Quarto 2/8: Tanques Criogenicos",
+      "name": "Expedição ao Quarto 2/8: Tanques Criogênicos",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -271,7 +271,7 @@
     },
     {
       "id": "exp3_shield",
-      "name": "Expedição ao Quarto 3/8: Escudo Termico Ablativo",
+      "name": "Expedição ao Quarto 3/8: Escudo Térmico Ablativo",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -298,7 +298,7 @@
     },
     {
       "id": "exp4_satnet",
-      "name": "Expedição ao Quarto 4/8: Rede de Satelites de Navegacao",
+      "name": "Expedição ao Quarto 4/8: Rede de Satélites de Navegação",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -325,7 +325,7 @@
     },
     {
       "id": "exp5_habitat",
-      "name": "Expedição ao Quarto 5/8: Modulo de Habitacao",
+      "name": "Expedição ao Quarto 5/8: Módulo de Habitação",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -352,7 +352,7 @@
     },
     {
       "id": "exp6_fusion",
-      "name": "Expedição ao Quarto 6/8: Reator de Fusao Compacto",
+      "name": "Expedição ao Quarto 6/8: Reator de Fusão Compacto",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -379,7 +379,7 @@
     },
     {
       "id": "exp7_anchor",
-      "name": "Expedição ao Quarto 7/8: Ancora Gravitacional",
+      "name": "Expedição ao Quarto 7/8: Âncora Gravitacional",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -406,7 +406,7 @@
     },
     {
       "id": "exp8_aurora",
-      "name": "Expedição ao Quarto 8/8: Nave-mae Aurora",
+      "name": "Expedição ao Quarto 8/8: Nave-mãe Aurora",
       "progress": true,
       "persistent": true,
       "max_level": 1,
@@ -645,7 +645,7 @@
       },
       {
         "id": "star_charts",
-        "name": "Cartas de navegacao (manter planetas)",
+        "name": "Cartas de navegação (manter planetas)",
         "priority": 3,
         "max_level": 1,
         "cost": {

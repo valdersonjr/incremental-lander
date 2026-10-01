@@ -57,4 +57,5 @@
 | 2026-10-01 | Nomes temáticos dos mundos escolhidos pelo Claude; ids `ares`/`kronos`/`titan` mantidos no código | usuário escolheu a opção recomendada | nomes na spec da economia (skill economy-balance) |
 | 2026-10-01 | 4º mundo = **Quarto bagunçado** ("O Quarto"); meta final "Expedição ao Quarto" (só textos; ids/números iguais) | exemplo do próprio usuário, proposto quando ele disse "continue"; aprovado | `art/src/bg/room_scene.py`, spec da economia (nomes) |
 | 2026-10-01 | Entrega escolhida por teclas 1–9 (inclui numérico) ou clique; aviso piscando se tentar pilotar antes | usuário "não consigo controlar a nave": nada avisava que é preciso escolher a entrega | `game/run/offer_panel.gd`, `godot-dev/references/patterns/controls-ux.md` |
+| 2026-10-01 | **Interface pixel com cor por mundo** (fonte própria com acentos, painéis 9-slice, botões, barras, ícones); fixos: fundo escuro, dourado/vermelho/ciano do gás | usuário: "deixar mais bonito todos os menus" + "tem que mudar de acordo com o mapa" | `pixel-art/references/patterns/ui-kit.md`, `godot-dev/references/ui.md` |
 

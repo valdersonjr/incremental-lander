@@ -1,0 +1,125 @@
+{
+  "panel": {
+    "size": 26,
+    "margin": 8
+  },
+  "panel_header": {
+    "size": 26,
+    "margin": 8,
+    "header": 12
+  },
+  "button": {
+    "size": [
+      20,
+      16
+    ],
+    "margin": [
+      6,
+      5
+    ],
+    "styles": [
+      "normal",
+      "hover",
+      "pressed",
+      "disabled",
+      "primary",
+      "primary_hover"
+    ]
+  },
+  "bar": {
+    "size": [
+      12,
+      8
+    ],
+    "margin": 3,
+    "kinds": [
+      "bg",
+      "fill",
+      "warn",
+      "danger",
+      "xp"
+    ]
+  },
+  "icons": {
+    "size": 12,
+    "names": [
+      "credits",
+      "ore",
+      "stardust",
+      "gas",
+      "thrust",
+      "tank",
+      "efficiency",
+      "reputation",
+      "gear",
+      "refinery",
+      "fleet",
+      "autopilot",
+      "planet",
+      "prestige",
+      "expedition",
+      "options",
+      "distance",
+      "quality"
+    ]
+  },
+  "font": {
+    "file": "font.fnt",
+    "size": 11
+  },
+  "worlds": {
+    "luna": {
+      "accent": "#30e1b9",
+      "title": "#8ff8e2",
+      "base": "#0eaf9b",
+      "deep": "#0b5e65"
+    },
+    "ares": {
+      "accent": "#91db69",
+      "title": "#cddf6c",
+      "base": "#1ebc73",
+      "deep": "#165a4c"
+    },
+    "kronos": {
+      "accent": "#ed8099",
+      "title": "#fca790",
+      "base": "#f04f78",
+      "deep": "#831c5d"
+    },
+    "titan": {
+      "accent": "#fbb954",
+      "title": "#fdcbb0",
+      "base": "#e6904e",
+      "deep": "#9e4539"
+    }
+  },
+  "colors": {
+    "white": "#ffffff",
+    "mist": "#c7dcd0",
+    "steel": "#9babb2",
+    "lilac_grey": "#7f708a",
+    "slate": "#625565",
+    "ink": "#2e222f",
+    "gold": "#f9c22b",
+    "lemon": "#fbff86",
+    "red": "#e83b3b",
+    "coral": "#f57d4a",
+    "leaf": "#91db69",
+    "amber": "#f79617",
+    "violet": "#a884f3",
+    "lavender": "#eaaded",
+    "aqua": "#30e1b9",
+    "ice": "#8ff8e2"
+  },
+  "world_files": [
+    "panel.png",
+    "panel_header.png",
+    "bar_fill.png",
+    "button_normal.png",
+    "button_hover.png",
+    "button_pressed.png",
+    "button_disabled.png",
+    "button_primary.png",
+    "button_primary_hover.png"
+  ]
+}

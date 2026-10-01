@@ -10,38 +10,132 @@ anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("1_hud")
 
-[node name="Stats" type="VBoxContainer" parent="."]
+[node name="Stats" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = 6.0
-offset_top = 4.0
-offset_right = 200.0
-offset_bottom = 90.0
-theme_override_constants/separation = 0
+offset_top = 6.0
+offset_right = 166.0
+offset_bottom = 80.0
+mouse_filter = 2
 
-[node name="Gas" type="Label" parent="Stats"]
+[node name="VBox" type="VBoxContainer" parent="Stats"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="GasRow" type="HBoxContainer" parent="Stats/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="GasIcon" type="TextureRect" parent="Stats/VBox/GasRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+stretch_mode = 3
+
+[node name="GasTitle" type="Label" parent="Stats/VBox/GasRow"]
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "GÁS"
+
+[node name="GasBar" type="ProgressBar" parent="Stats/VBox/GasRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"GasBar"
+show_percentage = false
+
+[node name="Gas" type="Label" parent="Stats/VBox/GasRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
+theme_type_variation = &"ValueLabel"
+horizontal_alignment = 2
+
+[node name="VyRow" type="HBoxContainer" parent="Stats/VBox"]
+layout_mode = 2
+
+[node name="VyTitle" type="Label" parent="Stats/VBox/VyRow"]
+custom_minimum_size = Vector2(46, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "V.VERT"
+
+[node name="Vy" type="Label" parent="Stats/VBox/VyRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
 
-[node name="Vy" type="Label" parent="Stats"]
+[node name="VxRow" type="HBoxContainer" parent="Stats/VBox"]
+layout_mode = 2
+
+[node name="VxTitle" type="Label" parent="Stats/VBox/VxRow"]
+custom_minimum_size = Vector2(46, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "V.HOR"
+
+[node name="Vx" type="Label" parent="Stats/VBox/VxRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
 
-[node name="Vx" type="Label" parent="Stats"]
+[node name="AltRow" type="HBoxContainer" parent="Stats/VBox"]
+layout_mode = 2
+
+[node name="AltTitle" type="Label" parent="Stats/VBox/AltRow"]
+custom_minimum_size = Vector2(46, 0)
+layout_mode = 2
+theme_type_variation = &"DimLabel"
+text = "ALT"
+
+[node name="Alt" type="Label" parent="Stats/VBox/AltRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"ValueLabel"
 
-[node name="Alt" type="Label" parent="Stats"]
+[node name="DistRow" type="HBoxContainer" parent="Stats/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="DistIcon" type="TextureRect" parent="Stats/VBox/DistRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+stretch_mode = 3
+
+[node name="Dist" type="Label" parent="Stats/VBox/DistRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+theme_type_variation = &"ValueLabel"
 
-[node name="Dist" type="Label" parent="Stats"]
+[node name="Money" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_left = 504.0
+offset_top = 6.0
+offset_right = 634.0
+offset_bottom = 30.0
+mouse_filter = 2
+
+[node name="HBox" type="HBoxContainer" parent="Money"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="MoneyIcon" type="TextureRect" parent="Money/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+stretch_mode = 3
+
+[node name="Credits" type="Label" parent="Money/HBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 10
+size_flags_horizontal = 3
+theme_type_variation = &"MoneyLabel"
+
+[node name="Deliveries" type="Label" parent="Money/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ValueLabel"
 
 [node name="Message" type="Label" parent="."]
 unique_name_in_owner = true
@@ -50,14 +144,3 @@ offset_left = 6.0
 offset_top = 344.0
 offset_right = 634.0
 offset_bottom = 358.0
-theme_override_font_sizes/font_size = 10
-
-[node name="Credits" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 6.0
-offset_top = 90.0
-offset_right = 320.0
-offset_bottom = 104.0
-theme_override_font_sizes/font_size = 10
-theme_override_colors/font_color = Color(0.984, 0.725, 0.329, 1)

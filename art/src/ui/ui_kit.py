@@ -348,7 +348,10 @@ def export() -> None:
             "button": {"size": [BTN_W, BTN_H], "margin": [6, 5], "styles": list(BTN_STYLES)},
             "bar": {"size": [BAR_W, BAR_H], "margin": 3, "kinds": list(BAR_RAMPS)},
             "icons": {"size": ICON, "names": ICONS}, "font": {"file": "font.fnt", "size": pf.ROWS},
-            "worlds": {w: {"accent": r["bright"], "title": r["hi"], "text_accent": r["base"]} for w, r in WORLDS.items()},
+            "worlds": {w: {"accent": hex_of(r["bright"]), "title": hex_of(r["hi"]), "base": hex_of(r["base"]),
+                           "deep": hex_of(r["deep"])} for w, r in WORLDS.items()},
+            "colors": {n: hex_of(n) for n in ("white", "mist", "steel", "lilac_grey", "slate", "ink", "gold", "lemon",
+                                               "red", "coral", "leaf", "amber", "violet", "lavender", "aqua", "ice")},
             "world_files": ["panel.png", "panel_header.png", "bar_fill.png"] + [f"button_{s}.png" for s in BTN_STYLES]}
     with open("assets/ui/ui_kit.json", "w") as f:
         json.dump(meta, f, indent=2)
