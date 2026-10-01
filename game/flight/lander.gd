@@ -10,7 +10,6 @@ signal crashed(reason: String, info: Dictionary)
 
 enum State {LANDED, FLYING, CRASHED}
 
-const COLOR_CRASH := Color("#e83b3b")   # red (marca de batida ate existir a explosao em pixel art)
 
 var state: State = State.LANDED
 var vel_m := Vector2.ZERO               # velocidade em m/s do modelo
@@ -76,11 +75,6 @@ func _process(_delta: float) -> void:
 	var anim := &"thrust" if thrusting else &"idle"
 	if _visual.animation != anim:
 		_visual.play(anim)
-
-
-func _draw() -> void:
-	if state == State.CRASHED:
-		draw_circle(Vector2.ZERO, 9.0, COLOR_CRASH)
 
 
 ## Estado do voo atual (m/s do modelo, rad, gas gasto desde a decolagem, tempo do modelo).

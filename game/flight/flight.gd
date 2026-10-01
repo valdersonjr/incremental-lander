@@ -14,6 +14,9 @@ var target_distance_m := 0.0
 var current_pad_id := 0
 var target_pad_id := -1
 
+const EXPLOSION_FRAMES := preload("res://assets/sprites/explosion_frames.tres")
+const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
+
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
 var _demo := false
@@ -48,6 +51,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	target_pad_id = -1
 	_rebuild_terrain()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.visible = true
 	lander.can_takeoff = false
 	var start_pad: Dictionary = terrain.pads[0]
 	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
@@ -95,6 +99,8 @@ func _planet_spec(pid: String) -> Dictionary:
 
 
 func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
+	# poeira (pixel-art: explosion.py): linha 15 do sprite = chao, x 24 = centro do lander
+	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, float(pad["y"]) - 15.0), false)
 	current_pad_id = int(pad["id"])
 	if current_pad_id == target_pad_id:
 		lander.can_takeoff = false
@@ -106,7 +112,23 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 
 
 func _on_lander_crashed(reason: String, info: Dictionary) -> void:
+	# a nave some e explode; o resultado so sai depois da explosao (senao o resumo a cobre)
+	lander.visible = false
+	var fx := _spawn_fx(EXPLOSION_FRAMES, &"boom", lander.global_position, true)
+	await fx.animation_finished
 	_finish(true, 0.0, reason, info)
+
+
+## Efeito de uma vez (AnimatedSprite2D) no mundo, por cima do lander; se apaga ao terminar.
+func _spawn_fx(frames: SpriteFrames, anim: StringName, pos: Vector2, centered: bool) -> AnimatedSprite2D:
+	var fx := AnimatedSprite2D.new()
+	fx.sprite_frames = frames
+	fx.centered = centered
+	add_child(fx)
+	fx.global_position = pos
+	fx.play(anim)
+	fx.animation_finished.connect(fx.queue_free)
+	return fx
 
 
 func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) -> void:

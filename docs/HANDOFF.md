@@ -10,15 +10,14 @@
   estrias e pedregulhos). Regra registrada no style-guide da pixel-art.
 - **No jogo**: lander futurista + **cena da Lua completa** (fundo `Backdrop` em parallax + terreno com faixas
   cisalhadas lit/flat/shade + pedregulhos) + **plataformas** (sprite animado; alvo com feixe de luz, pista
-  iluminada e marcador). Ares/Kronos/Titan ainda usam o placeholder (sem `<planeta>_layers.json`).
+  iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. Ares/Kronos/Titan ainda usam o placeholder (sem `<planeta>_layers.json`).
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
 **Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
-1. Explosão da batida (troca o círculo vermelho do `lander.gd`) e poeira do pouso.
-2. Cenas de Ares, Kronos e Titan no mesmo padrão de `art/src/bg/moon_scene.py` (gerar `<planeta>_layers.json`;
+1. Cenas de Ares, Kronos e Titan no mesmo padrão de `art/src/bg/moon_scene.py` (gerar `<planeta>_layers.json`;
    regra do usuário: mesmo estilo, só a paleta Resurrect 64 — muda a rampa, não a paleta).
-3. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
+2. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
 Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
 
 ## Pendências conhecidas

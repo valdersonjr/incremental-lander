@@ -27,7 +27,7 @@
 - Poeira redonda/alta parecia fumaça subindo → achatada.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: aprovado na primeira prévia.
 
 ## Fontes
 - https://blog.0x17.de/post/pixel_animations/ — reprodução dos tutoriais do saint11: forma primitiva + brilhos, depois erodir e mover subseções

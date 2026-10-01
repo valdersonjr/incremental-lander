@@ -69,6 +69,8 @@ assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.j
 assets/tiles/luna_ground_*    # faixas do terreno lit/flat/shade (128x176, repetem em x)
 assets/sprites/luna_rocks.png # atlas de pedregulhos (6 x 16x8)
 assets/sprites/landing_pad*, target_beam*, target_marker* # plataforma + feixe + marcador ← art/src/sprites/landing_pad.py
+assets/sprites/explosion*, landing_dust* # FX de batida e pouso ← art/src/fx/explosion.py (Flight._spawn_fx)
+tests/visual/crash_preview.*  # prévia da batida (e da poeira com -- --dust) para gdtool capture
 art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/src/terrain/ = versões reprovadas
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot

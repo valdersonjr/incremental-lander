@@ -26,3 +26,12 @@
 ## Armadilhas
 - Assets nomeados pelo id do planeta (`luna`), não "moon".
 - Câmera centrada na nave = terreno em meia tela: a faixa precisa ser funda (176 px), senão sobra bloco chapado.
+
+## FX de uma vez (explosão, poeira) — 2026-10-01
+- `Flight._spawn_fx(frames, anim, pos, centered)`: AnimatedSprite2D filho da Flight (desenha por cima do lander),
+  `animation_finished -> queue_free`; SpriteFrames com `loop: false` (gerado pela pixel-art).
+- Batida: esconder o lander, tocar a explosão e **só então** emitir `delivery_finished` (senão o resumo do run cobre).
+- Prévias que forçam situações raras: `tests/visual/crash_preview.tscn` precisa de `WorldConfig.register_input()`
+  (as ações de teclado são registradas pela main). Para pouso suave, soltar a 2 px do chão — 12 px de queda já passa
+  do limite de 3 m/s (é a regra funcionando, não bug).
+

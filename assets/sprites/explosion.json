@@ -1,0 +1,23 @@
+{
+  "frame_width": 64,
+  "frame_height": 64,
+  "animations": [
+    {
+      "name": "boom",
+      "row": 0,
+      "frames": 9,
+      "durations_ms": [
+        40,
+        50,
+        60,
+        60,
+        70,
+        90,
+        110,
+        130,
+        150
+      ],
+      "loop": false
+    }
+  ]
+}

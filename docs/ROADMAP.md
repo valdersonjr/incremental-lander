@@ -55,7 +55,8 @@
 - [x] Lander 32×32 futurista + propulsor de plasma (2026-09-30; estilo escolhido entre 5 propostas)
 - [x] Lua: cena rica em camadas (céu, Terra, montanhas facetadas em parallax, terreno com faixas por inclinação, pedregulhos) (2026-10-01; minimalista reprovado, rica aprovada)
 - [x] Plataformas de pouso + feixe de luz, pista iluminada e marcador no alvo (2026-10-01; brilho pedido pelo usuário)
-- [ ] Explosão/batida · pouso (poeira) · cenas de Ares/Kronos/Titan ·
+- [x] Explosão da batida + poeira do pouso (2026-10-01)
+- [ ] Cenas de Ares/Kronos/Titan ·
       UI (painéis, ícones de upgrade, fonte) · FX
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
