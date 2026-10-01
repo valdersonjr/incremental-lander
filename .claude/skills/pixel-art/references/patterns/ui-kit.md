@@ -31,7 +31,12 @@
 - Borda deep_teal sumia no céu → borda sea/teal.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: "Tem que mudar de acordo com o mapa... dado cada mapa novo" → **destaque por mundo** (`WORLDS` em
+  ui_kit.py; troca a rampa turquesa tom por tom): Lua turquesa, Silvânia verde, Docelândia rosa, O Quarto âmbar.
+  Todo mundo novo ganha uma entrada em `WORLDS`. Fixos: fundo escuro, dourado (dinheiro), vermelho (perigo), âmbar
+  (gás acabando), **barra de gás sempre ciano** (rosa nos doces confundia com perigo), ícones.
+- Assets por mundo em `assets/ui/<mundo>/` (painéis, botões, barra de progresso); fixos em `assets/ui/`.
+- (pendente: aprovação do estilo do kit)
 
 ## Fontes
 - https://www.wayline.io/learn/game-ui-art — 9-slice; ícone = silhueta primeiro; borda escura + um brilho; uma paleta/luz/escala

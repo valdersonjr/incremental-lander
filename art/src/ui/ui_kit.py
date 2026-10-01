@@ -20,6 +20,32 @@ BTN_W, BTN_H = 20, 16   # margens 6 (lados) / 5 (cima-baixo)
 BAR_W, BAR_H = 12, 8    # margens 3
 ICON = 12
 
+# Cor de destaque por mundo (decisão do usuário: "tem que mudar de acordo com o mapa"). O kit é desenhado na rampa
+# turquesa (Lua) e cada mundo troca tom por tom: low < deep < mid < base < bright < hi. Fixos em todos: fundo escuro,
+# dourado (dinheiro), vermelho (perigo), âmbar (gás acabando) e os ícones.
+BASE_RAMP = {"low": "navy", "deep": "deep_teal", "mid": "teal", "base": "sea", "bright": "aqua", "hi": "ice"}
+WORLDS = {
+    "luna":   BASE_RAMP,
+    "ares":   {"low": "deep_sage", "deep": "pine", "mid": "green", "base": "emerald", "bright": "leaf", "hi": "sprout"},
+    "kronos": {"low": "plum_dark", "deep": "magenta_dark", "mid": "raspberry", "base": "hot_pink", "bright": "pink",
+               "hi": "peach"},
+    "titan":  {"low": "umber", "deep": "rust", "mid": "terracotta", "base": "copper", "bright": "honey", "hi": "cream"},
+}
+
+
+def themed(cv: Canvas, world: str) -> Canvas:
+    """Troca a rampa turquesa pela do mundo, pixel a pixel (sem trocas em cadeia)."""
+    if world == "luna":
+        return cv
+    remap = {resolve(BASE_RAMP[k]): resolve(v) for k, v in WORLDS[world].items()}
+    out = cv.copy()
+    for y in range(out.h):
+        for x in range(out.w):
+            c = out.px_data[y][x]
+            if c in remap:
+                out.px_data[y][x] = remap[c]
+    return out
+
 
 # ------------------------------------------------------------------ painel
 def panel(w: int, h: int, header: int = 0) -> Canvas:
@@ -225,40 +251,49 @@ ICONS = ["credits", "ore", "stardust", "gas", "thrust", "tank", "efficiency", "r
 
 
 # ------------------------------------------------------------------ amostra (prévia do estilo no jogo)
-def sample() -> Canvas:
-    sys.path.insert(0, "art/src/bg"); sys.path.insert(0, "art/src/terrain")
+def world_scene(world: str) -> Canvas:
+    sys.path.insert(0, "art/src/bg"); sys.path.insert(0, "art/src/terrain"); sys.path.insert(0, "art/src/fx")
     import moon_scene as ms
-    cv = ms.ingame_preview(ms.load_layers(), with_lander=True)
+    if world == "luna":
+        return ms.ingame_preview(ms.load_layers(), with_lander=True)
+    mod = __import__({"ares": "forest_scene", "kronos": "candy_scene", "titan": "room_scene"}[world])
+    return mod.compose(mod.layers())
+
+
+def sample(world: str = "luna") -> Canvas:
+    cv = world_scene(world)
+    T = lambda c: themed(c, world)
+    acc = WORLDS[world]
     ink_shadow = "ink"
     # HUD de voo (canto superior esquerdo)
-    hud = panel(150, 74)
+    hud = T(panel(150, 74))
     cv.stamp(hud, 6, 6)
     cv.stamp(icon("gas"), 14, 14)
     pf.draw_text(cv, 30, 14, "GÁS", "mist")
     cv.stamp(bar(70, 8, "bg"), 58, 16)
-    cv.stamp(bar(52, 8, "fill"), 58, 16)
+    cv.stamp(bar(52, 8, "fill"), 58, 16)                       # gás: sempre ciano (cor do combustível)
     pf.draw_text(cv, 132, 14, "74", "white")
     for i, (lab, val, col) in enumerate((("V.VERT", "-1.2 m/s", "leaf"), ("V.HOR", "3.4 m/s", "gold"),
                                          ("ALT", "126 m", "mist"))):
         pf.draw_text(cv, 14, 28 + i * 12, lab, "steel")
         pf.draw_text(cv, 62, 28 + i * 12, val, col)
     # créditos + entrega (canto superior direito)
-    top = panel(120, 26)
+    top = T(panel(120, 26))
     cv.stamp(top, 514, 6)
     cv.stamp(icon("credits"), 522, 13)
     pf.draw_text(cv, 538, 13, "1.43K", "gold")
     pf.draw_text(cv, 576, 13, "2/6", "mist")
     # painel de ofertas
-    off = panel(212, 128, header=15)
+    off = T(panel(212, 128, header=15))
     ox, oy = 214, 40
     cv.stamp(off, ox, oy)
     pf.draw_text(cv, ox + 8, oy + 3, "ENTREGAS", "white", shadow="ink")
-    pf.draw_text(cv, ox + 150, oy + 3, "[E] sair", "ice")
+    pf.draw_text(cv, ox + 150, oy + 3, "[E] sair", acc["hi"])
     rows = [("1", "127 m", "12", "+22", True), ("2", "868 m", "32", "+187", True), ("3", "2.88K m", "58", "+698", True),
             ("4", "5.52K m", "81", "+1.43K", True), ("5", "9.11K m", "104", "+2.48K", False)]
     for i, (k, d, g, p, ok) in enumerate(rows):
         y = oy + 20 + i * 16
-        b = button(14, 13, "hover" if i == 1 else "normal" if ok else "disabled")
+        b = T(button(14, 13, "hover" if i == 1 else "normal" if ok else "disabled"))
         cv.stamp(b, ox + 8, y)
         pf.draw_text(cv, ox + 12, y + 1, k, "white" if ok else "slate")
         col = "mist" if ok else "red"
@@ -270,7 +305,7 @@ def sample() -> Canvas:
         pf.draw_text(cv, ox + 150, y + 1, p, "gold" if ok else "red")
     pf.draw_text(cv, ox + 8, oy + 106, "1-5 ou clique, depois W decola", "steel")
     # botão principal
-    cv.stamp(button(96, 18, "primary"), 272, 300)
+    cv.stamp(T(button(96, 18, "primary")), 272, 300)
     pf.draw_text(cv, 272 + 48 - pf.text_width("DECOLAR") // 2, 303, "DECOLAR", "ink")
     return cv
 
@@ -292,13 +327,19 @@ def kit_sheet() -> Canvas:
 
 
 def export() -> None:
+    import os
     pf.export("assets/ui/font.png", "assets/ui/font.fnt")
-    panel(PANEL, PANEL).save("assets/ui/panel.png", preview=False)
-    panel(PANEL, PANEL, header=12).save("assets/ui/panel_header.png", preview=False)
-    for st in BTN_STYLES:
-        button(BTN_W, BTN_H, st).save(f"assets/ui/button_{st}.png", preview=False)
-    for k in BAR_RAMPS:
+    bar(BAR_W, BAR_H, "fill").save("assets/ui/bar_gas.png", preview=False)   # gás: sempre ciano
+    for k in ("bg", "warn", "danger", "xp"):                    # fixos (significado)
         bar(BAR_W, BAR_H, k).save(f"assets/ui/bar_{k}.png", preview=False)
+    for world in WORLDS:                                        # destaque por mundo
+        d = f"assets/ui/{world}"
+        os.makedirs(d, exist_ok=True)
+        themed(panel(PANEL, PANEL), world).save(f"{d}/panel.png", preview=False)
+        themed(panel(PANEL, PANEL, header=12), world).save(f"{d}/panel_header.png", preview=False)
+        for st in BTN_STYLES:
+            themed(button(BTN_W, BTN_H, st), world).save(f"{d}/button_{st}.png", preview=False)
+        themed(bar(BAR_W, BAR_H, "fill"), world).save(f"{d}/bar_fill.png", preview=False)
     atlas = Canvas(ICON * len(ICONS), ICON)
     for i, n in enumerate(ICONS):
         atlas.stamp(icon(n), i * ICON, 0)
@@ -306,22 +347,37 @@ def export() -> None:
     meta = {"panel": {"size": PANEL, "margin": PM}, "panel_header": {"size": PANEL, "margin": PM, "header": 12},
             "button": {"size": [BTN_W, BTN_H], "margin": [6, 5], "styles": list(BTN_STYLES)},
             "bar": {"size": [BAR_W, BAR_H], "margin": 3, "kinds": list(BAR_RAMPS)},
-            "icons": {"size": ICON, "names": ICONS}, "font": {"file": "font.fnt", "size": pf.ROWS}}
+            "icons": {"size": ICON, "names": ICONS}, "font": {"file": "font.fnt", "size": pf.ROWS},
+            "worlds": {w: {"accent": r["bright"], "title": r["hi"], "text_accent": r["base"]} for w, r in WORLDS.items()},
+            "world_files": ["panel.png", "panel_header.png", "bar_fill.png"] + [f"button_{s}.png" for s in BTN_STYLES]}
     with open("assets/ui/ui_kit.json", "w") as f:
         json.dump(meta, f, indent=2)
 
 
 # caminhos literais dos assets (o pre-commit procura a fonte de cada PNG pelo caminho escrito no script):
-# assets/ui/font.png assets/ui/panel.png assets/ui/panel_header.png assets/ui/icons.png
-# assets/ui/button_normal.png assets/ui/button_hover.png assets/ui/button_pressed.png assets/ui/button_disabled.png
-# assets/ui/button_primary.png assets/ui/button_primary_hover.png
-# assets/ui/bar_bg.png assets/ui/bar_fill.png assets/ui/bar_warn.png assets/ui/bar_danger.png assets/ui/bar_xp.png
+# assets/ui/font.png assets/ui/icons.png assets/ui/bar_gas.png assets/ui/bar_bg.png assets/ui/bar_warn.png assets/ui/bar_danger.png
+# assets/ui/bar_xp.png
+# assets/ui/luna/panel.png assets/ui/luna/panel_header.png assets/ui/luna/bar_fill.png
+# assets/ui/luna/button_normal.png assets/ui/luna/button_hover.png assets/ui/luna/button_pressed.png assets/ui/luna/button_disabled.png assets/ui/luna/button_primary.png assets/ui/luna/button_primary_hover.png
+# assets/ui/ares/panel.png assets/ui/ares/panel_header.png assets/ui/ares/bar_fill.png
+# assets/ui/ares/button_normal.png assets/ui/ares/button_hover.png assets/ui/ares/button_pressed.png assets/ui/ares/button_disabled.png assets/ui/ares/button_primary.png assets/ui/ares/button_primary_hover.png
+# assets/ui/kronos/panel.png assets/ui/kronos/panel_header.png assets/ui/kronos/bar_fill.png
+# assets/ui/kronos/button_normal.png assets/ui/kronos/button_hover.png assets/ui/kronos/button_pressed.png assets/ui/kronos/button_disabled.png assets/ui/kronos/button_primary.png assets/ui/kronos/button_primary_hover.png
+# assets/ui/titan/panel.png assets/ui/titan/panel_header.png assets/ui/titan/bar_fill.png
+# assets/ui/titan/button_normal.png assets/ui/titan/button_hover.png assets/ui/titan/button_pressed.png assets/ui/titan/button_disabled.png assets/ui/titan/button_primary.png assets/ui/titan/button_primary_hover.png
 
 if __name__ == "__main__":
     kit_sheet().preview("art/previews/ui_kit_sheet.png", scale=3, grid=False, show_1x=False)
-    s = sample()
-    s.save("art/previews/ui_sample.png", preview=False)
-    s.preview("art/previews/ui_sample_2x.png", scale=2, grid=False, show_1x=False)
+    from PIL import Image
+    shots = []
+    for world in WORLDS:
+        s = sample(world)
+        s.save(f"art/previews/ui_sample_{world}.png", preview=False)
+        shots.append(Image.open(f"art/previews/ui_sample_{world}.png").convert("RGB"))
+    sheet = Image.new("RGB", (640 * 2, 360 * 2))
+    for i, im in enumerate(shots):
+        sheet.paste(im, ((i % 2) * 640, (i // 2) * 360))
+    sheet.save("art/previews/ui_worlds.png")
     if "--export" in sys.argv:
         import os
         os.makedirs("assets/ui", exist_ok=True)
