@@ -6,6 +6,7 @@ procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e reg
 | Slug | Objeto | Tipo | Grade | Assets gerados | Atualizado |
 |---|---|---|---|---|---|
 <!-- ex.: | lunar-rock-terrain | Terreno de rocha lunar | tileset blob47 | 16 | assets/tiles/moonrock.png | 2026-09-29 | -->
+| planet-scenes | Cenas de Ares/Kronos/Titan (mesmo estilo da Lua, outras rampas) | bg + terreno | 640x360 | (pendente aprovação) | 2026-10-01 |
 | explosion | Explosão da batida (plasma → fogo → fumaça + destroços) e poeira do pouso | fx | 64 / 48x16 | assets/sprites/explosion.png, assets/sprites/landing_dust.png | 2026-10-01 |
 | landing-pad | Plataforma de pouso + feixe e marcador do alvo | sprite + anim | 80x28 | assets/sprites/landing_pad.png, assets/sprites/target_beam.png, assets/sprites/target_marker.png | 2026-10-01 |
 | moon-scene | Cena da Lua em camadas (céu em faixas, Terra com halo, montanhas facetadas, terreno rico) | bg + terreno | 640x360 | assets/bg/luna_sky.png, assets/bg/luna_planet.png, assets/bg/luna_far.png, assets/bg/luna_mid.png, assets/bg/luna_plain.png, assets/tiles/luna_ground_lit.png, assets/tiles/luna_ground_flat.png, assets/tiles/luna_ground_shade.png, assets/sprites/luna_rocks.png | 2026-10-01 |
