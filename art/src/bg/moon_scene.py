@@ -411,7 +411,7 @@ def export() -> dict:
     return out
 
 
-def ingame_preview(L: dict) -> Canvas:
+def ingame_preview(L: dict, with_lander: bool = True) -> Canvas:
     """Recompõe a cena A PARTIR DOS ASSETS, como o Godot fará (prova de que o export = cena aprovada)."""
     cv = Canvas(W, H)
     cv.stamp(L["sky"]); cv.stamp(L["planet"], PLANET[0] - PLANET[2] - 12, PLANET[1] - PLANET[2] - 12)
@@ -433,9 +433,22 @@ def ingame_preview(L: dict) -> Canvas:
             continue
         i = rng.randrange(len(ROCK_SIZES))
         cv.stamp(L["rocks"].crop(i * cw, 0, cw, ch), x - cw // 2, ridge_y(pts, x) + rng.randint(0, 2) - 6)
-    lander = Canvas.from_image("assets/sprites/lander.png").crop(0, 0, 32, 32)
-    cv.stamp(lander, pad[0] + pad[1] // 2 - 16, ridge_y(pts, pad[0] + pad[1] // 2) - 25)
+    if with_lander:
+        lander = Canvas.from_image("assets/sprites/lander.png").crop(0, 0, 32, 32)
+        cv.stamp(lander, pad[0] + pad[1] // 2 - 16, ridge_y(pts, pad[0] + pad[1] // 2) - 25)
     return cv
+
+
+def load_layers() -> dict:
+    """Camadas exportadas (para prévias de outros assets sobre a cena aprovada)."""
+    names = {"sky": "assets/bg/luna_sky.png", "planet": "assets/bg/luna_planet.png", "far": "assets/bg/luna_far.png",
+             "mid": "assets/bg/luna_mid.png", "plain": "assets/bg/luna_plain.png",
+             "lit": "assets/tiles/luna_ground_lit.png", "flat": "assets/tiles/luna_ground_flat.png",
+             "shade": "assets/tiles/luna_ground_shade.png", "rocks": "assets/sprites/luna_rocks.png"}
+    return {k: Canvas.from_image(v) for k, v in names.items()}
+
+
+PREVIEW_PAD = (300, 64)
 
 
 if __name__ == "__main__":
