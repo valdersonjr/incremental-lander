@@ -21,6 +21,7 @@ var _demo := false
 @onready var lander: Lander = %Lander
 @onready var terrain: Terrain = %Terrain
 @onready var camera: Camera2D = %Camera
+@onready var backdrop: Backdrop = %Backdrop
 
 
 func _ready() -> void:
@@ -30,6 +31,10 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	camera.global_position = lander.global_position
+
+
+func _process(_delta: float) -> void:
+	backdrop.follow(camera.get_screen_center_position())
 
 
 ## Gera o terreno inicial e posiciona o lander na plataforma de partida (sem alvo ainda).
@@ -50,6 +55,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	lander.reset_physics_interpolation()
 	camera.global_position = lander.global_position
 	camera.reset_smoothing()
+	backdrop.setup(planet_id, camera.global_position.y)
 
 
 ## Define a proxima entrega: plataforma a distance_m a frente da plataforma atual.

@@ -4,12 +4,16 @@
 [ext_resource type="Script" path="res://game/flight/lander.gd" id="2_lander"]
 [ext_resource type="PackedScene" path="res://game/terrain/terrain.tscn" id="3_terrain"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/lander_frames.tres" id="4_frames"]
+[ext_resource type="PackedScene" path="res://game/background/backdrop.tscn" id="5_backdrop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lander"]
 size = Vector2(12, 15)
 
 [node name="Flight" type="Node2D"]
 script = ExtResource("1_flight")
+
+[node name="Backdrop" parent="." instance=ExtResource("5_backdrop")]
+unique_name_in_owner = true
 
 [node name="Terrain" parent="." instance=ExtResource("3_terrain")]
 unique_name_in_owner = true

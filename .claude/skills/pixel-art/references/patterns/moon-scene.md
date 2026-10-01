@@ -3,7 +3,11 @@
 - **Slug**: moon-scene
 - **Tipo**: fundo em camadas de parallax + terreno de primeiro plano
 - **Grade**: cena 640x360 (resolução interna); cada camada é um laço horizontal de 640 px
-- **Assets**: (aguardando aprovação) ← `art/src/bg/moon_scene.py` · prévia `art/previews/moon_scene_rich_2x.png`
+- **Assets** ← `art/src/bg/moon_scene.py --export` (contrato `assets/bg/luna_layers.json`):
+  `assets/bg/luna_{sky,planet,far,mid,plain}.png` (camadas de parallax, laço de 640 px),
+  `assets/tiles/luna_ground_{lit,flat,shade}.png` (faixa 128x176 aplicada cisalhada por segmento conforme a
+  inclinação), `assets/sprites/luna_rocks.png` (atlas 6 pedregulhos, célula 16x8, base na linha 6).
+  Prévias: `art/previews/moon_scene_rich_2x.png` (aprovada) e `moon_ingame_2x.png` (recomposta a partir dos assets).
 
 ## Por que existe
 O usuário reprovou o terreno minimalista (v1 em `moon-terrain.md` e os 5 estilos de `terrain_styles.py`) como
@@ -43,6 +47,14 @@ noite roxa com montanhas e faixas de céu até o magenta no horizonte, lago notu
 
 ## Decisões do usuário
 - 2026-09-30: estilos minimalistas reprovados ("todos horríveis"); quer riqueza de detalhe (referências acima).
+- 2026-10-01: cena aprovada ("agora sim ficou massa").
+
+## Export e jogo
+- Nomes dos assets usam o **id do planeta no jogo** (`luna_*`), não o nome em inglês — o Godot procura por id.
+- No jogo a câmera centraliza a nave: o terreno ocupa metade da tela. A faixa de 88 px deixava um bloco plum_dark
+  chapado → faixa de 176 px com estrias fundas que escurecem até sumir.
+- Lint acusa ~6% de "órfãos" nas faixas: é o dither bayer intencional das transições (igual à cena aprovada).
+- Pendente: cortes verticais onde um segmento muda de face (lit/flat/shade); plataformas ainda placeholder.
 
 ## Fontes
 - https://www.slynyrd.com/blog/2026/5/27/pixelblog-62-landscape-backgrounds — perspectiva atmosférica por plano, névoa na base, faixas de horizonte, escala de textura, 15–16 cores

@@ -1,0 +1,29 @@
+{
+  "notes": "Gerado por art/src/bg/moon_scene.py (pixel-art). Posi\u00e7\u00f5es em px na tela de 640x360 da cena aprovada.",
+  "horizon": 262,
+  "planet_pos": [
+    432,
+    46
+  ],
+  "far_y": 0,
+  "mid_y": 0,
+  "plain_y": 267,
+  "deep_color": "#45293f",
+  "strip_depth": 176,
+  "strip_width": 128,
+  "face_slope": 0.15,
+  "rock_cell": [
+    16,
+    8
+  ],
+  "rock_base_row": 6,
+  "rock_count": 6,
+  "rock_widths": [
+    4,
+    5,
+    6,
+    8,
+    11,
+    7
+  ]
+}

@@ -3,19 +3,23 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-09-30)
-- **Fases 0–7 concluídas + Fase 8 iniciada.** Mecânica completa, save e opções.
-- **Arte**: usuário escolheu a **direção futurista** (entre 5 propostas; folha em `art/previews/lander_styles_compare.png`).
-  Lander futurista (branco + turquesa, propulsor de plasma ciano) **já está no jogo** (AnimatedSprite2D).
-  Terreno, plataformas, céu, HUD e telas ainda são placeholders.
-- Ferramenta: `gdtool capture` agora usa `--always-on-top` e detecta gravação congelada (macOS).
+## Estado atual (2026-10-01)
+- **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
+- **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
+  "muito feio"; aprovou a cena da Lua: céu em faixas roxo→magenta, Terra com halo, montanhas facetadas, terreno com
+  estrias e pedregulhos). Regra registrada no style-guide da pixel-art.
+- **No jogo**: lander futurista + **cena da Lua completa** (fundo `Backdrop` em parallax + terreno com faixas
+  cisalhadas lit/flat/shade + pedregulhos). Ares/Kronos/Titan ainda usam o placeholder (sem `<planeta>_layers.json`).
+- **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
-**Continuar a Fase 8 — arte** (skill `pixel-art`, estilo futurista do style-guide; mostrar prévia e pedir aprovação):
-1. Terreno por planeta (polígono: textura de preenchimento seamless + faixa de superfície) — Lua primeiro.
-2. Plataformas de pouso (luzes/sinalização turquesa) e fundo espacial (estrelas, parallax).
-3. Explosão da batida e poeira do pouso; depois UI (fonte pixel, painéis do hangar).
-Integração no Godot pela skill `godot-dev` (trocar os `_draw()`/Polygon2D pelos assets).
+**Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
+1. **Plataformas de pouso** (hoje linhas placeholder em `Terrain._draw`): estrutura futurista com luzes turquesa;
+   alvo destacado.
+2. Explosão da batida (troca o círculo vermelho do `lander.gd`) e poeira do pouso.
+3. Cenas de Ares, Kronos e Titan no mesmo padrão de `art/src/bg/moon_scene.py` (gerar `<planeta>_layers.json`).
+4. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
+Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.

@@ -61,6 +61,17 @@
       }
     }
   },
+  "background": {
+    "notes": "Fundo em camadas (arte em assets/bg/<planeta>_*.png). horizon_screen = y na tela do horizonte com a camera no chao. layers = fator [x, y] de rolagem (0 = preso a tela).",
+    "horizon_screen": 196,
+    "layers": {
+      "sky": [0.0, 0.0],
+      "planet": [0.0, 0.02],
+      "far": [0.03, 0.05],
+      "mid": [0.08, 0.1],
+      "plain": [0.15, 0.16]
+    }
+  },
   "camera": {
     "smoothing_speed": 6.0
   },

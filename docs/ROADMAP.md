@@ -53,8 +53,9 @@
 
 ## Fase 8 — Arte · skill: `pixel-art` (obrigatória para TODA imagem)
 - [x] Lander 32×32 futurista + propulsor de plasma (2026-09-30; estilo escolhido entre 5 propostas)
-- [ ] Explosão/batida · pouso (poeira) · texturas de terreno por planeta ·
-      plataformas · fundos/parallax · UI (painéis, ícones de upgrade) · FX
+- [x] Lua: cena rica em camadas (céu, Terra, montanhas facetadas em parallax, terreno com faixas por inclinação, pedregulhos) (2026-10-01; minimalista reprovado, rica aprovada)
+- [ ] Plataformas de pouso · explosão/batida · pouso (poeira) · cenas de Ares/Kronos/Titan ·
+      UI (painéis, ícones de upgrade, fonte) · FX
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [ ] Propulsor (loop controlado pela potência) · pouso/batida · UI (clique, compra com variações) ·
