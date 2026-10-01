@@ -10,13 +10,14 @@
   estrias e pedregulhos). Regra registrada no style-guide da pixel-art.
 - **No jogo**: lander futurista + **cena da Lua completa** (fundo `Backdrop` em parallax + terreno com faixas
   cisalhadas lit/flat/shade + pedregulhos) + **plataformas** (sprite animado; alvo com feixe de luz, pista
-  iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. Ares/Kronos/Titan ainda usam o placeholder (sem `<planeta>_layers.json`).
+  iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. **Todos os 4 planetas têm cena** (Lua em `moon_scene.py`; Ares/Kronos/Titan em `planet_scenes.py`).
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
 **Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
-1. Cenas de Ares, Kronos e Titan no mesmo padrão de `art/src/bg/moon_scene.py` (gerar `<planeta>_layers.json`;
-   regra do usuário: mesmo estilo, só a paleta Resurrect 64 — muda a rampa, não a paleta).
+1. **Decisão de design pendente (usuário, 2026-10-01): "o jogo é só sair de um lugar e pousar em outro?"** —
+   ver plano em `~/.claude/plans/a-ideia-do-jogo-cryptic-boot.md` e a resposta na conversa; definir com o usuário
+   antes de seguir (envolve economy-balance + godot-dev + pixel-art).
 2. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
 Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
 

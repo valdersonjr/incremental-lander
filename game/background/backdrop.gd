@@ -10,6 +10,8 @@ var _ref_y := 0.0
 var _sprites: Dictionary = {}   # nome -> Sprite2D
 var _base: Dictionary = {}      # nome -> Vector2 (posicao na tela com a camera no chao)
 var _factors: Dictionary = {}   # nome -> Vector2
+var _min_y := -INF              # limites do deslocamento vertical (ver setup)
+var _max_y := INF
 
 
 ## Monta as camadas do planeta. ref_y = y da camera (mundo) quando o lander esta no chao da partida.
@@ -41,6 +43,13 @@ func setup(planet_id: String, ref_y: float) -> void:
 		# o ceu fica preso a tela; o resto acompanha o horizonte deslocado para perto do chao
 		_base[layer_name] = tops[layer_name] + (Vector2.ZERO if layer_name == "sky" else Vector2(0, shift))
 		_factors[layer_name] = _vec(bg["layers"][layer_name])
+	# a planicie (camada mais baixa) precisa sempre cobrir o pe da tela: o fundo desce no maximo ate sobrar
+	# ground_margin px de planicie, e sobe no maximo ate o fim da textura da planicie
+	var view_h := float(ProjectSettings.get_setting("display/window/size/viewport_height"))
+	var plain_top: float = _base["plain"].y
+	var plain_h := float((_sprites["plain"] as Sprite2D).texture.get_height())
+	_max_y = view_h - float(bg["ground_margin"]) - plain_top
+	_min_y = view_h - (plain_top + plain_h)
 	follow(Vector2(0, ref_y))
 
 
@@ -48,7 +57,7 @@ func setup(planet_id: String, ref_y: float) -> void:
 func follow(cam: Vector2) -> void:
 	for layer_name: String in _sprites:
 		var s: Sprite2D = _sprites[layer_name]
-		var off := TerrainArt.layer_offset(cam, _ref_y, _factors[layer_name])
+		var off := TerrainArt.layer_offset(cam, _ref_y, _factors[layer_name], _min_y, _max_y)
 		s.position = _base[layer_name] + Vector2(0, off.y)
 		if s.region_enabled:
 			s.region_rect.position.x = off.x

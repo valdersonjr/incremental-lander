@@ -79,9 +79,11 @@ static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_
 
 
 ## Deslocamento de uma camada de fundo (coordenadas de tela) para a camera em cam:
-## x = quanto rolar a textura (repete); y = quanto descer a camada quando a camera sobe acima de ref_y.
-static func layer_offset(cam: Vector2, ref_y: float, factor: Vector2) -> Vector2:
-	return Vector2(roundf(cam.x * factor.x), roundf((ref_y - cam.y) * factor.y))
+## x = quanto rolar a textura (repete); y = quanto descer a camada quando a camera sobe acima de ref_y,
+## limitado a [min_y, max_y] (a planicie nunca sai da tela nem descobre o fim da textura).
+static func layer_offset(cam: Vector2, ref_y: float, factor: Vector2, min_y: float = -INF,
+		max_y: float = INF) -> Vector2:
+	return Vector2(roundf(cam.x * factor.x), clampf(roundf((ref_y - cam.y) * factor.y), min_y, max_y))
 
 
 ## Canto sup. esq. do sprite da plataforma (topo do deck = altura da plataforma).

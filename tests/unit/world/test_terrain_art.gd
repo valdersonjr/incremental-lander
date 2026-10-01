@@ -41,7 +41,7 @@ func test_pedregulhos_fora_das_plataformas_e_deterministicos() -> void:
 
 
 func test_planeta_sem_arte_usa_placeholder() -> void:
-	assert_true(TerrainArt.load_meta("titan").is_empty())
+	assert_true(TerrainArt.load_meta("planeta_sem_arte").is_empty())
 
 
 func test_parallax() -> void:
@@ -54,4 +54,11 @@ func test_plataforma_alinhada_ao_topo_do_deck() -> void:
 	assert_eq(TerrainArt.pad_origin(pad), Vector2(60, 40), "deck de 64 px centrado; topo do deck na linha 10")
 	assert_eq(TerrainArt.beam_origin(pad).y + 84.0, 50.0, "base do feixe encosta no deck")
 	assert_true(TerrainArt.marker_origin(pad).y < TerrainArt.beam_origin(pad).y, "marcador acima do feixe")
+
+
+func test_parallax_limitado() -> void:
+	# camera muito alta: o deslocamento para no limite (a planicie nao sai da tela)
+	assert_eq(TerrainArt.layer_offset(Vector2(0, -5000), 0.0, Vector2(0, 0.1), -90.0, 119.0).y, 119.0)
+	assert_eq(TerrainArt.layer_offset(Vector2(0, 5000), 0.0, Vector2(0, 0.1), -90.0, 119.0).y, -90.0)
+	assert_eq(TerrainArt.layer_offset(Vector2(0, -500), 0.0, Vector2(0, 0.1), -90.0, 119.0).y, 50.0)
 

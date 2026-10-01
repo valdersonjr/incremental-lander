@@ -35,3 +35,11 @@
   (as ações de teclado são registradas pela main). Para pouso suave, soltar a 2 px do chão — 12 px de queda já passa
   do limite de 3 m/s (é a regra funcionando, não bug).
 
+## Parallax vertical sem vãos — 2026-10-01
+- Camadas que se apoiam umas nas outras (far, mid, plain) precisam do **mesmo fator y**: fatores diferentes abrem vão
+  e mostram o fim do céu por baixo (base reta "flutuando"). Profundidade só no fator x.
+- Limitar o deslocamento vertical (`TerrainArt.layer_offset(..., min_y, max_y)`): o fundo desce no máximo até sobrar
+  `ground_margin` px de planície na tela e sobe no máximo até o fim da textura da planície.
+- Verificar em altitude alta (`--dev_levels=thrust:60,...` — formato chave:valor! `--dev_levels=40` não faz nada e a
+  demo volta para a Lua sem gás).
+

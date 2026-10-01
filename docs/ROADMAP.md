@@ -56,7 +56,8 @@
 - [x] Lua: cena rica em camadas (céu, Terra, montanhas facetadas em parallax, terreno com faixas por inclinação, pedregulhos) (2026-10-01; minimalista reprovado, rica aprovada)
 - [x] Plataformas de pouso + feixe de luz, pista iluminada e marcador no alvo (2026-10-01; brilho pedido pelo usuário)
 - [x] Explosão da batida + poeira do pouso (2026-10-01)
-- [ ] Cenas de Ares/Kronos/Titan ·
+- [x] Cenas de Ares, Kronos e Titan no estilo da Lua (2026-10-01; aprovadas de primeira)
+- [ ]
       UI (painéis, ícones de upgrade, fonte) · FX
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)

@@ -26,7 +26,7 @@ cada planeta troca só o **tema** (rampas da Resurrect 64). A Lua fica congelada
 - Listras aparentes em Ares eram só a escala reduzida da folha (2x está limpo) — sempre conferir em 2x.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: as três aprovadas de primeira ("Aprovo tudo").
 
 ## Fontes
 - https://www.cubebrush.co/maru_98/products/gqryxg/mars-surface-pack-16x16-top-down-pixel-art-terrain-paths-rocks-craters — Marte em pixel art: rocha ferrugem, crateras
