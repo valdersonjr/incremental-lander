@@ -89,6 +89,17 @@ def lights(cv: Canvas, stripe_on: set, lamp_on: bool, dim: bool = False) -> Canv
     return cv
 
 
+def deck_glow(cv: Canvas, f: int) -> Canvas:
+    """Alvo: topo do deck vira pista iluminada (luzes ciano de pouso que pulsam do centro para fora)."""
+    mid = (DX0 + DX1) / 2
+    for x in range(DX0 + 1, DX1):
+        d = abs(x - mid)
+        lit = int(d) % 8 == (f * 2) % 8 or int(d) % 8 == (f * 2 + 1) % 8
+        cv.px(x, TOP, "white" if lit else "ice")
+        cv.px(x, TOP + 1, "aqua" if lit else "mist")
+    return cv
+
+
 def pad_frames():
     idle = lights(structure(), set(), False, dim=True)
     n = len(STRIPE_LIGHTS)
@@ -96,8 +107,40 @@ def pad_frames():
     target = []
     for f in range(6):
         on = {f, n - 1 - f} if f < (n + 1) // 2 else set()
-        target.append(lights(structure(), on, lamp_on=f in (0, 1)))
+        target.append(deck_glow(lights(structure(), on, lamp_on=f in (0, 1)), f))
     return idle, target
+
+
+BW, BH = 64, 84               # feixe do alvo: base (linha de baixo) encostada no topo do deck
+BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+
+
+def beam_frames() -> list:
+    """Cone de luz ciano subindo da plataforma alvo. Transparência binária -> 'translúcido' por dither com clear;
+    mais forte embaixo e nas bordas, some no alto; pulsa e solta partículas que sobem."""
+    frames = []
+    for f, amp in enumerate((1.0, 0.86, 0.74, 0.86)):
+        cv = Canvas(BW, BH)
+        for y in range(BH):
+            h = (BH - 1 - y) / (BH - 1)                  # 0 na base, 1 no topo
+            half = 29 + 3 * h                            # alarga um pouco para cima
+            for x in range(BW):
+                d = abs(x - (BW - 1) / 2) / half         # 0 no centro, 1 na borda
+                if d > 1:
+                    continue
+                edge = max(0.0, (d - 0.78) / 0.22)       # bordas mais fortes (parede do feixe)
+                lvl = amp * (1 - h) ** 1.4 * (0.26 + 0.74 * edge)
+                if lvl * 16 > BAYER[y % 4][x % 4] + 0.5:
+                    c = "ice" if lvl > 0.75 else "aqua" if lvl > 0.5 else "sea" if lvl > 0.28 else "teal"
+                    cv.px(x, y, c)
+        for i in range(9):                               # partículas subindo (laço de 4 quadros)
+            px = 6 + (i * 23) % (BW - 12)
+            py = BH - 4 - ((i * 17 + f * 7) % (BH - 10))
+            cv.px(px, py, "white" if py > BH * 0.5 else "ice")
+            if py + 1 < BH:
+                cv.px(px, py + 1, "aqua")
+        frames.append(cv)
+    return frames
 
 
 def marker_frames():
@@ -129,14 +172,20 @@ if __name__ == "__main__":
     marker = Animation("bob")
     for fr, ms in zip(marker_frames(), (220, 160, 220, 160)):
         marker.add(fr, ms)
+    beam = Animation("pulse")
+    for fr, ms in zip(beam_frames(), (180, 150, 180, 150)):
+        beam.add(fr, ms)
     if "--export" in sys.argv:
         save_animations(pad_anims, "assets/sprites/landing_pad.png", res_path="res://assets/sprites/landing_pad.png",
                         tres_path="assets/sprites/landing_pad_frames.tres", preview_dir="art/previews")
         save_animations([marker], "assets/sprites/target_marker.png", res_path="res://assets/sprites/target_marker.png",
                         tres_path="assets/sprites/target_marker_frames.tres", preview_dir="art/previews")
+        save_animations([beam], "assets/sprites/target_beam.png", res_path="res://assets/sprites/target_beam.png",
+                        tres_path="assets/sprites/target_beam_frames.tres", preview_dir="art/previews")
     else:
         save_animations(pad_anims, "art/previews/landing_pad_wip.png", preview_dir="art/previews")
         save_animations([marker], "art/previews/target_marker_wip.png", preview_dir="art/previews")
+        save_animations([beam], "art/previews/target_beam_wip.png", preview_dir="art/previews")
         # prévia no estilo: plataforma (alvo) e a nave sobre a cena da Lua aprovada, recomposta das camadas
         sys.path.insert(0, "art/src/bg"); sys.path.insert(0, "art/src/terrain")
         import moon_scene as ms
@@ -145,9 +194,10 @@ if __name__ == "__main__":
         pts = profile(640, seed=7, base=292, amp=60, pad=ms.PREVIEW_PAD)
         px0, pw = ms.PREVIEW_PAD
         y = ridge_y(pts, px0 + pw // 2)
+        comp.stamp(beam_frames()[0], px0 + pw // 2 - BW // 2, y - BH)
         comp.stamp(target[0], px0 - DX0, y - TOP)
         lander = Canvas.from_image("assets/sprites/lander.png").crop(0, 0, 32, 32)
         comp.stamp(lander, px0 + pw // 2 - 16, y - 25)
-        comp.stamp(marker_frames()[0], px0 + pw // 2 - 5, y - 58)
+        comp.stamp(marker_frames()[0], px0 + pw // 2 - 5, y - BH - 8)
         comp.save("art/previews/landing_pad_scene.png", preview=False)
-        comp.crop(230, 240, 200, 120).preview("art/previews/landing_pad_scene_zoom.png", scale=4, grid=False, show_1x=False)
+        comp.crop(230, 220, 200, 140).preview("art/previews/landing_pad_scene_zoom.png", scale=4, grid=False, show_1x=False)
