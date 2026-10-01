@@ -6,3 +6,5 @@ procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e reg
 | Slug | Som | kind | Assets gerados | Atualizado |
 |---|---|---|---|---|
 <!-- ex.: | thruster-loop | Propulsor do lander | loop | assets/audio/sfx/thruster_loop.wav | 2026-09-29 | -->
+| thruster | Propulsor do lander (plasma suave): ignição, loop, corte | loop/sfx | assets/audio/sfx/thruster_loop.wav, assets/audio/sfx/thruster_start.wav, assets/audio/sfx/thruster_stop.wav | 2026-10-01 |
+| game-sfx | Pouso, batida, entrega, clique, compra, negado | sfx/impact/jingle/ui | assets/audio/sfx/landing_01.wav, assets/audio/sfx/landing_02.wav, assets/audio/sfx/landing_03.wav, assets/audio/sfx/crash.wav, assets/audio/sfx/delivered.wav, assets/audio/ui/click_01.wav, assets/audio/ui/click_02.wav, assets/audio/ui/click_03.wav, assets/audio/ui/buy_01.wav, assets/audio/ui/buy_02.wav, assets/audio/ui/buy_03.wav, assets/audio/ui/denied.wav | 2026-10-01 |

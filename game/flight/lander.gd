@@ -22,7 +22,13 @@ var can_takeoff := true                 # falso enquanto nao ha entrega escolhid
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
 
+const THRUST_START := preload("res://assets/audio/sfx/thruster_start.wav")
+const THRUST_STOP := preload("res://assets/audio/sfx/thruster_stop.wav")
+
 @onready var _visual: AnimatedSprite2D = %Visual
+@onready var _thrust_loop: AudioStreamPlayer2D = %ThrustLoop
+@onready var _thrust_fx: AudioStreamPlayer2D = %ThrustFx
+var _was_thrusting := false
 
 
 ## Configura a nave (stats do EconMath + planeta da spec) e as plataformas do terreno.
@@ -75,6 +81,39 @@ func _process(_delta: float) -> void:
 	var anim := &"thrust" if thrusting else &"idle"
 	if _visual.animation != anim:
 		_visual.play(anim)
+	_update_thrust_sound()
+
+
+## Propulsor (sound-design: plasma suave): ignicao por cima do loop ao ligar; corte ao desligar.
+## O autopiloto liga/desliga em pulsos rapidos (sigma-delta): a ignicao so toca se o motor ficou parado > 0,25 s.
+var _off_time := 1.0
+
+
+func _exit_tree() -> void:
+	# sons tocando ao fechar o jogo deixam "playbacks" vivos (o Godot acusa recursos em uso na saida)
+	for p: AudioStreamPlayer2D in [_thrust_loop, _thrust_fx]:
+		p.stop()
+		p.stream = null
+
+
+func _update_thrust_sound() -> void:
+	if thrusting and not _was_thrusting:
+		if _off_time > 0.25:
+			_thrust_fx.stream = THRUST_START
+			_thrust_fx.play()
+		if not _thrust_loop.playing:
+			_thrust_loop.play()
+	elif not thrusting and _was_thrusting:
+		_off_time = 0.0
+	if not thrusting:
+		_off_time += get_process_delta_time()
+		if _thrust_loop.playing and _off_time > 0.12:
+			_thrust_loop.stop()
+			_thrust_fx.stream = THRUST_STOP
+			_thrust_fx.play()
+	if state == State.CRASHED and _thrust_loop.playing:
+		_thrust_loop.stop()
+	_was_thrusting = thrusting
 
 
 ## Estado do voo atual (m/s do modelo, rad, gas gasto desde a decolagem, tempo do modelo).

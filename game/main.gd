@@ -102,6 +102,7 @@ func _show_offers() -> void:
 
 
 func _on_offer_chosen(index: int) -> void:
+	Sound.ui("click")
 	var d := _run.take_offer(index)
 	_offers.visible = false
 	_flight.set_target(d)

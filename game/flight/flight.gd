@@ -101,8 +101,10 @@ func _planet_spec(pid: String) -> Dictionary:
 func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 	# poeira (pixel-art: explosion.py): linha 15 do sprite = chao, x 24 = centro do lander
 	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, float(pad["y"]) - 15.0), false)
+	Sound.sfx("landing")
 	current_pad_id = int(pad["id"])
 	if current_pad_id == target_pad_id:
+		Sound.sfx("delivered")
 		lander.can_takeoff = false
 		target_pad_id = -1
 		terrain.target_pad_id = -1
@@ -114,6 +116,7 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 func _on_lander_crashed(reason: String, info: Dictionary) -> void:
 	# a nave some e explode; o resultado so sai depois da explosao (senao o resumo a cobre)
 	lander.visible = false
+	Sound.sfx("crash")
 	var fx := _spawn_fx(EXPLOSION_FRAMES, &"boom", lander.global_position, true)
 	await fx.animation_finished
 	_finish(true, 0.0, reason, info)

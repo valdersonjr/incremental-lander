@@ -23,6 +23,7 @@ var _confirm_new_game := false
 
 func _ready() -> void:
 	_launch.pressed.connect(func() -> void: launch_requested.emit())
+	launch_requested.connect(func() -> void: Sound.ui("click"))
 
 
 ## Mostra o hangar atualizado.
@@ -306,7 +307,7 @@ func _make_row(r: Dictionary) -> HBoxContainer:
 	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	buy.disabled = not r["affordable"]
 	buy.pressed.connect(func() -> void:
-		GameState.buy_upgrade(id)
+		Sound.ui("buy" if GameState.buy_upgrade(id) else "denied")
 		refresh())
 	row.add_child(buy)
 	var mx := Button.new()
@@ -314,7 +315,7 @@ func _make_row(r: Dictionary) -> HBoxContainer:
 	mx.custom_minimum_size = Vector2(30, 15)
 	mx.disabled = not r["affordable"]
 	mx.pressed.connect(func() -> void:
-		GameState.buy_upgrade_max(id)
+		Sound.ui("buy" if GameState.buy_upgrade_max(id) > 0 else "denied")
 		refresh())
 	row.add_child(mx)
 	return row

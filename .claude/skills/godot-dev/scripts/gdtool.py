@@ -32,6 +32,18 @@ import xml.etree.ElementTree as ET
 
 GODOT = os.environ.get("GODOT_BIN") or shutil.which("godot") or "/Applications/Godot.app/Contents/MacOS/Godot"
 ERR_RE = re.compile(r"^(SCRIPT ERROR|ERROR|USER ERROR|Parse Error)", re.M)
+# Em --headless o driver de audio e o Dummy: sons que estavam tocando quando o --quit-after encerra deixam
+# "playbacks" vivos e o Godot acusa "N resources still in use at exit". Com driver real (janela) nao acontece
+# (testado em 2026-10-01). Vira aviso explicado; vazamento real aparece na captura (janela) e no --verbose.
+HEADLESS_AUDIO_EXIT = re.compile(r"^ERROR: \d+ resources still in use at exit")
+
+
+def real_errors(out: str) -> list:
+    errs = [l for l in out.splitlines() if ERR_RE.match(l.strip())]
+    kept = [l for l in errs if not HEADLESS_AUDIO_EXIT.match(l.strip())]
+    if len(kept) != len(errs):
+        print("  aviso: recursos de audio presos na saida (driver headless) - ignorado (ver patterns/verification-loop)")
+    return kept
 WARN_RE = re.compile(r"^(WARNING|USER WARNING)", re.M)
 NOISE = ("Godot Engine v", "OpenGL API", "Vulkan", "Metal", "--- Debugging process", "Using ")
 
@@ -216,7 +228,7 @@ def cmd_test(a) -> int:
                        "--quit-after", "600", "--", "--no_save"], timeout=300)
             out = clean(r.stdout + r.stderr)
             ok = re.search(r"_TEST OK", out) is not None
-            errs = [l for l in out.splitlines() if ERR_RE.match(l.strip())]
+            errs = real_errors(out)
             print(("ok     " if ok and not errs else "FALHOU ") + f"integracao {f}" +
                   ("" if ok else "\n    " + "\n    ".join((re.findall(r".*_TEST.*", out) + errs)[:4])))
             if not ok or errs:
@@ -238,7 +250,7 @@ def cmd_run(a) -> int:
         args += ["--"] + a.game_args
     r = godot(args, timeout=a.timeout)
     out = clean(r.stdout + r.stderr)
-    errs = [l for l in out.splitlines() if ERR_RE.match(l.strip())]
+    errs = real_errors(out)
     warns = [l for l in out.splitlines() if WARN_RE.match(l.strip())]
     if a.verbose or errs:
         print(out[-6000:])

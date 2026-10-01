@@ -15,6 +15,13 @@ static var _themes: Dictionary = {}
 static var _icons: Dictionary = {}
 
 
+## Solta os caches estaticos (chamado na saida do jogo; senao o Godot acusa recursos vivos no fim).
+static func clear_cache() -> void:
+	_themes.clear()
+	_icons.clear()
+	_meta.clear()
+
+
 static func meta() -> Dictionary:
 	if _meta.is_empty():
 		_meta = JSON.parse_string(FileAccess.get_file_as_string(DIR + "ui_kit.json"))

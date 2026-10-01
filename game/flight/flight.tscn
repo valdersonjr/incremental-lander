@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" path="res://game/terrain/terrain.tscn" id="3_terrain"]
 [ext_resource type="SpriteFrames" path="res://assets/sprites/lander_frames.tres" id="4_frames"]
 [ext_resource type="PackedScene" path="res://game/background/backdrop.tscn" id="5_backdrop"]
+[ext_resource type="AudioStream" path="res://assets/audio/sfx/thruster_loop.wav" id="6_loop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lander"]
 size = Vector2(12, 15)
@@ -26,6 +27,15 @@ script = ExtResource("2_lander")
 unique_name_in_owner = true
 sprite_frames = ExtResource("4_frames")
 animation = &"idle"
+
+[node name="ThrustLoop" type="AudioStreamPlayer2D" parent="Lander"]
+unique_name_in_owner = true
+stream = ExtResource("6_loop")
+bus = &"Engine"
+
+[node name="ThrustFx" type="AudioStreamPlayer2D" parent="Lander"]
+unique_name_in_owner = true
+bus = &"SFX"
 
 [node name="Shape" type="CollisionShape2D" parent="Lander"]
 position = Vector2(0, 0.5)

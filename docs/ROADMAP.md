@@ -66,8 +66,8 @@
       menus (HUD, entregas, resumo, hangar, final) (2026-10-01)
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
-- [ ] Propulsor (loop controlado pela potência) · pouso/batida · UI (clique, compra com variações) ·
-      jingles (upgrade, planeta, prestígio) · ambiências por planeta · músicas
+- [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)
+- [ ] Jingles (upgrade grande, planeta, prestígio) · alarme de gás baixo · ambiências por mundo · músicas
 
 ## Fase 10 — Calibração, polimento e build · skills: `economy-balance` (Etapa 10), `godot-dev`
 - [ ] 10.1 Jogar, exportar telemetria, `calibrate()` → `profiles_override` → re-simular

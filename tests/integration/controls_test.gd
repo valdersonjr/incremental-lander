@@ -11,6 +11,7 @@ var _step := 0
 var _frames := 0
 var _log: Array[String] = []
 var _hint_ok := false
+var _sound_ok := false
 
 
 func _ready() -> void:
@@ -68,6 +69,9 @@ func _physics_process(_delta: float) -> void:
 			if _frames > 40:
 				_key(KEY_W, false)
 				_log.append("W depois de escolher: estado=%s y=%.1f" % [Lander.State.keys()[l.state], l.global_position.y])
+				_sound_ok = (l.find_child("ThrustLoop") as AudioStreamPlayer2D).playing and Sound.played.has("click")
+				_log.append("som: propulsor=%s clique=%s" % [(l.find_child("ThrustLoop") as AudioStreamPlayer2D).playing,
+						Sound.played.get("click", 0)])
 				_key(KEY_A, true)
 				_step = 3
 				_frames = 0
@@ -78,6 +82,7 @@ func _physics_process(_delta: float) -> void:
 				var flying := l.state == Lander.State.FLYING
 				var rotated := l.rotation < -0.1
 				print("CONTROLS_LOG ", " | ".join(_log))
-				var ok := flying and rotated and _hint_ok
-				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (aviso=%s decolou=%s girou=%s)" % [_hint_ok, flying, rotated])
+				var ok := flying and rotated and _hint_ok and _sound_ok
+				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (aviso=%s decolou=%s girou=%s som=%s)" % [_hint_ok, flying,
+						rotated, _sound_ok])
 				get_tree().quit()

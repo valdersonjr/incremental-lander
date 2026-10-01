@@ -46,3 +46,11 @@
 ## Fontes
 - https://docs.godotengine.org/en/4.4/tutorials/editor/command_line_tutorial.html — flags de linha de comando
 - `godot --help` (4.7.2) — confirmação local de `--write-movie`, `--quit-after`, `--fixed-fps`, `--check-only`
+
+## Áudio em headless (2026-10-01)
+- `--headless` usa o driver de áudio Dummy: sons tocando quando o `--quit-after` encerra deixam playbacks vivos →
+  `ERROR: N resources still in use at exit`. Com driver real (janela/captura) **não** acontece. O `gdtool` trata isso
+  como aviso explicado (`HEADLESS_AUDIO_EXIT`). Vazamento de verdade: conferir com `--verbose` ou rodando em janela.
+- Caches estáticos (`static var`) que guardam recursos também acusam isso: limpar na saída (`UiKit.clear_cache()`
+  no `_exit_tree` do autoload `Sound`).
+

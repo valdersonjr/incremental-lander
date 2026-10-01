@@ -79,6 +79,8 @@ art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito (referê
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
+autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); propulsor fica no Lander (ThrustLoop/ThrustFx)
+audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
 scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo), icon(nome), icon_label(...), color(...)
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot

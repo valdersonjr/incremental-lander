@@ -11,6 +11,7 @@ signal continue_requested
 
 func _ready() -> void:
 	_continue.pressed.connect(func() -> void: continue_requested.emit())
+	continue_requested.connect(func() -> void: Sound.ui("click"))
 
 
 func show_summary(summary: Dictionary) -> void:
