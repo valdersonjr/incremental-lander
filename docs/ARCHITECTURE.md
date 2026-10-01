@@ -65,6 +65,7 @@ game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BandLit/BandFlat/Ban
                               # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
 game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam);
                               # anima quadros (meta anim) e rola nuvens
+scripts/world/camera_math.gd  # CameraMath.lift: câmera sobe perto do chão (mais céu, menos terreno)
 scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)
 assets/tiles/luna_ground_*    # faixas do terreno lit/flat/shade (128x176, repetem em x)

@@ -63,7 +63,7 @@
   },
   "background": {
     "notes": "Fundo em camadas (arte em assets/bg/<planeta>_*.png). horizon_screen = y na tela do horizonte com a camera no chao. layers = fator [x, y] de rolagem (0 = preso a tela); far, mid e plain descem juntos (fator y igual; senao abre vao entre as camadas) — profundidade so no x. ground_margin = px minimos de planicie visiveis embaixo (limita o quanto o fundo desce).",
-    "horizon_screen": 196,
+    "horizon_screen": 262,
     "ground_margin": 40,
     "layers": {
       "sky": [0.0, 0.0],
@@ -75,7 +75,11 @@
     }
   },
   "camera": {
-    "smoothing_speed": 6.0
+    "smoothing_speed": 6.0,
+    "notes": "Perto do chao a camera olha para cima (nave ~3/4 da tela, mais ceu e menos chao); some ate centralizar acima de lift_fade_alt_px.",
+    "ground_lift_px": 92,
+    "lift_fade_alt_px": 420,
+    "lift_speed": 3.0
   },
   "input": {
     "thrust": [

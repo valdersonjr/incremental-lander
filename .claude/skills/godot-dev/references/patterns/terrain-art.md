@@ -55,3 +55,12 @@
   `<planeta>_layers.json` faz sky e planet usarem o deslocamento do horizonte e o fator y dos móveis (`far`), x parado.
   A arte exporta a parede mais alta (`sky_y` negativo) para cobrir a subida da câmera.
 
+## Enquadramento da câmera — 2026-10-01
+- Usuário: "terreno ocupando muito da tela". Causa: câmera centrada na nave → no chão, metade da tela é terreno.
+- `CameraMath.lift(alt, ground_lift_px, lift_fade_alt_px)`: perto do chão a câmera sobe (offset y negativo, nave a
+  ~3/4 da tela); some até centralizar no alto. `world.json > camera` + `background.horizon_screen = 262` (horizonte
+  da cena aprovada). Aplicar o offset antes de `reset_smoothing()` + `force_update_scroll()` (senão o 1º quadro sai
+  centrado) e usar a altura com offset como `ref_y` do fundo.
+- Lógica pura fora de cenas que usam autoloads: os testes rodam em modo script sem autoloads (função estática numa
+  classe que usa `Sound` "não existe" no teste).
+

@@ -32,8 +32,12 @@ func _ready() -> void:
 	lander.crashed.connect(_on_lander_crashed)
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
+	var cam: Dictionary = WorldConfig.load_config()["camera"]
+	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
+	var target := -CameraMath.lift(alt, float(cam["ground_lift_px"]), float(cam["lift_fade_alt_px"]))
+	camera.offset.y = lerpf(camera.offset.y, target, clampf(float(cam["lift_speed"]) * delta, 0.0, 1.0))
 
 
 func _process(_delta: float) -> void:
@@ -58,8 +62,11 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	lander.global_position = Vector2(float(start_pad["x"]), float(start_pad["y"]) - feet - 0.5)
 	lander.reset_physics_interpolation()
 	camera.global_position = lander.global_position
+	var cam: Dictionary = WorldConfig.load_config()["camera"]
+	camera.offset.y = -float(cam["ground_lift_px"])
 	camera.reset_smoothing()
-	backdrop.setup(planet_id, camera.global_position.y)
+	camera.force_update_scroll()                              # ja no 1o quadro com o enquadramento certo
+	backdrop.setup(planet_id, camera.global_position.y + camera.offset.y)
 
 
 ## Define a proxima entrega: plataforma a distance_m a frente da plataforma atual.

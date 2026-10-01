@@ -70,3 +70,9 @@ func test_quadro_da_animacao_em_laco() -> void:
 	assert_eq(TerrainArt.anim_frame(0.0, 100.0, 6, 3), 3, "fase desincroniza")
 	assert_eq(TerrainArt.anim_frame(5.0, 100.0, 1), 0, "sem animacao")
 
+
+func test_camera_olha_para_cima_perto_do_chao() -> void:
+	assert_almost(CameraMath.lift(0.0, 92.0, 420.0), 92.0, 1e-4, "no chao: sobe tudo")
+	assert_almost(CameraMath.lift(210.0, 92.0, 420.0), 46.0, 1e-4, "meio caminho")
+	assert_almost(CameraMath.lift(1000.0, 92.0, 420.0), 0.0, 1e-4, "alto: nave no centro")
+
