@@ -46,6 +46,10 @@
 - **Paleta: sempre e só a Resurrect 64 definida no início** (travada pela biblioteca e pelo pre-commit).
   Outros planetas mudam de rampa (ex.: Ares em rust/fire), nunca de paleta.
 - Antes de mostrar um asset novo, compare-o lado a lado com a cena aprovada: se destoar, refaça.
+- **Estilo ≠ formas.** Cada planeta é um **mundo totalmente diferente** (bioma, silhuetas, objetos, escala):
+  Lua → Floresta fechada → Planeta dos doces → (4º a decidir). Recolorir a mesma paisagem foi reprovado
+  (2026-10-01: "só me mostrou ambientes iguais com cores diferentes"). Teste: em preto e branco, dá para saber
+  qual planeta é?
 - (Usuário, 2026-10-01: "lembre de sempre seguir o mesmo estilo de arte, porém mantendo a paleta definida inicialmente".)
 
 ## Decisões registradas

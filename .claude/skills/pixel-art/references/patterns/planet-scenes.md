@@ -26,7 +26,9 @@ cada planeta troca só o **tema** (rampas da Resurrect 64). A Lua fica congelada
 - Listras aparentes em Ares eram só a escala reduzida da folha (2x está limpo) — sempre conferir em 2x.
 
 ## Decisões do usuário
-- 2026-10-01: as três aprovadas de primeira ("Aprovo tudo").
+- 2026-10-01: as três aprovadas de primeira ("Aprovo tudo") — e logo depois **reprovadas como conceito**: "só me
+  mostrou ambientes iguais e com cores diferentes". Ares vira Floresta fechada, Kronos vira Planeta dos doces;
+  Titan fica como está até o usuário decidir o 4º mundo. Lição: mesmo estilo = mesma técnica, NUNCA mesmas formas.
 
 ## Fontes
 - https://www.cubebrush.co/maru_98/products/gqryxg/mars-surface-pack-16x16-top-down-pixel-art-terrain-paths-rocks-craters — Marte em pixel art: rocha ferrugem, crateras

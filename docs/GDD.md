@@ -51,6 +51,16 @@ art contínua (`Polygon2D` com textura seamless) + faixa de superfície na borda
 | Titan (gigante) | 15,0 | 0,2 | 300–60.000 m | ×2.500 | minério | concluir a Expedição a Titan (8/8) |
 Motor mínimo: o lander só decola se a aceleração do motor > ~1,05 × gravidade (Ares exige upgrades de motor).
 
+**Mundos (decisão do usuário, 2026-10-01): cada planeta é um ambiente TOTALMENTE diferente** (bioma, formas, objetos,
+escala), não uma recoloração. Mesmo estilo de arte (rico em camadas, Resurrect 64), mundos distintos.
+| Ordem | id na spec/código | Mundo | Nome (tema) |
+|---|---|---|---|
+| 1 | `luna` | Lua (montanhas facetadas, a Terra no céu) | Lua |
+| 2 | `ares` | **Floresta fechada** (árvores gigantes, cipós, névoa, vaga-lumes) | a definir no export (nome temático) |
+| 3 | `kronos` | **Planeta dos doces** (bengalas, pirulitos, algodão-doce, chocolate) | a definir no export |
+| 4 | `titan` | a decidir com o usuário (ideia citada: quarto bagunçado/gigante) | — |
+Os ids continuam `ares`/`kronos`/`titan` no código e no save; só nomes exibidos e arte mudam.
+
 ## 6. Upgrades (créditos; resetam no prestígio, exceto a Expedição)
 | Upgrade | Efeito | Observação |
 |---|---|---|
