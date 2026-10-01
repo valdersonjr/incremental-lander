@@ -27,12 +27,15 @@ from moon import profile, ridge_y
 import moon_scene as ms
 from moon_scene import mix, pnoise, W, H, HORIZON, STRIP_W, STRIP_D, FACE_SLOPE
 from explosion import blob, shade_blob
+import anim_util as au
 
 P = {"sky": "assets/bg/kronos_sky.png", "planet": "assets/bg/kronos_planet.png", "far": "assets/bg/kronos_far.png",
      "mid": "assets/bg/kronos_mid.png", "plain": "assets/bg/kronos_plain.png",
      "lit": "assets/tiles/kronos_ground_lit.png", "flat": "assets/tiles/kronos_ground_flat.png",
      "shade": "assets/tiles/kronos_ground_shade.png", "props": "assets/sprites/kronos_rocks.png",
-     "meta": "assets/bg/kronos_layers.json"}
+     "meta": "assets/bg/kronos_layers.json", "clouds": "assets/bg/kronos_clouds.png"}
+N_FRAMES, FRAME_MS = 6, 120      # pirulitos: 1/3 de volta (a espiral tem 3 faixas) em 0,72 s -> giro contínuo
+CLOUD_SPEED = 3.0                # px/s: nuvens passam devagar (camada própria, laço de 640 px)
 PROP_CELL = (16, 16)
 PROP_BASE = 14
 PROP_SPACING = (10, 30)
@@ -85,7 +88,11 @@ def sky(cv: Canvas) -> None:
         cv.px(x, y, "white")
         for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
             cv.px(x + dx, y + dy, "lavender")
-    # nuvens de algodão-doce: bolhas unidas, topo claro, base sombreada e quase reta
+
+
+def clouds(cv: Canvas) -> None:
+    """Nuvens de algodão-doce (camada própria que rola sozinha): bolhas unidas, topo claro, base achatada."""
+    rng = random.Random(8)
     for cx, cy, wdt, kind in ((70, 120, 70, "pink"), (250, 92, 54, "blue"), (360, 150, 80, "pink"),
                               (520, 106, 60, "blue"), (610, 170, 46, "pink"), (190, 190, 40, "blue")):
         ramp = ["white", "lavender", "pink", "rose"] if kind == "pink" else ["white", "pale_sky", "violet", "purple"]
@@ -171,7 +178,7 @@ def far_layer() -> Canvas:
 
 
 # ------------------------------------------------------------------ pirulitos, bengalas, morros de chocolate (mid)
-def lollipop(cv: Canvas, x0: int, base: int, h: int, r: int, pair: tuple) -> None:
+def lollipop(cv: Canvas, x0: int, base: int, h: int, r: int, pair: tuple, phase: float = 0.0) -> None:
     for y in range(base - h + r, base + 1):                   # palito
         pxw(cv, x0, y, "cream"); pxw(cv, x0 + 1, y, "sand")
     cy = base - h
@@ -182,7 +189,7 @@ def lollipop(cv: Canvas, x0: int, base: int, h: int, r: int, pair: tuple) -> Non
             if d > r:
                 continue
             ang = math.atan2(y - cy, x - x0)
-            band = ((ang + d * 0.32) % (2 * math.pi / 3)) < (math.pi / 3)
+            band = ((ang + d * 0.32 + phase) % (2 * math.pi / 3)) < (math.pi / 3)
             dark = (x - x0) * 0.6 + (y - cy) * 0.8 > r * 0.25
             c = (shade_a if dark else a) if band else (shade_b if dark else b)
             if d > r - 1 and (x - x0) * 0.6 + (y - cy) * 0.8 < -r * 0.3:
@@ -230,7 +237,11 @@ def choco_hill(cv: Canvas, hx: int, base: int, hh: int, hw: int, seed: int) -> N
             pxw(cv, x, y0 + k, c)
 
 
-def mid_layer() -> Canvas:
+def spin(f: int, direction: int = 1) -> float:
+    return direction * f * (2 * math.pi / 3) / N_FRAMES
+
+
+def mid_layer(fr: int = 0) -> Canvas:
     cv = Canvas(W, ms.MID_BASE + 1)
     base = ms.MID_BASE
     rng = random.Random(61)
@@ -239,7 +250,8 @@ def mid_layer() -> Canvas:
     pairs = [("red", "white", "crimson", "mist"), ("hot_pink", "lemon", "raspberry", "gold"),
              ("aqua", "white", "sea", "mist"), ("violet", "white", "purple", "lavender")]
     for i, x in enumerate((130, 300, 470, 610)):
-        lollipop(cv, x + rng.randint(-12, 12), base, rng.randint(110, 165), rng.randint(16, 24), pairs[i % len(pairs)])
+        lollipop(cv, x + rng.randint(-12, 12), base, rng.randint(110, 165), rng.randint(16, 24), pairs[i % len(pairs)],
+                 phase=spin(fr, 1 if i % 2 == 0 else -1))
     for x in (20, 360, 520):
         cane(cv, x + rng.randint(-10, 10), base, rng.randint(80, 120))
     for y in range(base - 14, base + 1):                       # névoa lilás na base
@@ -250,7 +262,7 @@ def mid_layer() -> Canvas:
 
 
 # ------------------------------------------------------------------ rio de chocolate (plain)
-def plain_layer() -> Canvas:
+def plain_layer(fr: int = 0) -> Canvas:
     cv = Canvas(W, H + 160)
     top = ms.PLAIN_TOP
     rng = random.Random(71)
@@ -259,11 +271,13 @@ def plain_layer() -> Canvas:
         for x in range(W):
             cv.px(x, y, mix("rosewood", "mauve", min(1, f * 2.0), x, y) if f < 0.5 else
                   mix("mauve", "plum_dark", min(1, (f - 0.5) * 2), x, y) if f < 1 else "plum_dark")
-    for _ in range(230):                                       # correnteza brilhante
+    for j in range(230):                                       # correnteza brilhante (brilhos piscam em onda)
         y = top + 3 + int(rng.random() ** 1.3 * (H - top))
         x, ln = rng.randrange(W), rng.randint(4, 22)
         near = (y - top) / (H - top)
         c = "peach" if near < 0.2 else "sand" if near < 0.5 else "rosewood"
+        if (fr + j) % N_FRAMES == 0 and near < 0.6:
+            c = "cream" if near < 0.3 else "peach"
         for i in range(ln):
             cv.px((x + i) % W, y, c)
             if i in (0, ln - 1) and near < 0.5:
@@ -347,14 +361,14 @@ ASCII_PROPS = {
 PROP_ORDER = ["lollipop", "cane", "gumdrop", "cupcake", "bonbon", "donut", "icecream", "marshmallow"]
 
 
-def props_atlas() -> Canvas:
+def props_atlas(fr: int = 0) -> Canvas:
     cw, ch = PROP_CELL
     cv = Canvas(cw * len(PROP_ORDER), ch)
     for i, name in enumerate(PROP_ORDER):
         ox = i * cw
         if name == "lollipop":
             tmp = Canvas(W, ch)
-            lollipop(tmp, 7, PROP_BASE, 12, 4, ("hot_pink", "white", "raspberry", "mist"))
+            lollipop(tmp, 7, PROP_BASE, 12, 4, ("hot_pink", "white", "raspberry", "mist"), phase=spin(fr))
             cv.stamp(tmp.crop(0, 0, cw, ch), ox, 0)
         elif name == "cane":
             for y in range(6, PROP_BASE + 1):
@@ -375,21 +389,25 @@ def layers() -> dict:
     INV = {resolve(n): n for n in COLOR_NAMES}
     L = {}
     c = Canvas(W, H); sky(c); L["sky"] = c
+    c = Canvas(W, 230); clouds(c); L["clouds"] = c
     c = Canvas(W, H); box = donut(c); L["planet"] = c.crop(*box); L["planet_pos"] = box[:2]
     L["far"] = far_layer()
-    L["mid"] = mid_layer()
-    L["plain"] = plain_layer()
+    L["mid_frames"] = [mid_layer(f) for f in range(N_FRAMES)]
+    L["plain_frames"] = [plain_layer(f) for f in range(N_FRAMES)]
+    L["props_frames"] = [props_atlas(f) for f in range(N_FRAMES)]
+    L["mid"], L["plain"], L["props"] = L["mid_frames"][0], L["plain_frames"][0], L["props_frames"][0]
     L["plain_y"] = ms.PLAIN_TOP - 6
     for i, face in enumerate(("lit", "flat", "shade")):
         L[face] = ground_strip(face, 61 + i)
-    L["props"] = props_atlas()
     return L
 
 
-def compose(L: dict) -> Canvas:
+def compose(L: dict, f: int = 0, cloud_dx: int = 0) -> Canvas:
     cv = Canvas(W, H)
-    cv.stamp(L["sky"]); cv.stamp(L["planet"], *L["planet_pos"])
-    cv.stamp(L["far"]); cv.stamp(L["mid"]); cv.stamp(L["plain"], 0, L["plain_y"])
+    cv.stamp(L["sky"])
+    cv.stamp(L["clouds"], -cloud_dx); cv.stamp(L["clouds"], W - cloud_dx)
+    cv.stamp(L["planet"], *L["planet_pos"])
+    cv.stamp(L["far"]); cv.stamp(L["mid_frames"][f]); cv.stamp(L["plain_frames"][f], 0, L["plain_y"])
     pad = ms.PREVIEW_PAD
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
     faces = ms.segment_faces(pts)
@@ -405,7 +423,8 @@ def compose(L: dict) -> Canvas:
     while x < W - 8:
         if not (pad[0] - 12 < x < pad[0] + pad[1] + 12):
             i = rng.randrange(len(PROP_ORDER))
-            cv.stamp(L["props"].crop(i * cw, 0, cw, ch), int(x - cw / 2), ridge_y(pts, x) + rng.randint(0, 2) - PROP_BASE)
+            cv.stamp(L["props_frames"][(f + i) % N_FRAMES].crop(i * cw, 0, cw, ch), int(x - cw / 2),
+                     ridge_y(pts, x) + rng.randint(0, 2) - PROP_BASE)
         x += rng.uniform(*PROP_SPACING)
     y = ridge_y(pts, pad[0] + pad[1] // 2)
     cv.stamp(Canvas.from_image("assets/sprites/target_beam.png").crop(0, 0, 64, 84), pad[0], y - 84)
@@ -415,8 +434,11 @@ def compose(L: dict) -> Canvas:
 
 
 def export(L: dict) -> None:
-    for k in ("sky", "planet", "far", "mid", "plain", "props"):
+    for k in ("sky", "planet", "far", "clouds"):
         L[k].save(P[k])
+    au.stack(L["mid_frames"]).save(P["mid"])
+    au.stack(L["plain_frames"]).save(P["plain"])
+    au.stack_cells(L["props_frames"]).save(P["props"])
     for k in ("lit", "flat", "shade"):
         L[k].save(P[k], tiled=True)
     meta = {
@@ -425,6 +447,9 @@ def export(L: dict) -> None:
         "deep_color": "#45293f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(PROP_CELL), "rock_base_row": PROP_BASE, "rock_count": len(PROP_ORDER),
         "rock_widths": [16] * len(PROP_ORDER), "rock_spacing": list(PROP_SPACING),
+        "rock_frames": N_FRAMES, "rock_ms": FRAME_MS,
+        "anim": {"mid": {"frames": N_FRAMES, "ms": FRAME_MS}, "plain": {"frames": N_FRAMES, "ms": FRAME_MS * 2}},
+        "clouds": {"y": 0, "speed": CLOUD_SPEED},
     }
     with open(P["meta"], "w") as f:
         json.dump(meta, f, indent=2)
@@ -437,5 +462,9 @@ if __name__ == "__main__":
     sc.save("art/previews/candy_scene.png", preview=False)
     sc.preview("art/previews/candy_scene_2x.png", scale=2, grid=False, show_1x=False)
     L["props"].preview("art/previews/candy_props_preview.png", scale=6)
+    frames = [compose(L, f % N_FRAMES, int(f * CLOUD_SPEED * FRAME_MS / 1000 * 4)) for f in range(N_FRAMES * 2)]
+    au.save_gif(frames, "art/previews/candy_anim.gif", FRAME_MS)
+    au.stack([fr.crop(100, 90, 240, 110) for fr in frames[:3]]).preview("art/previews/candy_anim_check.png", scale=2,
+                                                                        grid=False, show_1x=False)
     if "--export" in sys.argv:
         export(L)

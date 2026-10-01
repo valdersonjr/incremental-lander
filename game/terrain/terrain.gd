@@ -20,6 +20,9 @@ var target_pad_id := -1:
 var _rocks: Array[Dictionary] = []
 var _rock_tex: Texture2D
 var _rock_cell := Vector2.ZERO
+var _rock_frames := 1
+var _rock_ms := 200.0
+var _time := 0.0
 
 @onready var _fill: Polygon2D = %Fill
 @onready var _surface: Line2D = %Surface
@@ -47,6 +50,7 @@ func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) ->
 		for b: Polygon2D in _bands.values():
 			b.visible = false
 		_rocks.clear()
+		_rock_frames = 1
 	else:
 		_apply_art(planet_id, seed_value, meta)
 	# colisao por segmentos da superficie: leve e robusta para terrenos de varios km
@@ -112,9 +116,18 @@ func _apply_art(planet_id: String, seed_value: int, meta: Dictionary) -> void:
 	var cell: Array = meta["rock_cell"]
 	_rock_cell = Vector2(float(cell[0]), float(cell[1]))
 	_rocks = TerrainArt.rock_spots(ridge, pads, seed_value, meta)
+	_rock_frames = int(meta.get("rock_frames", 1))
+	_rock_ms = float(meta.get("rock_ms", 200.0))
+
+
+func _process(delta: float) -> void:
+	_time += delta
+	if _rock_frames > 1:
+		queue_redraw()                                         # enfeites animados (vento, pirulitos girando)
 
 
 func _draw() -> void:
 	for r in _rocks:
-		var src := Rect2(Vector2(_rock_cell.x * int(r["frame"]), 0), _rock_cell)
+		var f := TerrainArt.anim_frame(_time, _rock_ms, _rock_frames, int(r.get("phase", 0)))
+		var src := Rect2(Vector2(_rock_cell.x * int(r["frame"]), _rock_cell.y * f), _rock_cell)
 		draw_texture_rect_region(_rock_tex, Rect2(r["pos"], _rock_cell), src)

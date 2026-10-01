@@ -451,7 +451,7 @@
     },
     {
       "id": "ares",
-      "name": "Ares (gravidade forte)",
+      "name": "Silvânia (floresta fechada)",
       "gravity": 5.0,
       "drag": 0.1,
       "distance": [
@@ -470,7 +470,7 @@
     },
     {
       "id": "kronos",
-      "name": "Kronos (atmosfera densa)",
+      "name": "Docelândia (planeta dos doces)",
       "gravity": 9.0,
       "drag": 0.3,
       "distance": [

@@ -1,29 +1,47 @@
 {
-  "notes": "Gerado por art/src/bg/planet_scenes.py (pixel-art). Mesmo contrato de luna_layers.json.",
+  "notes": "Floresta fechada (mundo 2, id ares). Gerado por art/src/bg/forest_scene.py (pixel-art).",
   "horizon": 262,
   "planet_pos": [
-    125,
-    143
+    413,
+    175
   ],
   "far_y": 0,
   "mid_y": 0,
   "plain_y": 267,
-  "deep_color": "#6e2727",
+  "deep_color": "#2e222f",
   "strip_depth": 176,
   "strip_width": 128,
   "face_slope": 0.15,
   "rock_cell": [
     16,
-    8
+    16
   ],
-  "rock_base_row": 6,
-  "rock_count": 6,
+  "rock_base_row": 14,
+  "rock_count": 8,
   "rock_widths": [
-    4,
-    5,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16,
+    16
+  ],
+  "rock_spacing": [
     6,
-    8,
-    11,
-    7
-  ]
+    22
+  ],
+  "rock_frames": 6,
+  "rock_ms": 180,
+  "anim": {
+    "mid": {
+      "frames": 6,
+      "ms": 180
+    },
+    "plain": {
+      "frames": 6,
+      "ms": 180
+    }
+  }
 }

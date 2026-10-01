@@ -62,3 +62,11 @@ func test_parallax_limitado() -> void:
 	assert_eq(TerrainArt.layer_offset(Vector2(0, 5000), 0.0, Vector2(0, 0.1), -90.0, 119.0).y, -90.0)
 	assert_eq(TerrainArt.layer_offset(Vector2(0, -500), 0.0, Vector2(0, 0.1), -90.0, 119.0).y, 50.0)
 
+
+func test_quadro_da_animacao_em_laco() -> void:
+	assert_eq(TerrainArt.anim_frame(0.0, 100.0, 6), 0)
+	assert_eq(TerrainArt.anim_frame(0.25, 100.0, 6), 2)
+	assert_eq(TerrainArt.anim_frame(0.65, 100.0, 6), 0, "volta ao primeiro quadro")
+	assert_eq(TerrainArt.anim_frame(0.0, 100.0, 6, 3), 3, "fase desincroniza")
+	assert_eq(TerrainArt.anim_frame(5.0, 100.0, 1), 0, "sem animacao")
+

@@ -56,10 +56,11 @@ escala), não uma recoloração. Mesmo estilo de arte (rico em camadas, Resurrec
 | Ordem | id na spec/código | Mundo | Nome (tema) |
 |---|---|---|---|
 | 1 | `luna` | Lua (montanhas facetadas, a Terra no céu) | Lua |
-| 2 | `ares` | **Floresta fechada** (árvores gigantes, cipós, névoa, vaga-lumes) | a definir no export (nome temático) |
-| 3 | `kronos` | **Planeta dos doces** (bengalas, pirulitos, algodão-doce, chocolate) | a definir no export |
+| 2 | `ares` | **Floresta fechada** (árvores gigantes, cipós, névoa, vaga-lumes) | **Silvânia** |
+| 3 | `kronos` | **Planeta dos doces** (bengalas, pirulitos, algodão-doce, chocolate) | **Docelândia** |
 | 4 | `titan` | a decidir com o usuário (ideia citada: quarto bagunçado/gigante) | — |
 Os ids continuam `ares`/`kronos`/`titan` no código e no save; só nomes exibidos e arte mudam.
+Os mundos são **animados** (vento, pirulitos girando, nuvens, estrelas) — pedido do usuário.
 
 ## 6. Upgrades (créditos; resetam no prestígio, exceto a Expedição)
 | Upgrade | Efeito | Observação |

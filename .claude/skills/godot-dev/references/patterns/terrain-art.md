@@ -43,3 +43,10 @@
 - Verificar em altitude alta (`--dev_levels=thrust:60,...` — formato chave:valor! `--dev_levels=40` não faz nada e a
   demo volta para a Lua sem gás).
 
+## Camadas e enfeites animados — 2026-10-01
+- Arte: quadros empilhados na vertical; meta `anim: {camada: {frames, ms}}`, `rock_frames`, `rock_ms`, `rock_spacing`.
+- `Backdrop`: todas as camadas usam `region_enabled`; `region_rect.position.y` = quadro (`TerrainArt.anim_frame`),
+  `position.x` = rolagem (laço com `texture_repeat`). Camada opcional `clouds` (rola sozinha, presa ao céu).
+- `Terrain`: enfeites animados redesenham a cada quadro (`queue_redraw` no `_process`), cada um com `phase` própria
+  (não balançam em sincronia). Fonte do retângulo: x = variante, y = quadro.
+

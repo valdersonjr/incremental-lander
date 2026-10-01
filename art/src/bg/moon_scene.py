@@ -37,7 +37,10 @@ def pnoise(x: float, seed: int, period: int = W, octaves=(1, 3, 7, 13), amp=(1, 
 
 
 # ------------------------------------------------------------------ céu
-def sky(cv: Canvas) -> None:
+SKY_FRAMES, SKY_MS = 6, 220     # estrelas cintilando (loop de 1,3 s)
+
+
+def sky(cv: Canvas, fr: int = 0) -> None:
     bands = [(0, "ink"), (95, "navy"), (170, "plum_dark"), (212, "plum"), (244, "berry"), (262, "rose")]
     for y in range(H):
         for x in range(W):
@@ -54,16 +57,21 @@ def sky(cv: Canvas) -> None:
                     c = c1
             cv.px(x, y, c)
     rng = random.Random(11)
-    for _ in range(420):                       # estrelas: densidade cai perto do horizonte
+    for j in range(420):                       # estrelas: densidade cai perto do horizonte
         x, y = rng.randrange(W), int(rng.random() ** 1.6 * 230)
         c = rng.choices(["lilac_grey", "mist", "white", "lavender", "pale_sky"], [5, 3, 1.2, 1, 1])[0]
+        if fr and c in ("white", "mist") and (fr + j * 7) % SKY_FRAMES == 0:
+            c = "lilac_grey"                   # algumas estrelas brilhantes apagam um instante
         cv.px(x, y, c)
-    for x, y in ((60, 40), (205, 22), (330, 78), (560, 30), (610, 120), (120, 150)):   # cintilantes
-        cv.px(x, y, "white")
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            cv.px(x + dx, y + dy, "mist")
-        for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2)):
-            cv.px(x + dx, y + dy, "lilac_grey")
+    for i, (x, y) in enumerate(((60, 40), (205, 22), (330, 78), (560, 30), (610, 120), (120, 150))):   # cintilantes
+        st = (fr + i * 2) % SKY_FRAMES if fr else 0          # quadro 0 = cena aprovada
+        cv.px(x, y, "white" if st in (0, 1, 2, 5) else "mist")
+        if st in (0, 1, 2, 5):
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                cv.px(x + dx, y + dy, "mist")
+        if st in (0, 1):
+            for dx, dy in ((2, 0), (-2, 0), (0, 2), (0, -2)):
+                cv.px(x + dx, y + dy, "lilac_grey")
 
 
 # ------------------------------------------------------------------ planeta (Terra) com halo
@@ -379,7 +387,11 @@ def export() -> dict:
     global COLOR_NAMES_INV
     COLOR_NAMES_INV = {resolve(n): n for n in COLOR_NAMES}
     out = {}
-    c = Canvas(W, H); sky(c); c.save("assets/bg/luna_sky.png"); out["sky"] = c
+    import anim_util as au
+    sky_frames = []
+    for fr in range(SKY_FRAMES):
+        c = Canvas(W, H); sky(c, fr); sky_frames.append(c)
+    au.stack(sky_frames).save("assets/bg/luna_sky.png"); out["sky"] = sky_frames[0]; out["sky_frames"] = sky_frames
     c = Canvas(W, H); planet(c, *PLANET)
     cx, cy, r = PLANET
     c = c.crop(cx - r - 12, cy - r - 12, 2 * r + 25, 2 * r + 25); c.save("assets/bg/luna_planet.png"); out["planet"] = c
@@ -405,6 +417,7 @@ def export() -> dict:
         "deep_color": "#45293f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(ROCK_CELL), "rock_base_row": 6, "rock_count": len(ROCK_SIZES),
         "rock_widths": [w for w, _ in ROCK_SIZES],
+        "anim": {"sky": {"frames": SKY_FRAMES, "ms": SKY_MS}},
     }
     with open("assets/bg/luna_layers.json", "w") as f:
         json.dump(meta, f, indent=2)

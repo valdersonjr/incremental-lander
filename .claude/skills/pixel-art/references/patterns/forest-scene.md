@@ -35,7 +35,16 @@ fechada, outro planeta dos doces, outro um quarto bagunçado"). Mesma técnica d
 - Moitas espalhadas no meio da planície pareciam pedras flutuando → apoiadas na linha do horizonte.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: aprovado; nome exibido **Silvânia**. Pediu o mapa animado ("árvores balançando, pirulitos girando").
+## Animação (pedido do usuário: "o mapa se mexer")
+- Quadros empilhados na vertical num PNG (`art/src/bg/anim_util.py`); metas `anim` (camadas) e `rock_frames`/`rock_ms`
+  (enfeites) no `<planeta>_layers.json`. Loop curto (6 quadros), balanço de 1–2 px, sem dither animado piscando.
+- Vento: copas balançam (topo da copa mais que a base), cipós com a ponta balançando mais, vaga-lumes piscando fora
+  de fase, grama/capim/samambaia/flores cisalhados pelo vento, cogumelo de luz pulsando. 6 quadros × 180 ms.
+- Copa inteira pulando 2 px parecia tremida → amplitude 1,6 (passos de 1 px) e parte de baixo da copa pela metade.
+- `sorted()` dentro do laço dos tufos custava 23 s → ordenar uma vez (6 s no total).
+- Relevo fundo deixava bloco escuro → raízes e pedrinhas até o fim da faixa.
+
 
 ## Fontes
 - https://www.slynyrd.com/blog/2019/3/7/pixelblog-15-plant-life — folhagem por sugestão, aglomerados consistentes, galhos aparecendo

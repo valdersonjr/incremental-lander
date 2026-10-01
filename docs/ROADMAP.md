@@ -56,7 +56,10 @@
 - [x] Lua: cena rica em camadas (céu, Terra, montanhas facetadas em parallax, terreno com faixas por inclinação, pedregulhos) (2026-10-01; minimalista reprovado, rica aprovada)
 - [x] Plataformas de pouso + feixe de luz, pista iluminada e marcador no alvo (2026-10-01; brilho pedido pelo usuário)
 - [x] Explosão da batida + poeira do pouso (2026-10-01)
-- [x] Cenas de Ares, Kronos e Titan no estilo da Lua (2026-10-01; aprovadas de primeira)
+- [x] ~~Cenas de Ares, Kronos e Titan recoloridas~~ → reprovadas como conceito: cada planeta é um mundo diferente
+- [x] Mundo 2 **Silvânia** (floresta fechada, id ares) e mundo 3 **Docelândia** (planeta dos doces, id kronos) (2026-10-01)
+- [x] Mapa animado: vento na floresta, pirulitos girando, nuvens passando, estrelas cintilando (2026-10-01)
+- [ ] 4º mundo (id titan): tema a decidir com o usuário (hoje usa a cena de gelo antiga)
 - [ ]
       UI (painéis, ícones de upgrade, fonte) · FX
 

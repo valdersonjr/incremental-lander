@@ -63,6 +63,7 @@ static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_
 	var cell: Array = meta["rock_cell"]
 	var base_row := float(meta["rock_base_row"])
 	var count := int(meta["rock_count"])
+	var spacing: Array = meta.get("rock_spacing", [14.0, 46.0])
 	var x := ridge[0].x + rng.randf_range(4.0, 30.0)
 	while x < ridge[ridge.size() - 1].x:
 		var clear := true
@@ -73,8 +74,8 @@ static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_
 		if clear:
 			var y := TerrainGen.height_at(ridge, x) + float(rng.randi_range(0, 2))
 			spots.append({"pos": Vector2(roundf(x - float(cell[0]) * 0.5), roundf(y - base_row)),
-				"frame": rng.randi_range(0, count - 1)})
-		x += rng.randf_range(14.0, 46.0)
+				"frame": rng.randi_range(0, count - 1), "phase": rng.randi_range(0, 7)})
+		x += rng.randf_range(float(spacing[0]), float(spacing[1]))
 	return spots
 
 
@@ -99,3 +100,11 @@ static func beam_origin(pad: Dictionary) -> Vector2:
 ## Canto sup. esq. do marcador (acima do feixe).
 static func marker_origin(pad: Dictionary) -> Vector2:
 	return Vector2(float(pad["x"]), float(pad["y"])) + MARKER_ORIGIN
+
+
+## Quadro atual de uma animacao em laco (arte da pixel-art: quadros empilhados). phase desincroniza copias.
+static func anim_frame(time_s: float, frame_ms: float, frames: int, phase: int = 0) -> int:
+	if frames <= 1:
+		return 0
+	return (int(time_s * 1000.0 / frame_ms) + phase) % frames
+

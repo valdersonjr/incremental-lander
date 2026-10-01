@@ -63,7 +63,8 @@ art/src/sprites/              # lander.py (fonte do sprite), lander_styles.py (5
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BandLit/BandFlat/BandShade (faixas cisalhadas com arte) + Line2D (Surface,
                               # só placeholder) + StaticBody2D com ConcavePolygonShape2D (segmentos); pedregulhos em _draw;
                               # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
-game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/planet/far/mid/plain; setup(planeta, ref_y), follow(cam)
+game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam);
+                              # anima quadros (meta anim) e rola nuvens
 scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)
 assets/tiles/luna_ground_*    # faixas do terreno lit/flat/shade (128x176, repetem em x)
@@ -72,6 +73,9 @@ assets/sprites/landing_pad*, target_beam*, target_marker* # plataforma + feixe +
 assets/sprites/explosion*, landing_dust* # FX de batida e pouso ← art/src/fx/explosion.py (Flight._spawn_fx)
 tests/visual/crash_preview.*  # prévia da batida (e da poeira com -- --dust) para gdtool capture
 art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/src/terrain/ = versões reprovadas
+art/src/bg/forest_scene.py    # mundo 2 Silvânia (floresta, id ares) · candy_scene.py = mundo 3 Docelândia (doces, id kronos)
+art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito; ainda gera a cena de gelo de titan (4º mundo a decidir)
+art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)

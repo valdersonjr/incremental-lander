@@ -56,6 +56,9 @@ noite roxa com montanhas e faixas de céu até o magenta no horizonte, lago notu
 - Lint acusa ~6% de "órfãos" nas faixas: é o dither bayer intencional das transições (igual à cena aprovada).
 - Pendente: cortes verticais onde um segmento muda de face (lit/flat/shade); plataformas ainda placeholder.
 
+## Animação
+- 2026-10-01: céu com estrelas cintilando (6 quadros × 220 ms; quadro 0 = cena aprovada); demais camadas paradas.
+
 ## Fontes
 - https://www.slynyrd.com/blog/2026/5/27/pixelblog-62-landscape-backgrounds — perspectiva atmosférica por plano, névoa na base, faixas de horizonte, escala de textura, 15–16 cores
 - https://www.slynyrd.com/blog/2019/11/12/pixelblog-23-parallax-scrolling — camadas em laço, velocidades inteiras, camadas equilibradas sem ponto dominante

@@ -30,7 +30,13 @@
   sombreamento com **transição bayer entre os tons** + aro claro nas bordas de cima/esquerda; nuvem por bolha.
 
 ## Decisões do usuário
-- (pendente)
+- 2026-10-01: aprovado; nome exibido **Docelândia**. Pediu o mapa animado ("árvores balançando, pirulitos girando").
+## Animação (pedido do usuário: "o mapa se mexer")
+- Quadros empilhados na vertical num PNG (`art/src/bg/anim_util.py`); metas `anim` (camadas) e `rock_frames`/`rock_ms`
+  (enfeites) no `<planeta>_layers.json`. Loop curto (6 quadros), balanço de 1–2 px, sem dither animado piscando.
+- Pirulitos giram (1/3 de volta por ciclo: a espiral tem 3 faixas → laço perfeito; sentidos alternados), brilhos correm
+  no rio de chocolate, **nuvens numa camada própria** (`kronos_clouds.png`, rola sozinha a 3 px/s), pirulitos do chão giram.
+
 
 ## Fontes
 - https://gatdesucre.itch.io/sugarland-tileset — mundo de doces em plataforma: terreno + decorações

@@ -27,6 +27,7 @@ import moon_scene as ms
 from moon_scene import mix, pnoise, W, H, HORIZON, STRIP_W, STRIP_D, FACE_SLOPE
 from explosion import blob, shade_blob
 import planet_scenes as ps
+import anim_util as au
 
 P = {"sky": "assets/bg/ares_sky.png", "planet": "assets/bg/ares_planet.png", "far": "assets/bg/ares_far.png",
      "mid": "assets/bg/ares_mid.png", "plain": "assets/bg/ares_plain.png",
@@ -38,6 +39,17 @@ PROP_BASE = 14
 PROP_SPACING = (6, 22)            # floresta: enfeites bem mais densos que as pedras da Lua
 SUN = (452, 214, 20)
 INV = {}
+
+
+def shade_dir(pts: set, cx: float, cy: float, r: float, ramp: list) -> dict:
+    """Mesmo resultado de explosion.shade_blob(mode='dir'), sem criar telas auxiliares (bem mais rápido)."""
+    n, out = len(ramp), {}
+    for (x, y) in pts:
+        t = ((x - cx) * 0.6 + (y - cy) * 0.8) / (r * 1.1)
+        if ((x, y - 1) not in pts or (x - 1, y) not in pts) and t < 0.2:
+            t -= 0.5
+        out[(x, y)] = ramp[min(n - 1, max(0, int((t + 1) / 2 * n)))]
+    return out
 
 
 def pxw(cv: Canvas, x: int, y: int, c) -> None:
@@ -136,7 +148,9 @@ def conifer(cv: Canvas, x0: int, base: int, h: int, w: int, cols: dict, haze=Non
         pxw(cv, x0, y, cols["dark"])
 
 
-def big_tree(cv: Canvas, x0: int, base: int, h: int, tw: int, crown_r: int, seed: int, haze: str) -> None:
+def big_tree(cv: Canvas, x0: int, base: int, h: int, tw: int, crown_r: int, seed: int, haze: str,
+             sway: int = 0) -> None:
+    """sway: deslocamento da copa (px) neste quadro do vento; tronco fica parado, cipós balançam mais embaixo."""
     rng = random.Random(seed)
     crown_y = base - h
     # tronco com casca (estrias verticais), luz à esquerda, raízes abrindo na base
@@ -153,29 +167,27 @@ def big_tree(cv: Canvas, x0: int, base: int, h: int, tw: int, crown_r: int, seed
             pxw(cv, x, y, c)
     for side in (-1, 1):                                      # galhos saindo para a copa
         for k in range(crown_r):
-            x = x0 + side * (tw // 2 + k)
+            x = x0 + side * (tw // 2 + k) + (sway if k > crown_r * 0.6 else 0)
             y = crown_y + crown_r // 2 + 6 - int(k * 0.7)
             pxw(cv, x, y, "umber"); pxw(cv, x, y + 1, "charcoal")
     # copa: vários blobs sombreados (dir) + aglomerados de folhas consistentes
     blobs = [(x0 + rng.randint(-crown_r, crown_r), crown_y + rng.randint(-crown_r // 2, crown_r // 2),
               crown_r * rng.uniform(0.5, 0.85)) for _ in range(7)]
     blobs.append((x0, crown_y, crown_r * 0.9))
+    # vento: a parte de cima da copa balança mais; a de baixo (perto do tronco) acompanha pela metade
+    blobs = [(bx + (sway if by <= crown_y else int(sway / 2)), by, br) for bx, by, br in blobs]
     allpts = set()
     for i, (bx, by, br) in enumerate(sorted(blobs, key=lambda b: b[1])):
         pts = blob(bx, by, br, seed * 31 + i, 0.25)
         allpts |= pts
-        tmp = Canvas(W * 3, H)
-        shade_blob(tmp, {(x + W, y) for x, y in pts if 0 <= y < H}, bx + W, by, br,
-                   ["emerald", "green", "green", "pine", "deep_sage"], mode="dir")
-        for (x, y) in pts:
+        for (x, y), c in shade_dir(pts, bx, by, br, ["emerald", "green", "green", "pine", "deep_sage"]).items():
             if 0 <= y < H:
-                c = tmp.get(x + W, y)
-                if c is not None:
-                    pxw(cv, x, y, INV[c])
+                pxw(cv, x, y, c)
     # aglomerados de folhas: tufos de 3 px (mais claros no lado da luz, escuros na sombra)
+    ordered = sorted(allpts)                                   # ordenar uma vez (determinístico e rápido)
     for _ in range(int(len(allpts) / 18)):
-        x, y = rng.choice(sorted(allpts))
-        lit = (x - x0) * 0.6 + (y - crown_y) * 0.8 < 0
+        x, y = rng.choice(ordered)
+        lit = (x - x0 - sway) * 0.6 + (y - crown_y) * 0.8 < 0
         c = "leaf" if lit else "deep_sage"
         for dx, dy in ((0, 0), (1, 0), (0, 1)) if lit else ((0, 0), (-1, 0), (0, -1)):
             if (x + dx, y + dy) in allpts:
@@ -184,10 +196,12 @@ def big_tree(cv: Canvas, x0: int, base: int, h: int, tw: int, crown_r: int, seed
             pxw(cv, x, y - 1, "sprout")
     # cipós descendo da copa
     for _ in range(3):
-        vx = x0 + rng.randint(-crown_r, crown_r)
+        vx = x0 + sway + rng.randint(-crown_r, crown_r)
         vy = crown_y + crown_r // 2
-        for k in range(rng.randint(15, 50)):
-            pxw(cv, vx, vy + k, "pine" if k % 6 else "green")
+        length = rng.randint(15, 50)
+        for k in range(length):
+            dx = round(sway * 0.8 * k / length)                       # ponta do cipó balança mais
+            pxw(cv, vx + dx, vy + k, "pine" if k % 6 else "green")
 
 
 def far_layer() -> Canvas:
@@ -200,7 +214,14 @@ def far_layer() -> Canvas:
     return cv
 
 
-def mid_layer() -> Canvas:
+N_FRAMES, FRAME_MS = 6, 180      # vento: loop de ~1,1 s
+
+
+def wind(f: int, phase: float, amp: float = 1.6) -> int:
+    return round(amp * math.sin(2 * math.pi * f / N_FRAMES + phase))
+
+
+def mid_layer(f: int = 0) -> Canvas:
     cv = Canvas(W, ms.MID_BASE + 1)
     base = ms.MID_BASE
     rng = random.Random(41)
@@ -209,7 +230,7 @@ def mid_layer() -> Canvas:
                 {"lit": "green", "mid": "pine", "dark": "deep_sage", "rim": "emerald"}, haze="sage", seed=90 + i)
     for i, x in enumerate((40, 190, 330, 500)):
         big_tree(cv, x + rng.randint(-20, 20), base, rng.randint(150, 205), rng.randint(10, 16),
-                 rng.randint(34, 46), 200 + i, "sage")
+                 rng.randint(34, 46), 200 + i, "sage", sway=wind(f, i * 1.3))
     # névoa na base (perspectiva atmosférica)
     for y in range(base - 14, base + 1):
         for x in range(W):
@@ -218,7 +239,7 @@ def mid_layer() -> Canvas:
     return cv
 
 
-def plain_layer() -> Canvas:
+def plain_layer(fr: int = 0) -> Canvas:
     cv = Canvas(W, H + 160)
     top = ms.PLAIN_TOP
     rng = random.Random(51)
@@ -231,21 +252,22 @@ def plain_layer() -> Canvas:
         bx = rng.randrange(W)
         by, br = (top + rng.randint(0, 6), rng.uniform(6, 12)) if row else (top + rng.randint(14, 26), rng.uniform(3, 6))
         pts = {(x % W, y) for x, y in blob(bx, by, br, rng.randrange(999), 0.3) if y >= top}
-        tmp = Canvas(W, cv.h)
-        shade_blob(tmp, pts, bx, by, br, ["green", "pine", "deep_sage", "charcoal"], mode="dir")
-        for (x, y) in pts:
-            c = tmp.get(x, y)
-            if c is not None:
-                cv.px(x, y, INV[c])
+        for (x, y), c in shade_dir(pts, bx, by, br, ["green", "pine", "deep_sage", "charcoal"]).items():
+            cv.px(x, y, c)
     for _ in range(160):                                       # estrias do chão distante
         y = top + int(rng.random() ** 1.3 * (H - top))
         x, ln = rng.randrange(W), rng.randint(3, 16)
         for i in range(ln):
             cv.px((x + i) % W, y, "pine" if y < top + 40 else "deep_sage")
-    for _ in range(40):                                        # vaga-lumes
+    for i in range(40):                                        # vaga-lumes: piscam fora de fase e flutuam 1 px
         x, y = rng.randrange(W), top + rng.randint(-2, 70)
+        glow = rng.random() < 0.5
+        k = (fr + i) % N_FRAMES
+        if k >= 4:
+            continue                                               # apagado
+        y += (0, -1, -1, 0)[k]
         cv.px(x, y, "lemon")
-        if rng.random() < 0.5:
+        if glow and k in (1, 2):
             for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                 cv.px((x + dx) % W, y + dy, "lime")
     return cv.crop(0, top, W, cv.h - top)
@@ -268,18 +290,19 @@ def ground_strip(face: str, seed: int) -> Canvas:
     for x in range(STRIP_W):                                   # franja de grama descendo na terra
         for k in range(3, 3 + int(2 + 2 * pnoise(x, seed, STRIP_W, (3, 7, 13), (1, .6, .4)))):
             cv.px(x, k, THEME["rim"][face][2] if (x + k) % 3 else THEME["rim"][face][1])
-    for _ in range(14):                                        # raízes serpenteando
-        x, k = rng.randrange(STRIP_W), rng.randint(6, 60)
+    for _ in range(30):                                        # raízes serpenteando (até o fundo da faixa)
+        x, k = rng.randrange(STRIP_W), rng.randint(6, STRIP_D - 10)
         for i in range(rng.randint(12, 40)):
             x += 1
             if rng.random() < 0.35:
                 k += rng.choice([-1, 1])
             k = max(5, min(STRIP_D - 4, k))
-            cv.px(x % STRIP_W, k, "olive" if k < 30 else "umber")
+            cv.px(x % STRIP_W, k, "olive" if k < 30 else "umber" if k < 110 else "charcoal")
             cv.px(x % STRIP_W, k + 1, "charcoal" if k < 30 else "ink")
-    for _ in range(26):                                        # pedrinhas
-        x, k = rng.randrange(STRIP_W), rng.randint(6, 70)
-        cv.px(x, k, "lichen" if k < 30 else "sage"); cv.px((x + 1) % STRIP_W, k, "sage")
+    for _ in range(46):                                        # pedrinhas (escurecem com a profundidade)
+        x, k = rng.randrange(STRIP_W), rng.randint(6, STRIP_D - 6)
+        cv.px(x, k, "lichen" if k < 30 else "sage" if k < 100 else "deep_sage")
+        cv.px((x + 1) % STRIP_W, k, "sage" if k < 100 else "deep_sage")
         cv.px(x, k + 1, "deep_sage"); cv.px((x + 1) % STRIP_W, k + 1, "charcoal")
     return cv
 
@@ -313,10 +336,28 @@ PROPS = [
 ]
 
 
-def props_atlas() -> Canvas:
+SWAYING = {"grass", "tallgrass", "fern", "flowers"}
+
+
+def sway_rows(rows: list, dx_top: int) -> list:
+    """Cisalha o desenho ASCII: o topo desloca dx_top, a base fica parada (planta no vento)."""
+    out = []
+    n = len(rows)
+    for i, r in enumerate(rows):
+        d = round(dx_top * (1 - i / max(n - 1, 1)) ** 1.5)
+        out.append(("." * d + r)[:len(r)] if d > 0 else (r[-d:] + "." * -d) if d < 0 else r)
+    return out
+
+
+def props_atlas(f: int = 0) -> Canvas:
     cw, ch = PROP_CELL
     cv = Canvas(cw * len(PROPS), ch)
-    for i, (_, legend, rows) in enumerate(PROPS):
+    for i, (name, legend, rows) in enumerate(PROPS):
+        if name in SWAYING:
+            rows = sway_rows(rows, wind(f, i * 0.9, 1.6))
+        legend = dict(legend)
+        if name == "glowcap" and (f % N_FRAMES) in (2, 3):     # cogumelo de luz pulsa
+            legend.update({"b": "ice", "a": "white", "c": "aqua"})
         cv.paint(rows, legend, x=i * cw, y=PROP_BASE + 1 - len(rows))
     return cv
 
@@ -330,18 +371,19 @@ def layers() -> dict:
     c = Canvas(W, H); sky(c); L["sky"] = c
     c = Canvas(W, H); box = sun(c); L["planet"] = c.crop(*box); L["planet_pos"] = box[:2]
     L["far"] = far_layer()
-    L["mid"] = mid_layer()
-    L["plain"] = plain_layer()
+    L["mid_frames"] = [mid_layer(f) for f in range(N_FRAMES)]
+    L["plain_frames"] = [plain_layer(f) for f in range(N_FRAMES)]
+    L["props_frames"] = [props_atlas(f) for f in range(N_FRAMES)]
+    L["mid"], L["plain"], L["props"] = L["mid_frames"][0], L["plain_frames"][0], L["props_frames"][0]
     for i, face in enumerate(("lit", "flat", "shade")):
         L[face] = ground_strip(face, 61 + i)
-    L["props"] = props_atlas()
     return L
 
 
-def compose(L: dict) -> Canvas:
+def compose(L: dict, f: int = 0) -> Canvas:
     cv = Canvas(W, H)
     cv.stamp(L["sky"]); cv.stamp(L["planet"], *L["planet_pos"])
-    cv.stamp(L["far"]); cv.stamp(L["mid"]); cv.stamp(L["plain"], 0, ms.PLAIN_TOP)
+    cv.stamp(L["far"]); cv.stamp(L["mid_frames"][f]); cv.stamp(L["plain_frames"][f], 0, ms.PLAIN_TOP)
     pad = ms.PREVIEW_PAD
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
     faces = ms.segment_faces(pts)
@@ -357,7 +399,8 @@ def compose(L: dict) -> Canvas:
     while x < W - 8:
         if not (pad[0] - 12 < x < pad[0] + pad[1] + 12):
             i = rng.randrange(len(PROPS))
-            cv.stamp(L["props"].crop(i * cw, 0, cw, ch), int(x - cw / 2), ridge_y(pts, x) + rng.randint(0, 2) - PROP_BASE)
+            cv.stamp(L["props_frames"][(f + i) % N_FRAMES].crop(i * cw, 0, cw, ch), int(x - cw / 2),
+                     ridge_y(pts, x) + rng.randint(0, 2) - PROP_BASE)
         x += rng.uniform(*PROP_SPACING)
     y = ridge_y(pts, pad[0] + pad[1] // 2)
     beam = Canvas.from_image("assets/sprites/target_beam.png").crop(0, 0, 64, 84)
@@ -370,8 +413,11 @@ def compose(L: dict) -> Canvas:
 
 
 def export(L: dict) -> None:
-    for k in ("sky", "planet", "far", "mid", "plain", "props"):
+    for k in ("sky", "planet", "far"):
         L[k].save(P[k])
+    au.stack(L["mid_frames"]).save(P["mid"])
+    au.stack(L["plain_frames"]).save(P["plain"])
+    au.stack_cells(L["props_frames"]).save(P["props"])
     for k in ("lit", "flat", "shade"):
         L[k].save(P[k], tiled=True)
     meta = {
@@ -380,6 +426,8 @@ def export(L: dict) -> None:
         "deep_color": "#2e222f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(PROP_CELL), "rock_base_row": PROP_BASE, "rock_count": len(PROPS),
         "rock_widths": [16] * len(PROPS), "rock_spacing": list(PROP_SPACING),
+        "rock_frames": N_FRAMES, "rock_ms": FRAME_MS,
+        "anim": {"mid": {"frames": N_FRAMES, "ms": FRAME_MS}, "plain": {"frames": N_FRAMES, "ms": FRAME_MS}},
     }
     with open(P["meta"], "w") as f:
         json.dump(meta, f, indent=2)
@@ -392,5 +440,10 @@ if __name__ == "__main__":
     sc.save("art/previews/forest_scene.png", preview=False)
     sc.preview("art/previews/forest_scene_2x.png", scale=2, grid=False, show_1x=False)
     L["props"].preview("art/previews/forest_props_preview.png", scale=6)
+    au.save_gif([compose(L, f) for f in range(N_FRAMES)], "art/previews/forest_anim.gif", FRAME_MS)
+    zoom = [compose(L, f).crop(120, 40, 320, 300) for f in range(N_FRAMES)]
+    au.save_gif(zoom, "art/previews/forest_anim_zoom.gif", FRAME_MS, scale=3)
+    au.stack([z.crop(0, 0, 320, 120) for z in zoom[:3]]).preview("art/previews/forest_anim_check.png", scale=2,
+                                                                  grid=False, show_1x=False)
     if "--export" in sys.argv:
         export(L)
