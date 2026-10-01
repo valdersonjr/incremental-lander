@@ -56,4 +56,5 @@
 | 2026-10-01 | **Cada planeta = mundo totalmente diferente** (Lua → Floresta fechada → Planeta dos doces → 4º a decidir); recolorir a mesma paisagem foi reprovado | usuário: "só me mostrou ambientes iguais com cores diferentes"; exemplos: lua, floresta fechada, planeta dos doces, quarto bagunçado | `docs/GDD.md` §5, pixel-art style-guide |
 | 2026-10-01 | Nomes temáticos dos mundos escolhidos pelo Claude; ids `ares`/`kronos`/`titan` mantidos no código | usuário escolheu a opção recomendada | nomes na spec da economia (skill economy-balance) |
 | 2026-10-01 | 4º mundo = **Quarto bagunçado** ("O Quarto"); meta final "Expedição ao Quarto" (só textos; ids/números iguais) | exemplo do próprio usuário, proposto quando ele disse "continue"; aprovado | `art/src/bg/room_scene.py`, spec da economia (nomes) |
+| 2026-10-01 | Entrega escolhida por teclas 1–9 (inclui numérico) ou clique; aviso piscando se tentar pilotar antes | usuário "não consigo controlar a nave": nada avisava que é preciso escolher a entrega | `game/run/offer_panel.gd`, `godot-dev/references/patterns/controls-ux.md` |
 

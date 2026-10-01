@@ -17,11 +17,18 @@
 
 ## Próximo passo
 **Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
-1. **Decisão de design pendente (usuário, 2026-10-01): "o jogo é só sair de um lugar e pousar em outro?"** —
+1. **Perigos por mundo (aprovado em princípio, 2026-10-01: "pode ser")** — Lua nenhum; Floresta galhos/cipós + vento;
+   Doces calda que gruda e freia; Quarto objetos caindo + ventilador. Planejar com economy-balance (custo de gás/risco),
+   godot-dev (física/obstáculos) e pixel-art (sprites). Antes: confirmar com o usuário que os controles funcionam.
+   (Contexto: pergunta "o jogo é só sair de um lugar e pousar em outro?") —
    ver plano em `~/.claude/plans/a-ideia-do-jogo-cryptic-boot.md` e a resposta na conversa; definir com o usuário
    antes de seguir (envolve economy-balance + godot-dev + pixel-art).
 2. UI: fonte pixel, painéis do hangar/HUD, ícones de upgrade.
 Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
+
+## Como jogar no editor (lembrar o usuário)
+- Play → **clicar dentro da tela do jogo** (o jogo roda embutido na aba Game do Godot 4.7) → escolher a entrega com
+  **1–8 ou clique** → **W/Espaço** propulsor, **A/D** girar, **R** reinicia, **E** encerra o run.
 
 ## Pendências conhecidas
 - "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
