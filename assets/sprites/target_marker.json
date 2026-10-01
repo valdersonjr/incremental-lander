@@ -1,0 +1,18 @@
+{
+  "frame_width": 11,
+  "frame_height": 9,
+  "animations": [
+    {
+      "name": "bob",
+      "row": 0,
+      "frames": 4,
+      "durations_ms": [
+        220,
+        160,
+        220,
+        160
+      ],
+      "loop": true
+    }
+  ]
+}

@@ -6,6 +6,10 @@ class_name TerrainArt
 extends RefCounted
 
 const FACES: Array[String] = ["lit", "flat", "shade"]
+# contrato com art/src/sprites/landing_pad.py (pad 80x28 com topo do deck na linha 10; feixe 64x84; marcador 11x9)
+const PAD_ORIGIN := Vector2(-40, -10)
+const BEAM_ORIGIN := Vector2(-32, -84)
+const MARKER_ORIGIN := Vector2(-5, -92)
 
 
 ## Metadados de arte do planeta ({} se o planeta ainda nao tem arte -> placeholder).
@@ -78,3 +82,18 @@ static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_
 ## x = quanto rolar a textura (repete); y = quanto descer a camada quando a camera sobe acima de ref_y.
 static func layer_offset(cam: Vector2, ref_y: float, factor: Vector2) -> Vector2:
 	return Vector2(roundf(cam.x * factor.x), roundf((ref_y - cam.y) * factor.y))
+
+
+## Canto sup. esq. do sprite da plataforma (topo do deck = altura da plataforma).
+static func pad_origin(pad: Dictionary) -> Vector2:
+	return Vector2(float(pad["x"]), float(pad["y"])) + PAD_ORIGIN
+
+
+## Canto sup. esq. do feixe do alvo (base encostada no topo do deck).
+static func beam_origin(pad: Dictionary) -> Vector2:
+	return Vector2(float(pad["x"]), float(pad["y"])) + BEAM_ORIGIN
+
+
+## Canto sup. esq. do marcador (acima do feixe).
+static func marker_origin(pad: Dictionary) -> Vector2:
+	return Vector2(float(pad["x"]), float(pad["y"])) + MARKER_ORIGIN

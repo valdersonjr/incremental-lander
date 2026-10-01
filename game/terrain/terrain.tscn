@@ -1,6 +1,8 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/terrain/terrain.gd" id="1_terrain"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/target_beam_frames.tres" id="2_beam"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/target_marker_frames.tres" id="3_marker"]
 
 [node name="Terrain" type="Node2D"]
 script = ExtResource("1_terrain")
@@ -33,6 +35,23 @@ unique_name_in_owner = true
 show_behind_parent = true
 width = 2.0
 default_color = Color(0.608, 0.671, 0.698, 1)
+
+[node name="Beam" type="AnimatedSprite2D" parent="."]
+unique_name_in_owner = true
+visible = false
+sprite_frames = ExtResource("2_beam")
+animation = &"pulse"
+centered = false
+
+[node name="Pads" type="Node2D" parent="."]
+unique_name_in_owner = true
+
+[node name="Marker" type="AnimatedSprite2D" parent="."]
+unique_name_in_owner = true
+visible = false
+sprite_frames = ExtResource("3_marker")
+animation = &"bob"
+centered = false
 
 [node name="Body" type="StaticBody2D" parent="."]
 

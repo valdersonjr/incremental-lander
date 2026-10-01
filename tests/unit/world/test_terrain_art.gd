@@ -47,3 +47,11 @@ func test_planeta_sem_arte_usa_placeholder() -> void:
 func test_parallax() -> void:
 	assert_eq(TerrainArt.layer_offset(Vector2(1000, -500), 0.0, Vector2(0.1, 0.2)), Vector2(100, 100))
 	assert_eq(TerrainArt.layer_offset(Vector2(1000, -500), 0.0, Vector2.ZERO), Vector2.ZERO)
+
+
+func test_plataforma_alinhada_ao_topo_do_deck() -> void:
+	var pad := {"x": 100.0, "y": 50.0, "half_width": 32.0}
+	assert_eq(TerrainArt.pad_origin(pad), Vector2(60, 40), "deck de 64 px centrado; topo do deck na linha 10")
+	assert_eq(TerrainArt.beam_origin(pad).y + 84.0, 50.0, "base do feixe encosta no deck")
+	assert_true(TerrainArt.marker_origin(pad).y < TerrainArt.beam_origin(pad).y, "marcador acima do feixe")
+

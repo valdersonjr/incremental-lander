@@ -1,0 +1,65 @@
+[gd_resource type="SpriteFrames" load_steps=9 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/landing_pad.png" id="1_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 28, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3"]
+atlas = ExtResource("1_tex")
+region = Rect2(80, 28, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4"]
+atlas = ExtResource("1_tex")
+region = Rect2(160, 28, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5"]
+atlas = ExtResource("1_tex")
+region = Rect2(240, 28, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6"]
+atlas = ExtResource("1_tex")
+region = Rect2(320, 28, 80, 28)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
+atlas = ExtResource("1_tex")
+region = Rect2(400, 28, 80, 28)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_1")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 2.000
+}, {
+"frames": [{
+"duration": 1.333,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 1.167,
+"texture": SubResource("AtlasTexture_3")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_4")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_5")
+}, {
+"duration": 1.167,
+"texture": SubResource("AtlasTexture_6")
+}, {
+"duration": 2.167,
+"texture": SubResource("AtlasTexture_7")
+}],
+"loop": true,
+"name": &"target",
+"speed": 8.333
+}]

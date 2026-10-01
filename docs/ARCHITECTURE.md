@@ -61,12 +61,14 @@ game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sina
 assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
 art/src/sprites/              # lander.py (fonte do sprite), lander_styles.py (5 estilos propostos), lander_apollo.py
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BandLit/BandFlat/BandShade (faixas cisalhadas com arte) + Line2D (Surface,
-                              # só placeholder) + StaticBody2D com ConcavePolygonShape2D (segmentos); pedregulhos e plataformas em _draw
+                              # só placeholder) + StaticBody2D com ConcavePolygonShape2D (segmentos); pedregulhos em _draw;
+                              # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
 game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/planet/far/mid/plain; setup(planeta, ref_y), follow(cam)
 scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)
 assets/tiles/luna_ground_*    # faixas do terreno lit/flat/shade (128x176, repetem em x)
 assets/sprites/luna_rocks.png # atlas de pedregulhos (6 x 16x8)
+assets/sprites/landing_pad*, target_beam*, target_marker* # plataforma + feixe + marcador ← art/src/sprites/landing_pad.py
 art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/src/terrain/ = versões reprovadas
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot

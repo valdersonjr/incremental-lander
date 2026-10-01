@@ -100,7 +100,6 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 		lander.can_takeoff = false
 		target_pad_id = -1
 		terrain.target_pad_id = -1
-		terrain.queue_redraw()
 		_finish(false, quality, "", info)
 	elif lander.gas <= 0.001:
 		stranded.emit()
