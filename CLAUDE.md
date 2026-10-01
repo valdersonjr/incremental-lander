@@ -17,7 +17,8 @@ construção que ela propõe**. Não fuja desses padrões e não pergunte ao usu
 | Código/cenas Godot, arquitetura, save, telemetria, testes, build | `godot-dev` |
 
 Regras herdadas das skills:
-- Arte: paleta **Resurrect 64** travada; fonte = scripts em `art/src/**.py`; exports em `assets/`; nunca
+- Arte: **todo asset segue o estilo da cena da Lua aprovada** (rico em camadas + lander futurista; ver
+  `pixel-art/references/style-guide.md` §"ESTILO DO JOGO") e usa **só** a paleta **Resurrect 64** travada; fonte = scripts em `art/src/**.py`; exports em `assets/`; nunca
   editar PNG de `assets/` à mão.
 - Áudio: 100% sintetizado (retro-synth espacial), escala em D, loudness por categoria; fonte em
   `audio/src/**.py`; aprovação do usuário ouvindo (`afplay`).

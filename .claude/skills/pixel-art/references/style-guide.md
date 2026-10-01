@@ -38,6 +38,16 @@
   brilhos ciano; evitar ferrugem/sujeira e formas "fofas".
 - Fundo espacial: `space` (+ estrelas `mist`/`white` esparsas, `scatter` com `min_dist`).
 
+## ESTILO DO JOGO (regra do usuário, vale para TODO asset novo)
+- **Referência visual obrigatória: a cena da Lua aprovada** (`art/previews/moon_scene_rich_2x.png`,
+  padrão `patterns/moon-scene.md`) + o lander futurista. Todo asset novo (plataformas, FX, outros planetas, UI)
+  segue a mesma linguagem: rico em detalhe, luz de cima-esquerda com faces luz/sombra marcadas, perspectiva
+  atmosférica, céu em faixas pontilhadas, estrias e aglomerados no chão, brilhos turquesa/ciano na tecnologia.
+- **Paleta: sempre e só a Resurrect 64 definida no início** (travada pela biblioteca e pelo pre-commit).
+  Outros planetas mudam de rampa (ex.: Ares em rust/fire), nunca de paleta.
+- Antes de mostrar um asset novo, compare-o lado a lado com a cena aprovada: se destoar, refaça.
+- (Usuário, 2026-10-01: "lembre de sempre seguir o mesmo estilo de arte, porém mantendo a paleta definida inicialmente".)
+
 ## Decisões registradas
 <!-- Adicione aqui: data — decisão — motivo -->
 - 2026-09-30 — **riqueza de detalhe**: cenas em camadas com perspectiva atmosférica, céu em faixas, relevo facetado, textura no chão; arte minimalista/chapada foi reprovada ("muito feia", "todos horríveis") — referências do usuário em patterns/moon-scene.md
