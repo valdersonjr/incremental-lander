@@ -62,12 +62,10 @@ escala), não uma recoloração. Mesmo estilo de arte (rico em camadas, Resurrec
 Os ids continuam `ares`/`kronos`/`titan` no código e no save; só nomes exibidos e arte mudam.
 Os mundos são **animados** (vento, pirulitos girando, nuvens, estrelas) — pedido do usuário.
 
-**Narrativa de fundo (pedido do usuário, 2026-10-02: "tem que ter uma narrativa de fundo pra ser interessante")**
-- **Lua — guerra alienígena**: uma nave-mãe paira no céu; discos voadores (verde-ácido) atacam as bases humanas
-  (ciano) no topo das montanhas; torres respondem com traçantes âmbar, discos são abatidos, uma base arde e um
-  disco caído fumega na planície. O jogador é o **entregador de suprimentos do front**.
-- Planejado (a definir com economy-balance): a cada marco de entregas a linha de batalha recua (menos discos, bases
-  reconstruídas) até a Lua ser libertada. Os outros mundos ganham narrativa própria depois.
+**Cenas vivas de fundo (2026-10-02)** — só ambientação, **sem história nem progressão** (usuário: "não precisa
+deixar com história forte... a ideia era só algo passando de fundo mesmo").
+- **Lua — guerra alienígena passando ao fundo**: nave-mãe no céu, discos atacando bases nas montanhas, traçantes,
+  abates, base em chamas, disco caído na planície. Não interage com o jogo nem muda com o avanço.
 - Terreno da Lua: crosta de regolito com crateras sobre blocos de basalto (2026-10-02).
 
 ## 6. Upgrades (créditos; resetam no prestígio, exceto a Expedição)

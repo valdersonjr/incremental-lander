@@ -19,11 +19,8 @@
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
-0. **Lua em guerra (2026-10-02, feito)**: nave-mãe, discos, lasers, traçantes, abates, base em chamas, disco abatido.
-   Pendente: (a) **progressão da guerra** — o front recua a cada marco de entregas (definir marcos com economy-balance;
-   WarFx já aceita nº de discos via meta "saucers"); (b) sons distantes da batalha (sound-design: tiros, lasers, explosões
-   abafadas); (c) narrativa dos outros mundos.
-**Continuar a Fase 8** (skill `pixel-art` → prévia → aprovação → `godot-dev` integra):
+0. **Lua em guerra (2026-10-02, feito)** — só cena de fundo, sem história/progressão (decisão do usuário).
+   Opcional depois: sons distantes da batalha (sound-design).
 1. **Perigos por mundo (aprovado em princípio, 2026-10-01: "pode ser")** — Lua nenhum; Floresta galhos/cipós + vento;
    Doces calda que gruda e freia; Quarto objetos caindo + ventilador. Planejar com economy-balance (custo de gás/risco),
    godot-dev (física/obstáculos) e pixel-art (sprites). Antes: confirmar com o usuário que os controles funcionam.
