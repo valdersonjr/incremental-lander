@@ -492,7 +492,7 @@ func _add_options() -> void:
 		row.add_child(vol)
 		_rows.add_child(row)
 	_rows.add_child(_section("JOGO"))
-	var menu_row := _table_row("options", "Voltar ao menu inicial (o progresso fica salvo)")
+	var menu_row := _table_row("options", "Voltar ao menu inicial (salva; lá você troca de jogo salvo)")
 	var mb := Button.new()
 	mb.custom_minimum_size = Vector2(COL_ACTION, 15)
 	mb.text = "Menu inicial"
@@ -506,12 +506,12 @@ func _add_options() -> void:
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 10)
 	_rows.add_child(gap)
-	var row := _table_row("options", "Apagar todo o progresso e começar do zero", &"BadLabel")
+	var row := _table_row("options", "Apagar este jogo (Jogo %d) e começar do zero" % SaveManager.slot, &"BadLabel")
 	var ng := Button.new()
 	ng.custom_minimum_size = Vector2(COL_ACTION, 15)
 	ng.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"
 	ng.theme_type_variation = &"DangerButton"
-	ng.tooltip_text = "apaga o save: créditos, upgrades, mundos e prestígio (Esc cancela)"
+	ng.tooltip_text = "apaga este jogo: créditos, upgrades, mundos e prestígio (Esc cancela). Os outros jogos salvos não mudam."
 	ng.set_meta(&"focus_key", "new_game")
 	ng.pressed.connect(func() -> void:
 		Sound.ui("click")

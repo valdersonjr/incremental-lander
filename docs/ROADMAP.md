@@ -70,6 +70,8 @@
       foco de teclado visível e preservado, tooltips/rolagem no tema, volume com -/+ igual no título e no hangar,
       brilho de compra, "faltam X" nos custos, ações destrutivas em vermelho + Esc cancela, resumo/final modais com
       fundo escurecido, "IR AO HANGAR", motivo da batida legível, aviso central com painel (2026-10-02)
+- [x] Vários jogos salvos: 3 espaços (jogo 1 = save.json antigo, sem migração), tela "Jogos salvos" no menu inicial
+      (jogar / novo jogo / apagar com 2 cliques), opções e último jogo em `user://settings.json` (2026-10-02)
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)

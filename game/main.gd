@@ -49,9 +49,13 @@ func _ready() -> void:
 	_gui.add_child(_title)
 	_title.visible = false
 	_title.play_requested.connect(_on_title_play)
-	_title.new_game_requested.connect(func() -> void:
-		SaveManager.new_game()
+	_title.slot_play_requested.connect(func(slot: int) -> void:
+		SaveManager.load_slot(slot)
+		_on_title_play())
+	_title.new_game_requested.connect(func(slot: int) -> void:
+		SaveManager.new_game(slot)
 		_start_run())
+	_title.current_slot_changed.connect(_build_title_world)
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().quit())
@@ -71,12 +75,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show_title() -> void:
 	_hangar.visible = false
 	_ending.visible = false
+	_build_title_world()
+	_gui.move_child(_title, -1)
+	_title.open()
+
+
+## Cena de fundo do menu: o mundo do jogo em uso, nave parada na plataforma.
+func _build_title_world() -> void:
 	_clear_run()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
 	_flight.start(GameState.current_planet, _run_seed, GameState.ship_stats(), false)
-	_gui.move_child(_title, -1)
-	_title.open()
 
 
 ## Continuar: com progresso vai ao hangar (gastar o que ganhou); sem progresso, decola o primeiro run.

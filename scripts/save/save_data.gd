@@ -77,6 +77,18 @@ static func deserialize(raw: Variant) -> Dictionary:
 	return {"ok": true, "state": st, "warnings": warnings}
 
 
+## Resumo de um estado validado (deserialize) para a tela de jogos salvos.
+static func summary(state: Dictionary) -> Dictionary:
+	return {
+		"planet": str(state.get("current_planet", "luna")),
+		"runs": int(state.get("runs_done", 0)),
+		"credits": float(state.get("resources", {}).get("credits", 0.0)),
+		"play_seconds": float(state.get("play_seconds", 0.0)),
+		"prestige_points": float(state.get("prestige_points", 0.0)),
+		"reached_goal": bool(state.get("reached_goal", false)),
+	}
+
+
 static func _filter_numbers(src: Variant, allowed: Array, kind: String, warnings: Array[String],
 		as_int: bool) -> Dictionary:
 	var out := {}

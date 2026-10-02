@@ -54,8 +54,10 @@ scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), 
 scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
-game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Sinais play_requested
-                              # (Continuar → hangar; sem progresso → run), new_game_requested, quit_requested; opções = volumes.
+game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Continuar · Jogos salvos ·
+                              # Opções · Sair. Sinais play_requested (Continuar → hangar; sem progresso → run),
+                              # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
+                              # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
                               # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
 game/ending/ending.*          # Ending (Control modal como o resumo): "VOCÊ CHEGOU AO QUARTO!" + resumo; Continuar jogando
                               # (Events.goal_reached)
@@ -100,8 +102,9 @@ game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, a
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)
-autoload/save_manager.gd      # SaveManager: user://save.json (JSON versionado, tmp→rename, save.bak), autosave em
-                              # eventos + ao fechar; desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
+autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
+                              # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
+                              # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
@@ -109,7 +112,8 @@ tests/unit/run/               # test_run_state, test_purchases, test_prestige, t
 tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,
                               # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
-tests/integration/            # save_roundtrip.tscn (salva/carrega/backup numa pasta própria) — rodado por gdtool test
+tests/integration/            # save_roundtrip.tscn (salva/carrega/backup + jogos salvos numa pasta própria), slots_flow.tscn
+                              # (Main + menu: novo jogo no espaço 2, trocar de jogo) — rodados por gdtool test
 ```
 Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 — exceto o lander e a cena da Lua (arte final).
 

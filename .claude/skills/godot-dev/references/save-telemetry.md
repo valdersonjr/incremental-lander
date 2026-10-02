@@ -12,6 +12,14 @@ Fontes: docs Godot (Saving games, FileAccess, user://), práticas de versionamen
   ids removidos da spec → reembolsar/ignorar com `push_warning`.
 - Validar tipos ao carregar (dados de fora são não confiáveis); arquivo corrompido → usar `save.bak`.
 - Autosave: fim de run, compra, prestígio, sair do jogo (`NOTIFICATION_WM_CLOSE_REQUEST`).
+- **Vários jogos salvos** (feito 2026-10-02): `SaveManager.SLOTS`; caminho por espaço (`slot_files(n)`; o jogo 1 mantém
+  o nome antigo para não migrar); a tela de seleção lê só o resumo (`slot_summary` → `SaveData.summary`, puro e
+  testado) sem trocar o jogo em uso; **opções fora do save** (`settings.json`, com `last_slot`) para não mudarem ao
+  trocar de jogo. UX: apagar exige 2 cliques + Esc cancela; espaço ocupado nunca é sobrescrito direto (apagar antes).
+  Fontes: [GDQuest — Save and Load cheat sheet](https://www.gdquest.com/library/cheatsheet_save_systems/),
+  [Bugnet — game save best practices Godot](https://bugnet.io/blog/game-save-best-practices-godot),
+  [Godot forum — dynamic save slot system](https://forum.godotengine.org/t/better-way-to-make-a-dynamic-save-slot-system/142808).
+- Testes nunca usam o `user://` real: `SaveManager.set_dir("user://itest...")`; prévias `tests/visual/` têm o save desligado.
 
 ## Telemetria (calibra a economia — `economy-balance` Etapa 10)
 - `Telemetry` (autoload) grava em `user://telemetry/deliveries.csv` e `runs.csv` com `FileAccess`

@@ -72,10 +72,10 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_constants/separation = 8
 
-[node name="NewGame" type="Button" parent="Panel/VBox/Menu"]
+[node name="SavesButton" type="Button" parent="Panel/VBox/Menu"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Novo jogo"
+text = "Jogos salvos"
 
 [node name="OptionsButton" type="Button" parent="Panel/VBox/Menu"]
 unique_name_in_owner = true
@@ -97,6 +97,18 @@ theme_override_constants/separation = 4
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
 text = "OPÇÕES"
+horizontal_alignment = 1
+
+[node name="Saves" type="VBoxContainer" parent="Panel/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SavesTitle" type="Label" parent="Panel/VBox/Saves"]
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "JOGOS SALVOS"
 horizontal_alignment = 1
 
 [node name="Hint" type="Label" parent="Panel/VBox"]

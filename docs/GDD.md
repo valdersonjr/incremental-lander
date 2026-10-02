@@ -116,6 +116,8 @@ compras ≤ 30 min. Relatório: `balance/reports/2026-09-29-v6-expedition/`.
 ## 11. Técnico
 Godot 4.7.2 · desktop (Mac/PC) · teclado · 640×360 viewport, escala inteira (janela 1280×720) ·
 filtro Nearest · snap de pixel · buses de áudio Master/Music/Ambience/SFX→Engine/UI ·
+**3 jogos salvos** independentes (menu inicial → Jogos salvos: jogar, novo jogo, apagar com 2 cliques), autosave no
+jogo em uso; volumes e último jogo usado são globais ·
 economia em `data/economy.json` + `scripts/economy/econ_math.gd` (paridade testada com o Python).
 
 ## 12. Em aberto

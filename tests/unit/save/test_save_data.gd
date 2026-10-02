@@ -47,3 +47,14 @@ func test_dados_invalidos() -> void:
 	var st: Dictionary = SaveData.deserialize(neg)["state"]
 	assert_almost(st["resources"]["credits"], 0.0, 1e-9, "negativo vira 0")
 	assert_eq(st["current_planet"], "luna", "planeta nao liberado volta para a Lua")
+
+
+func test_resumo_para_a_tela_de_jogos_salvos() -> void:
+	var back := SaveData.deserialize(SaveData.serialize(_state()))
+	var s := SaveData.summary(back["state"])
+	assert_eq(s["planet"], "ares")
+	assert_eq(s["runs"], 4)
+	assert_almost(s["credits"], 123.5)
+	assert_almost(s["play_seconds"], 321.0)
+	assert_almost(s["prestige_points"], 40.0)
+	assert_false(s["reached_goal"])
