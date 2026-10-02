@@ -391,6 +391,9 @@ def export() -> dict:
     sky_frames = []
     for fr in range(SKY_FRAMES):
         c = Canvas(W, H); sky(c, fr); sky_frames.append(c)
+    import moon_war as mw                               # narrativa: Lua em guerra (2026-10-02)
+    for fr, c in enumerate(sky_frames):
+        mw.mothership(c, fr)
     au.stack(sky_frames).save("assets/bg/luna_sky.png"); out["sky"] = sky_frames[0]; out["sky_frames"] = sky_frames
     c = Canvas(W, H); planet(c, *PLANET)
     cx, cy, r = PLANET
@@ -402,9 +405,15 @@ def export() -> dict:
     c = Canvas(W, MID_BASE + 1)
     mountains(c, 7, MID_BASE, 7, (30, 100), {"shadow": "ink", "mid": "shadow", "lit": "lilac_grey", "ridge": "steel"},
               gullies=90, haze="shadow")
-    c.save("assets/bg/luna_mid.png"); out["mid"] = c
+    mids = [mw.war_mid(c, fr) for fr in range(mw.FR)]
+    au.stack([m[0] for m in mids]).save("assets/bg/luna_mid.png"); out["mid"] = mids[0][0]
+    war = {"muzzles": [list(m) for m in mids[0][1]], "targets": [list(t) for t in mids[0][2]]}
     c = Canvas(W, H + 160); plain(c, PLAIN_TOP)
-    c = c.crop(0, PLAIN_TOP, W, c.h - PLAIN_TOP); c.save("assets/bg/luna_plain.png"); out["plain"] = c
+    c = c.crop(0, PLAIN_TOP, W, c.h - PLAIN_TOP)
+    plains = []
+    for fr in range(mw.FR):
+        p = c.copy(); mw.wreck(p, fr); plains.append(p)
+    au.stack(plains).save("assets/bg/luna_plain.png"); out["plain"] = plains[0]
     # terreno v3 (2026-10-02, opção D "blocos de basalto"): crosta cisalhada + escurecimento + corpo no mundo
     import moon_ground as mg
     G = mg.VARIANTS["D"]()
@@ -423,7 +432,9 @@ def export() -> dict:
         "depth_depth": out["depth"].h, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(ROCK_CELL), "rock_base_row": 6, "rock_count": len(ROCK_SIZES),
         "rock_widths": [w for w, _ in ROCK_SIZES],
-        "anim": {"sky": {"frames": SKY_FRAMES, "ms": SKY_MS}},
+        "anim": {"sky": {"frames": SKY_FRAMES, "ms": SKY_MS}, "mid": {"frames": mw.FR, "ms": mw.LAYER_MS},
+                 "plain": {"frames": mw.FR, "ms": mw.LAYER_MS}},
+        "war": {**war, **mw.war_meta()},
     }
     with open("assets/bg/luna_layers.json", "w") as f:
         json.dump(meta, f, indent=2)
@@ -463,7 +474,12 @@ def load_layers() -> dict:
              "lit": "assets/tiles/luna_ground_lit.png", "flat": "assets/tiles/luna_ground_flat.png",
              "shade": "assets/tiles/luna_ground_shade.png", "rocks": "assets/sprites/luna_rocks.png",
              "body": "assets/tiles/luna_body.png", "depth": "assets/tiles/luna_depth.png"}
-    return {k: Canvas.from_image(v) for k, v in names.items()}
+    L = {k: Canvas.from_image(v) for k, v in names.items()}
+    # camadas animadas: quadros empilhados na vertical -> quadro 0
+    for k, h in (("sky", H), ("mid", MID_BASE + 1), ("plain", H + 160 - PLAIN_TOP)):
+        if L[k].h > h:
+            L[k] = L[k].crop(0, 0, W, h)
+    return L
 
 
 PREVIEW_PAD = (300, 64)

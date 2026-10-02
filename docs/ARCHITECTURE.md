@@ -65,6 +65,9 @@ game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BodyBand (UV no mund
                               # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
 game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam);
                               # anima quadros (meta anim) e rola nuvens
+game/background/war_fx.gd     # WarFx (filho do Backdrop, logo após "mid"): guerra viva no fundo (discos, lasers, traçantes,
+                              # abates, clarões); coordenadas da camada mid; contrato meta "war" (opcional por planeta)
+scripts/world/war_math.gd     # WarMath (puro): wrap_dx, screen_x (laço de 640), line_points (Bresenham)
 scripts/world/camera_math.gd  # CameraMath.lift: câmera sobe perto do chão (mais céu, menos terreno)
 scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), band_all (faixa única; UV do mundo ou cisalhado), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)

@@ -16,6 +16,7 @@ var _max_y := INF
 var _anim: Dictionary = {}      # nome -> {"frames": int, "ms": float, "h": float} (quadros empilhados na vertical)
 var _scroll: Dictionary = {}    # nome -> px/s de rolagem propria (nuvens)
 var _time := 0.0
+var _war: WarFx = null          # guerra no fundo (opcional: meta "war"), acompanha a camada mid
 
 
 ## Monta as camadas do planeta. ref_y = y da camera (mundo) quando o lander esta no chao da partida.
@@ -23,6 +24,7 @@ func setup(planet_id: String, ref_y: float) -> void:
 	for c in get_children():
 		c.queue_free()
 	_sprites.clear()
+	_war = null
 	_anim.clear()
 	_scroll.clear()
 	_ref_y = ref_y
@@ -65,6 +67,12 @@ func setup(planet_id: String, ref_y: float) -> void:
 		_factors[layer_name] = _vec(bg["layers"][layer_name])
 		if wall_mode and layer_name in ["sky", "planet"]:
 			_factors[layer_name] = Vector2(0.0, _vec(bg["layers"]["far"]).y)   # sobe/desce junto com os moveis
+	if meta.has("war") and _sprites.has("mid"):
+		_war = WarFx.new()
+		_war.name = "War"
+		add_child(_war)
+		move_child(_war, (_sprites["mid"] as Sprite2D).get_index() + 1)   # na frente das montanhas do meio
+		_war.setup(meta["war"], hash(planet_id))
 	# a planicie (camada mais baixa) precisa sempre cobrir o pe da tela: o fundo desce no maximo ate sobrar
 	# ground_margin px de planicie, e sobe no maximo ate o fim da textura da planicie
 	var view_h := float(ProjectSettings.get_setting("display/window/size/viewport_height"))
@@ -85,6 +93,10 @@ func follow(cam: Vector2) -> void:
 		s.position = _base[layer_name] + Vector2(0, off.y)
 		if layer_name in REPEATING:
 			s.region_rect.position.x = off.x + roundf(_time * float(_scroll.get(layer_name, 0.0)))
+	if _war != null:
+		var mid: Sprite2D = _sprites["mid"]
+		_war.position = mid.position
+		_war.scroll_x = mid.region_rect.position.x
 
 
 func _process(delta: float) -> void:

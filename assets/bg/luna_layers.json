@@ -33,6 +33,95 @@
     "sky": {
       "frames": 6,
       "ms": 220
+    },
+    "mid": {
+      "frames": 4,
+      "ms": 140
+    },
+    "plain": {
+      "frames": 4,
+      "ms": 140
+    }
+  },
+  "war": {
+    "muzzles": [
+      [
+        87,
+        209
+      ],
+      [
+        377,
+        169
+      ],
+      [
+        535,
+        229
+      ]
+    ],
+    "targets": [
+      [
+        82,
+        216
+      ],
+      [
+        238,
+        194
+      ],
+      [
+        372,
+        170
+      ],
+      [
+        520,
+        233
+      ]
+    ],
+    "saucers": 3,
+    "sky_band": [
+      70,
+      175
+    ],
+    "speed": [
+      10,
+      26
+    ],
+    "laser": [
+      "#d5e04b",
+      "#cddf6c",
+      "#239063"
+    ],
+    "tracer": [
+      "#f9c22b",
+      "#f79617"
+    ],
+    "smoke": [
+      "#3e3546",
+      "#2e222f"
+    ],
+    "sprites": {
+      "saucer": "res://assets/sprites/war_saucer.png",
+      "saucer_far": "res://assets/sprites/war_saucer_far.png",
+      "blast": "res://assets/sprites/war_blast.png"
+    },
+    "frames": {
+      "saucer": [
+        24,
+        10,
+        4,
+        110
+      ],
+      "saucer_far": [
+        12,
+        6,
+        2,
+        220
+      ],
+      "blast": [
+        16,
+        16,
+        6,
+        70
+      ]
     }
   }
 }
