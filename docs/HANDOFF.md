@@ -6,9 +6,9 @@
 ## Estado atual (2026-10-01)
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
-  "muito feio"; aprovou a cena da Lua: céu em faixas roxo→magenta, Terra com halo, montanhas facetadas, terreno com
+  "muito feio"; aprovou a cena da Lua (hoje em cinza clássico): céu em faixas, Terra com halo, montanhas facetadas, terreno com
   estrias e pedregulhos). Regra registrada no style-guide da pixel-art.
-- **No jogo**: lander futurista + **cena da Lua completa** (fundo `Backdrop` em parallax + terreno com faixas
+- **No jogo**: lander futurista + **cena da Lua completa** (cinza clássico desde 2026-10-02; fundo `Backdrop` em parallax + terreno com faixas
   cisalhadas lit/flat/shade + pedregulhos) + **plataformas** (sprite animado; alvo com feixe de luz, pista
   iluminada e marcador) + **explosão na batida** (a entrega só termina depois dela) e **poeira em cada pouso**. **Mundos**: Lua (`moon_scene.py`), **Silvânia** = floresta fechada (id ares, `forest_scene.py`), **Docelândia** = planeta
   dos doces (id kronos, `candy_scene.py`), e **O Quarto** = quarto bagunçado (id titan, `room_scene.py`; meta final "Expedição ao Quarto"),
@@ -28,7 +28,8 @@
    antes de seguir (envolve economy-balance + godot-dev + pixel-art).
 2. Fase 9 — som, continuação: ambiência de cada mundo (Lua, floresta, doces, quarto), música, jingles,
    alarme de gás baixo. O usuário prefere não auditar som por som: gerar seguindo a skill e tocar um resumo.
-Refinos pendentes da Lua: cortes verticais na troca de face do terreno; planície pode ler como lago.
+Refinos pendentes da Lua: cortes verticais na troca de face do terreno. (Lua repintada em cinza clássico em 2026-10-02 —
+opções descartadas em `art/previews/moon_recolor/grid.png`.)
 
 ## Como jogar no editor (lembrar o usuário)
 - Play → **clicar dentro da tela do jogo** (o jogo roda embutido na aba Game do Godot 4.7) → escolher a entrega com

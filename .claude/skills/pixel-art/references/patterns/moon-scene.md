@@ -25,6 +25,9 @@ noite roxa com montanhas e faixas de céu até o magenta no horizonte, lago notu
 - Parallax: camadas equilibradas, sem ponto dominante (laço sem costura); cada camada em laço de W px.
 
 ## Como construir (passes, como no script)
+> **Paleta atual (2026-10-02): Lua cinza clássica** — o roxo/magenta abaixo é histórico. Hoje: céu ink → shadow → slate
+> no horizonte; montanhas distantes shadow/slate (névoa shadow); do meio ink/shadow/lilac_grey/steel; planície
+> shadow → ink com estrias slate/shadow/charcoal; fundo do terreno ink. A Terra azul é o único ponto de cor.
 1. Céu: stops ink → navy → plum_dark → plum → berry → rose (horizonte), transições bayer de até 22 px.
    Estrelas com densidade caindo perto do horizonte, 5 brilhos; 6 cintilantes em cruz.
 2. Planeta (Terra): esfera com luz de cima-esquerda, oceano/continentes/nuvens por ruído, terminador pontilhado,
@@ -48,6 +51,8 @@ noite roxa com montanhas e faixas de céu até o magenta no horizonte, lago notu
 ## Decisões do usuário
 - 2026-09-30: estilos minimalistas reprovados ("todos horríveis"); quer riqueza de detalhe (referências acima).
 - 2026-10-01: cena aprovada ("agora sim ficou massa").
+- 2026-10-02: "não curti muito a cor do primeiro mapa" → entre 6 direções de cor (azul gelo, cinza, pôr do sol,
+  verde-azulado, azul+âmbar) escolheu **C — cinza clássico**. Formas e camadas mantidas; só a paleta mudou.
 
 ## Export e jogo
 - Nomes dos assets usam o **id do planeta no jogo** (`luna_*`), não o nome em inglês — o Godot procura por id.

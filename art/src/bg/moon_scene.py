@@ -41,7 +41,7 @@ SKY_FRAMES, SKY_MS = 6, 220     # estrelas cintilando (loop de 1,3 s)
 
 
 def sky(cv: Canvas, fr: int = 0) -> None:
-    bands = [(0, "ink"), (95, "navy"), (170, "plum_dark"), (212, "plum"), (244, "berry"), (262, "rose")]
+    bands = [(0, "ink"), (150, "ink"), (214, "shadow"), (262, "slate")]   # 2026-10-01: Lua cinza clássica (era roxo/magenta)
     for y in range(H):
         for x in range(W):
             c = bands[0][1]
@@ -59,7 +59,7 @@ def sky(cv: Canvas, fr: int = 0) -> None:
     rng = random.Random(11)
     for j in range(420):                       # estrelas: densidade cai perto do horizonte
         x, y = rng.randrange(W), int(rng.random() ** 1.6 * 230)
-        c = rng.choices(["lilac_grey", "mist", "white", "lavender", "pale_sky"], [5, 3, 1.2, 1, 1])[0]
+        c = rng.choices(["lilac_grey", "mist", "white", "steel", "pale_sky"], [5, 3, 1.2, 1, 1])[0]
         if fr and c in ("white", "mist") and (fr + j * 7) % SKY_FRAMES == 0:
             c = "lilac_grey"                   # algumas estrelas brilhantes apagam um instante
         cv.px(x, y, c)
@@ -186,19 +186,19 @@ def mountains(cv: Canvas, seed: int, base: int, n: int, hrange, cols: dict, gull
 # ------------------------------------------------------------------ chão distante (planície com estrias)
 def plain(cv: Canvas, top: int = HORIZON) -> None:
     rng = random.Random(21)
-    for y in range(top, cv.h):          # cv.h > H na camada exportada: sobra navy para o parallax vertical
+    for y in range(top, cv.h):          # cv.h > H na camada exportada: sobra ink para o parallax vertical
         f = (y - top) / (H - top)
         for x in range(W):
-            cv.px(x, y, mix("plum", "navy", min(1, f * 2.2), x, y) if f < 0.5 else "navy")
+            cv.px(x, y, mix("shadow", "ink", min(1, f * 2.2), x, y) if f < 0.5 else "ink")
     for _ in range(320):                        # estrias horizontais (mais finas e claras perto do horizonte)
         y = top + int(rng.random() ** 1.5 * (H - top))
         x, ln = rng.randrange(W), rng.randint(4, 26)
         near = (y - top) / (H - top)
-        c = "purple" if near < 0.25 else "plum" if near < 0.6 else "indigo"
+        c = "slate" if near < 0.25 else "shadow" if near < 0.6 else "charcoal"
         for i in range(ln):
             cv.px((x + i) % W, y, c)
     for x in range(W):
-        cv.px(x, top, "violet" if pnoise(x, 3) > 0.1 else "purple")
+        cv.px(x, top, "lilac_grey" if pnoise(x, 3) > 0.1 else "slate")
 
 
 # ------------------------------------------------------------------ terreno jogável (primeiro plano)
@@ -220,7 +220,7 @@ def ground(cv: Canvas, pts: list, pad: tuple) -> None:
             elif k < 40:
                 c = mix("slate", "shadow", (k - 14) / 26, x, y)
             else:
-                c = mix("shadow", "plum_dark", min(1, (k - 40) / 40), x, y)
+                c = mix("shadow", "ink", min(1, (k - 40) / 40), x, y)
             cv.px(x, y, c)
     # estrias horizontais no corpo (camadas de regolito): claras em cima, escuras embaixo
     for _ in range(260):
@@ -288,10 +288,10 @@ def build() -> Canvas:
     global COLOR_NAMES_INV
     COLOR_NAMES_INV = {resolve(n): n for n in COLOR_NAMES}
     planet(cv)
-    mountains(cv, 3, HORIZON, 9, (70, 125), {"shadow": "plum", "mid": "plum", "lit": "purple", "ridge": "purple"},
-              gullies=0, haze="berry")
+    mountains(cv, 3, HORIZON, 9, (70, 125), {"shadow": "shadow", "mid": "shadow", "lit": "slate", "ridge": "slate"},
+              gullies=0, haze="shadow")
     mountains(cv, 7, HORIZON + 4, 7, (30, 100),
-              {"shadow": "navy", "mid": "indigo", "lit": "purple", "ridge": "violet"}, gullies=90, haze="plum")
+              {"shadow": "ink", "mid": "shadow", "lit": "lilac_grey", "ridge": "steel"}, gullies=90, haze="shadow")
     plain(cv, HORIZON + 5)
     pad = (300, 64)
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
@@ -306,7 +306,7 @@ def build() -> Canvas:
 PLANET = (478, 92, 34)                   # cx, cy, r (halo +12)
 MID_BASE = HORIZON + 4
 PLAIN_TOP = HORIZON + 5
-STRIP_W, STRIP_D = 128, 176              # faixa do terreno: laço de 128 px, abaixo de 176 px é plum_dark sólido
+STRIP_W, STRIP_D = 128, 176              # faixa do terreno: laço de 128 px, abaixo de 176 px é ink sólido
 # (no jogo a câmera centraliza a nave: o terreno ocupa metade da tela -> faixa funda com estrias até escurecer)
 FACE_SLOPE = 0.15                        # |inclinação| do segmento acima disso = encosta (luz/sombra)
 ROCK_CELL = (16, 8)                      # célula do atlas de pedregulhos; base da pedra na linha 6
@@ -325,7 +325,7 @@ def ground_color(face: str, k: int, x: int, y: int):
                    (k - 3) / 11, x, y)
     if k < 40:
         return mix("slate", "shadow", (k - 14) / 26, x, y)
-    return mix("shadow", "plum_dark", min(1, (k - 40) / 40), x, y)
+    return mix("shadow", "ink", min(1, (k - 40) / 40), x, y)
 
 
 def strip(face: str, seed: int) -> Canvas:
@@ -343,12 +343,12 @@ def strip(face: str, seed: int) -> Canvas:
             cv.px((x + i) % STRIP_W, k, light)
             if rng.random() < 0.5:
                 cv.px((x + i) % STRIP_W, k + 1, dark)
-    for _ in range(70):                                    # estrias fundas: escurecem até sumir no plum_dark
+    for _ in range(70):                                    # estrias fundas: escurecem até sumir no ink
         x, k, ln = rng.randrange(STRIP_W), rng.randint(74, STRIP_D - 12), rng.randint(4, 22)
-        light = "slate" if k < 110 else "shadow" if k < 150 else "plum_dark"
+        light = "slate" if k < 110 else "shadow" if k < 150 else "ink"
         dark = "ink"
         if k >= 150:
-            light, dark = "shadow", "plum_dark"
+            light, dark = "shadow", "ink"
         for i in range(ln):
             cv.px((x + i) % STRIP_W, k, light)
             if rng.random() < 0.5:
@@ -396,12 +396,12 @@ def export() -> dict:
     cx, cy, r = PLANET
     c = c.crop(cx - r - 12, cy - r - 12, 2 * r + 25, 2 * r + 25); c.save("assets/bg/luna_planet.png"); out["planet"] = c
     c = Canvas(W, HORIZON + 1)
-    mountains(c, 3, HORIZON, 9, (70, 125), {"shadow": "plum", "mid": "plum", "lit": "purple", "ridge": "purple"},
-              gullies=0, haze="berry")
+    mountains(c, 3, HORIZON, 9, (70, 125), {"shadow": "shadow", "mid": "shadow", "lit": "slate", "ridge": "slate"},
+              gullies=0, haze="shadow")
     c.save("assets/bg/luna_far.png"); out["far"] = c
     c = Canvas(W, MID_BASE + 1)
-    mountains(c, 7, MID_BASE, 7, (30, 100), {"shadow": "navy", "mid": "indigo", "lit": "purple", "ridge": "violet"},
-              gullies=90, haze="plum")
+    mountains(c, 7, MID_BASE, 7, (30, 100), {"shadow": "ink", "mid": "shadow", "lit": "lilac_grey", "ridge": "steel"},
+              gullies=90, haze="shadow")
     c.save("assets/bg/luna_mid.png"); out["mid"] = c
     c = Canvas(W, H + 160); plain(c, PLAIN_TOP)
     c = c.crop(0, PLAIN_TOP, W, c.h - PLAIN_TOP); c.save("assets/bg/luna_plain.png"); out["plain"] = c
@@ -414,7 +414,7 @@ def export() -> dict:
     meta = {
         "notes": "Gerado por art/src/bg/moon_scene.py (pixel-art). Posições em px na tela de 640x360 da cena aprovada.",
         "horizon": HORIZON, "planet_pos": [cx - r - 12, cy - r - 12], "far_y": 0, "mid_y": 0, "plain_y": PLAIN_TOP,
-        "deep_color": "#45293f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
+        "deep_color": "#2e222f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(ROCK_CELL), "rock_base_row": 6, "rock_count": len(ROCK_SIZES),
         "rock_widths": [w for w, _ in ROCK_SIZES],
         "anim": {"sky": {"frames": SKY_FRAMES, "ms": SKY_MS}},
@@ -437,7 +437,7 @@ def ingame_preview(L: dict, with_lander: bool = True) -> Canvas:
         seg = min(sum(1 for p in pts[1:] if p[0] <= x), len(faces) - 1)
         for y in range(r, H):
             k = y - r
-            cv.px(x, y, L[faces[seg]].get(x % STRIP_W, k) if k < STRIP_D else "plum_dark")
+            cv.px(x, y, L[faces[seg]].get(x % STRIP_W, k) if k < STRIP_D else "ink")
     rng = random.Random(31)
     cw, ch = ROCK_CELL
     for _ in range(26):
