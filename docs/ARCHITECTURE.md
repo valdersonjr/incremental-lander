@@ -60,15 +60,17 @@ game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sina
                               # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
 assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
 art/src/sprites/              # lander.py (fonte do sprite), lander_styles.py (5 estilos propostos), lander_apollo.py
-game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BandLit/BandFlat/BandShade (faixas cisalhadas com arte) + Line2D (Surface,
+game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BodyBand (UV no mundo) + DepthBand (escurecimento) + BandLit/BandFlat/BandShade (faixas cisalhadas com arte) + Line2D (Surface,
                               # só placeholder) + StaticBody2D com ConcavePolygonShape2D (segmentos); pedregulhos em _draw;
                               # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
 game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam);
                               # anima quadros (meta anim) e rola nuvens
 scripts/world/camera_math.gd  # CameraMath.lift: câmera sobe perto do chão (mais céu, menos terreno)
-scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), rock_spots, layer_offset
+scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), band_all (faixa única; UV do mundo ou cisalhado), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)
-assets/tiles/luna_ground_*    # faixas do terreno lit/flat/shade (128x176, repetem em x)
+assets/tiles/luna_ground_*    # crosta do terreno lit/flat/shade (128x26, repetem em x; abaixo transparente)
+assets/tiles/luna_body.png    # corpo em blocos de basalto (128x128, UV = mundo) — meta body_texture (opcional)
+assets/tiles/luna_depth.png   # escurecimento com a profundidade (128x176 cisalhado) — meta depth_texture/depth_depth
 assets/sprites/luna_rocks.png # atlas de pedregulhos (6 x 16x8)
 assets/sprites/landing_pad*, target_beam*, target_marker* # plataforma + feixe + marcador ← art/src/sprites/landing_pad.py
 assets/sprites/explosion*, landing_dust* # FX de batida e pouso ← art/src/fx/explosion.py (Flight._spawn_fx)

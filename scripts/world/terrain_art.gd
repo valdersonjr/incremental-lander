@@ -52,6 +52,26 @@ static func band(ridge: PackedVector2Array, depth: float, threshold: float) -> D
 	return out
 
 
+## Faixa unica (todas as faces) de altura depth abaixo do contorno: {"polygon", "uv", "polygons"}.
+## world_uv = true -> UV = posicao no mundo (textura NAO cisalha: corpo rochoso); senao UV como em band().
+static func band_all(ridge: PackedVector2Array, depth: float, world_uv: bool) -> Dictionary:
+	var poly := PackedVector2Array()
+	var uv := PackedVector2Array()
+	var polygons: Array = []
+	for i in ridge.size() - 1:
+		var a := ridge[i]
+		var b := ridge[i + 1]
+		var n := poly.size()
+		var quad := [a, b, b + Vector2(0, depth), a + Vector2(0, depth)]
+		poly.append_array(quad)
+		if world_uv:
+			uv.append_array(quad)
+		else:
+			uv.append_array([Vector2(a.x, 0), Vector2(b.x, 0), Vector2(b.x, depth), Vector2(a.x, depth)])
+		polygons.append(PackedInt32Array([n, n + 1, n + 2, n + 3]))
+	return {"polygon": poly, "uv": uv, "polygons": polygons}
+
+
 ## Pedregulhos sobre o contorno, fora das plataformas: [{"pos": canto sup. esq. da celula, "frame": int}].
 static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_value: int,
 		meta: Dictionary) -> Array[Dictionary]:

@@ -405,16 +405,22 @@ def export() -> dict:
     c.save("assets/bg/luna_mid.png"); out["mid"] = c
     c = Canvas(W, H + 160); plain(c, PLAIN_TOP)
     c = c.crop(0, PLAIN_TOP, W, c.h - PLAIN_TOP); c.save("assets/bg/luna_plain.png"); out["plain"] = c
-    out["lit"] = strip("lit", 61); out["lit"].save("assets/tiles/luna_ground_lit.png", tiled=True)
-    out["flat"] = strip("flat", 62); out["flat"].save("assets/tiles/luna_ground_flat.png", tiled=True)
-    out["shade"] = strip("shade", 63); out["shade"].save("assets/tiles/luna_ground_shade.png", tiled=True)
+    # terreno v3 (2026-10-02, opção D "blocos de basalto"): crosta cisalhada + escurecimento + corpo no mundo
+    import moon_ground as mg
+    G = mg.VARIANTS["D"]()
+    for f in ("lit", "flat", "shade"):
+        out[f] = G["crust_" + f]; out[f].save(f"assets/tiles/luna_ground_{f}.png")
+    out["body"] = G["body"]; out["body"].save("assets/tiles/luna_body.png", tiled=True)
+    out["depth"] = G["depth"]; out["depth"].save("assets/tiles/luna_depth.png")
     out["rocks"] = rocks_atlas(); out["rocks"].save("assets/sprites/luna_rocks.png")
-    for k in ("lit", "flat", "shade"):
+    for k in ("lit", "flat", "shade", "body"):
         print(k, out[k].lint(wrap=True))
     meta = {
         "notes": "Gerado por art/src/bg/moon_scene.py (pixel-art). Posições em px na tela de 640x360 da cena aprovada.",
         "horizon": HORIZON, "planet_pos": [cx - r - 12, cy - r - 12], "far_y": 0, "mid_y": 0, "plain_y": PLAIN_TOP,
-        "deep_color": "#2e222f", "strip_depth": STRIP_D, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
+        "deep_color": "#2e222f", "strip_depth": out["lit"].h,
+        "body_texture": "res://assets/tiles/luna_body.png", "depth_texture": "res://assets/tiles/luna_depth.png",
+        "depth_depth": out["depth"].h, "strip_width": STRIP_W, "face_slope": FACE_SLOPE,
         "rock_cell": list(ROCK_CELL), "rock_base_row": 6, "rock_count": len(ROCK_SIZES),
         "rock_widths": [w for w, _ in ROCK_SIZES],
         "anim": {"sky": {"frames": SKY_FRAMES, "ms": SKY_MS}},
@@ -432,12 +438,10 @@ def ingame_preview(L: dict, with_lander: bool = True) -> Canvas:
     pad = (300, 64)
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
     faces = segment_faces(pts)
-    for x in range(W):
-        r = ridge_y(pts, x)
-        seg = min(sum(1 for p in pts[1:] if p[0] <= x), len(faces) - 1)
-        for y in range(r, H):
-            k = y - r
-            cv.px(x, y, L[faces[seg]].get(x % STRIP_W, k) if k < STRIP_D else "ink")
+    import moon_ground as mg
+    G = {"body": L["body"], "depth": L["depth"], **{"crust_" + f: L[f] for f in ("lit", "flat", "shade")}}
+    mg.compose(cv, lambda x: ridge_y(pts, x), 0, W,
+               lambda x: faces[min(sum(1 for p in pts[1:] if p[0] <= x), len(faces) - 1)], G)
     rng = random.Random(31)
     cw, ch = ROCK_CELL
     for _ in range(26):
@@ -457,7 +461,8 @@ def load_layers() -> dict:
     names = {"sky": "assets/bg/luna_sky.png", "planet": "assets/bg/luna_planet.png", "far": "assets/bg/luna_far.png",
              "mid": "assets/bg/luna_mid.png", "plain": "assets/bg/luna_plain.png",
              "lit": "assets/tiles/luna_ground_lit.png", "flat": "assets/tiles/luna_ground_flat.png",
-             "shade": "assets/tiles/luna_ground_shade.png", "rocks": "assets/sprites/luna_rocks.png"}
+             "shade": "assets/tiles/luna_ground_shade.png", "rocks": "assets/sprites/luna_rocks.png",
+             "body": "assets/tiles/luna_body.png", "depth": "assets/tiles/luna_depth.png"}
     return {k: Canvas.from_image(v) for k, v in names.items()}
 
 

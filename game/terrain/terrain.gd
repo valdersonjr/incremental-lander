@@ -28,6 +28,8 @@ var _time := 0.0
 @onready var _surface: Line2D = %Surface
 @onready var _collision: CollisionShape2D = %Collision
 @onready var _bands: Dictionary = {"lit": %BandLit, "flat": %BandFlat, "shade": %BandShade}
+@onready var _body_band: Polygon2D = %BodyBand
+@onready var _depth_band: Polygon2D = %DepthBand
 @onready var _pads_root: Node2D = %Pads
 @onready var _beam: AnimatedSprite2D = %Beam
 @onready var _marker: AnimatedSprite2D = %Marker
@@ -49,6 +51,8 @@ func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) ->
 		_surface.visible = true
 		for b: Polygon2D in _bands.values():
 			b.visible = false
+		_body_band.visible = false
+		_depth_band.visible = false
 		_rocks.clear()
 		_rock_frames = 1
 	else:
@@ -112,12 +116,28 @@ func _apply_art(planet_id: String, seed_value: int, meta: Dictionary) -> void:
 		b.uv = g["uv"]
 		b.polygons = g["polygons"]
 		b.visible = true
+	# corpo rochoso alinhado ao mundo + escurecimento com a profundidade (opcional no contrato do planeta)
+	var has_body := meta.has("body_texture")
+	_body_band.visible = has_body
+	_depth_band.visible = has_body
+	if has_body:
+		var dd := float(meta["depth_depth"])
+		_set_band(_body_band, TerrainArt.band_all(ridge, dd, true), str(meta["body_texture"]))
+		_set_band(_depth_band, TerrainArt.band_all(ridge, dd, false), str(meta["depth_texture"]))
 	_rock_tex = load("res://assets/sprites/%s_rocks.png" % planet_id) as Texture2D
 	var cell: Array = meta["rock_cell"]
 	_rock_cell = Vector2(float(cell[0]), float(cell[1]))
 	_rocks = TerrainArt.rock_spots(ridge, pads, seed_value, meta)
 	_rock_frames = int(meta.get("rock_frames", 1))
 	_rock_ms = float(meta.get("rock_ms", 200.0))
+
+
+func _set_band(b: Polygon2D, g: Dictionary, texture_path: String) -> void:
+	b.texture = load(texture_path) as Texture2D
+	b.polygons = []
+	b.polygon = g["polygon"]
+	b.uv = g["uv"]
+	b.polygons = g["polygons"]
 
 
 func _process(delta: float) -> void:

@@ -12,6 +12,18 @@ unique_name_in_owner = true
 show_behind_parent = true
 color = Color(0.243, 0.208, 0.275, 1)
 
+[node name="BodyBand" type="Polygon2D" parent="."]
+unique_name_in_owner = true
+visible = false
+show_behind_parent = true
+texture_repeat = 2
+
+[node name="DepthBand" type="Polygon2D" parent="."]
+unique_name_in_owner = true
+visible = false
+show_behind_parent = true
+texture_repeat = 2
+
 [node name="BandLit" type="Polygon2D" parent="."]
 unique_name_in_owner = true
 visible = false

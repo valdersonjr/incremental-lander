@@ -27,7 +27,8 @@ noite roxa com montanhas e faixas de céu até o magenta no horizonte, lago notu
 ## Como construir (passes, como no script)
 > **Paleta atual (2026-10-02): Lua cinza clássica** — o roxo/magenta abaixo é histórico. Hoje: céu ink → shadow → slate
 > no horizonte; montanhas distantes shadow/slate (névoa shadow); do meio ink/shadow/lilac_grey/steel; planície
-> shadow → ink com estrias slate/shadow/charcoal; fundo do terreno ink. A Terra azul é o único ponto de cor.
+> shadow → ink com estrias slate/shadow/charcoal; fundo do terreno ink.
+> **Terreno jogável: ver `moon-ground.md` (v3, blocos de basalto, 2026-10-02)** — o passo 6 abaixo é histórico. A Terra azul é o único ponto de cor.
 1. Céu: stops ink → navy → plum_dark → plum → berry → rose (horizonte), transições bayer de até 22 px.
    Estrelas com densidade caindo perto do horizonte, 5 brilhos; 6 cintilantes em cruz.
 2. Planeta (Terra): esfera com luz de cima-esquerda, oceano/continentes/nuvens por ruído, terminador pontilhado,

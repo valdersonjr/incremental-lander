@@ -23,6 +23,16 @@ func test_faixa_cisalhada_cobre_todos_os_segmentos() -> void:
 	assert_eq(g["lit"]["uv"][1], Vector2(16, 0), "uv x = x do mundo (textura repete)")
 
 
+func test_faixa_unica_com_uv_do_mundo_nao_cisalha() -> void:
+	var ridge := PackedVector2Array([Vector2(0, 0), Vector2(16, -10), Vector2(32, -10)])
+	var w := TerrainArt.band_all(ridge, 176.0, true)
+	var s := TerrainArt.band_all(ridge, 176.0, false)
+	assert_eq((w["polygons"] as Array).size(), 2)
+	assert_eq(w["uv"], w["polygon"], "corpo: uv = posicao no mundo (rochas nao deformam na encosta)")
+	assert_eq(s["uv"][1], Vector2(16, 0), "escurecimento: uv cisalhado como as faixas")
+	assert_eq(s["uv"][2], Vector2(16, 176))
+
+
 func test_pedregulhos_fora_das_plataformas_e_deterministicos() -> void:
 	var t := TerrainGen.generate(7, "luna", [800.0] as Array[float])
 	var pads: Array[Dictionary] = []

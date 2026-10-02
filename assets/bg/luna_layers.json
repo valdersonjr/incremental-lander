@@ -9,7 +9,10 @@
   "mid_y": 0,
   "plain_y": 267,
   "deep_color": "#2e222f",
-  "strip_depth": 176,
+  "strip_depth": 26,
+  "body_texture": "res://assets/tiles/luna_body.png",
+  "depth_texture": "res://assets/tiles/luna_depth.png",
+  "depth_depth": 176,
   "strip_width": 128,
   "face_slope": 0.15,
   "rock_cell": [
