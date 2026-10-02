@@ -14,6 +14,8 @@
   dos doces (id kronos, `candy_scene.py`), e **O Quarto** = quarto bagunçado (id titan, `room_scene.py`; meta final "Expedição ao Quarto"),
   todos **animados**.
 - **Som (Fase 9 iniciada)**: propulsor plasma suave + pouso, batida, entrega, clique, compra, negado (autoload `Sound`).
+- **Menus revisados (2026-10-02)**: hangar em abas NAVE/MUNDOS/PRESTÍGIO (Q/E), Expedição fixa no topo, opções à parte
+  (Esc); HUD com aviso central de pouso/batida. Prévia: `hangar_preview -- --late --top --tab=1|2|3`.
 - **Interface**: kit pixel (fonte com acentos, painéis, botões, barras, ícones) em todos os menus; cor muda com o mundo
   (`UiKit.theme_for`). Prévias: `tests/visual/{hangar,summary,ending}_preview` (args `--planet=`, `--top`).
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
@@ -37,7 +39,7 @@ opções descartadas em `art/previews/moon_recolor/grid.png`.)
   **1–8 ou clique** → **W/Espaço** propulsor, **A/D** girar, **R** reinicia, **E** encerra o run.
 
 ## Pendências conhecidas
-- "Alcance max (ideal)" no hangar é otimista e satura em 1000 km (limite da busca) — melhorar texto.
+- "Alcance max (ideal)" no hangar é otimista (delta-v ideal); ao saturar mostra "> 1000K m".
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
 - Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
 - Telemetria antiga (antes da coluna pilot) misturava demo e humano: foi para `deliveries_old.csv` — não usar na calibração.

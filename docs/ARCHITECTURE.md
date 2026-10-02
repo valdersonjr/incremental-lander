@@ -54,8 +54,10 @@ scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect →
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
 game/ending/ending.*          # Ending: "VOCÊ CHEGOU A TITAN!" + resumo; Continuar jogando (Events.goal_reached)
-game/hangar/hangar.*          # Hangar: EXPEDIÇÃO A TITAN (barra segmentada [###-----] + próxima etapa) + PLANETAS (liberar / voar em / motor fraco) + PRESTÍGIO (recomeçar com confirmação;
-                              # modo 'recomeço em andamento' = só loja + CONCLUIR) + LOJA DA POEIRA + UPGRADES; DECOLAR
+game/hangar/hangar.*          # Hangar em ABAS (Q/E): cabeçalho (recursos, stats, EXPEDIÇÃO fixa: barra + próxima etapa + botão) +
+                              # NAVE (upgrades em tabela, padrão ao abrir) | MUNDOS (voar/liberar; "VOCÊ ESTÁ AQUI") | PRESTÍGIO
+                              # (recomeçar com confirmação + LOJA DA POEIRA). OPÇÕES = tela à parte (botão/Esc). Aba com algo
+                              # comprável fica dourada com "!". Modo 'recomeço em andamento' = só loja + CONCLUIR; DECOLAR
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info);
                               # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
 assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
@@ -88,7 +90,8 @@ assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mund
 autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); propulsor fica no Lander (ThrustLoop/ThrustFx)
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
 scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo), icon(nome), icon_label(...), color(...)
-game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6, mensagem
+game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
+                              # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)
 autoload/save_manager.gd      # SaveManager: user://save.json (JSON versionado, tmp→rename, save.bak), autosave em

@@ -21,7 +21,8 @@ func show_ending(play_seconds: float = -1.0) -> void:
 	_title.text = "VOCÊ CHEGOU AO QUARTO!"
 	_text.text = "\n".join([
 		"A Nave-mãe Aurora pousou no gigante.",
-		"runs: %d   Poeira Estelar acumulada: %s" % [GameState.runs_done, EconMath.fmt(GameState.prestige_points)],
+		"runs: %d" % GameState.runs_done,
+		"Poeira Estelar acumulada: %s" % EconMath.fmt(GameState.prestige_points),
 		"tempo de jogo: %s" % _fmt_time(play_seconds),
 		"",
 		"Obrigado por jogar este protótipo.",

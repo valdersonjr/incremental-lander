@@ -132,6 +132,12 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"MoneyLabel"
 
+[node name="DeliveriesIcon" type="TextureRect" parent="Money/HBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+stretch_mode = 3
+
 [node name="Deliveries" type="Label" parent="Money/HBox"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -144,3 +150,26 @@ offset_left = 6.0
 offset_top = 344.0
 offset_right = 634.0
 offset_bottom = 358.0
+
+[node name="Toast" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 170.0
+offset_top = 46.0
+offset_right = 380.0
+offset_bottom = 92.0
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="ToastTitle" type="Label" parent="Toast"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+horizontal_alignment = 1
+
+[node name="ToastText" type="Label" parent="Toast"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ValueLabel"
+horizontal_alignment = 1

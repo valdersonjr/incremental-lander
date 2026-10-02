@@ -18,6 +18,15 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   Tema não atravessa CanvasLayer: aplicar em cada tela raiz. Ícones: `UiKit.icon(nome)`, `UiKit.icon_label(...)`.
 - Cores com significado são fixas (dinheiro dourado, perigo vermelho, gás ciano); só o destaque muda por mundo.
 
+## Hangar (layout aprovado 2026-10-02)
+- Abas NAVE (padrão ao abrir) | MUNDOS | PRESTÍGIO, trocadas com Q/E ou clique; aba atual = `PrimaryButton`,
+  outra aba com algo comprável = texto dourado + "!". A meta (Expedição) fica fixa no cabeçalho, fora das abas.
+- Tudo em **tabelas com colunas de largura fixa** (`COL_*`) e ação à direita; botões largos de linha inteira só para
+  ações únicas. Item atual (mundo) em verde "VOCÊ ESTÁ AQUI", nunca cinza (cinza = indisponível).
+- Um só botão principal por tela (DECOLAR); ações destrutivas (prestígio, novo jogo) com 2 cliques e sem destaque cheio;
+  opções/novo jogo fora da tela de compras (Esc).
+- Feedback do voo (entrega/batida) em aviso central grande, entre o painel de stats e o de ofertas.
+
 ## Números
 Sempre `EconMath.fmt(valor)` (K, M, B, T, Qa… aa) — nunca `str(float)` na tela. Tempo: formato curto (2m05s).
 
