@@ -5,6 +5,8 @@ class_name Hangar
 extends PanelContainer
 
 signal launch_requested
+## Voltar ao menu inicial (opcoes).
+signal title_requested
 
 enum Tab { SHIP, WORLDS, PRESTIGE, OPTIONS }
 
@@ -444,6 +446,16 @@ func _add_options() -> void:
 			refresh())
 		row.add_child(b)
 		_rows.add_child(row)
+	var menu_row := _table_row("options", "Voltar ao menu inicial (o progresso fica salvo)")
+	var mb := Button.new()
+	mb.custom_minimum_size = Vector2(COL_ACTION, 15)
+	mb.text = "Menu inicial"
+	mb.pressed.connect(func() -> void:
+		Sound.ui("click")
+		SaveManager.request_save()
+		title_requested.emit())
+	menu_row.add_child(mb)
+	_rows.add_child(menu_row)
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0, 10)
 	_rows.add_child(gap)

@@ -9,6 +9,7 @@ const OFFER_SCENE := preload("res://game/run/offer_panel.tscn")
 const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
 const ENDING_SCENE := preload("res://game/ending/ending.tscn")
+const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
 
 var _args: Dictionary = {}
 var _demo := false
@@ -20,6 +21,7 @@ var _offers: OfferPanel = null
 var _summary: RunSummary = null
 var _hangar: Hangar = null
 var _ending: Ending = null
+var _title: TitleScreen = null
 var _run_start_ms := 0
 
 @onready var _world: Node2D = %World
@@ -42,19 +44,64 @@ func _ready() -> void:
 	_ending.visible = false
 	_ending.closed.connect(func() -> void: _hangar.open())
 	Events.goal_reached.connect(_on_goal_reached)
-	_start_run()
+	_hangar.title_requested.connect(_show_title)
+	_title = TITLE_SCENE.instantiate()
+	_gui.add_child(_title)
+	_title.visible = false
+	_title.play_requested.connect(_on_title_play)
+	_title.new_game_requested.connect(func() -> void:
+		SaveManager.new_game()
+		_start_run())
+	_title.quit_requested.connect(func() -> void:
+		SaveManager.save_game()
+		get_tree().quit())
+	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
+	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_") or k == "planet"):
+		_start_run()
+	else:
+		_show_title()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"restart") and not _hangar.visible:
+	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible:
 		_start_run()
+
+
+## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega).
+func _show_title() -> void:
+	_hangar.visible = false
+	_ending.visible = false
+	_clear_run()
+	_flight = FLIGHT_SCENE.instantiate()
+	_world.add_child(_flight)
+	_flight.start(GameState.current_planet, _run_seed, GameState.ship_stats(), false)
+	_gui.move_child(_title, -1)
+	_title.open()
+
+
+## Continuar: com progresso vai ao hangar (gastar o que ganhou); sem progresso, decola o primeiro run.
+func _on_title_play() -> void:
+	_title.visible = false
+	if TitleScreen.has_progress():
+		_hangar.open()
+	else:
+		_start_run()
+
+
+func _clear_run() -> void:
+	for n: Node in [_flight, _hud, _offers, _summary]:
+		if n != null:
+			n.queue_free()
+	_flight = null
+	_hud = null
+	_offers = null
+	_summary = null
 
 
 func _start_run() -> void:
 	_hangar.visible = false
-	for n: Node in [_flight, _hud, _offers, _summary]:
-		if n != null:
-			n.queue_free()
+	_title.visible = false
+	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed)
 	_flight = FLIGHT_SCENE.instantiate()
@@ -68,6 +115,7 @@ func _start_run() -> void:
 	_summary.visible = false
 	_gui.move_child(_hangar, -1)  # hangar sempre por cima
 	_gui.move_child(_ending, -1)
+	_gui.move_child(_title, -1)
 	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
 	for c: Control in [_hud, _offers, _summary, _ending]:
 		c.theme = ui

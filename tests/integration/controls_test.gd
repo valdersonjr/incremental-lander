@@ -1,6 +1,6 @@
 ## Teste de integracao dos CONTROLES como um jogador: abre o jogo normal (sem demo), injeta teclas reais
 ## (eventos de teclado como o SO manda) e verifica se a nave responde. Imprime CONTROLS_TEST OK ou FALHOU.
-## Cenarios: W antes de escolher (nao decola, aviso pisca) -> escolhe com CLIQUE do mouse -> W (decola) -> A (gira).
+## Cenarios: menu inicial (Enter em Jogar) -> W antes de escolher (nao decola, aviso pisca) -> escolhe com CLIQUE do mouse -> W (decola) -> A (gira).
 ## Com -- --numpad: escolhe com a tecla 1 do teclado numerico.
 extends Node
 
@@ -12,6 +12,7 @@ var _frames := 0
 var _log: Array[String] = []
 var _hint_ok := false
 var _sound_ok := false
+var _title_ok := false
 
 
 func _ready() -> void:
@@ -34,6 +35,20 @@ func _lander() -> Lander:
 
 func _physics_process(_delta: float) -> void:
 	_frames += 1
+	var title := _main.find_child("TitleScreen", true, false) as TitleScreen
+	if title != null and title.visible:                        # o jogo abre no menu inicial: Enter em "Jogar"
+		if _frames == 10:
+			_key(KEY_ENTER, true)
+		elif _frames == 12:
+			_key(KEY_ENTER, false)
+		elif _frames > 60:
+			_log.append("menu inicial: Enter nao iniciou o jogo")
+			_frames = 0
+		return
+	if not _title_ok:
+		_title_ok = true
+		_log.append("menu inicial: Enter em Jogar iniciou o run")
+		_frames = 0
 	var l := _lander()
 	if l == null:
 		return
@@ -82,7 +97,7 @@ func _physics_process(_delta: float) -> void:
 				var flying := l.state == Lander.State.FLYING
 				var rotated := l.rotation < -0.1
 				print("CONTROLS_LOG ", " | ".join(_log))
-				var ok := flying and rotated and _hint_ok and _sound_ok
-				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (aviso=%s decolou=%s girou=%s som=%s)" % [_hint_ok, flying,
-						rotated, _sound_ok])
+				var ok := _title_ok and flying and rotated and _hint_ok and _sound_ok
+				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (menu=%s aviso=%s decolou=%s girou=%s som=%s)" % [_title_ok,
+						_hint_ok, flying, rotated, _sound_ok])
 				get_tree().quit()

@@ -53,6 +53,9 @@ scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), 
 scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
+game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Sinais play_requested
+                              # (Continuar → hangar; sem progresso → run), new_game_requested, quit_requested; opções = volumes.
+                              # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
 game/ending/ending.*          # Ending: "VOCÊ CHEGOU A TITAN!" + resumo; Continuar jogando (Events.goal_reached)
 game/hangar/hangar.*          # Hangar em ABAS (Q/E): cabeçalho (recursos, stats, EXPEDIÇÃO fixa: barra + próxima etapa + botão) +
                               # NAVE (upgrades em tabela, padrão ao abrir) | MUNDOS (voar/liberar; "VOCÊ ESTÁ AQUI") | PRESTÍGIO
@@ -99,7 +102,7 @@ autoload/save_manager.gd      # SaveManager: user://save.json (JSON versionado, 
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
-tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview) para gdtool capture
+tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
 tests/integration/            # save_roundtrip.tscn (salva/carrega/backup numa pasta própria) — rodado por gdtool test
 ```

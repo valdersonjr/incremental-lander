@@ -120,4 +120,4 @@ economia em `data/economy.json` + `scripts/economy/econ_math.gd` (paridade testa
 
 ## 12. Em aberto
 - Controles exatos e sensação de voo (Fase 1). · Geração dos mapas (procedural? quantos por planeta?).
-- Pós-jogo após Titan. · Tela de título/menus. · Nome final do jogo.
+- Pós-jogo após Titan. · Nome final do jogo (o menu inicial usa "INCREMENTAL LANDER" provisório).

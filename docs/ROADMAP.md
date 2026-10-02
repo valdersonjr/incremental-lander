@@ -64,6 +64,8 @@
       FX
 - [x] Interface: fonte pixel com acentos, painéis, botões, barras e ícones; cor de destaque por mundo; todos os
       menus (HUD, entregas, resumo, hangar, final) (2026-10-01)
+- [x] Menu inicial: título sobre a cena do mundo atual (nave na plataforma), Continuar/Jogar, Novo jogo (confirma),
+      Opções (volumes), Sair; "Menu inicial" nas opções do hangar (2026-10-02)
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)
