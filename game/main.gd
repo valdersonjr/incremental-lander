@@ -10,6 +10,7 @@ const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
 const ENDING_SCENE := preload("res://game/ending/ending.tscn")
 const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
+const PAUSE_SCENE := preload("res://game/pause/pause_menu.tscn")
 
 var _args: Dictionary = {}
 var _demo := false
@@ -22,6 +23,7 @@ var _summary: RunSummary = null
 var _hangar: Hangar = null
 var _ending: Ending = null
 var _title: TitleScreen = null
+var _pause: PauseMenu = null
 var _run_start_ms := 0
 
 @onready var _world: Node2D = %World
@@ -59,6 +61,8 @@ func _ready() -> void:
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().quit())
+	_pause = PAUSE_SCENE.instantiate()
+	_gui.add_child(_pause)
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
 	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_") or k == "planet"):
 		_start_run()
@@ -69,6 +73,23 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible:
 		_start_run()
+	elif event.is_action_pressed(&"ui_cancel") and _can_pause():
+		get_viewport().set_input_as_handled()
+		_pause.open()
+
+
+## Janela perdeu o foco no meio do voo: pausa (o jogador volta e encontra a nave parada). Fora na gravacao de quadros
+## (gdtool capture), em que a janela pode perder o foco sem ninguem jogando.
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT and _pause != null and _can_pause() \
+			and Engine.get_write_movie_path() == "":
+		_pause.open()
+
+
+## Pausa so no voo (HUD na tela, sem resumo/hangar/menu/final por cima) e nunca no demo (verificacao automatica).
+func _can_pause() -> bool:
+	return not _demo and _hud != null and is_instance_valid(_hud) and _hud.visible and not _summary.visible \
+			and not _hangar.visible and not _title.visible and not _ending.visible and not _pause.visible
 
 
 ## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega).
@@ -125,8 +146,9 @@ func _start_run() -> void:
 	_gui.move_child(_hangar, -1)  # hangar sempre por cima
 	_gui.move_child(_ending, -1)
 	_gui.move_child(_title, -1)
+	_gui.move_child(_pause, -1)
 	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
-	for c: Control in [_hud, _offers, _summary, _ending]:
+	for c: Control in [_hud, _offers, _summary, _ending, _pause]:
 		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	_hud.bind(_flight, _run)

@@ -143,7 +143,7 @@ func _fill_saves() -> void:
 				Sound.ui("click")
 				slot_play_requested.emit(n))
 		elif s["exists"]:                                      # arquivo ilegivel: so da para apagar
-			act.text = "—"
+			act.text = "-"
 			act.disabled = true
 		else:
 			act.text = "Novo jogo"

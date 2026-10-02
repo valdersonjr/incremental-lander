@@ -30,7 +30,7 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   compensa, mas exige gás num salto só.
 
 ## 3. Pilotagem (física) — **a implementar e calibrar**
-- Controles (teclado): girar esquerda/direita, propulsor. (Detalhes finais na skill `godot-dev`/Fase 1.)
+- Controles (teclado): girar esquerda/direita, propulsor; Esc pausa o voo (volumes + lista de controles). (Detalhes finais na skill `godot-dev`/Fase 1.)
 - Gravidade do planeta, arrasto/vento, gás consumido por Δv (`efficiency` = m/s por unidade de gás).
 - Pouso: velocidade vertical/horizontal, ângulo e distância ao centro da plataforma → **qualidade q (0..1)**.
 - O modelo econômico assume salto balístico: `Δv ≈ 2·sqrt(g·d)·(1 + 0.707·g/a)·(1+drag)·desperdício + 2·g·pairar`

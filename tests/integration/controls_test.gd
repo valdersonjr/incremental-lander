@@ -1,6 +1,7 @@
 ## Teste de integracao dos CONTROLES como um jogador: abre o jogo normal (sem demo), injeta teclas reais
 ## (eventos de teclado como o SO manda) e verifica se a nave responde. Imprime CONTROLS_TEST OK ou FALHOU.
-## Cenarios: menu inicial (Enter em Jogar) -> W antes de escolher (nao decola, aviso pisca) -> escolhe com CLIQUE do mouse -> W (decola) -> A (gira).
+## Cenarios: menu inicial (Enter em Jogar) -> W antes de escolher (nao decola, aviso pisca) -> escolhe com CLIQUE do mouse -> W (decola) -> A (gira)
+## -> Esc (pausa: arvore congelada, nave parada) -> Esc (volta).
 ## Com -- --numpad: escolhe com a tecla 1 do teclado numerico.
 extends Node
 
@@ -13,11 +14,15 @@ var _log: Array[String] = []
 var _hint_ok := false
 var _sound_ok := false
 var _title_ok := false
+var _pause_ok := false
+var _pause_y := 0.0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS                    # o teste continua rodando com o jogo pausado
 	SaveManager.set_dir("user://itest_controls")
 	_main = MAIN.instantiate()
+	_main.process_mode = Node.PROCESS_MODE_PAUSABLE            # o jogo pausa como no executavel (o teste nao)
 	add_child(_main)
 
 
@@ -94,10 +99,31 @@ func _physics_process(_delta: float) -> void:
 			if _frames > 15:
 				_key(KEY_A, false)
 				_log.append("A: rotacao=%.2f" % l.rotation)
+				_key(KEY_ESCAPE, true)
+				_key(KEY_ESCAPE, false)
+				_step = 4
+				_frames = 0
+		4:
+			if _frames == 6:                                    # o Esc chega no quadro seguinte; mede ja pausado
+				_pause_y = l.global_position.y
+			if _frames > 20:
+				var pause := _main.find_child("PauseMenu", true, false) as PauseMenu
+				var frozen := is_equal_approx(l.global_position.y, _pause_y)
+				_pause_ok = get_tree().paused and pause.visible and frozen
+				_log.append("Esc: pausado=%s menu=%s nave parada=%s" % [get_tree().paused, pause.visible, frozen])
+				_key(KEY_ESCAPE, true)
+				_key(KEY_ESCAPE, false)
+				_step = 5
+				_frames = 0
+		5:
+			if _frames > 5:
+				var pause := _main.find_child("PauseMenu", true, false) as PauseMenu
+				var resumed := not get_tree().paused and not pause.visible
+				_log.append("Esc de novo: voltou=%s" % resumed)
 				var flying := l.state == Lander.State.FLYING
 				var rotated := l.rotation < -0.1
 				print("CONTROLS_LOG ", " | ".join(_log))
-				var ok := _title_ok and flying and rotated and _hint_ok and _sound_ok
-				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (menu=%s aviso=%s decolou=%s girou=%s som=%s)" % [_title_ok,
-						_hint_ok, flying, rotated, _sound_ok])
+				var ok := _title_ok and flying and rotated and _hint_ok and _sound_ok and _pause_ok and resumed
+				print("CONTROLS_TEST ", "OK" if ok else "FALHOU (menu=%s aviso=%s decolou=%s girou=%s som=%s pausa=%s volta=%s)" % [
+						_title_ok, _hint_ok, flying, rotated, _sound_ok, _pause_ok, resumed])
 				get_tree().quit()

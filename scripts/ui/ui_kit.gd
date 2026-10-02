@@ -1,7 +1,7 @@
 ## Kit de interface (arte da skill pixel-art: art/src/ui/ui_kit.py -> assets/ui/, contrato ui_kit.json).
 ## Monta um Theme por mundo (cor de destaque muda com o planeta; fixos: fundo escuro, dourado = dinheiro,
 ## vermelho = perigo, ambar = gas acabando, barra de gas ciano). Fonte bitmap: tamanho 11 (1x) ou 22 (2x), nunca
-## fracionario. Variacoes de tipo: TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
+## fracionario. Variacoes de tipo: SlimPanel, TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
 ## PrimaryButton, DangerButton, GasBar, WarnBar, DangerBar, XpBar. Foco de teclado = moldura de 1 px na cor de titulo
 ## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, stat_row, pulse.
 class_name UiKit
@@ -73,6 +73,9 @@ static func theme_for(world: String) -> Theme:
 	var panel := _box(wd + "panel.png", 8, Vector4(8, 6, 8, 6), true)
 	for type: StringName in [&"PanelContainer", &"Panel"]:
 		t.set_stylebox(&"panel", type, panel)
+	# painel fino (uma linha de texto: dica de teclas no HUD)
+	t.set_type_variation(&"SlimPanel", &"PanelContainer")
+	t.set_stylebox(&"panel", &"SlimPanel", _box(wd + "panel.png", 8, Vector4(6, 2, 6, 2), true))
 	# textos (sombra de 1 px escura para ler sobre qualquer cenario)
 	t.set_color(&"font_color", &"Label", color("mist"))
 	t.set_color(&"font_shadow_color", &"Label", color("ink"))

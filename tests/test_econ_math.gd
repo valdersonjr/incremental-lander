@@ -24,7 +24,7 @@ func _init() -> void:
 		"titan_no": EconMath.planet_available("titan", ["luna", "ares", "kronos"], {"warp_drive": 1}, {"exp8_aurora": 0}),
 		"titan_yes": EconMath.planet_available("titan", ["luna", "ares", "kronos"], {"warp_drive": 1}, {"exp8_aurora": 1}),
 		"reset": EconMath.prestige_reset_state({"capital": 2, "pilot_file": 1, "star_charts": 1}),
-		"fmt": [EconMath.fmt(999), EconMath.fmt(1234), EconMath.fmt(5.6e6), EconMath.fmt(1.5e15), EconMath.fmt(1e40), EconMath.fmt(123456789, "sci")],
+		"fmt": [EconMath.fmt(999), EconMath.fmt(1234), EconMath.fmt(5.6e6), EconMath.fmt(1.5e15), EconMath.fmt(1e6), EconMath.fmt(1e9), EconMath.fmt(1e15), EconMath.fmt(1e40), EconMath.fmt(123456789, "sci")],
 	}
 	print("ECON_JSON=" + JSON.stringify(out))
 	quit()

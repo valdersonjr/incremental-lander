@@ -30,7 +30,7 @@ func _ready() -> void:
 		if "--confirm" in args:
 			t._on_delete(3)
 	if "--options" in args:
-		t._set_options(true)
+		t._set_screen(TitleScreen.Screen.OPTIONS)
 
 
 ## Jogos 1 (em uso) e 3 numa pasta de previa, escritos direto (o SaveManager fica desligado nas previas).

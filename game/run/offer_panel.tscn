@@ -28,6 +28,11 @@ layout_mode = 2
 theme_type_variation = &"DimLabel"
 text = "[E] encerrar run"
 
+[node name="Cols" type="HBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 3
+
 [node name="List" type="VBoxContainer" parent="VBox"]
 unique_name_in_owner = true
 layout_mode = 2

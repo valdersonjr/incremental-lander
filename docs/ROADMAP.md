@@ -70,6 +70,10 @@
       foco de teclado visível e preservado, tooltips/rolagem no tema, volume com -/+ igual no título e no hangar,
       brilho de compra, "faltam X" nos custos, ações destrutivas em vermelho + Esc cancela, resumo/final modais com
       fundo escurecido, "IR AO HANGAR", motivo da batida legível, aviso central com painel (2026-10-02)
+- [x] 2ª auditoria de UX (só apresentação/interação; saída do demo idêntica): pausa no voo (Esc / janela sem foco) com
+      volumes e controles; dica de teclas do HUD em painel; cabeçalho de colunas nas ofertas; foco visível (com atraso) no
+      resumo; modais bloqueiam clique atrás; números do hangar num só formato, "MÁX"; `fmt(1e6)` = "1.00M" (era "1000K");
+      glifo inexistente "—" trocado; prévia `flight_ui_preview` (2026-10-02)
 - [x] Vários jogos salvos: 3 espaços (jogo 1 = save.json antigo, sem migração), tela "Jogos salvos" no menu inicial
       (jogar / novo jogo / apagar com 2 cliques), opções e último jogo em `user://settings.json` (2026-10-02)
 

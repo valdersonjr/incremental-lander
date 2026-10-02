@@ -150,9 +150,9 @@ func _fill_ship(planet: String) -> void:
 	var reach := Purchases.max_reach_m(planet, s, float(s["tank"]))
 	var reach_txt := "> %s" % EconMath.fmt(REACH_CAP_M) if reach >= REACH_CAP_M * 0.99 else "~%s" % EconMath.fmt(reach)
 	_clear(_ship)
-	_ship.add_child(UiKit.icon_label("thrust", "motor %.1f m/s2" % float(s["thrust"])))
-	_ship.add_child(UiKit.icon_label("tank", "tanque %s gás" % EconMath.fmt(float(s["tank"]))))
-	_ship.add_child(UiKit.icon_label("efficiency", "bocais %.2f m/s/gás" % float(s["efficiency"])))
+	_ship.add_child(UiKit.icon_label("thrust", "motor %s m/s2" % _num(s["thrust"])))   # mesmo formato da tabela
+	_ship.add_child(UiKit.icon_label("tank", "tanque %s gás" % _num(s["tank"])))
+	_ship.add_child(UiKit.icon_label("efficiency", "bocais %s m/s/gás" % _num(s["efficiency"])))
 	_ship.add_child(UiKit.icon_label("distance", "alcance máx %s m" % reach_txt))
 
 
@@ -290,7 +290,7 @@ func _make_row(r: Dictionary) -> HBoxContainer:
 			&"ValueLabel"))
 	row.add_child(_buy_button(r, COL_ACTION))
 	var mx := Button.new()
-	mx.text = "MAX"
+	mx.text = "MÁX"
 	mx.tooltip_text = "comprar o máximo de níveis possível"
 	mx.custom_minimum_size = Vector2(COL_MAX, 15)
 	mx.disabled = not r["affordable"]
@@ -422,7 +422,7 @@ func _add_prestige() -> void:
 				_confirm_prestige = true
 			refresh())
 	else:
-		b.text = "Recomeçar: +%s Poeira agora (mínimo %s) - ganhe mais créditos neste ciclo" % [
+		b.text = "Recomeçar: +%s Poeira agora (mínimo %s); ganhe mais créditos" % [
 				EconMath.fmt(g), EconMath.fmt(float(EconMath.spec["prestige"].get("min_gain", 1)))]
 		b.disabled = true
 	_rows.add_child(b)
@@ -459,7 +459,7 @@ func _add_shop(st: Dictionary) -> void:
 	for r: Dictionary in Prestige.shop_rows(st):
 		var row := _table_row("prestige", str(r["name"]))
 		row.set_meta(&"row_key", "shop:" + str(r["id"]))
-		row.add_child(_cell("MAX" if r["maxed"] else "nv %d/%d" % [int(r["level"]), int(r["max_level"])],
+		row.add_child(_cell("MÁX" if r["maxed"] else "nv %d/%d" % [int(r["level"]), int(r["max_level"])],
 				COL_LEVEL + 10, &"DimLabel"))
 		var sb := Button.new()
 		sb.custom_minimum_size = Vector2(COL_ACTION + COL_MAX + 4, 15)
@@ -566,6 +566,11 @@ func _after_rebuild(focus_key: String) -> void:
 				return
 	if not _launch.disabled and visible:
 		_launch.grab_focus.call_deferred()
+	elif visible:                                              # recomeco: cursor na loja (nunca no CONCLUIR)
+		for b: Node in _rows.find_children("*", "Button", true, false):
+			if not (b as Button).disabled and b.get_meta(&"focus_key", "") != "finish_prestige":
+				(b as Button).grab_focus.call_deferred()
+				return
 
 ## Comeco de uma linha de tabela: icone + nome (expande e corta se faltar espaco).
 func _table_row(icon_name: String, title: String, variation: StringName = &"") -> HBoxContainer:
@@ -653,8 +658,13 @@ func _stages_done() -> int:
 	return n
 
 
+## Valor de stat: 2 casas abaixo de 10, 1 casa ate 1000 (sem ",0" em inteiros: "100 gás"), depois K/M/B.
 func _num(v: float) -> String:
-	return EconMath.fmt(v) if v >= 1000.0 else ("%.2f" % v if v < 10.0 else "%.1f" % v)
+	if v >= 1000.0:
+		return EconMath.fmt(v)
+	if v < 10.0:
+		return "%.2f" % v
+	return str(int(v)) if is_equal_approx(v, roundf(v)) else "%.1f" % v
 
 
 func _res_label(res: String) -> String:

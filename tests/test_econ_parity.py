@@ -31,7 +31,7 @@ P = {
     "bulk_tank": bulk_cost(u["tank"]["cost"]["credits"], 5, 10),
     "maxaff_tank": max_affordable(u["tank"]["cost"]["credits"], 5, 1e5),
     "avail_exp2_yes": True, "avail_exp2_no": False, "titan_no": False, "titan_yes": True,
-    "fmt": [fmt(999), fmt(1234), fmt(5.6e6), fmt(1.5e15), fmt(1e40), fmt(123456789, "sci")],
+    "fmt": [fmt(999), fmt(1234), fmt(5.6e6), fmt(1.5e15), fmt(1e6), fmt(1e9), fmt(1e15), fmt(1e40), fmt(123456789, "sci")],
 }
 
 fails = []

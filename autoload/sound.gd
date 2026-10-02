@@ -19,6 +19,7 @@ var _next := 0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS                    # cliques do menu de pausa tocam com o jogo pausado
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
 		add_child(p)

@@ -7,6 +7,8 @@ signal offer_chosen(index: int)
 signal end_requested
 
 const HINT := "teclas 1-%d ou clique  >  depois W/Espaço decola"
+## Largura (px) das colunas distancia e gas (sem o icone de 12 px + 3 de espaco).
+const COL_W := [54, 28]
 
 ## Segundos restantes do aviso piscando (tentou pilotar antes de escolher). Exposto para o teste de controles.
 var hint_flash := 0.0
@@ -14,6 +16,16 @@ var _count := 0
 
 @onready var _list: VBoxContainer = %List
 @onready var _hint: Label = %Hint
+
+
+func _ready() -> void:
+	# cabecalho das colunas (mesmas larguras das linhas de _make_row)
+	for c: Array in [["", 16], ["distância", COL_W[0] + 15], ["gás", COL_W[1] + 15], ["pagamento", 0]]:
+		var l := Label.new()
+		l.text = c[0]
+		l.theme_type_variation = &"DimLabel"
+		l.custom_minimum_size = Vector2(int(c[1]), 0)
+		%Cols.add_child(l)
 
 
 ## Mostra as ofertas do run com o gas que resta.
@@ -64,8 +76,8 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 		key.theme_type_variation = &"DangerButton"
 	key.pressed.connect(func() -> void: offer_chosen.emit(index))
 	row.add_child(key)
-	var cols := [["distance", "%s m" % EconMath.fmt(info["distance"]), 54],
-			["gas", EconMath.fmt(info["gas_est"]), 28], ["credits", "+" + EconMath.fmt(info["pay_typical"]), 0]]
+	var cols := [["distance", "%s m" % EconMath.fmt(info["distance"]), COL_W[0]],
+			["gas", EconMath.fmt(info["gas_est"]), COL_W[1]], ["credits", "+" + EconMath.fmt(info["pay_typical"]), 0]]
 	for c: Array in cols:
 		var cell := UiKit.icon_label(c[0], c[1], &"BadLabel" if not ok else (&"MoneyLabel" if c[0] == "credits"
 				else &"ValueLabel"))

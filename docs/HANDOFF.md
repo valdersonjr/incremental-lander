@@ -21,6 +21,9 @@
 - **Auditoria de UX (2026-10-02)**: todas as telas revisadas só na apresentação/interação (padrões em
   `godot-dev/references/ui.md` §"Padrões de interação"); saída do demo idêntica antes/depois (nenhuma regra mudou).
   Prévias novas: `hangar_preview -- --late --top --pending|--keys`, `summary_preview -- --crash`.
+- **2ª auditoria de UX (2026-10-02)**: pausa no voo (Esc ou janela sem foco; `game/pause/`), dica de teclas em painel,
+  cabeçalho nas ofertas, foco no resumo, formatos do hangar unificados, `fmt(1e6)`="1.00M". Regras intactas (demo idêntico).
+  Prévia: `tests/visual/flight_ui_preview -- --no_title [--pause] [--delivered|--crashed]`. `controls_test` cobre a pausa.
 - **Vários jogos salvos (2026-10-02)**: 3 espaços; menu inicial → "Jogos salvos" (jogar / novo jogo / apagar). Jogo 1 =
   o save.json de sempre. Prévia: `title_preview -- --progress --saves [--confirm]`. Testes: save_roundtrip + slots_flow.
 - **Interface**: kit pixel (fonte com acentos, painéis, botões, barras, ícones) em todos os menus; cor muda com o mundo

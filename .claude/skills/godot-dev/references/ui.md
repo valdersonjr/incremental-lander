@@ -33,6 +33,15 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
 - **Texto do jogador, não id**: motivos (`vertical_rapido` …) passam por `UiKit.crash_text`; botão diz para onde
   leva ("IR AO HANGAR", não "novo run" se abre o hangar). Dica de teclas dentro de painel, nunca solta sobre o cenário.
 - Tooltip e barra de rolagem usam o tema (`TooltipPanel`/`TooltipLabel`, `VScrollBar`) — nada com a cara padrão do Godot.
+- **Pausa** (2ª auditoria, 2026-10-02): Esc no voo ou janela sem foco abrem `PauseMenu` (`game/pause/`, modal,
+  `PROCESS_MODE_ALWAYS`, `SceneTree.paused`): volumes + lista de controles + CONTINUAR (Esc/Enter). Nunca no demo nem na
+  gravação de quadros. O autoload `Sound` roda com o jogo pausado (cliques do menu). Pausa não mexe no run.
+- **Rodapé do HUD** (dica de teclas / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.
+- **Modais** bloqueiam o clique no que está atrás (`Dim` com mouse_filter STOP). Botão de modal que aparece no meio do
+  voo ganha foco com atraso (`RunSummary.FOCUS_DELAY`): Espaço do propulsor não fecha a janela sem querer.
+- Tabelas com **cabeçalho de colunas** (ofertas: distância / gás / pagamento). Stats do mesmo valor no mesmo formato em
+  toda a tela (`Hangar._num`: 2 casas < 10, 1 casa até 1000 sem ",0" em inteiros, depois `EconMath.fmt`). "MÁX", não "MAX".
+- Só caracteres que a fonte tem (sem "—", "²", setas): conferir `assets/ui/font.fnt` antes de usar símbolo novo.
 
 ## Hangar (layout aprovado 2026-10-02)
 - Abas NAVE (padrão ao abrir) | MUNDOS | PRESTÍGIO, trocadas com Q/E ou clique; aba atual = `PrimaryButton`,

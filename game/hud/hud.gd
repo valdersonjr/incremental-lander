@@ -4,12 +4,11 @@ class_name Hud
 extends Control
 
 const TOAST_SECONDS := 2.5
-const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar"
+const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar   Esc: pausa"
 
 var flight: Flight = null
 var run: RunState = null
 
-var _status := ""
 var _toast_left := 0.0
 
 @onready var _gas: Label = %Gas
@@ -39,8 +38,8 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
 	run = p_run
 	flight.delivery_finished.connect(_on_delivery_finished)
-	flight.lander.took_off.connect(func() -> void: _status = CONTROLS_HINT)   # resultado antigo nao fica no rodape
-	_status = CONTROLS_HINT
+	flight.lander.took_off.connect(func() -> void: _set_status(CONTROLS_HINT))   # resultado antigo nao fica no rodape
+	_set_status(CONTROLS_HINT)
 
 
 func _process(delta: float) -> void:
@@ -67,7 +66,6 @@ func _process(delta: float) -> void:
 	else:
 		_dist.text = "escolha uma entrega"
 		_dist_icon.flip_h = false
-	_msg.text = _status
 	_credits.text = EconMath.fmt(GameState.amount("credits"))
 	_deliveries.text = "%d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
 
@@ -81,12 +79,18 @@ func _set_speed(label: Label, value: float, limit: float) -> void:
 func _on_delivery_finished(result: Dictionary) -> void:
 	if result["crashed"]:
 		var why := UiKit.crash_text(str(result["reason"]))
-		_status = "BATEU: %s  -  R para tentar de novo" % why
+		_set_status("BATEU: " + why, &"BadLabel")
 		_show_toast("BATEU!", why, &"BadLabel")
 	else:
-		_status = "ENTREGA! qualidade %d%%   gás usado %.1f" % [int(result["quality"] * 100.0), result["gas_used"]]
-		_show_toast("ENTREGA!", "qualidade %d%%   gás usado %.1f" % [int(result["quality"] * 100.0),
-				result["gas_used"]], &"GoodLabel")
+		var text := "qualidade %d%%   gás usado %s" % [int(result["quality"] * 100.0), EconMath.fmt(result["gas_used"])]
+		_set_status("ENTREGA! " + text, &"GoodLabel")
+		_show_toast("ENTREGA!", text, &"GoodLabel")
+
+
+## Rodape (dica de teclas ou resultado do ultimo pouso) (painel fino no Footer, da largura do texto).
+func _set_status(text: String, variation: StringName = &"DimLabel") -> void:
+	_msg.text = text
+	_msg.theme_type_variation = variation
 
 
 ## Aviso grande no centro (o momento mais importante do voo nao pode ficar so no rodape).

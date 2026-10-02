@@ -59,6 +59,9 @@ game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Fli
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
                               # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
+game/pause/pause_menu.*       # PauseMenu (Control modal, PROCESS_MODE_ALWAYS): open() congela a árvore (SceneTree.paused) e
+                              # mostra volumes + controles; close()/Esc/Enter volta (sinal closed). Main abre com Esc no voo
+                              # ou NOTIFICATION_APPLICATION_FOCUS_OUT (_can_pause: HUD visível, sem modal; nunca no demo/gravação)
 game/ending/ending.*          # Ending (Control modal como o resumo): "VOCÊ CHEGOU AO QUARTO!" + resumo; Continuar jogando
                               # (Events.goal_reached)
 game/hangar/hangar.*          # Hangar em ABAS (Q/E): cabeçalho (recursos, stats, EXPEDIÇÃO fixa: barra + próxima etapa + botão) +

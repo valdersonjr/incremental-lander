@@ -268,9 +268,9 @@ static func fmt(x: float, style: String = "suffix", digits: int = 3) -> String:
 	if x < 1000.0:
 		s = ("%.1f" % x) if (x < 10.0 and x != floor(x)) else str(int(x))
 		return ("-" if neg else "") + s
-	var e3 := int(floor(log(x) / log(10.0) / 3.0))
+	var e3 := _exp10(x) / 3                                    # mesmo que floor(log10(x) / 3) do Python
 	if style == "sci":
-		var e := int(floor(log(x) / log(10.0)))
+		var e := _exp10(x)
 		s = ("%." + str(digits - 1) + "f") % (x / pow(10.0, e)) + "e" + str(e)
 	else:
 		var m := x / pow(10.0, 3 * e3)
@@ -285,3 +285,13 @@ static func fmt(x: float, style: String = "suffix", digits: int = 3) -> String:
 			suf = char(97 + (k / 26) % 26) + char(97 + k % 26)
 		s = ("%." + str(dec) + "f") % m + suf
 	return ("-" if neg else "") + s
+
+
+## floor(log10(x)) exato nas potencias de 10 (log(x)/log(10) da 5.9999.. em 1e6 e virava "1000K").
+static func _exp10(x: float) -> int:
+	var e := int(floor(log(x) / log(10.0)))
+	if pow(10.0, e + 1) <= x:
+		e += 1
+	elif pow(10.0, e) > x:
+		e -= 1
+	return e
