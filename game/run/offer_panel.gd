@@ -50,11 +50,18 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 	row.add_theme_constant_override(&"separation", 3)
 	row.mouse_filter = Control.MOUSE_FILTER_STOP
 	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	# entrega acima do gas estimado continua escolhivel (tecla ou clique): o botao fica em vermelho, nao desabilitado
+	row.tooltip_text = "distância %s m  ·  gás estimado %s  ·  pagamento típico +%s" % [EconMath.fmt(info["distance"]),
+			EconMath.fmt(info["gas_est"]), EconMath.fmt(info["pay_typical"])]
+	if not ok:
+		row.tooltip_text += "\narriscada: precisa de mais gás do que resta"
 	var key := Button.new()
 	key.text = str(index + 1)
 	key.custom_minimum_size = Vector2(16, 15)
 	key.focus_mode = Control.FOCUS_NONE
-	key.disabled = not ok
+	key.mouse_filter = Control.MOUSE_FILTER_PASS              # a dica da linha aparece sobre o botao tambem
+	if not ok:
+		key.theme_type_variation = &"DangerButton"
 	key.pressed.connect(func() -> void: offer_chosen.emit(index))
 	row.add_child(key)
 	var cols := [["distance", "%s m" % EconMath.fmt(info["distance"]), 54],
@@ -69,8 +76,7 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 		row.add_child(cell)
 	# linha inteira clicavel; destaque no botao ao passar o mouse
 	row.mouse_entered.connect(func() -> void:
-		if ok:
-			key.add_theme_stylebox_override(&"normal", key.get_theme_stylebox(&"hover")))
+		key.add_theme_stylebox_override(&"normal", key.get_theme_stylebox(&"hover")))
 	row.mouse_exited.connect(func() -> void: key.remove_theme_stylebox_override(&"normal"))
 	row.gui_input.connect(func(ev: InputEvent) -> void:
 		if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT and visible:

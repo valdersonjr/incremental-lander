@@ -54,3 +54,9 @@
 - Caches estáticos (`static var`) que guardam recursos também acusam isso: limpar na saída (`UiKit.clear_cache()`
   no `_exit_tree` do autoload `Sound`).
 
+## Prévias nunca tocam o save real (2026-10-02)
+Uma prévia de `tests/visual/` que simulava uma compra (`--keys`) disparou o autosave (`Events.upgrade_bought`) e
+**sobrescreveu `user://save.json` e o `save.bak`** do jogador com o estado falso da prévia. Correção: o `SaveManager`
+se desliga (não carrega nem grava) quando a cena da linha de comando começa com `res://tests/visual/`; a prévia ainda
+põe `SaveManager.enabled = false` por garantia. Regra: **toda cena de verificação que mexe no GameState roda com save
+desligado** (`--no_save`, caminho `tests/visual/` ou `SaveManager.set_dir()` numa pasta própria nos testes de integração).

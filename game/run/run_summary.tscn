@@ -2,39 +2,69 @@
 
 [ext_resource type="Script" path="res://game/run/run_summary.gd" id="1_sum"]
 
-[node name="RunSummary" type="PanelContainer"]
-offset_left = 210.0
-offset_top = 96.0
-offset_right = 430.0
-offset_bottom = 250.0
+[node name="RunSummary" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_sum")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="Dim" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.180392, 0.133333, 0.184314, 0.6)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(232, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="Title" type="Label" parent="VBox"]
+[node name="Title" type="Label" parent="Center/Panel/VBox"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
 text = "FIM DO RUN"
 horizontal_alignment = 1
 
-[node name="Reason" type="Label" parent="VBox"]
+[node name="Reason" type="Label" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DimLabel"
 horizontal_alignment = 1
 
-[node name="Rows" type="VBoxContainer" parent="VBox"]
+[node name="Rows" type="VBoxContainer" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 3
 theme_override_constants/separation = 2
 
-[node name="Continue" type="Button" parent="VBox"]
+[node name="Gap" type="Control" parent="Center/Panel/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+
+[node name="Continue" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 focus_mode = 0
 theme_type_variation = &"PrimaryButton"
-text = "NOVO RUN  [Enter]"
+text = "IR AO HANGAR  [Enter]"

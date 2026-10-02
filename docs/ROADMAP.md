@@ -66,6 +66,10 @@
       menus (HUD, entregas, resumo, hangar, final) (2026-10-01)
 - [x] Menu inicial: título sobre a cena do mundo atual (nave na plataforma), Continuar/Jogar, Novo jogo (confirma),
       Opções (volumes), Sair; "Menu inicial" nas opções do hangar (2026-10-02)
+- [x] Auditoria de UX de todas as telas (só apresentação/interação; regras intactas — saída do demo idêntica):
+      foco de teclado visível e preservado, tooltips/rolagem no tema, volume com -/+ igual no título e no hangar,
+      brilho de compra, "faltam X" nos custos, ações destrutivas em vermelho + Esc cancela, resumo/final modais com
+      fundo escurecido, "IR AO HANGAR", motivo da batida legível, aviso central com painel (2026-10-02)
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)

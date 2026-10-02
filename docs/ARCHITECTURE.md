@@ -43,7 +43,8 @@ game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta
 scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram), take_offer, complete_delivery
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
-game/run/run_summary.*        # RunSummary: fim do run (motivo, entregas, qualidade média, ganhos); Enter = novo run
+game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
+                              # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged, goal_reached
 autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio (cycle_earned, prestige_pending,
                               # begin_prestige/finish_prestige, buy_shop_item), planetas liberados, income_history,
@@ -56,7 +57,8 @@ scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgr
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Sinais play_requested
                               # (Continuar → hangar; sem progresso → run), new_game_requested, quit_requested; opções = volumes.
                               # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
-game/ending/ending.*          # Ending: "VOCÊ CHEGOU A TITAN!" + resumo; Continuar jogando (Events.goal_reached)
+game/ending/ending.*          # Ending (Control modal como o resumo): "VOCÊ CHEGOU AO QUARTO!" + resumo; Continuar jogando
+                              # (Events.goal_reached)
 game/hangar/hangar.*          # Hangar em ABAS (Q/E): cabeçalho (recursos, stats, EXPEDIÇÃO fixa: barra + próxima etapa + botão) +
                               # NAVE (upgrades em tabela, padrão ao abrir) | MUNDOS (voar/liberar; "VOCÊ ESTÁ AQUI") | PRESTÍGIO
                               # (recomeçar com confirmação + LOJA DA POEIRA). OPÇÕES = tela à parte (botão/Esc). Aba com algo
@@ -92,17 +94,20 @@ art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
 autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); propulsor fica no Lander (ThrustLoop/ThrustFx)
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
-scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo), icon(nome), icon_label(...), color(...)
+scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButton, tooltip, scrollbar), icon(nome), icon_label,
+                              # color, volume_row(bus) (opções do título e do hangar), stat_row, pulse (brilho), crash_text
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)
 autoload/save_manager.gd      # SaveManager: user://save.json (JSON versionado, tmp→rename, save.bak), autosave em
-                              # eventos + ao fechar; desligado em --demo/--dev_*/--no_save; new_game(); set_dir() p/ testes
+                              # eventos + ao fechar; desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
+                              # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
-tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview, title_preview --progress/--options/--confirm) para gdtool capture
+tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,
+                              # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
 tests/integration/            # save_roundtrip.tscn (salva/carrega/backup numa pasta própria) — rodado por gdtool test
 ```

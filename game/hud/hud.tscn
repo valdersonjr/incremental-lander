@@ -151,24 +151,29 @@ offset_top = 344.0
 offset_right = 634.0
 offset_bottom = 358.0
 
-[node name="Toast" type="VBoxContainer" parent="."]
+[node name="Toast" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
-offset_left = 170.0
+offset_left = 190.0
 offset_top = 46.0
-offset_right = 380.0
-offset_bottom = 92.0
+offset_right = 360.0
+offset_bottom = 46.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="Toast"]
+layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="ToastTitle" type="Label" parent="Toast"]
+[node name="ToastTitle" type="Label" parent="Toast/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
 horizontal_alignment = 1
 
-[node name="ToastText" type="Label" parent="Toast"]
+[node name="ToastText" type="Label" parent="Toast/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"ValueLabel"

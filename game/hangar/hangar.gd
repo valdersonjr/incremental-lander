@@ -1,6 +1,8 @@
 ## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), MUNDOS (planetas),
 ## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo; OPCOES e uma tela a parte (Esc).
-## Q/E trocam de aba, Enter decola. Tudo que e numero vem de GameState/EconMath.
+## Q/E trocam de aba, Enter decola (ou ativa o botao com foco, se o jogador navegou com setas/Tab). Tudo que e numero
+## vem de GameState/EconMath. As linhas sao refeitas a cada refresh(): botoes levam meta "focus_key" para o foco do
+## teclado sobreviver, e linhas levam "row_key" para o brilho de compra (UiKit.pulse).
 class_name Hangar
 extends PanelContainer
 
@@ -26,6 +28,11 @@ const REACH_CAP_M := 1.0e6                                     # limite da busca
 var _tab := Tab.SHIP
 var _confirm_prestige := false
 var _confirm_new_game := false
+## Ultima interacao foi teclado/controle: refresh() devolve o foco ao mesmo botao (senao, ao DECOLAR).
+var _keyboard_nav := false
+## Linha que acabou de ser comprada (brilha no proximo refresh) e se o saldo mudou.
+var _flash_row := ""
+var _flash_money := false
 
 @onready var _planet: Label = %Planet
 @onready var _resources: HBoxContainer = %Resources
@@ -52,10 +59,12 @@ func open() -> void:
 	_tab = Tab.SHIP
 	visible = true
 	refresh()
-	_launch.grab_focus()
+	if not _launch.disabled:
+		_launch.grab_focus()
 
 
 func refresh() -> void:
+	var focus_key := _focused_key()
 	var planet := GameState.current_planet
 	theme = UiKit.theme_for(planet)                            # a cor do hangar acompanha o mundo atual
 	_planet.text = _planet_name(planet)
@@ -67,8 +76,10 @@ func refresh() -> void:
 		_expedition.visible = false
 		_options.visible = false
 		_add_pending_prestige()
+		_after_rebuild(focus_key)
 		return
 	_launch.disabled = false
+	_launch.text = "DECOLAR  [Enter]"
 	_options.visible = true
 	_options.text = "Voltar [Esc]" if _tab == Tab.OPTIONS else "Opções [Esc]"
 	if _tab == Tab.PRESTIGE and not _prestige_unlocked():
@@ -84,6 +95,16 @@ func refresh() -> void:
 			_add_prestige()
 		Tab.OPTIONS:
 			_add_options()
+	_after_rebuild(focus_key)
+
+
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event is InputEventKey or event is InputEventJoypadButton:
+		_keyboard_nav = true
+	elif event is InputEventMouseButton:
+		_keyboard_nav = false
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -95,7 +116,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			launch_requested.emit()
 	elif event.is_action_pressed(&"ui_cancel") and not GameState.prestige_pending:
 		get_viewport().set_input_as_handled()
-		_toggle_options()
+		if _confirm_prestige or _confirm_new_game:            # Esc primeiro desiste da confirmacao pendente
+			_confirm_prestige = false
+			_confirm_new_game = false
+			Sound.ui("click")
+			refresh()
+		else:
+			_toggle_options()
 	elif event is InputEventKey and event.pressed and not event.echo and not GameState.prestige_pending:
 		var k: int = event.keycode
 		if k == KEY_Q or k == KEY_E:
@@ -107,6 +134,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _fill_resources() -> void:
 	_clear(_resources)
+	if _flash_money:
+		_flash_money = false
+		UiKit.pulse(_resources, 1.5)
 	_resources.add_child(UiKit.icon_label("credits", EconMath.fmt(GameState.amount("credits")), &"MoneyLabel"))
 	if GameState.amount("ore") > 0.0:
 		_resources.add_child(UiKit.icon_label("ore", EconMath.fmt(GameState.amount("ore")), &"ValueLabel"))
@@ -167,7 +197,9 @@ func _fill_expedition() -> void:
 
 func _fill_tabs() -> void:
 	_clear(_tabs)
-	_tabs.visible = true
+	_tabs.visible = _tab != Tab.OPTIONS                        # opcoes e uma tela a parte: sem abas em cima
+	if not _tabs.visible:
+		return
 	for info: Array in TAB_INFO:
 		var t: Tab = info[0]
 		if t == Tab.PRESTIGE and not _prestige_unlocked():
@@ -244,6 +276,7 @@ func _add_upgrades() -> void:
 func _make_row(r: Dictionary) -> HBoxContainer:
 	var id: String = r["id"]
 	var row := _table_row(ICONS.get(id, "options"), str(r["name"]))
+	row.set_meta(&"row_key", "up:" + id)
 	if not (r["milestone"] as Dictionary).is_empty():
 		var ms := Label.new()
 		ms.text = "marco nv %d: ×%s " % [int(r["milestone"]["level"]), str(r["milestone"]["mult"])]
@@ -261,9 +294,9 @@ func _make_row(r: Dictionary) -> HBoxContainer:
 	mx.tooltip_text = "comprar o máximo de níveis possível"
 	mx.custom_minimum_size = Vector2(COL_MAX, 15)
 	mx.disabled = not r["affordable"]
+	mx.set_meta(&"focus_key", "max:" + id)
 	mx.pressed.connect(func() -> void:
-		Sound.ui("buy" if GameState.buy_upgrade_max(id) > 0 else "denied")
-		refresh())
+		_bought(GameState.buy_upgrade_max(id) > 0, "up:" + id))
 	row.add_child(mx)
 	return row
 
@@ -279,12 +312,12 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 	buy.icon = UiKit.icon(RES.get(r["cost"].keys()[0], ["credits"])[0]) if not (r["cost"] as Dictionary).is_empty() else null
 	buy.custom_minimum_size = Vector2(width, 15)
 	buy.clip_text = true
-	buy.tooltip_text = buy.text
+	buy.tooltip_text = "comprar 1 nível: " + buy.text + _missing_text(r["cost"])
 	buy.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	buy.disabled = not r["affordable"]
+	buy.set_meta(&"focus_key", "buy:" + id)
 	buy.pressed.connect(func() -> void:
-		Sound.ui("buy" if GameState.buy_upgrade(id) else "denied")
-		refresh())
+		_bought(GameState.buy_upgrade(id), "up:" + id))
 	return buy
 
 
@@ -308,6 +341,7 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 	var id: String = p["id"]
 	var here := id == GameState.current_planet
 	var row := _table_row("planet", str(p["name"]), &"GoodLabel" if here else &"")
+	row.set_meta(&"row_key", "planet:" + id)
 	row.add_child(_cell("%.2f" % float(p["gravity"]), COL_LEVEL + 34, &"ValueLabel"))
 	row.add_child(_cell("×%s" % EconMath.fmt(float(p["pay_mult"])), COL_EFFECT - 34, &"MoneyLabel"))
 	if here:
@@ -316,16 +350,20 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(COL_ACTION + COL_MAX + 4, 15)
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.set_meta(&"focus_key", "planet:" + id)
 	if p["unlocked"]:
 		b.icon = UiKit.icon("distance")
 		if p["can_fly"]:
 			b.text = "Voar para cá"
+			b.tooltip_text = "a próxima decolagem será neste mundo"
 			b.pressed.connect(func() -> void:
 				Sound.ui("click")
 				GameState.current_planet = id
+				_flash_row = "planet:" + id
 				refresh())
 		else:
 			b.text = "motor fraco: compre Motor"
+			b.tooltip_text = "o motor ainda não vence a gravidade deste mundo"
 			b.disabled = true
 	else:
 		var cost_txt := []
@@ -333,10 +371,10 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 			cost_txt.append("%s %s" % [EconMath.fmt(float(p["cost"][res])), _res_label(res)])
 		b.icon = UiKit.icon("credits")
 		b.text = "Liberar  " + " + ".join(cost_txt)
+		b.tooltip_text = "liberar " + str(p["name"]) + _missing_text(p["cost"])
 		b.disabled = not p["affordable"]
 		b.pressed.connect(func() -> void:
-			Sound.ui("buy" if GameState.unlock_planet(id) else "denied")
-			refresh())
+			_bought(GameState.unlock_planet(id), "planet:" + id))
 	row.add_child(b)
 	return row
 
@@ -366,12 +404,17 @@ func _add_prestige() -> void:
 	var b := Button.new()
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.icon = UiKit.icon("stardust")
+	b.set_meta(&"focus_key", "prestige")
 	if Prestige.can_prestige(st):
-		for c: StringName in [&"font_color", &"font_hover_color"]:   # destaque so na cor: DECOLAR segue o unico principal
-			b.add_theme_color_override(c, UiKit.color("lavender"))
-		b.text = ("CONFIRMA? recomeçar do zero por +%s Poeira (clique de novo)" if _confirm_prestige
+		if _confirm_prestige:                                  # 2o clique apaga o ciclo: texto de perigo
+			b.theme_type_variation = &"DangerButton"
+		else:                                                  # destaque so na cor: DECOLAR segue o unico principal
+			for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color"]:
+				b.add_theme_color_override(c, UiKit.color("lavender"))
+		b.text = ("Recomeçar do zero por +%s Poeira? Clique de novo  (Esc cancela)" if _confirm_prestige
 				else "Recomeçar agora: +%s Poeira Estelar") % EconMath.fmt(g)
 		b.pressed.connect(func() -> void:
+			Sound.ui("click")
 			if _confirm_prestige:
 				_confirm_prestige = false
 				GameState.begin_prestige()
@@ -390,6 +433,8 @@ func _add_prestige() -> void:
 ## Recomeco em andamento: so a loja + concluir (o reset usa o que foi comprado).
 func _add_pending_prestige() -> void:
 	_launch.disabled = true
+	_launch.text = "conclua o recomeço para decolar"
+	_launch.release_focus()                                    # sem foco: Enter nao conclui o recomeco por acidente
 	var head := Label.new()
 	head.text = "RECOMEÇO: gaste sua Poeira Estelar na loja e conclua. O progresso comum será zerado."
 	head.theme_type_variation = &"DustLabel"
@@ -399,7 +444,9 @@ func _add_pending_prestige() -> void:
 	var done := Button.new()
 	done.text = "CONCLUIR RECOMEÇO"
 	done.theme_type_variation = &"PrimaryButton"
+	done.set_meta(&"focus_key", "finish_prestige")
 	done.pressed.connect(func() -> void:
+		Sound.ui("click")
 		GameState.finish_prestige()
 		refresh())
 	_rows.add_child(done)
@@ -411,6 +458,7 @@ func _add_shop(st: Dictionary) -> void:
 	_rows.add_child(_section("LOJA DA POEIRA   (%s disponível)" % EconMath.fmt(GameState.amount(dust_id))))
 	for r: Dictionary in Prestige.shop_rows(st):
 		var row := _table_row("prestige", str(r["name"]))
+		row.set_meta(&"row_key", "shop:" + str(r["id"]))
 		row.add_child(_cell("MAX" if r["maxed"] else "nv %d/%d" % [int(r["level"]), int(r["max_level"])],
 				COL_LEVEL + 10, &"DimLabel"))
 		var sb := Button.new()
@@ -420,36 +468,35 @@ func _add_shop(st: Dictionary) -> void:
 		sb.text = "comprado" if r["maxed"] else "%s poeira" % EconMath.fmt(float(r["cost"]))
 		sb.disabled = not r["affordable"]
 		var id: String = r["id"]
+		sb.set_meta(&"focus_key", "shop:" + id)
+		if not r["maxed"]:
+			sb.tooltip_text = "%s poeira" % EconMath.fmt(float(r["cost"])) + _missing_text({dust_id: float(r["cost"])})
 		sb.pressed.connect(func() -> void:
-			Sound.ui("buy" if GameState.buy_shop_item(id) else "denied")
-			refresh())
+			_bought(GameState.buy_shop_item(id), "shop:" + id))
 		row.add_child(sb)
 		_rows.add_child(row)
 
 
 # --- OPCOES ------------------------------------------------------------------------------------------------------
 
-## Opcoes: volume por bus (clique alterna 100/75/50/25/0%) e, separado, novo jogo (2 cliques).
+## Opcoes: volume por bus (- e +, UiKit.volume_row, igual ao menu inicial), menu inicial e, separado, novo jogo
+## (2 cliques).
 func _add_options() -> void:
 	_rows.add_child(_section("OPÇÕES   (Esc volta)"))
-	var names := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
+	_rows.add_child(_section("VOLUME"))
 	for bus: String in GameState.BUSES:
-		var row := _table_row("options", "Volume: %s" % names[bus])
-		var b := Button.new()
-		b.custom_minimum_size = Vector2(COL_ACTION, 15)
-		b.text = "%d%%" % int(round(GameState.volume(bus) * 100.0))
-		b.tooltip_text = "clique: -25% (de 0% volta a 100%)"
-		b.pressed.connect(func() -> void:
-			var v := GameState.volume(bus) - 0.25
-			GameState.set_volume(bus, 1.0 if v < -0.01 else v)
-			SaveManager.request_save()
-			refresh())
-		row.add_child(b)
+		var row := _table_row("options", "")
+		row.get_child(1).free()                                # o nome vem da linha de volume
+		var vol := UiKit.volume_row(bus)
+		vol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(vol)
 		_rows.add_child(row)
+	_rows.add_child(_section("JOGO"))
 	var menu_row := _table_row("options", "Voltar ao menu inicial (o progresso fica salvo)")
 	var mb := Button.new()
 	mb.custom_minimum_size = Vector2(COL_ACTION, 15)
 	mb.text = "Menu inicial"
+	mb.set_meta(&"focus_key", "menu")
 	mb.pressed.connect(func() -> void:
 		Sound.ui("click")
 		SaveManager.request_save()
@@ -462,8 +509,12 @@ func _add_options() -> void:
 	var row := _table_row("options", "Apagar todo o progresso e começar do zero", &"BadLabel")
 	var ng := Button.new()
 	ng.custom_minimum_size = Vector2(COL_ACTION, 15)
-	ng.text = "CONFIRMA?" if _confirm_new_game else "Novo jogo"
+	ng.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"
+	ng.theme_type_variation = &"DangerButton"
+	ng.tooltip_text = "apaga o save: créditos, upgrades, mundos e prestígio (Esc cancela)"
+	ng.set_meta(&"focus_key", "new_game")
 	ng.pressed.connect(func() -> void:
+		Sound.ui("click")
 		if _confirm_new_game:
 			_confirm_new_game = false
 			SaveManager.new_game()
@@ -475,6 +526,46 @@ func _add_options() -> void:
 
 
 # --- utilitarios -------------------------------------------------------------------------------------------------
+
+## Resultado de uma compra: som, brilho na linha e no saldo (feedback imediato) e tela atualizada.
+func _bought(ok: bool, row_key: String) -> void:
+	Sound.ui("buy" if ok else "denied")
+	if ok:
+		_flash_row = row_key
+		_flash_money = true
+	refresh()
+
+
+## " - faltam X cr" para o tooltip de um custo que ainda nao da para pagar (so leitura do saldo).
+func _missing_text(cost: Dictionary) -> String:
+	var parts := []
+	for res: String in cost:
+		var miss := float(cost[res]) - GameState.amount(res)
+		if miss > 0.0:
+			parts.append("%s %s" % [EconMath.fmt(miss), _res_label(res)])
+	return "" if parts.is_empty() else "\nfaltam " + " + ".join(parts)
+
+
+func _focused_key() -> String:
+	var f := get_viewport().gui_get_focus_owner()
+	if f != null and is_ancestor_of(f) and f.has_meta(&"focus_key"):
+		return str(f.get_meta(&"focus_key"))
+	return ""
+
+
+## Depois de refazer as linhas: brilho da compra e foco (mesmo botao se o jogador usa teclado; senao DECOLAR).
+func _after_rebuild(focus_key: String) -> void:
+	for n: Node in _rows.find_children("*", "HBoxContainer", true, false):
+		if _flash_row != "" and n.get_meta(&"row_key", "") == _flash_row:
+			UiKit.pulse(n as CanvasItem)
+	_flash_row = ""
+	if _keyboard_nav and focus_key != "":
+		for b: Node in find_children("*", "Button", true, false):
+			if b.get_meta(&"focus_key", "") == focus_key and not b.is_queued_for_deletion():
+				(b as Button).grab_focus.call_deferred()
+				return
+	if not _launch.disabled and visible:
+		_launch.grab_focus.call_deferred()
 
 ## Comeco de uma linha de tabela: icone + nome (expande e corta se faltar espaco).
 func _table_row(icon_name: String, title: String, variation: StringName = &"") -> HBoxContainer:
@@ -488,6 +579,8 @@ func _table_row(icon_name: String, title: String, variation: StringName = &"") -
 	row.add_child(ic)
 	var name := Label.new()
 	name.text = title
+	name.tooltip_text = title
+	name.mouse_filter = Control.MOUSE_FILTER_PASS                # nome cortado: o tooltip mostra inteiro
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name.clip_text = true
 	if variation != &"":

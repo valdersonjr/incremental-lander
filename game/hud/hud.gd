@@ -3,9 +3,11 @@
 class_name Hud
 extends Control
 
+const TOAST_SECONDS := 2.5
+const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar"
+
 var flight: Flight = null
 var run: RunState = null
-const TOAST_SECONDS := 2.5
 
 var _status := ""
 var _toast_left := 0.0
@@ -37,7 +39,8 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
 	run = p_run
 	flight.delivery_finished.connect(_on_delivery_finished)
-	_status = "W/Espaço: propulsor   A/D: girar   R: reiniciar"
+	flight.lander.took_off.connect(func() -> void: _status = CONTROLS_HINT)   # resultado antigo nao fica no rodape
+	_status = CONTROLS_HINT
 
 
 func _process(delta: float) -> void:
@@ -77,8 +80,9 @@ func _set_speed(label: Label, value: float, limit: float) -> void:
 
 func _on_delivery_finished(result: Dictionary) -> void:
 	if result["crashed"]:
-		_status = "BATEU (%s) - R para tentar de novo" % result["reason"]
-		_show_toast("BATEU!", str(result["reason"]), &"BadLabel")
+		var why := UiKit.crash_text(str(result["reason"]))
+		_status = "BATEU: %s  -  R para tentar de novo" % why
+		_show_toast("BATEU!", why, &"BadLabel")
 	else:
 		_status = "ENTREGA! qualidade %d%%   gás usado %.1f" % [int(result["quality"] * 100.0), result["gas_used"]]
 		_show_toast("ENTREGA!", "qualidade %d%%   gás usado %.1f" % [int(result["quality"] * 100.0),

@@ -18,6 +18,9 @@
   (Esc); HUD com aviso central de pouso/batida. Prévia: `hangar_preview -- --late --top --tab=1|2|3`.
 - **Menu inicial (2026-10-02)**: o jogo abre no título sobre a cena do mundo atual; Continuar/Novo jogo/Opções/Sair.
   Prévia: `tests/visual/title_preview -- --progress --planet=kronos`. O teste de controles passa pelo menu (Enter).
+- **Auditoria de UX (2026-10-02)**: todas as telas revisadas só na apresentação/interação (padrões em
+  `godot-dev/references/ui.md` §"Padrões de interação"); saída do demo idêntica antes/depois (nenhuma regra mudou).
+  Prévias novas: `hangar_preview -- --late --top --pending|--keys`, `summary_preview -- --crash`.
 - **Interface**: kit pixel (fonte com acentos, painéis, botões, barras, ícones) em todos os menus; cor muda com o mundo
   (`UiKit.theme_for`). Prévias: `tests/visual/{hangar,summary,ending}_preview` (args `--planet=`, `--top`).
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
@@ -41,6 +44,9 @@ opções descartadas em `art/previews/moon_recolor/grid.png`.)
   **1–8 ou clique** → **W/Espaço** propulsor, **A/D** girar, **R** reinicia, **E** encerra o run.
 
 ## Pendências conhecidas
+- **Save do jogador sobrescrito por engano (2026-10-02)** por uma prévia de teste (causa corrigida no SaveManager).
+  Reconstrução proposta (telemetria: as 19 runs foram batidas na Lua sem upgrades → créditos 0): o usuário decide se
+  copia `save_reconstruido.json` (scratchpad da sessão) por cima de `user://save.json`; senão, "Novo jogo".
 - "Alcance max (ideal)" no hangar é otimista (delta-v ideal); ao saturar mostra "> 1000K m".
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
 - Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.

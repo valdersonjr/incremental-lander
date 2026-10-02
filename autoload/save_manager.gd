@@ -1,6 +1,7 @@
 ## Save/load do progresso (skill godot-dev, save-telemetry.md): JSON versionado em user://save.json,
 ## escrita atomica (tmp -> rename), backup save.bak, autosave nos eventos, salva ao fechar.
-## Desligado em --demo, --dev_* e --no_save (verificacao nunca sobrescreve o progresso do jogador).
+## Desligado em --demo, --dev_* e --no_save e nas previas de tests/visual/ (verificacao nunca carrega nem sobrescreve
+## o progresso do jogador — uma previa que simula compra dispararia o autosave sobre o save real).
 extends Node
 
 var PATH := "user://save.json"
@@ -14,6 +15,9 @@ var _dirty := false
 func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a == "--demo" or a == "--no_save" or a.begins_with("--dev_"):
+			enabled = false
+	for a in OS.get_cmdline_args():
+		if a.begins_with("res://tests/visual/"):
 			enabled = false
 	if enabled:
 		load_game()

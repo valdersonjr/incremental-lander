@@ -18,6 +18,22 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   Tema não atravessa CanvasLayer: aplicar em cada tela raiz. Ícones: `UiKit.icon(nome)`, `UiKit.icon_label(...)`.
 - Cores com significado são fixas (dinheiro dourado, perigo vermelho, gás ciano); só o destaque muda por mundo.
 
+## Padrões de interação (auditoria de UX 2026-10-02 — valem para toda tela nova)
+- **Foco de teclado sempre visível**: o tema desenha moldura de 1 px fora do botão (cor `title` do mundo; branca no
+  `PrimaryButton`). Toda tela navegável por setas/Tab/Enter dá `grab_focus()` no botão principal ao abrir.
+- **Telas refeitas no `refresh()`** (hangar): botões levam `set_meta("focus_key", ...)` e o foco volta ao mesmo botão
+  se a última entrada foi teclado; se foi mouse, volta ao botão principal (Enter continua = ação principal).
+- **Destrutivo** (apagar save, recomeçar): `DangerButton` (texto coral), 2 cliques com texto "…? Clique de novo",
+  **Esc cancela** a confirmação antes de qualquer outra coisa. Botão desabilitado não fica com foco.
+- **Modais** (resumo, final): raiz `Control` em tela cheia → `ColorRect` escurecendo (ink, alfa `UiKit.DIM_ALPHA`)
+  + `CenterContainer` + painel. Estatísticas em `UiKit.stat_row(ícone, nome, valor, variação)`.
+- **Feedback**: compra = som + `UiKit.pulse` na linha (meta `row_key`) e no saldo; custo inacessível mostra
+  "faltam X" no tooltip; nomes cortados (`clip_text`) têm tooltip com o texto inteiro.
+- **Opções**: volume só por `UiKit.volume_row(bus)` (- / barra / + / %), igual no título e no hangar.
+- **Texto do jogador, não id**: motivos (`vertical_rapido` …) passam por `UiKit.crash_text`; botão diz para onde
+  leva ("IR AO HANGAR", não "novo run" se abre o hangar). Dica de teclas dentro de painel, nunca solta sobre o cenário.
+- Tooltip e barra de rolagem usam o tema (`TooltipPanel`/`TooltipLabel`, `VScrollBar`) — nada com a cara padrão do Godot.
+
 ## Hangar (layout aprovado 2026-10-02)
 - Abas NAVE (padrão ao abrir) | MUNDOS | PRESTÍGIO, trocadas com Q/E ou clique; aba atual = `PrimaryButton`,
   outra aba com algo comprável = texto dourado + "!". A meta (Expedição) fica fixa no cabeçalho, fora das abas.
@@ -25,7 +41,8 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   ações únicas. Item atual (mundo) em verde "VOCÊ ESTÁ AQUI", nunca cinza (cinza = indisponível).
 - Um só botão principal por tela (DECOLAR); ações destrutivas (prestígio, novo jogo) com 2 cliques e sem destaque cheio;
   opções/novo jogo fora da tela de compras (Esc).
-- Feedback do voo (entrega/batida) em aviso central grande, entre o painel de stats e o de ofertas.
+- Feedback do voo (entrega/batida) em aviso central grande **com painel**, entre o painel de stats e o de ofertas; o
+  rodapé volta à dica de controles na decolagem seguinte (não fica com o resultado velho).
 
 ## Números
 Sempre `EconMath.fmt(valor)` (K, M, B, T, Qa… aa) — nunca `str(float)` na tela. Tempo: formato curto (2m05s).

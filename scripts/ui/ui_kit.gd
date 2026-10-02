@@ -2,13 +2,22 @@
 ## Monta um Theme por mundo (cor de destaque muda com o planeta; fixos: fundo escuro, dourado = dinheiro,
 ## vermelho = perigo, ambar = gas acabando, barra de gas ciano). Fonte bitmap: tamanho 11 (1x) ou 22 (2x), nunca
 ## fracionario. Variacoes de tipo: TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
-## PrimaryButton, GasBar, WarnBar, DangerBar, XpBar.
+## PrimaryButton, DangerButton, GasBar, WarnBar, DangerBar, XpBar. Foco de teclado = moldura de 1 px na cor de titulo
+## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, stat_row, pulse.
 class_name UiKit
 extends RefCounted
 
 const DIR := "res://assets/ui/"
 const FONT_SIZE := 11
 const TITLE_SIZE := 22
+## Passo do volume nas opcoes (botoes - e +).
+const VOLUME_STEP := 0.1
+const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
+## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
+const CRASH_TEXT := {"fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
+		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado"}
+## Escurecimento atras de janelas modais (resumo, final).
+const DIM_ALPHA := 0.6
 
 static var _meta: Dictionary = {}
 static var _themes: Dictionary = {}
@@ -83,7 +92,8 @@ static func theme_for(world: String) -> Theme:
 	t.set_stylebox(&"hover", &"Button", _box(wd + "button_hover.png", 6, m))
 	t.set_stylebox(&"pressed", &"Button", _box(wd + "button_pressed.png", 6, m + Vector4(0, 1, 0, -1)))
 	t.set_stylebox(&"disabled", &"Button", _box(wd + "button_disabled.png", 6, m))
-	t.set_stylebox(&"focus", &"Button", StyleBoxEmpty.new())
+	var focus := _focus_box(color("title", world))
+	t.set_stylebox(&"focus", &"Button", focus)
 	t.set_color(&"font_color", &"Button", color("white"))
 	t.set_color(&"font_hover_color", &"Button", color("white"))
 	t.set_color(&"font_pressed_color", &"Button", color("mist"))
@@ -96,11 +106,16 @@ static func theme_for(world: String) -> Theme:
 	t.set_type_variation(&"PrimaryButton", &"Button")
 	t.set_stylebox(&"normal", &"PrimaryButton", _box(wd + "button_primary.png", 6, m))
 	t.set_stylebox(&"hover", &"PrimaryButton", _box(wd + "button_primary_hover.png", 6, m))
-	t.set_stylebox(&"focus", &"PrimaryButton", StyleBoxEmpty.new())
+	t.set_stylebox(&"focus", &"PrimaryButton", _focus_box(color("white")))
 	t.set_color(&"font_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_hover_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_focus_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_shadow_color", &"PrimaryButton", Color(0, 0, 0, 0))
+	t.set_color(&"font_disabled_color", &"PrimaryButton", color("slate"))
+	# acao destrutiva (apagar progresso, recomecar): botao comum com texto vermelho
+	t.set_type_variation(&"DangerButton", &"Button")
+	for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color"]:
+		t.set_color(c, &"DangerButton", color("coral"))
 	# barras
 	t.set_stylebox(&"background", &"ProgressBar", _box(DIR + "bar_bg.png", 3, Vector4.ZERO))
 	t.set_stylebox(&"fill", &"ProgressBar", _box(wd + "bar_fill.png", 3, Vector4.ZERO))
@@ -109,8 +124,19 @@ static func theme_for(world: String) -> Theme:
 			[&"XpBar", "bar_xp.png"]]:
 		t.set_type_variation(v[0], &"ProgressBar")
 		t.set_stylebox(&"fill", v[0], _box(DIR + str(v[1]), 3, Vector4.ZERO))
-	# rolagem discreta
+	# rolagem discreta, com a arte das barras (trilho escuro + puxador na cor do mundo)
 	t.set_constant(&"scrollbar_h_separation", &"ScrollContainer", 4)
+	for sb_type: StringName in [&"VScrollBar", &"HScrollBar"]:
+		t.set_stylebox(&"scroll", sb_type, _box(DIR + "bar_bg.png", 3, Vector4.ZERO))
+		t.set_stylebox(&"scroll_focus", sb_type, _box(DIR + "bar_bg.png", 3, Vector4.ZERO))
+		for g: StringName in [&"grabber", &"grabber_highlight", &"grabber_pressed"]:
+			t.set_stylebox(g, sb_type, _box(wd + "bar_fill.png", 3, Vector4.ZERO))
+	# dicas (tooltip) no mesmo painel e fonte do jogo
+	t.set_stylebox(&"panel", &"TooltipPanel", _box(wd + "panel.png", 8, Vector4(6, 4, 6, 4), true))
+	t.set_color(&"font_color", &"TooltipLabel", color("mist"))
+	t.set_color(&"font_shadow_color", &"TooltipLabel", color("ink"))
+	t.set_constant(&"shadow_offset_x", &"TooltipLabel", 1)
+	t.set_constant(&"shadow_offset_y", &"TooltipLabel", 1)
 	_themes[world] = t
 	return t
 
@@ -130,6 +156,91 @@ static func icon_label(icon_name: String, text: String, variation: StringName = 
 		l.theme_type_variation = variation
 	row.add_child(l)
 	return row
+
+
+## Linha de volume de um bus: nome | - | barra | + | %. Muda em passos de VOLUME_STEP, salva e toca o clique.
+static func volume_row(bus: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	var name := Label.new()
+	name.text = BUS_NAMES.get(bus, bus)
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name.custom_minimum_size = Vector2(56, 0)
+	row.add_child(name)
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(60, 8)
+	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var pct := Label.new()
+	pct.custom_minimum_size = Vector2(30, 0)
+	pct.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	pct.theme_type_variation = &"ValueLabel"
+	var show := func() -> void:
+		var v := GameState.volume(bus)
+		bar.value = v * 100.0
+		pct.text = "%d%%" % int(round(v * 100.0))
+		pct.theme_type_variation = &"DimLabel" if v <= 0.0 else &"ValueLabel"
+	for step: float in [-VOLUME_STEP, VOLUME_STEP]:
+		var b := Button.new()
+		b.text = "-" if step < 0.0 else "+"
+		b.custom_minimum_size = Vector2(16, 15)
+		b.tooltip_text = ("diminuir" if step < 0.0 else "aumentar") + " o volume (%s)" % name.text
+		b.set_meta(&"focus_key", "vol%s:%s" % [b.text, bus])
+		b.pressed.connect(func() -> void:
+			GameState.set_volume(bus, snappedf(GameState.volume(bus) + step, VOLUME_STEP))
+			SaveManager.request_save()
+			Sound.ui("click")
+			show.call())
+		row.add_child(b)
+		if step < 0.0:
+			row.add_child(bar)
+	row.add_child(pct)
+	show.call()
+	return row
+
+
+## Linha de estatistica (resumo/final): icone | nome apagado | valor a direita.
+static func stat_row(icon_name: String, title: String, value: String, variation: StringName = &"ValueLabel") -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	var tr := TextureRect.new()
+	tr.texture = icon(icon_name) if icon_name != "" else null   # "" = sem icone, mas a coluna fica alinhada
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	tr.custom_minimum_size = Vector2(12, 12)
+	row.add_child(tr)
+	var l := Label.new()
+	l.text = title
+	l.theme_type_variation = &"DimLabel"
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(l)
+	var v := Label.new()
+	v.text = value
+	v.theme_type_variation = variation
+	v.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(v)
+	return row
+
+
+## Brilho curto (compra, ganho): o item clareia e volta ao normal.
+static func pulse(item: CanvasItem, strength: float = 1.7, seconds: float = 0.35) -> void:
+	item.modulate = Color(strength, strength, strength)
+	item.create_tween().tween_property(item, "modulate", Color.WHITE, seconds).set_trans(Tween.TRANS_QUAD) \
+			.set_ease(Tween.EASE_OUT)
+
+
+static func crash_text(reason: String) -> String:
+	return CRASH_TEXT.get(reason, reason.replace("_", " "))
+
+
+## Moldura de foco (teclado): 1 px fora do botao, sem preencher.
+static func _focus_box(c: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.draw_center = false
+	sb.anti_aliasing = false
+	sb.border_color = c
+	sb.set_border_width_all(1)
+	sb.set_expand_margin_all(1)
+	return sb
 
 
 static func _box(path: String, margin: int, content: Vector4, tile_center: bool = false) -> StyleBoxTexture:

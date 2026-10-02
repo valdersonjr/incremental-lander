@@ -9,12 +9,10 @@ signal play_requested
 signal new_game_requested
 signal quit_requested
 
-const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
-
 var _confirm_new_game := false
 var _options_open := false
 
-@onready var _info: Label = %Info
+@onready var _info: HBoxContainer = %Info
 @onready var _menu: VBoxContainer = %Menu
 @onready var _options: VBoxContainer = %Options
 
@@ -25,7 +23,9 @@ func _ready() -> void:
 		play_requested.emit())
 	%NewGame.pressed.connect(_on_new_game)
 	%OptionsButton.pressed.connect(func() -> void: _set_options(true))
-	%Quit.pressed.connect(func() -> void: quit_requested.emit())
+	%Quit.pressed.connect(func() -> void:
+		Sound.ui("click")
+		quit_requested.emit())
 
 
 ## Mostra o menu atualizado (texto de Continuar/Jogar e resumo do progresso salvo).
@@ -53,15 +53,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _set_options(open_options: bool) -> void:
+	var was_open := _options_open
 	_options_open = open_options
+	_confirm_new_game = false
 	_menu.visible = not open_options
 	_options.visible = open_options
 	if open_options:
 		Sound.ui("click")
 		_fill_options()
+		%Hint.text = "setas: escolher  ·  Enter: -/+  ·  Esc: voltar"
 	else:
 		_refresh_menu()
-		%Play.grab_focus()
+		(%OptionsButton if was_open else %Play).grab_focus()   # voltar das opcoes devolve o cursor a elas
 
 
 func _refresh_menu() -> void:
@@ -69,14 +72,22 @@ func _refresh_menu() -> void:
 	%Play.text = "Continuar" if progress else "Jogar"
 	%NewGame.visible = progress
 	_info.visible = progress
-	%NewGame.text = "CONFIRMA? (apaga tudo)" if _confirm_new_game else "Novo jogo"
-	_info.text = "" if not progress else "%s  -  %d runs  -  %s cr" % [_planet_name(GameState.current_planet),
-			GameState.runs_done, EconMath.fmt(GameState.amount("credits"))]
+	%NewGame.text = "Apagar tudo? Clique de novo" if _confirm_new_game else "Novo jogo"
+	%NewGame.theme_type_variation = &"DangerButton" if _confirm_new_game else &""
+	%Hint.text = "Esc: cancelar" if _confirm_new_game else "setas: escolher  ·  Enter: confirmar"
+	for c in _info.get_children():
+		_info.remove_child(c)
+		c.queue_free()
+	if progress:                                               # resumo do jogo salvo, com os icones do jogo
+		_info.add_child(UiKit.icon_label("planet", _planet_name(GameState.current_planet), &"DimLabel"))
+		_info.add_child(UiKit.icon_label("expedition", "%d runs" % GameState.runs_done, &"DimLabel"))
+		_info.add_child(UiKit.icon_label("credits", EconMath.fmt(GameState.amount("credits")), &"MoneyLabel"))
 
 
 func _on_new_game() -> void:
 	if _confirm_new_game:
 		_confirm_new_game = false
+		Sound.ui("click")
 		new_game_requested.emit()
 		return
 	Sound.ui("click")
@@ -84,24 +95,18 @@ func _on_new_game() -> void:
 	_refresh_menu()
 
 
-## Volumes por bus (clique: -25%; de 0% volta a 100%), como nas opcoes do hangar.
+## Volumes por bus (- e +), a mesma linha das opcoes do hangar (UiKit.volume_row).
 func _fill_options() -> void:
 	for c in _options.get_children():
 		if c.name != &"OptionsTitle":
+			_options.remove_child(c)
 			c.queue_free()
 	var first: Button = null
 	for bus: String in GameState.BUSES:
-		var b := Button.new()
-		b.text = "%s: %d%%" % [BUS_NAMES[bus], int(round(GameState.volume(bus) * 100.0))]
-		b.pressed.connect(func() -> void:
-			var v := GameState.volume(bus) - 0.25
-			GameState.set_volume(bus, 1.0 if v < -0.01 else v)
-			SaveManager.request_save()
-			Sound.ui("click")
-			b.text = "%s: %d%%" % [BUS_NAMES[bus], int(round(GameState.volume(bus) * 100.0))])
-		_options.add_child(b)
+		var row := UiKit.volume_row(bus)
+		_options.add_child(row)
 		if first == null:
-			first = b
+			first = row.get_child(1) as Button
 	var back := Button.new()
 	back.text = "Voltar [Esc]"
 	back.pressed.connect(func() -> void: _set_options(false))
