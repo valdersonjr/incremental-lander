@@ -63,6 +63,20 @@ func _ready() -> void:
 		get_tree().quit())
 	_pause = PAUSE_SCENE.instantiate()
 	_gui.add_child(_pause)
+	# menu do jogo a partir do hangar: o hangar some e o menu abre sobre o mundo escurecido
+	_hangar.menu_requested.connect(func() -> void:
+		_hangar.visible = false
+		_gui.move_child(_pause, -1)
+		_pause.open(PauseMenu.Mode.HANGAR))
+	_pause.closed.connect(func() -> void:
+		if _pause.mode == PauseMenu.Mode.HANGAR:
+			_back_to_hangar())
+	_pause.title_requested.connect(func() -> void:
+		SaveManager.request_save()
+		_show_title())
+	_pause.new_game_requested.connect(func() -> void:
+		SaveManager.new_game()
+		_back_to_hangar())
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
 	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_") or k == "planet"):
 		_start_run()
@@ -71,7 +85,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible:
+	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible and not _pause.visible:
 		_start_run()
 	elif event.is_action_pressed(&"ui_cancel") and _can_pause():
 		get_viewport().set_input_as_handled()
@@ -90,6 +104,12 @@ func _notification(what: int) -> void:
 func _can_pause() -> bool:
 	return not _demo and _hud != null and is_instance_valid(_hud) and _hud.visible and not _summary.visible \
 			and not _hangar.visible and not _title.visible and not _ending.visible and not _pause.visible
+
+
+## Volta do menu do jogo ao hangar, na mesma aba (refresh atualiza o tema e o foco).
+func _back_to_hangar() -> void:
+	_hangar.visible = true
+	_hangar.refresh()
 
 
 ## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega).

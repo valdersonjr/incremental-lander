@@ -1,10 +1,18 @@
-## Pausa do voo (arte: UiKit), janela modal: congela a arvore (SceneTree.paused) e mostra volumes + lista de controles.
-## So apresentacao: nao mexe no run (a Main decide quando pode pausar). Roda com PROCESS_MODE_ALWAYS.
-## Esc, Enter ou o botao continuam.
+## Menu do jogo (arte: UiKit), janela modal sobre o mundo escurecido. Dois modos:
+## FLIGHT (Esc no voo): "PAUSA", congela a arvore (SceneTree.paused), volumes + controles + CONTINUAR.
+## HANGAR (Esc/Opções no hangar; a Main esconde o hangar): "MENU", volumes + controles + Menu inicial + Novo jogo
+## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
+## Roda com PROCESS_MODE_ALWAYS.
 class_name PauseMenu
 extends Control
 
 signal closed
+## Modo HANGAR: voltar ao menu inicial (a Main salva e mostra o titulo).
+signal title_requested
+## Modo HANGAR: apagar o jogo em uso e comecar do zero (confirmado com 2 cliques).
+signal new_game_requested
+
+enum Mode { FLIGHT, HANGAR }
 
 ## Teclas do jogo (texto de jogador; as acoes vem de data/world.json -> input).
 const CONTROLS := [
@@ -15,10 +23,18 @@ const CONTROLS := [
 	["R", "reiniciar o run"],
 ]
 
+var mode := Mode.FLIGHT
+var _confirm_new_game := false
+
 
 func _ready() -> void:
 	visible = false
 	%Continue.pressed.connect(close)
+	%MenuButton.pressed.connect(func() -> void:
+		Sound.ui("click")
+		visible = false
+		title_requested.emit())
+	%NewGame.pressed.connect(_on_new_game)
 	for c: Array in CONTROLS:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override(&"separation", 4)
@@ -35,14 +51,25 @@ func _ready() -> void:
 		%Controls.add_child(row)
 
 
-func open() -> void:
+## Abre o menu. FLIGHT pausa o jogo; HANGAR nao pausa (nada corre no hangar) e mostra as acoes do jogo salvo.
+func open(p_mode: Mode = Mode.FLIGHT) -> void:
+	mode = p_mode
+	_confirm_new_game = false
+	theme = UiKit.theme_for(GameState.current_planet)
 	for c in %Volumes.get_children():
 		%Volumes.remove_child(c)
 		c.queue_free()
 	for bus: String in GameState.BUSES:
 		%Volumes.add_child(UiKit.volume_row(bus))
+	var hangar := mode == Mode.HANGAR
+	%Title.text = "MENU" if hangar else "PAUSA"
+	%GameTitle.visible = hangar
+	%Game.visible = hangar
+	%Continue.text = "VOLTAR AO HANGAR  [Esc]" if hangar else "CONTINUAR  [Esc]"
+	_show_new_game()
 	visible = true
-	get_tree().paused = true
+	if not hangar:
+		get_tree().paused = true
 	Sound.ui("click")
 	%Continue.grab_focus()
 	UiKit.pulse(%Panel, 1.3, 0.25)
@@ -58,6 +85,32 @@ func close() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and (event.is_action_pressed(&"ui_cancel") or event.is_action_pressed(&"confirm")):
+	if not visible:
+		return
+	if event.is_action_pressed(&"ui_cancel"):
+		get_viewport().set_input_as_handled()
+		if _confirm_new_game:                                  # Esc primeiro desiste da confirmacao
+			_confirm_new_game = false
+			Sound.ui("click")
+			_show_new_game()
+		else:
+			close()
+	elif event.is_action_pressed(&"confirm"):
 		get_viewport().set_input_as_handled()
 		close()
+
+
+func _on_new_game() -> void:
+	Sound.ui("click")
+	if not _confirm_new_game:
+		_confirm_new_game = true
+		_show_new_game()
+		return
+	_confirm_new_game = false
+	visible = false
+	new_game_requested.emit()
+
+
+func _show_new_game() -> void:
+	%NewGameLabel.text = "Apagar o Jogo %d e recomeçar do zero" % SaveManager.slot
+	%NewGame.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"

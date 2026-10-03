@@ -1,6 +1,6 @@
 ## Previa visual do hangar. gdtool.py capture res://tests/visual/hangar_preview.tscn [-- --top --planet=ares]
 ## Padrao: rolado ate o fim. --top: comeco. --planet: mundo (cor da interface). --late: meio de jogo (prestigio,
-## expedicao). --tab=1|2|3: aba MUNDOS/PRESTIGIO/OPCOES. --pending: recomeco em andamento (so loja + concluir).
+## expedicao). --tab=1|2: aba MUNDOS/PRESTIGIO. --menu: menu do jogo (Esc), como a Main abre. --pending: recomeco em andamento (so loja + concluir).
 ## --keys: simula navegacao por teclado (foco no 1o botao de compra, depois de uma compra) e tooltip de custo.
 extends Node
 
@@ -53,6 +53,15 @@ func _ready() -> void:
 		await get_tree().process_frame
 		var f := get_viewport().gui_get_focus_owner()
 		print("KEYS_FOCUS ", f.get_meta(&"focus_key", "?") if f != null else "nenhum")
+	if "--menu" in args:                                       # Esc no hangar: o hangar some e o menu abre
+		var menu: PauseMenu = preload("res://game/pause/pause_menu.tscn").instantiate()
+		layer.add_child(menu)
+		h.menu_requested.connect(func() -> void:
+			h.visible = false
+			menu.open(PauseMenu.Mode.HANGAR))
+		h._request_menu()
+		if "--confirm" in args:
+			menu._on_new_game()
 	if "--top" in args:
 		return
 	var scroll: ScrollContainer = h.find_child("Scroll", true, false)

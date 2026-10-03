@@ -1,5 +1,6 @@
 ## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), MUNDOS (planetas),
-## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo; OPCOES e uma tela a parte (Esc).
+## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo. Esc / botao Opcoes pedem o menu do
+## jogo (menu_requested: a Main esconde o hangar e abre o PauseMenu no modo HANGAR — volumes, menu inicial, novo jogo).
 ## Q/E trocam de aba, Enter decola (ou ativa o botao com foco, se o jogador navegou com setas/Tab). Tudo que e numero
 ## vem de GameState/EconMath. As linhas sao refeitas a cada refresh(): botoes levam meta "focus_key" para o foco do
 ## teclado sobreviver, e linhas levam "row_key" para o brilho de compra (UiKit.pulse).
@@ -7,10 +8,12 @@ class_name Hangar
 extends PanelContainer
 
 signal launch_requested
-## Voltar ao menu inicial (opcoes).
+## Voltar ao menu inicial (contrato mantido; hoje o pedido sai do menu do jogo, PauseMenu.title_requested).
 signal title_requested
+## Esc ou botao Opcoes: abrir o menu do jogo fora do hangar.
+signal menu_requested
 
-enum Tab { SHIP, WORLDS, PRESTIGE, OPTIONS }
+enum Tab { SHIP, WORLDS, PRESTIGE }
 
 const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay_mult": "×", "gear": "×",
 		"drones": "", "autopilot": "×"}
@@ -27,7 +30,6 @@ const REACH_CAP_M := 1.0e6                                     # limite da busca
 
 var _tab := Tab.SHIP
 var _confirm_prestige := false
-var _confirm_new_game := false
 ## Ultima interacao foi teclado/controle: refresh() devolve o foco ao mesmo botao (senao, ao DECOLAR).
 var _keyboard_nav := false
 ## Linha que acabou de ser comprada (brilha no proximo refresh) e se o saldo mudou.
@@ -49,13 +51,12 @@ func _ready() -> void:
 	_launch.pressed.connect(func() -> void: launch_requested.emit())
 	launch_requested.connect(func() -> void: Sound.ui("click"))
 	_options.icon = UiKit.icon("options")
-	_options.pressed.connect(func() -> void: _toggle_options())
+	_options.pressed.connect(_request_menu)
 
 
 ## Mostra o hangar atualizado, na aba NAVE (o que se compra a cada visita).
 func open() -> void:
 	_confirm_prestige = false
-	_confirm_new_game = false
 	_tab = Tab.SHIP
 	visible = true
 	refresh()
@@ -81,7 +82,6 @@ func refresh() -> void:
 	_launch.disabled = false
 	_launch.text = "DECOLAR  [Enter]"
 	_options.visible = true
-	_options.text = "Voltar [Esc]" if _tab == Tab.OPTIONS else "Opções [Esc]"
 	if _tab == Tab.PRESTIGE and not _prestige_unlocked():
 		_tab = Tab.SHIP
 	_fill_expedition()
@@ -93,8 +93,6 @@ func refresh() -> void:
 			_add_worlds()
 		Tab.PRESTIGE:
 			_add_prestige()
-		Tab.OPTIONS:
-			_add_options()
 	_after_rebuild(focus_key)
 
 
@@ -116,13 +114,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			launch_requested.emit()
 	elif event.is_action_pressed(&"ui_cancel") and not GameState.prestige_pending:
 		get_viewport().set_input_as_handled()
-		if _confirm_prestige or _confirm_new_game:            # Esc primeiro desiste da confirmacao pendente
+		if _confirm_prestige:                                  # Esc primeiro desiste da confirmacao pendente
 			_confirm_prestige = false
-			_confirm_new_game = false
 			Sound.ui("click")
 			refresh()
 		else:
-			_toggle_options()
+			_request_menu()
 	elif event is InputEventKey and event.pressed and not event.echo and not GameState.prestige_pending:
 		var k: int = event.keycode
 		if k == KEY_Q or k == KEY_E:
@@ -197,9 +194,7 @@ func _fill_expedition() -> void:
 
 func _fill_tabs() -> void:
 	_clear(_tabs)
-	_tabs.visible = _tab != Tab.OPTIONS                        # opcoes e uma tela a parte: sem abas em cima
-	if not _tabs.visible:
-		return
+	_tabs.visible = true
 	for info: Array in TAB_INFO:
 		var t: Tab = info[0]
 		if t == Tab.PRESTIGE and not _prestige_unlocked():
@@ -231,7 +226,6 @@ func _set_tab(t: Tab) -> void:
 	Sound.ui("click")
 	_tab = t
 	_confirm_prestige = false
-	_confirm_new_game = false
 	refresh()
 	_scroll.scroll_vertical = 0
 
@@ -244,8 +238,9 @@ func _cycle_tab(step: int) -> void:
 	_set_tab(order[posmod((0 if i < 0 else i) + step, order.size())])
 
 
-func _toggle_options() -> void:
-	_set_tab(Tab.SHIP if _tab == Tab.OPTIONS else Tab.OPTIONS)
+func _request_menu() -> void:
+	_confirm_prestige = false
+	menu_requested.emit()
 
 
 func _tab_has_news(t: Tab) -> bool:
@@ -475,54 +470,6 @@ func _add_shop(st: Dictionary) -> void:
 			_bought(GameState.buy_shop_item(id), "shop:" + id))
 		row.add_child(sb)
 		_rows.add_child(row)
-
-
-# --- OPCOES ------------------------------------------------------------------------------------------------------
-
-## Opcoes: volume por bus (- e +, UiKit.volume_row, igual ao menu inicial), menu inicial e, separado, novo jogo
-## (2 cliques).
-func _add_options() -> void:
-	_rows.add_child(_section("OPÇÕES   (Esc volta)"))
-	_rows.add_child(_section("VOLUME"))
-	for bus: String in GameState.BUSES:
-		var row := _table_row("options", "")
-		row.get_child(1).free()                                # o nome vem da linha de volume
-		var vol := UiKit.volume_row(bus)
-		vol.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(vol)
-		_rows.add_child(row)
-	_rows.add_child(_section("JOGO"))
-	var menu_row := _table_row("options", "Voltar ao menu inicial (salva; lá você troca de jogo salvo)")
-	var mb := Button.new()
-	mb.custom_minimum_size = Vector2(COL_ACTION, 15)
-	mb.text = "Menu inicial"
-	mb.set_meta(&"focus_key", "menu")
-	mb.pressed.connect(func() -> void:
-		Sound.ui("click")
-		SaveManager.request_save()
-		title_requested.emit())
-	menu_row.add_child(mb)
-	_rows.add_child(menu_row)
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0, 10)
-	_rows.add_child(gap)
-	var row := _table_row("options", "Apagar este jogo (Jogo %d) e começar do zero" % SaveManager.slot, &"BadLabel")
-	var ng := Button.new()
-	ng.custom_minimum_size = Vector2(COL_ACTION, 15)
-	ng.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"
-	ng.theme_type_variation = &"DangerButton"
-	ng.tooltip_text = "apaga este jogo: créditos, upgrades, mundos e prestígio (Esc cancela). Os outros jogos salvos não mudam."
-	ng.set_meta(&"focus_key", "new_game")
-	ng.pressed.connect(func() -> void:
-		Sound.ui("click")
-		if _confirm_new_game:
-			_confirm_new_game = false
-			SaveManager.new_game()
-		else:
-			_confirm_new_game = true
-		refresh())
-	row.add_child(ng)
-	_rows.add_child(row)
 
 
 # --- utilitarios -------------------------------------------------------------------------------------------------

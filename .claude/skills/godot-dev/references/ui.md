@@ -33,9 +33,11 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
 - **Texto do jogador, não id**: motivos (`vertical_rapido` …) passam por `UiKit.crash_text`; botão diz para onde
   leva ("IR AO HANGAR", não "novo run" se abre o hangar). Dica de teclas dentro de painel, nunca solta sobre o cenário.
 - Tooltip e barra de rolagem usam o tema (`TooltipPanel`/`TooltipLabel`, `VScrollBar`) — nada com a cara padrão do Godot.
-- **Pausa** (2ª auditoria, 2026-10-02): Esc no voo ou janela sem foco abrem `PauseMenu` (`game/pause/`, modal,
-  `PROCESS_MODE_ALWAYS`, `SceneTree.paused`): volumes + lista de controles + CONTINUAR (Esc/Enter). Nunca no demo nem na
-  gravação de quadros. O autoload `Sound` roda com o jogo pausado (cliques do menu). Pausa não mexe no run.
+- **Menu do jogo = `PauseMenu`** (`game/pause/`, modal, `PROCESS_MODE_ALWAYS`), o mesmo nos dois lugares:
+  voo (Esc ou janela sem foco) → modo FLIGHT "PAUSA", congela a árvore (`SceneTree.paused`), CONTINUAR; hangar (Esc ou
+  "Menu [Esc]") → modo HANGAR "MENU": **o hangar some** (Esc nunca abre "opções dentro do hangar" — reclamação do usuário em
+  2026-10-03), + Menu inicial e Novo jogo (2 cliques, Esc cancela), VOLTAR AO HANGAR. Ambos: volumes + controles.
+  Nunca no demo nem na gravação de quadros. O autoload `Sound` roda com o jogo pausado. Com o menu aberto, R não decola.
 - **Rodapé do HUD** (dica de teclas / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.
 - **Modais** bloqueiam o clique no que está atrás (`Dim` com mouse_filter STOP). Botão de modal que aparece no meio do
   voo ganha foco com atraso (`RunSummary.FOCUS_DELAY`): Espaço do propulsor não fecha a janela sem querer.

@@ -74,6 +74,8 @@
       volumes e controles; dica de teclas do HUD em painel; cabeçalho de colunas nas ofertas; foco visível (com atraso) no
       resumo; modais bloqueiam clique atrás; números do hangar num só formato, "MÁX"; `fmt(1e6)` = "1.00M" (era "1000K");
       glifo inexistente "—" trocado; prévia `flight_ui_preview` (2026-10-02)
+- [x] Esc no hangar abre o **menu do jogo** (hangar escondido; volumes, controles, menu inicial, novo jogo), não mais uma
+      "aba de opções" dentro do hangar; teste `esc_flow` (2026-10-03)
 - [x] Vários jogos salvos: 3 espaços (jogo 1 = save.json antigo, sem migração), tela "Jogos salvos" no menu inicial
       (jogar / novo jogo / apagar com 2 cliques), opções e último jogo em `user://settings.json` (2026-10-02)
 
