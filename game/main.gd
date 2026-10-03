@@ -24,7 +24,15 @@ var _hangar: Hangar = null
 var _ending: Ending = null
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
-var _run_start_ms := 0
+## Segundos reais do run em andamento, sem pausa (o relogio para com o jogo pausado ou a janela sem foco): a frota
+## e paga por este tempo, nao pelo relogio de parede.
+var _run_time := 0.0
+var _run_active := false
+## Recordes batidos neste run (aparecem no resumo depois do final do jogo).
+var _run_records: Array[String] = []
+## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
+var _restart_armed := 0.0
+const CONFIRM_SECONDS := 2.0
 
 @onready var _world: Node2D = %World
 @onready var _gui: CanvasLayer = %GUI
@@ -89,9 +97,33 @@ func _ready() -> void:
 		_show_title()
 
 
+func _process(delta: float) -> void:
+	if _run_active:
+		_run_time += delta
+	_restart_armed = maxf(_restart_armed - delta, 0.0)
+
+
+## Tela cheia: F11 ou Alt+Enter, em qualquer tela.
+func _input(event: InputEvent) -> void:
+	var alt_enter: bool = event is InputEventKey and event.pressed and not event.is_echo() \
+			and (event as InputEventKey).alt_pressed and (event as InputEventKey).keycode == KEY_ENTER
+	if alt_enter or event.is_action_pressed(&"fullscreen"):
+		get_viewport().set_input_as_handled()
+		GameState.set_fullscreen(not GameState.fullscreen())
+		SaveManager.request_save()
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible and not _pause.visible:
-		_start_run()
+	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible and not _pause.visible \
+			and not _ending.visible:
+		# no meio de um salto, R pede confirmacao (a entrega em voo se perderia por um toque sem querer)
+		var flying := _flight != null and _flight.lander.state == Lander.State.FLYING and _run != null and not _run.over
+		if flying and _restart_armed <= 0.0 and not _demo:
+			_restart_armed = CONFIRM_SECONDS
+			_hud.confirm_hint("R de novo para reiniciar o run (a entrega em voo se perde)", CONFIRM_SECONDS)
+		else:
+			_restart_armed = 0.0
+			_start_run()
 	elif event.is_action_pressed(&"ui_cancel") and _can_pause():
 		get_viewport().set_input_as_handled()
 		_pause.open()
@@ -117,16 +149,21 @@ func _back_to_hangar() -> void:
 	_hangar.refresh()
 
 
-## Abre o hangar (no sandbox, repoe antes os recursos de teste).
+## Abre o hangar (no sandbox, repoe antes os recursos de teste). O que for do voo some: nada atras do hangar recebe
+## teclas (o painel de ofertas escutava 1-9 escondido atras dele).
 func _open_hangar() -> void:
 	if Sandbox.active():
 		Sandbox.top_up()
+	for c: Control in [_hud, _offers, _summary]:
+		if c != null and is_instance_valid(c):
+			c.visible = false
 	_hangar.open()
 
 
 ## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega). Voltar ao menu
 ## encerra o sandbox (o jogo salvo verdadeiro volta).
 func _show_title() -> void:
+	_abandon_run()                                             # run em andamento fecha a conta no jogo em uso
 	Sandbox.end()
 	_hangar.visible = false
 	_ending.visible = false
@@ -152,7 +189,27 @@ func _on_title_play() -> void:
 		_start_run()
 
 
+func _note_record(key: String, value: float) -> void:
+	if GameState.note_record(key, value) and not key in _run_records:
+		_run_records.append(key)
+
+
+## Saida do voo pelo menu (Menu inicial) ou R: fecha a contabilidade do run como um fim normal (frota paga pelo tempo
+## voado, conta como run) sem mostrar o resumo. Run sem entregas nao conta. Fora de um run nao faz nada.
+func _abandon_run() -> void:
+	if not _run_active or _run == null or _run.over:
+		return
+	_run_active = false
+	if _run.deliveries.is_empty():                             # nada entregue: nao conta como run (nem polui a frota)
+		return
+	_run.finish("encerrado")
+	GameState.settle_run(_run.earned, _run_time * float(WorldConfig.load_config()["time_scale"]))
+	GameState.runs_done += 1
+	Events.run_finished.emit(_run.summary())
+
+
 func _clear_run() -> void:
+	_run_active = false
 	for n: Node in [_flight, _hud, _offers, _summary]:
 		if n != null:
 			n.queue_free()
@@ -163,6 +220,7 @@ func _clear_run() -> void:
 
 
 func _start_run() -> void:
+	_abandon_run()                                             # R no meio do run: o que foi ganho fecha a conta antes
 	_hangar.visible = false
 	_title.visible = false
 	_clear_run()
@@ -191,7 +249,9 @@ func _start_run() -> void:
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
 	_summary.continue_requested.connect(_on_continue)
-	_run_start_ms = Time.get_ticks_msec()
+	_run_time = 0.0
+	_run_active = true
+	_run_records.clear()
 	Events.run_started.emit(GameState.current_planet)
 	_show_offers()
 
@@ -199,7 +259,7 @@ func _start_run() -> void:
 func _show_offers() -> void:
 	var gas := _flight.lander.gas
 	if not _run.over and not _run.can_continue(gas):
-		_run.finish("sem_gas")
+		_run.finish("sem_gas" if not _run.deliveries.is_empty() else "sem_alcance")
 	if _run.over:
 		_end_run()
 		return
@@ -227,7 +287,7 @@ func _on_end_requested() -> void:
 
 
 func _on_delivery_finished(result: Dictionary) -> void:
-	print("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
+	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		_run.crash(str(result["reason"]))
 		_end_run()
@@ -235,6 +295,10 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"],
 			int(result.get("crystals", 0)))
 	GameState.add_rewards(rewards)
+	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
+	_note_record("longest_hop", float(result["distance"]))
+	_note_record("best_combo", float(_run.streak))
+	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
 	_hud.show_delivery(_run.deliveries[-1], _run.streak)
 	if _run.streak >= 2:                                       # combo: estalo que sobe com o tamanho, depois da entrega
 		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % mini(_run.streak, 5)))
@@ -249,14 +313,17 @@ func _on_stranded() -> void:
 func _end_run() -> void:
 	_offers.visible = false
 	# duracao do run em segundos do modelo (a frota trabalha enquanto voce voa)
-	var model_s := (Time.get_ticks_msec() - _run_start_ms) / 1000.0 * float(WorldConfig.load_config()["time_scale"])
+	_run_active = false
+	var model_s := _run_time * float(WorldConfig.load_config()["time_scale"])
 	var fleet := GameState.settle_run(_run.earned, model_s)
+	_note_record("best_run", float(_run.earned.get("credits", 0.0)) + float(fleet.get("credits", 0.0)))
 	var s := _run.summary()
 	s["fleet"] = fleet
+	s["records"] = _run_records.duplicate() if GameState.reached_goal else []
 	_summary.show_summary(s)
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
-	print("RUN_SUMMARY ", JSON.stringify(s))
+	_log("RUN_SUMMARY ", JSON.stringify(s))
 	if _demo:
 		await get_tree().create_timer(2.0).timeout
 		_on_continue()
@@ -276,7 +343,7 @@ func _on_continue() -> void:
 func _on_goal_reached(_planet_id: String) -> void:
 	_hangar.visible = false
 	_ending.show_ending()
-	print("GOAL_REACHED ", JSON.stringify({"runs": GameState.runs_done, "points": GameState.prestige_points}))
+	_log("GOAL_REACHED ", JSON.stringify({"runs": GameState.runs_done, "points": GameState.prestige_points}))
 
 
 func _on_launch_requested() -> void:
@@ -319,7 +386,7 @@ func _demo_shop() -> void:
 		if best == "" or not GameState.buy_upgrade(best):
 			break
 	for p: Dictionary in GameState.planet_rows():
-		if p["unlocked"] and p["can_fly"]:
+		if p["unlocked"] and p["can_launch"]:
 			GameState.current_planet = p["id"]
 	_hangar.refresh()
 	print("HANGAR ", JSON.stringify({"planet": GameState.current_planet, "credits": GameState.amount("credits"), "levels": GameState.levels,
@@ -330,6 +397,8 @@ func _demo_shop() -> void:
 ## --dev_shop=warp_drive:1,star_charts:1
 ## --dev_unlock=ares,kronos  --planet=id. Nao existem no jogo normal (sem args).
 func _apply_dev_args() -> void:
+	if not OS.is_debug_build():                                # build publico: sem atalhos de desenvolvedor
+		return
 	if _args.has("dev_levels"):
 		for pair in str(_args["dev_levels"]).split(","):
 			GameState.levels[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
@@ -352,6 +421,12 @@ func _apply_dev_args() -> void:
 			push_warning("--planet=%s nao existe na spec; usando luna" % pid)
 		if not GameState.current_planet in GameState.unlocked_planets:
 			GameState.unlocked_planets.append(GameState.current_planet)
+
+
+## Linha de verificacao (gdtool run/capture leem o stdout); fora no build publico.
+func _log(tag: String, data: String) -> void:
+	if OS.is_debug_build():
+		print(tag, data)
 
 
 func _parse_args(args: PackedStringArray) -> Dictionary:

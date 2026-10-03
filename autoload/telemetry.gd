@@ -1,5 +1,7 @@
-## Telemetria de entregas em CSV (calibra o modelo da economy-balance, Etapa 10).
+## Telemetria de entregas em CSV (calibra o modelo da economy-balance, Etapa 10). So local (nada sai do computador).
 ## Arquivo: user://telemetry/deliveries.csv — copiar para balance/telemetry/ e rodar econ.calibrate().
+## Ligada no desenvolvimento (editor / build de depuracao); no build publico so com --telemetry. Arquivo acima de
+## MAX_BYTES vira deliveries_old*.csv (nao cresce sem limite).
 extends Node
 
 const DIR := "user://telemetry"
@@ -7,12 +9,15 @@ const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
 		"crashed", "pilot", "tier", "crystals"]
 
+const MAX_BYTES := 5 * 1024 * 1024
+
 var enabled := true
 var pilot := "human"      # "demo" quando o piloto automatico voa (nao misturar na calibracao)
 
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	enabled = OS.is_debug_build() or "--telemetry" in args
 	if "--demo" in args:
 		pilot = "demo"
 		enabled = "--telemetry" in args
@@ -39,15 +44,16 @@ func record_delivery(result: Dictionary) -> void:
 	f.store_csv_line(row)
 
 
-## Se o arquivo existente tem outro cabecalho (versao antiga), guarda como deliveries_old.csv
+## Se o arquivo existente tem outro cabecalho (versao antiga) ou passou de MAX_BYTES, guarda como deliveries_old.csv
 ## (ou deliveries_old2.csv, 3... — nunca sobrescreve dados antigos).
 func _rotate_if_old_header() -> void:
 	if not FileAccess.file_exists(DELIVERIES):
 		return
 	var f := FileAccess.open(DELIVERIES, FileAccess.READ)
 	var head := f.get_csv_line()
+	var too_big := f.get_length() > MAX_BYTES
 	f.close()
-	if Array(head) != HEADER:
+	if Array(head) != HEADER or too_big:
 		var n := 1
 		var name := "deliveries_old.csv"
 		while FileAccess.file_exists(DIR.path_join(name)):

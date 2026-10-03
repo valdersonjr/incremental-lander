@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/integration/release_fixes.gd" id="1_it"]
+
+[node name="ReleaseFixes" type="Node"]
+script = ExtResource("1_it")

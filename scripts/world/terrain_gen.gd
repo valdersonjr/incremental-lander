@@ -71,13 +71,16 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 				"tier": tiers[i], "lift": lift})
 	for i in pads.size() - 1:
 		_add_crest(ridge, pads[i], pads[i + 1], cfg["crest"], pcfg)
+	var y_range := _y_range(ridge)
 	for p in pads:
-		_shape_pad(ridge, p, side_slope)
+		y_range = _shape_pad(ridge, p, side_slope, y_range)
 	for k in range(pads.size() - 1, -1, -1):                   # topo plano garantido; a mais antiga ganha
 		var p: Dictionary = pads[k]
-		for j in ridge.size():
-			if absf(ridge[j].x - float(p["x"])) <= float(p["half_width"]) + 0.001:
-				ridge[j] = Vector2(ridge[j].x, float(p["y"]))
+		var half_p := float(p["half_width"]) + 0.001
+		for j in range(_first_at_or_after(ridge, float(p["x"]) - half_p), ridge.size()):
+			if ridge[j].x > float(p["x"]) + half_p:
+				break
+			ridge[j] = Vector2(ridge[j].x, float(p["y"]))
 	# garante as bordas exatas das plataformas no contorno
 	for p in pads:
 		ridge = _insert_point(ridge, Vector2(p["x"] - p["half_width"], p["y"]))
@@ -108,19 +111,30 @@ static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 	var extra := minf(_height_at(ridge, mid) - peak_y, float(crest["max_bump_slope"]) * w / (PI * 0.5))
 	if extra <= 0.0:
 		return
-	for j in ridge.size():
+	for j in range(_first_at_or_after(ridge, mid - w), ridge.size()):
 		var dx := ridge[j].x - mid
+		if dx >= w:
+			break
 		if absf(dx) < w:
 			ridge[j].y -= extra * (0.5 + 0.5 * cos(PI * dx / w))
 
 
 ## Pico (lift > 0) ou vale (lift < 0) em volta da plataforma: topo plano + encostas com side_slope.
-static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: float) -> void:
+## y_range = (menor y, maior y) do contorno: limita a faixa que a encosta pode alcancar (o resto nao muda).
+## Devolve o y_range atualizado (um vale pode descer o contorno abaixo do maior y anterior).
+static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: float, y_range: Vector2) -> Vector2:
 	var lift := float(p["lift"])
 	var cx := float(p["x"])
 	var half := float(p["half_width"])
 	var py := float(p["y"])
-	for j in ridge.size():
+	var reach := half + 0.001
+	if lift > 0.0:
+		reach = half + maxf(y_range.y - py, 0.0) / side_slope + 1.0
+	elif lift < 0.0:
+		reach = half + maxf(py - y_range.x, 0.0) / side_slope + 1.0
+	for j in range(_first_at_or_after(ridge, cx - reach), ridge.size()):
+		if ridge[j].x > cx + reach:
+			break
 		var dx := absf(ridge[j].x - cx)
 		if dx <= half + 0.001:
 			ridge[j].y = py
@@ -128,6 +142,8 @@ static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: flo
 			ridge[j].y = minf(ridge[j].y, py + (dx - half) * side_slope)
 		elif lift < 0.0:
 			ridge[j].y = maxf(ridge[j].y, py - (dx - half) * side_slope)
+		y_range = Vector2(minf(y_range.x, ridge[j].y), maxf(y_range.y, ridge[j].y))
+	return y_range
 
 
 ## Ponto mais alto do relevo (menor y) entre x_a e x_b — usado pelo piloto automatico para nao raspar cristas.
@@ -136,7 +152,9 @@ static func highest_between(ridge: PackedVector2Array, x_a: float, x_b: float) -
 	var hi := maxf(x_a, x_b)
 	var best := minf(_height_at(ridge, lo), _height_at(ridge, hi))
 	for pt in ridge:
-		if pt.x > lo and pt.x < hi:
+		if pt.x >= hi:
+			break
+		if pt.x > lo:
 			best = minf(best, pt.y)
 	return best
 
@@ -154,16 +172,48 @@ static func pad_at(pads: Array[Dictionary], x: float) -> Dictionary:
 	return {}
 
 
+## Menor e maior y do contorno.
+static func _y_range(ridge: PackedVector2Array) -> Vector2:
+	var r := Vector2(INF, -INF)
+	for pt in ridge:
+		r.x = minf(r.x, pt.y)
+		r.y = maxf(r.y, pt.y)
+	return r
+
+
+## Indice do primeiro ponto com x >= x0 (contorno crescente em x; ridge.size() se nenhum).
+static func _first_at_or_after(ridge: PackedVector2Array, x0: float) -> int:
+	var lo := 0
+	var hi := ridge.size()
+	while lo < hi:
+		var mid := (lo + hi) >> 1
+		if ridge[mid].x < x0:
+			lo = mid + 1
+		else:
+			hi = mid
+	return lo
+
+
+## Busca binaria (o contorno e crescente em x): mapas de centenas de km tem dezenas de milhares de pontos e isto roda
+## para cada pedra e varias vezes por quadro — a busca linear travava o jogo por segundos no fim do jogo.
 static func _height_at(ridge: PackedVector2Array, x: float) -> float:
+	var n := ridge.size()
 	if x <= ridge[0].x:
 		return ridge[0].y
-	for i in range(1, ridge.size()):
-		if ridge[i].x >= x:
-			var a := ridge[i - 1]
-			var b := ridge[i]
-			var t := (x - a.x) / maxf(b.x - a.x, 0.0001)
-			return lerpf(a.y, b.y, t)
-	return ridge[ridge.size() - 1].y
+	if x > ridge[n - 1].x:
+		return ridge[n - 1].y
+	var lo := 1
+	var hi := n - 1
+	while lo < hi:                                             # primeiro i com ridge[i].x >= x
+		var mid := (lo + hi) >> 1
+		if ridge[mid].x >= x:
+			hi = mid
+		else:
+			lo = mid + 1
+	var a := ridge[lo - 1]
+	var b := ridge[lo]
+	var t := (x - a.x) / maxf(b.x - a.x, 0.0001)
+	return lerpf(a.y, b.y, t)
 
 
 static func _insert_point(ridge: PackedVector2Array, p: Vector2) -> PackedVector2Array:

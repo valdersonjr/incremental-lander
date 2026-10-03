@@ -148,11 +148,13 @@ func _extend_terrain_if_near_edge() -> void:
 	if ridge.is_empty():
 		return
 	var x := lander.global_position.x
+	# passo cresce com o mapa (1/4 da largura): mapas de centenas de km se estendem poucas vezes (cada vez refaz tudo)
+	var step := maxf(EXTEND_STEP, (ridge[ridge.size() - 1].x - ridge[0].x) * 0.25)
 	var grow := Vector2.ZERO
 	if x < ridge[0].x + EXTEND_NEAR:
-		grow.x = EXTEND_STEP
+		grow.x = step
 	if x > ridge[ridge.size() - 1].x - EXTEND_NEAR:
-		grow.y = EXTEND_STEP
+		grow.y = step
 	if grow == Vector2.ZERO:
 		return
 	_extend += grow

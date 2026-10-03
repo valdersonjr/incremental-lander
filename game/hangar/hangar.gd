@@ -75,8 +75,9 @@ func refresh() -> void:
 		_add_pending_prestige()
 		_after_rebuild(focus_key)
 		return
-	_launch.disabled = false
-	_launch.text = "DECOLAR  [Enter]"
+	var launchable := Purchases.can_launch(planet, GameState.ship_stats())
+	_launch.disabled = not launchable
+	_launch.text = "DECOLAR  [Enter]" if launchable else "nave fraca para este mundo: melhore a nave ou troque em MUNDOS"
 	if _tab == Tab.PRESTIGE and not _prestige_unlocked():
 		_tab = Tab.SHIP
 	_fill_expedition()
@@ -107,7 +108,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		if not _launch.disabled:
 			launch_requested.emit()
-	elif event.is_action_pressed(&"ui_cancel") and not GameState.prestige_pending:
+	elif event.is_action_pressed(&"ui_cancel"):                # com recomeco pendente tambem: opcoes/menu/sair
 		get_viewport().set_input_as_handled()
 		if _confirm_prestige:                                  # Esc primeiro desiste da confirmacao pendente
 			_confirm_prestige = false
@@ -115,11 +116,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			refresh()
 		else:
 			_request_menu()
-	elif event is InputEventKey and event.pressed and not event.echo and not GameState.prestige_pending:
-		var k: int = event.keycode
-		if k == KEY_Q or k == KEY_E:
-			get_viewport().set_input_as_handled()
-			_cycle_tab(-1 if k == KEY_Q else 1)
+	elif (event.is_action_pressed(&"tab_prev") or event.is_action_pressed(&"tab_next")) and not event.is_echo() \
+			and not GameState.prestige_pending:                # Q/E ou LB/RB
+		get_viewport().set_input_as_handled()
+		_cycle_tab(-1 if event.is_action_pressed(&"tab_prev") else 1)
 
 
 # --- cabecalho ---------------------------------------------------------------------------------------------------
@@ -335,7 +335,9 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 	row.add_child(_cell("%.2f" % float(p["gravity"]), COL_LEVEL + 34, &"ValueLabel"))
 	row.add_child(_cell("×%s" % EconMath.fmt(float(p["pay_mult"])), COL_EFFECT - 34, &"MoneyLabel"))
 	if here:
-		row.add_child(_cell("VOCÊ ESTÁ AQUI", COL_ACTION + COL_MAX + 4, &"GoodLabel"))
+		var ok: bool = p["can_launch"]
+		row.add_child(_cell("VOCÊ ESTÁ AQUI" if ok else "AQUI: nave fraca", COL_ACTION + COL_MAX + 4,
+				&"GoodLabel" if ok else &"BadLabel"))
 		return row
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(COL_ACTION + COL_MAX + 4, 15)
@@ -343,7 +345,7 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 	b.set_meta(&"focus_key", "planet:" + id)
 	if p["unlocked"]:
 		b.icon = UiKit.icon("distance")
-		if p["can_fly"]:
+		if p["can_launch"]:
 			b.text = "Voar para cá"
 			b.tooltip_text = "a próxima decolagem será neste mundo"
 			b.pressed.connect(func() -> void:
@@ -351,9 +353,13 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 				GameState.current_planet = id
 				_flash_row = "planet:" + id
 				refresh())
-		else:
+		elif not p["can_fly"]:
 			b.text = "motor fraco: compre Motor"
 			b.tooltip_text = "o motor ainda não vence a gravidade deste mundo"
+			b.disabled = true
+		else:
+			b.text = "alcance curto: compre Tanque"
+			b.tooltip_text = "com o tanque cheio a nave ainda não chega à entrega mais curta deste mundo"
 			b.disabled = true
 	else:
 		var cost_txt := []
@@ -418,6 +424,9 @@ func _add_prestige() -> void:
 	_rows.add_child(b)
 	if GameState.prestige_points > 0.0 or GameState.amount(dust_id) > 0.0:
 		_add_shop(st)
+	if GameState.reached_goal:                                 # pos-jogo: recordes pessoais
+		for row: Control in Ending.record_rows():
+			_rows.add_child(row)
 
 
 ## Recomeco em andamento: so a loja + concluir (o reset usa o que foi comprado).

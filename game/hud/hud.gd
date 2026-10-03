@@ -10,6 +10,7 @@ var flight: Flight = null
 var run: RunState = null
 
 var _toast_left := 0.0
+var _hint_left := 0.0
 
 @onready var _gas: Label = %Gas
 @onready var _gas_bar: ProgressBar = %GasBar
@@ -47,6 +48,10 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 
 func _process(delta: float) -> void:
 	_tick_toast(delta)
+	if _hint_left > 0.0:
+		_hint_left -= delta
+		if _hint_left <= 0.0:
+			_set_status(_idle_status())
 	if flight == null:
 		return
 	var l := flight.lander
@@ -114,6 +119,12 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 	_toast_extra.text = "  ·  ".join(parts)
 	_toast_extra.visible = not parts.is_empty()
 	_toast_extra.theme_type_variation = &"BadLabel" if not bool(entry.get("good", true)) else &"MoneyLabel"
+
+
+## Pedido de confirmacao no rodape (ex.: "R de novo para reiniciar"); some sozinho depois de seconds.
+func confirm_hint(text: String, seconds: float) -> void:
+	_set_status(text, &"MoneyLabel")
+	_hint_left = seconds
 
 
 ## Rodape em repouso: so a marca do sandbox. As teclas ficam no menu do Esc (CONTROLES), nao na tela.

@@ -55,10 +55,12 @@ layout_mode = 2
 theme_override_constants/separation = 2
 
 [node name="Thanks" type="Label" parent="Center/Panel/VBox"]
+custom_minimum_size = Vector2(260, 0)
 layout_mode = 2
 theme_type_variation = &"DimLabel"
-text = "Obrigado por jogar este protótipo."
+text = "Obrigado por jogar! A jornada continua: bata seus recordes, recomece por mais Poeira Estelar ou teste tudo no Sandbox."
 horizontal_alignment = 1
+autowrap_mode = 3
 
 [node name="Continue" type="Button" parent="Center/Panel/VBox"]
 unique_name_in_owner = true

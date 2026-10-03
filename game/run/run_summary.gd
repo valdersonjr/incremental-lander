@@ -37,6 +37,9 @@ func show_summary(summary: Dictionary) -> void:
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
 				float(fleet[res])), &"MoneyLabel"))
+	for key: String in summary.get("records", []):             # pos-jogo: recorde batido neste run
+		var info: Array = GameState.RECORDS.get(key, [key, ""])
+		_rows.add_child(UiKit.stat_row(str(info[1]), "NOVO RECORDE: " + str(info[0]), "!", &"GoodLabel"))
 	visible = true
 	# foco visivel no botao, mas so depois de um instante: Espaco (propulsor) apertado na hora da batida nao pula o resumo
 	get_tree().create_timer(FOCUS_DELAY).timeout.connect(func() -> void:
@@ -54,5 +57,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _reason_text(reason: String) -> String:
 	if reason.begins_with("batida"):
 		return "a nave bateu: " + UiKit.crash_text(reason.get_slice(":", 1))
-	return {"limite_de_entregas": "limite de entregas", "sem_gas": "acabou o gás", "encerrado": "run encerrado"}.get(
+	return {"limite_de_entregas": "limite de entregas", "sem_gas": "acabou o gás", "encerrado": "run encerrado",
+			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave ou troque de mundo"}.get(
 			reason, reason)

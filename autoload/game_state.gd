@@ -15,8 +15,19 @@ var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (ba
 var reached_goal := false             # chegou ao planeta final (targets.goal)
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
+var records: Dictionary = {}          # recordes pessoais (pos-jogo): RECORDS -> maior valor ja feito
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
+## Recordes pessoais (estatistica, nao economia): id -> [nome para o jogador, icone].
+const RECORDS := {
+	"best_delivery": ["maior entrega", "credits"],
+	"longest_hop": ["salto mais longo (m)", "distance"],
+	"best_combo": ["maior combo", "quality"],
+	"best_run": ["run mais rico", "expedition"],
+}
+
+var _fullscreen_applied := false
+var _bus_base_db: Dictionary = {}     # volume de cada bus no default_bus_layout (a opcao soma por cima)
 
 
 func _ready() -> void:
@@ -45,6 +56,7 @@ func reset() -> void:
 	reached_goal = false
 	runs_done = 0
 	play_seconds = 0.0
+	records = {}
 
 
 ## Quantidade de um recurso.
@@ -138,6 +150,10 @@ func finish_prestige() -> void:
 	Prestige.reset(st)
 	_pull(st)
 	prestige_pending = false
+	# planetas mantidos (Cartas de navegacao) mas a nave voltou ao inicio: nao deixar o jogador num mundo em que nao
+	# decola (o run acabaria na hora, sem entregas)
+	if not Purchases.can_launch(current_planet, ship_stats()):
+		current_planet = Purchases.best_launchable(unlocked_planets, ship_stats())
 	for res: String in resources:
 		Events.resources_changed.emit(res, resources[res])
 
@@ -172,6 +188,15 @@ func settle_run(earned: Dictionary, seconds: float) -> Dictionary:
 	return fleet
 
 
+## Registra um valor para um recorde. Retorna true se bateu o recorde anterior (e havia um: a primeira marca nao conta).
+func note_record(key: String, value: float) -> bool:
+	var old := float(records.get(key, 0.0))
+	if value <= old:
+		return false
+	records[key] = value
+	return old > 0.0
+
+
 ## Libera o planeta objetivo? Chamado apos unlock_planet para disparar o final.
 func check_goal(planet_id: String) -> bool:
 	var goal: String = EconMath.spec["targets"].get("goal", {}).get("planet", "")
@@ -187,7 +212,7 @@ func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "shop": shop, "prestige_points": prestige_points,
 			"prestige_pending": prestige_pending, "unlocked": unlocked_planets, "current_planet": current_planet,
 			"cycle_earned": cycle_earned, "income_history": income_history, "reached_goal": reached_goal,
-			"runs_done": runs_done, "play_seconds": play_seconds, "settings": settings}
+			"runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -205,6 +230,7 @@ func apply_save_state(st: Dictionary) -> void:
 	runs_done = st["runs_done"]
 	play_seconds = st["play_seconds"]
 	settings = st["settings"]
+	records = st.get("records", {})
 	apply_settings()
 	for res: String in resources:
 		Events.resources_changed.emit(res, resources[res])
@@ -230,12 +256,64 @@ func set_crt(on: bool) -> void:
 	apply_settings()
 
 
-## Aplica as opcoes (volumes nos buses de audio) e avisa quem mostra as outras (filtro CRT).
+## Tela cheia (padrao: nao). F11 / Alt+Enter alternam (Main).
+func fullscreen() -> bool:
+	return bool(settings.get("fullscreen", false))
+
+
+func set_fullscreen(on: bool) -> void:
+	settings["fullscreen"] = on
+	apply_settings()
+
+
+## Teclas de uma acao remapeavel (nomes): as escolhidas pelo jogador ou as padrao de world.json.
+func keys_for(action: String) -> Array:
+	var custom: Variant = settings.get("keys")
+	if custom is Dictionary and (custom as Dictionary).get(action) is Array:
+		return custom[action]
+	return WorldConfig.default_keys(action)
+
+
+## Remapeia a tecla principal de uma acao: key_name passa a ser a 1a tecla dela e sai de qualquer outra acao.
+func remap_key(action: String, key_name: String) -> void:
+	var custom := {}
+	for a: String in WorldConfig.remappable():
+		var ks: Array = keys_for(a).duplicate()
+		ks.erase(key_name)
+		custom[a] = ks
+	var mine: Array = custom.get(action, [])
+	if mine.is_empty():
+		mine.append(key_name)
+	else:
+		mine[0] = key_name
+	custom[action] = mine
+	settings["keys"] = custom
+	apply_settings()
+
+
+## Volta as teclas ao padrao.
+func reset_keys() -> void:
+	settings.erase("keys")
+	apply_settings()
+
+
+
+## Aplica as opcoes (volumes nos buses de audio, teclas, tela cheia) e avisa quem mostra as outras (filtro CRT).
 func apply_settings() -> void:
+	WorldConfig.register_input()
+	for action: String in WorldConfig.remappable():
+		WorldConfig.set_keys(action, keys_for(action))
+	# tela cheia so quando a opcao muda (nao briga com a tela cheia do sistema, ex.: botao verde do macOS)
+	if fullscreen() != _fullscreen_applied and DisplayServer.get_name() != "headless":
+		_fullscreen_applied = fullscreen()
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if _fullscreen_applied
+				else DisplayServer.WINDOW_MODE_WINDOWED)
 	for bus: String in BUSES:
 		var idx := AudioServer.get_bus_index(bus)
 		if idx >= 0:
+			if not _bus_base_db.has(bus):
+				_bus_base_db[bus] = AudioServer.get_bus_volume_db(idx)
 			var v := volume(bus)
 			AudioServer.set_bus_mute(idx, v <= 0.0)
-			AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))
+			AudioServer.set_bus_volume_db(idx, float(_bus_base_db[bus]) + linear_to_db(maxf(v, 0.0001)))
 	Events.settings_changed.emit()

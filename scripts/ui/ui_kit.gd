@@ -3,7 +3,7 @@
 ## vermelho = perigo, ambar = gas acabando, barra de gas ciano). Fonte bitmap: tamanho 11 (1x) ou 22 (2x), nunca
 ## fracionario. Variacoes de tipo: SlimPanel, TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
 ## PrimaryButton, DangerButton, GasBar, WarnBar, DangerBar, XpBar. Foco de teclado = moldura de 1 px na cor de titulo
-## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, crt_row, stat_row, pulse.
+## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, toggle_row (crt_row, fullscreen_row), key_row, stat_row, pulse.
 class_name UiKit
 extends RefCounted
 
@@ -202,25 +202,83 @@ static func volume_row(bus: String) -> HBoxContainer:
 	return row
 
 
-## Linha "Filtro CRT": nome | botao Ligado/Desligado (alterna, salva e toca o clique). Igual no titulo e nos menus.
-static func crt_row() -> HBoxContainer:
+## Linha liga/desliga: nome | botao com o estado (alterna, salva e toca o clique). Igual no titulo e nos menus.
+static func toggle_row(title: String, tooltip: String, focus_key: String, getter: Callable, setter: Callable,
+		on_text: String = "Ligado", off_text: String = "Desligado") -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 4)
 	var name := Label.new()
-	name.text = "Filtro CRT"
+	name.text = title
 	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name)
 	var b := Button.new()
 	b.custom_minimum_size = Vector2(70, 15)
-	b.tooltip_text = "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa"
-	b.set_meta(&"focus_key", "crt")
+	b.tooltip_text = tooltip
+	b.set_meta(&"focus_key", focus_key)
 	var show := func() -> void:
-		b.text = "Ligado" if GameState.crt_enabled() else "Desligado"
+		b.text = on_text if getter.call() else off_text
 	b.pressed.connect(func() -> void:
-		GameState.set_crt(not GameState.crt_enabled())
+		setter.call(not getter.call())
 		SaveManager.request_save()
 		Sound.ui("click")
 		show.call())
+	show.call()
+	row.add_child(b)
+	return row
+
+
+## Linha "Filtro CRT" (efeito de TV de tubo).
+static func crt_row() -> HBoxContainer:
+	return toggle_row("Filtro CRT", "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa", "crt",
+			GameState.crt_enabled, GameState.set_crt)
+
+
+## Linha "Tela cheia" (tambem F11 ou Alt+Enter).
+static func fullscreen_row() -> HBoxContainer:
+	return toggle_row("Tela cheia", "ocupar a tela inteira (F11 ou Alt+Enter também alternam)", "fullscreen",
+			GameState.fullscreen, GameState.set_fullscreen, "Ligada", "Desligada")
+
+
+## Linha de controle remapeavel: o que faz | botao com a tecla principal (+ as outras, apagadas). Clicar (ou Enter)
+## espera a proxima tecla; Esc desiste. A tecla escolhida sai de qualquer outra acao (GameState.remap_key).
+static func key_row(action: String, title: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	var what := Label.new()
+	what.text = title
+	what.theme_type_variation = &"DimLabel"
+	what.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(what)
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(96, 13)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.set_meta(&"focus_key", "key:" + action)
+	b.tooltip_text = "clique e aperte a nova tecla (Esc desiste)"
+	var show := func() -> void:
+		var names := GameState.keys_for(action).map(func(k: String) -> String: return WorldConfig.key_label(k))
+		b.text = " / ".join(names) if not names.is_empty() else "(sem tecla)"
+	b.pressed.connect(func() -> void:
+		Sound.ui("click")
+		b.set_meta(&"listening", true)
+		b.text = "aperte uma tecla...")
+	b.gui_input.connect(func(ev: InputEvent) -> void:
+		if not b.get_meta(&"listening", false) or not ev is InputEventKey or not ev.pressed or ev.echo:
+			return
+		b.accept_event()
+		b.set_meta(&"listening", false)
+		var k := ev as InputEventKey
+		if k.keycode != KEY_ESCAPE and k.physical_keycode != KEY_NONE:
+			GameState.remap_key(action, OS.get_keycode_string(k.physical_keycode))
+			SaveManager.request_save()
+		Sound.ui("click")
+		for r: Node in row.get_parent().get_children():           # outras linhas podem ter perdido a tecla
+			if r.has_meta(&"refresh"):
+				(r.get_meta(&"refresh") as Callable).call())
+	b.focus_exited.connect(func() -> void:
+		if b.get_meta(&"listening", false):
+			b.set_meta(&"listening", false)
+			show.call())
+	row.set_meta(&"refresh", show)
 	show.call()
 	row.add_child(b)
 	return row

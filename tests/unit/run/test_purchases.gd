@@ -77,3 +77,19 @@ func test_motor_base_nao_voa_em_ares() -> void:
 	assert_true(Purchases.can_fly("luna", EconMath.ship_stats({})))
 	assert_false(Purchases.can_fly("ares", EconMath.ship_stats({})), "motor 4 < 1,05 x gravidade 5")
 	assert_true(Purchases.can_fly("ares", EconMath.ship_stats({"thrust": 3})))
+
+
+func test_decolar_exige_motor_e_alcance() -> void:
+	var base := EconMath.ship_stats({})
+	assert_true(Purchases.can_launch("luna", base), "nave inicial decola na Lua")
+	assert_false(Purchases.can_launch("kronos", base), "motor 4 nao vence a gravidade 9")
+	var forte := EconMath.ship_stats({"thrust": 42, "tank": 38, "efficiency": 35})
+	assert_true(Purchases.can_launch("kronos", forte))
+
+
+func test_melhor_mundo_para_decolar_apos_recomeco() -> void:
+	# Cartas de navegacao mantem os mundos, mas a nave volta ao inicio: so a Lua serve
+	var base := EconMath.ship_stats({})
+	assert_eq(Purchases.best_launchable(["luna", "ares", "kronos"], base), "luna")
+	var forte := EconMath.ship_stats({"thrust": 42, "tank": 38, "efficiency": 35})
+	assert_eq(Purchases.best_launchable(["luna", "ares", "kronos"], forte), "kronos")

@@ -58,3 +58,39 @@ func test_resumo_para_a_tela_de_jogos_salvos() -> void:
 	assert_almost(s["play_seconds"], 321.0)
 	assert_almost(s["prestige_points"], 40.0)
 	assert_false(s["reached_goal"])
+
+
+func test_valores_de_tipo_errado_viram_zero_sem_erro() -> void:
+	var raw := SaveData.serialize(_state())
+	raw["resources"]["credits"] = {"x": 1}
+	raw["levels"]["tank"] = [3]
+	raw["prestige_points"] = "abc"
+	raw["runs_done"] = {"a": 1}
+	raw["reached_goal"] = [true]
+	raw["unlocked"] = "luna"
+	raw["income_history"] = {"earned": 1}
+	var back := SaveData.deserialize(raw)
+	assert_true(back["ok"])
+	var st: Dictionary = back["state"]
+	assert_almost(st["resources"]["credits"], 0.0)
+	assert_eq(st["levels"]["tank"], 0)
+	assert_almost(st["prestige_points"], 0.0)
+	assert_eq(st["runs_done"], 0)
+	assert_false(st["reached_goal"])
+	assert_eq(st["unlocked"], ["luna"])
+	assert_eq(st["income_history"], [])
+
+
+func test_versao_de_save_mais_nova_nao_carrega() -> void:
+	var raw := SaveData.serialize(_state())
+	raw["save_version"] = SaveData.SAVE_VERSION + 1
+	assert_false(SaveData.deserialize(raw)["ok"], "save de versao futura: guardar a parte, nunca interpretar")
+
+
+func test_recordes_ida_e_volta() -> void:
+	var st := _state()
+	st["records"] = {"best_delivery": 1500.0, "best_combo": 4.0, "inventado": 9.0}
+	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
+	assert_almost(back["state"]["records"]["best_delivery"], 1500.0)
+	assert_almost(back["state"]["records"]["best_combo"], 4.0)
+	assert_false(back["state"]["records"].has("inventado"))

@@ -6,13 +6,15 @@ extends PanelContainer
 signal offer_chosen(index: int)
 signal end_requested
 
-const HINT := "teclas 1-%d ou clique  >  depois W/Espaço decola"
+const HINT := "teclas 1-%d, setas + Enter ou clique  >  depois decole"
 ## Largura (px) das colunas distancia e gas (sem o icone de 12 px + 3 de espaco) e da coluna da plataforma.
 const COL_W := [54, 28]
 const TIER_W := 26
 
 ## Segundos restantes do aviso piscando (tentou pilotar antes de escolher). Exposto para o teste de controles.
 var hint_flash := 0.0
+## Segundos restantes para o 2o toque de E confirmar o fim do run (um toque sem querer nao encerra).
+var end_armed := 0.0
 var _count := 0
 
 @onready var _list: VBoxContainer = %List
@@ -40,7 +42,17 @@ func show_offers(run: RunState, gas_left: float) -> void:
 		var info := run.offer_info(i, gas_left)
 		_list.add_child(_make_row(i, info))
 	hint_flash = 0.0
+	end_armed = 0.0
 	visible = true
+	# foco na 1a oferta alcancavel: setas/direcional + Enter/A escolhem (controle e teclado sem numeros)
+	var first := -1
+	for i in _count:
+		if run.offer_info(i, gas_left)["reachable"]:
+			first = i
+			break
+	if _count > 0:
+		var b := (_list.get_child(maxi(first, 0)) as Node).get_child(0) as Button
+		b.grab_focus.call_deferred()
 
 
 ## Centro (tela) da linha da oferta i — usado pelo teste de controles para simular o clique.
@@ -49,7 +61,11 @@ func offer_line_center(i: int) -> Vector2:
 
 
 func _process(delta: float) -> void:
-	if hint_flash > 0.0:
+	if end_armed > 0.0:
+		end_armed -= delta
+		_hint.text = "E de novo para encerrar o run (o que você ganhou fica)"
+		_hint.theme_type_variation = &"MoneyLabel"
+	elif hint_flash > 0.0:
 		hint_flash -= delta
 		_hint.text = "ESCOLHA UMA ENTREGA PRIMEIRO: tecla 1-%d ou clique" % _count
 		_hint.theme_type_variation = &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel"
@@ -75,7 +91,6 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 	var key := Button.new()
 	key.text = str(index + 1)
 	key.custom_minimum_size = Vector2(16, 15)
-	key.focus_mode = Control.FOCUS_NONE
 	key.mouse_filter = Control.MOUSE_FILTER_PASS              # a dica da linha aparece sobre o botao tambem
 	if not ok:
 		key.theme_type_variation = &"DangerButton"
@@ -120,7 +135,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"end_run"):
 		get_viewport().set_input_as_handled()
-		end_requested.emit()
+		if end_armed > 0.0:
+			end_armed = 0.0
+			end_requested.emit()
+		else:
+			end_armed = 2.0
 	elif event.is_action_pressed(&"thrust") or event.is_action_pressed(&"rotate_left") \
 			or event.is_action_pressed(&"rotate_right"):
 		hint_flash = 2.0                                       # tentou pilotar antes de escolher: avisa

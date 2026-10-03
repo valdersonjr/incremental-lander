@@ -145,6 +145,77 @@
     ],
     "confirm": [
       "Enter"
+    ],
+    "tab_prev": [
+      "Q"
+    ],
+    "tab_next": [
+      "E"
+    ],
+    "fullscreen": [
+      "F11"
+    ]
+  },
+  "input_notes": "Teclas por acao (nomes de OS.find_keycode_from_string, tecla fisica). remappable = acoes que o jogador pode trocar no menu do jogo (settings.json > keys). joypad: botoes (JoyButton) e eixos (JoyAxis, value = direcao) — controle com layout Xbox: A/RT propulsor, analogico/direcional gira, Y encerra, Back reinicia, LB/RB trocam aba, Start abre o menu.",
+  "remappable": [
+    "thrust",
+    "rotate_left",
+    "rotate_right",
+    "restart",
+    "end_run"
+  ],
+  "joypad": {
+    "thrust": [
+      {
+        "button": 0
+      },
+      {
+        "axis": 5,
+        "value": 1.0
+      }
+    ],
+    "rotate_left": [
+      {
+        "button": 13
+      },
+      {
+        "axis": 0,
+        "value": -1.0
+      }
+    ],
+    "rotate_right": [
+      {
+        "button": 14
+      },
+      {
+        "axis": 0,
+        "value": 1.0
+      }
+    ],
+    "restart": [
+      {
+        "button": 4
+      }
+    ],
+    "end_run": [
+      {
+        "button": 3
+      }
+    ],
+    "tab_prev": [
+      {
+        "button": 9
+      }
+    ],
+    "tab_next": [
+      {
+        "button": 10
+      }
+    ],
+    "ui_cancel": [
+      {
+        "button": 6
+      }
     ]
   },
   "demo": {

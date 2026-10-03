@@ -144,8 +144,24 @@ func _apply_art(planet_id: String, seed_value: int, meta: Dictionary) -> void:
 	var cell: Array = meta["rock_cell"]
 	_rock_cell = Vector2(float(cell[0]), float(cell[1]))
 	_rocks = TerrainArt.rock_spots(ridge, pads, seed_value, meta)
+	_rocks = _sorted_by_x(_rocks)
 	_rock_frames = int(meta.get("rock_frames", 1))
 	_rock_ms = float(meta.get("rock_ms", 200.0))
+
+
+## rock_spots devolve a sequencia da direita (x crescente) e depois a da esquerda (x decrescente): junta em x crescente
+## sem ordenar (o _draw recorta as visiveis por busca binaria).
+static func _sorted_by_x(spots: Array[Dictionary]) -> Array[Dictionary]:
+	var split := spots.size()
+	for i in range(1, spots.size()):
+		if (spots[i]["pos"] as Vector2).x < (spots[i - 1]["pos"] as Vector2).x:
+			split = i
+			break
+	var left := spots.slice(split)
+	left.reverse()
+	var out: Array[Dictionary] = []
+	out.assign(left + spots.slice(0, split))
+	return out
 
 
 func _set_band(b: Polygon2D, g: Dictionary, texture_path: String) -> void:
@@ -158,12 +174,29 @@ func _set_band(b: Polygon2D, g: Dictionary, texture_path: String) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
-	if _rock_frames > 1:
-		queue_redraw()                                         # enfeites animados (vento, pirulitos girando)
+	if not _rocks.is_empty():
+		queue_redraw()                         # so as pedras na tela sao desenhadas: redesenha quando a camera anda
 
 
+## Desenha so as pedras visiveis (mapas longos tem dezenas de milhares; desenhar todas a cada quadro pesava).
 func _draw() -> void:
-	for r in _rocks:
+	if _rocks.is_empty():
+		return
+	var view := get_global_transform_with_canvas().affine_inverse() * get_viewport_rect()
+	var x0 := view.position.x - _rock_cell.x
+	var x1 := view.end.x + _rock_cell.x
+	var lo := 0
+	var hi := _rocks.size()
+	while lo < hi:                                             # primeira pedra com x >= x0
+		var mid := (lo + hi) >> 1
+		if (_rocks[mid]["pos"] as Vector2).x < x0:
+			lo = mid + 1
+		else:
+			hi = mid
+	for i in range(lo, _rocks.size()):
+		var r: Dictionary = _rocks[i]
+		if (r["pos"] as Vector2).x > x1:
+			break
 		var f := TerrainArt.anim_frame(_time, _rock_ms, _rock_frames, int(r.get("phase", 0)))
 		var src := Rect2(Vector2(_rock_cell.x * int(r["frame"]), _rock_cell.y * f), _rock_cell)
 		draw_texture_rect_region(_rock_tex, Rect2(r["pos"], _rock_cell), src)

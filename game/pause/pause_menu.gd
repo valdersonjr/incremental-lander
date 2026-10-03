@@ -15,13 +15,17 @@ signal new_game_requested
 
 enum Mode { FLIGHT, HANGAR }
 
-## Teclas do jogo (texto de jogador; as acoes vem de data/world.json -> input).
-const CONTROLS := [
-	["W, Espaço ou seta acima", "propulsor"],
-	["A/D ou setas laterais", "girar"],
-	["número da oferta ou clique", "escolher entrega"],
-	["E (na escolha)", "encerrar o run"],
-	["R", "reiniciar o run"],
+## Acoes remapeaveis (world.json > remappable) com o texto do menu; as fixas vem em CONTROLS_FIXED.
+const KEY_TITLES := {
+	"thrust": "propulsor",
+	"rotate_left": "girar à esquerda",
+	"rotate_right": "girar à direita",
+	"restart": "reiniciar o run (2x no voo)",
+	"end_run": "encerrar o run (2x, na escolha)",
+}
+const CONTROLS_FIXED := [
+	["1-9, setas + Enter ou clique", "escolher entrega"],
+	["controle: A/RT, analógico", "Start: menu"],
 ]
 
 var mode := Mode.FLIGHT
@@ -37,7 +41,12 @@ func _ready() -> void:
 		get_tree().paused = false
 		title_requested.emit())
 	%NewGame.pressed.connect(_on_new_game)
-	for c: Array in CONTROLS:
+	%RestoreKeys.pressed.connect(func() -> void:
+		Sound.ui("click")
+		GameState.reset_keys()
+		SaveManager.request_save()
+		_fill_keys())
+	for c: Array in CONTROLS_FIXED:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override(&"separation", 4)
 		var key := Label.new()
@@ -64,6 +73,8 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	for bus: String in GameState.BUSES:
 		%Volumes.add_child(UiKit.volume_row(bus))
 	%Volumes.add_child(UiKit.crt_row())
+	%Volumes.add_child(UiKit.fullscreen_row())
+	_fill_keys()
 	var hangar := mode == Mode.HANGAR
 	%Title.text = "MENU" if hangar else "PAUSA"
 	%Continue.text = "VOLTAR AO HANGAR  [Esc]" if hangar else "CONTINUAR  [Esc]"
@@ -71,7 +82,7 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	if sandbox:
 		%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)"
 	else:
-		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Voltar ao menu inicial (salva; entregas feitas ficam)"
+		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Ao menu inicial (entregas feitas ficam)"
 	%MenuButton.text = "Sair do sandbox" if sandbox else "Menu inicial"
 	%NewGameRow.visible = hangar and not sandbox                # apagar o jogo so com calma, no hangar
 	_show_new_game()
@@ -81,6 +92,15 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	Sound.ui("click")
 	%Continue.grab_focus()
 	UiKit.pulse(%Panel, 1.3, 0.25)
+
+
+## Linhas das teclas remapeaveis (refeitas ao abrir e ao restaurar o padrao), antes das linhas fixas.
+func _fill_keys() -> void:
+	for c in %Keys.get_children():
+		%Keys.remove_child(c)
+		c.queue_free()
+	for action: String in WorldConfig.remappable():
+		%Keys.add_child(UiKit.key_row(action, KEY_TITLES.get(action, action)))
 
 
 func close() -> void:
@@ -120,5 +140,5 @@ func _on_new_game() -> void:
 
 
 func _show_new_game() -> void:
-	%NewGameLabel.text = "Apagar o Jogo %d e recomeçar do zero" % SaveManager.slot
+	%NewGameLabel.text = "Recomeçar o Jogo %d do zero" % SaveManager.slot
 	%NewGame.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"

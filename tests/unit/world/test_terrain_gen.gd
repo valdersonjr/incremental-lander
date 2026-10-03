@@ -137,3 +137,22 @@ func test_estender_o_mapa_nao_muda_o_que_existia() -> void:
 	var rocks_b := TerrainArt.rock_spots(rb, pads, 3, meta)
 	for r in rocks_a:
 		assert_true(rocks_b.has(r), "pedra mudou de lugar ao estender")
+
+
+## Busca binaria da altura = interpolacao linear do contorno (antes era busca linear; o resultado nao pode mudar).
+func test_altura_por_busca_binaria_igual_a_linear() -> void:
+	var d: Array[float] = [900.0, 2500.0]
+	var t: Array[String] = ["narrow", "tight"]
+	var ridge: PackedVector2Array = TerrainGen.generate(5, "kronos", d, t, Vector2(2400, 4800))["ridge"]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	for i in 300:
+		var x := rng.randf_range(ridge[0].x - 50.0, ridge[ridge.size() - 1].x + 50.0)
+		var expected := ridge[0].y if x <= ridge[0].x else ridge[ridge.size() - 1].y
+		for j in range(1, ridge.size()):
+			if ridge[j].x >= x and x > ridge[0].x:
+				var a := ridge[j - 1]
+				var b := ridge[j]
+				expected = lerpf(a.y, b.y, (x - a.x) / maxf(b.x - a.x, 0.0001))
+				break
+		assert_almost(TerrainGen.height_at(ridge, x), expected)

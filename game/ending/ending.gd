@@ -1,5 +1,5 @@
-## Tela de final (arte: UiKit): chegou ao mundo objetivo (O Quarto, id titan). Janela modal com o resumo da jornada;
-## permite continuar jogando (Enter ou o botao).
+## Tela de final (arte: UiKit): chegou ao mundo objetivo (O Quarto, id titan). Janela modal com o resumo da jornada e
+## os recordes pessoais (pos-jogo: continuar jogando para bater recordes); continua com Enter ou o botao.
 class_name Ending
 extends Control
 
@@ -30,6 +30,8 @@ func show_ending(play_seconds: float = -1.0) -> void:
 	_rows.add_child(UiKit.stat_row("stardust", "Poeira Estelar acumulada", EconMath.fmt(GameState.prestige_points),
 			&"DustLabel"))
 	_rows.add_child(UiKit.stat_row("", "tempo de jogo", _fmt_time(play_seconds)))
+	for row: Control in Ending.record_rows():
+		_rows.add_child(row)
 	visible = true
 	_continue.grab_focus()
 	UiKit.pulse(%Panel, 1.3, 0.4)
@@ -38,3 +40,22 @@ func show_ending(play_seconds: float = -1.0) -> void:
 func _fmt_time(s: float) -> String:
 	var t := int(s)
 	return "%dh%02dm" % [t / 3600, (t % 3600) / 60] if t >= 3600 else "%dm%02ds" % [t / 60, t % 60]
+
+
+## Linhas "RECORDES" (titulo + uma por recorde ja feito) para o final e o hangar; vazio se ainda nao ha recorde.
+static func record_rows() -> Array[Control]:
+	var out: Array[Control] = []
+	for key: String in GameState.RECORDS:
+		var v := float(GameState.records.get(key, 0.0))
+		if v <= 0.0:
+			continue
+		if out.is_empty():
+			var t := Label.new()
+			t.text = "RECORDES"
+			t.theme_type_variation = &"SectionLabel"
+			out.append(t)
+		var info: Array = GameState.RECORDS[key]
+		var shown := "%d" % int(v) if key == "best_combo" else EconMath.fmt(v)
+		out.append(UiKit.stat_row(str(info[1]), str(info[0]), shown, &"MoneyLabel" if key in ["best_delivery", "best_run"]
+				else &"ValueLabel"))
+	return out

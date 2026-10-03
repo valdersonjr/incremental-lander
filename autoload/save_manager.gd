@@ -19,6 +19,11 @@ var sandbox := false
 var slot := 1
 var _dir := "user://"
 var _dirty := false
+## Aviso para o jogador (o menu inicial mostra): um jogo salvo existe mas nao pode ser lido.
+var load_warning := ""
+## Espacos cujo arquivo existe mas nao carregou (danificado ou de versao mais nova): antes de gravar por cima, os
+## arquivos sao guardados a parte (nunca se perde um save por uma leitura que falhou).
+var _unreadable: Dictionary = {}
 
 
 func _ready() -> void:
@@ -29,6 +34,7 @@ func _ready() -> void:
 		if a.begins_with("res://tests/visual/"):
 			enabled = false
 	if enabled:
+		_migrate_old_user_dir()
 		_load_prefs_and_slot()
 	Events.run_finished.connect(func(_s: Dictionary) -> void: request_save())
 	Events.upgrade_bought.connect(func(_i: String, _l: int) -> void: request_save())
@@ -40,6 +46,32 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		save_game()
+
+
+## A pasta de dados passou a ter nome proprio (project.godot: custom_user_dir_name), independente do nome do jogo.
+## Na primeira vez, copia os saves, opcoes e telemetria da pasta antiga do Godot (app_userdata/Incremental Lander).
+## Nunca sobrescreve nada que ja exista na pasta nova.
+func _migrate_old_user_dir() -> void:
+	var new_dir := OS.get_user_data_dir()
+	if FileAccess.file_exists(new_dir.path_join("save.json")) or FileAccess.file_exists(new_dir.path_join("settings.json")):
+		return
+	for engine_dir: String in ["Godot", "godot"]:
+		var old_dir := OS.get_data_dir().path_join(engine_dir).path_join("app_userdata").path_join("Incremental Lander")
+		if old_dir == new_dir or not DirAccess.dir_exists_absolute(old_dir):
+			continue
+		_copy_tree(old_dir, new_dir, ["json", "bak", "csv"])
+		print("save: dados copiados de %s" % old_dir)
+		return
+
+
+func _copy_tree(src: String, dst: String, exts: Array) -> void:
+	DirAccess.make_dir_recursive_absolute(dst)
+	for f: String in DirAccess.get_files_at(src):
+		if f.get_extension() in exts and not FileAccess.file_exists(dst.path_join(f)):
+			DirAccess.copy_absolute(src.path_join(f), dst.path_join(f))
+	for d: String in ["telemetry"]:
+		if DirAccess.dir_exists_absolute(src.path_join(d)):
+			_copy_tree(src.path_join(d), dst.path_join(d), exts)
 
 
 ## Muda a pasta do save (testes de integracao usam uma pasta propria, nunca o save real). Volta ao jogo 1.
@@ -75,6 +107,8 @@ func save_game() -> bool:
 	_save_prefs()
 	if sandbox:
 		return false
+	if _unreadable.has(slot):
+		_keep_unreadable(slot)
 	var f := FileAccess.open(TMP, FileAccess.WRITE)
 	if f == null:
 		push_warning("save: nao abriu %s" % TMP)
@@ -93,6 +127,12 @@ func load_game() -> bool:
 		push_warning("save: " + w)
 	if r["ok"]:
 		GameState.apply_save_state(r["state"])
+		_unreadable.erase(slot)
+	elif r["exists"]:
+		_unreadable[slot] = true
+		load_warning = ("O Jogo %d não pôde ser lido (arquivo danificado ou de outra versão do jogo).\n" +
+				"Ele foi guardado à parte e não será apagado.") % slot
+		push_warning("save: jogo %d ilegivel; sera guardado a parte antes de gravar" % slot)
 	return r["ok"]
 
 
@@ -113,6 +153,7 @@ func load_slot(n: int) -> void:
 	if sandbox:                                               # jogos salvos so mudam fora do sandbox
 		push_warning("save: load_slot ignorado no sandbox")
 		return
+	load_warning = ""
 	var settings: Dictionary = GameState.settings.duplicate()
 	_use_slot(n)
 	GameState.reset()
@@ -128,6 +169,7 @@ func new_game(n: int = -1) -> void:
 	if sandbox:                                               # jogos salvos so mudam fora do sandbox
 		push_warning("save: new_game ignorado no sandbox")
 		return
+	load_warning = ""
 	if n < 0:
 		n = slot
 	var settings: Dictionary = GameState.settings.duplicate()
@@ -143,6 +185,7 @@ func delete_slot(n: int) -> void:
 	if sandbox:                                               # jogos salvos so mudam fora do sandbox
 		push_warning("save: delete_slot ignorado no sandbox")
 		return
+	load_warning = ""
 	if not enabled:
 		return
 	_remove_slot_files(n)
@@ -160,7 +203,26 @@ func _use_slot(n: int) -> void:
 	BAK = f["bak"]
 
 
+## Guarda os arquivos ilegiveis do espaco n como <nome>.unreadable[N].json/.bak (nunca sobrescreve outro).
+func _keep_unreadable(n: int) -> void:
+	_unreadable.erase(n)
+	var f := slot_files(n)
+	for key: String in ["path", "bak"]:
+		var src: String = f[key]
+		if not FileAccess.file_exists(src):
+			continue
+		var ext := src.get_extension()
+		var base := src.get_basename()
+		var dst := "%s.unreadable.%s" % [base, ext]
+		var k := 2
+		while FileAccess.file_exists(dst):
+			dst = "%s.unreadable%d.%s" % [base, k, ext]
+			k += 1
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(src), ProjectSettings.globalize_path(dst))
+
+
 func _remove_slot_files(n: int) -> void:
+	_unreadable.erase(n)
 	var f := slot_files(n)
 	for path: String in [f["path"], f["bak"], f["tmp"]]:
 		if FileAccess.file_exists(path):

@@ -105,6 +105,8 @@ func _set_screen(s: Screen) -> void:
 
 
 func _refresh_menu() -> void:
+	%Warning.text = SaveManager.load_warning                   # save ilegivel: o jogador fica sabendo (e que foi guardado)
+	%Warning.visible = SaveManager.load_warning != ""
 	var progress := has_progress()
 	%Play.text = "Continuar" if progress else "Jogar"
 	_clear(_info)
@@ -255,6 +257,7 @@ func _fill_options() -> void:
 		if first == null:
 			first = row.get_child(1) as Button
 	_options.add_child(UiKit.crt_row())
+	_options.add_child(UiKit.fullscreen_row())
 	var back := Button.new()
 	back.text = "Voltar [Esc]"
 	back.pressed.connect(func() -> void: _set_screen(Screen.MENU))
