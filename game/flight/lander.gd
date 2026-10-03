@@ -14,8 +14,9 @@ enum State {LANDED, FLYING, CRASHED}
 var state: State = State.LANDED
 var vel_m := Vector2.ZERO               # velocidade em m/s do modelo
 var gas := 0.0
-var params: Dictionary = {}             # gravity, thrust, efficiency, drag, tank, gear
+var params: Dictionary = {}             # gravity, thrust, efficiency, drag, tank, gear, planet_drag
 var pads: Array[Dictionary] = []
+var ridge := PackedVector2Array()       # contorno do terreno (px): altitude para o ar denso perto do chao
 var autopilot: Autopilot = null
 var thrusting := false
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
@@ -35,6 +36,7 @@ var _was_thrusting := false
 func setup(stats: Dictionary, planet: Dictionary, terrain_pads: Array[Dictionary]) -> void:
 	params = {
 		"gravity": float(planet["gravity"]),
+		"planet_drag": float(planet.get("drag", 0.0)),
 		"drag": float(planet.get("drag", 0.0)) * float(WorldConfig.load_config()["drag_scale"]),
 		"thrust": float(stats["thrust"]),
 		"efficiency": float(stats["efficiency"]),
@@ -65,6 +67,7 @@ func _physics_process(delta: float) -> void:
 			return
 	rotation += float(controls["rotate"]) * float(cfg["rotate_speed"]) * delta
 	var dt_m := delta * float(cfg["time_scale"])
+	params["drag"] = LanderPhysics.drag_at(float(params["planet_drag"]), altitude_m(), cfg)
 	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, params, dt_m)
 	vel_m = r["velocity"]
 	gas = r["gas"]
@@ -114,6 +117,14 @@ func _update_thrust_sound() -> void:
 	if state == State.CRASHED and _thrust_loop.playing:
 		_thrust_loop.stop()
 	_was_thrusting = thrusting
+
+
+## Altura (m do modelo) dos pes acima do relevo logo abaixo (0 sem terreno conhecido).
+func altitude_m() -> float:
+	if ridge.is_empty():
+		return 0.0
+	var feet := float(WorldConfig.load_config()["lander"]["feet_offset_m"])
+	return WorldConfig.px_to_m(TerrainGen.height_at(ridge, global_position.x) - global_position.y) - feet
 
 
 ## Estado do voo atual (m/s do modelo, rad, gas gasto desde a decolagem, tempo do modelo).

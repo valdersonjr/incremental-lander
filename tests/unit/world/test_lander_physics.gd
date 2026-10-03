@@ -32,3 +32,12 @@ func test_gas_acaba_no_meio_do_passo() -> void:
 func test_propulsor_inclinado_empurra_de_lado() -> void:
 	var r := LanderPhysics.step(Vector2.ZERO, PI / 2.0, true, 100.0, params, 1.0)
 	assert_true(r["velocity"].x > 3.9, "nariz para a direita empurra para +x")
+
+
+func test_ar_denso_perto_do_chao() -> void:
+	var cfg := WorldConfig.load_config()
+	var low := LanderPhysics.drag_at(0.3, 0.0, cfg)
+	var high := LanderPhysics.drag_at(0.3, 2000.0, cfg)
+	assert_true(low > high * 5.0, "rente ao chao o arrasto e bem maior")
+	assert_almost(high, 0.3 * float(cfg["drag_scale"]), 1e-4, "no alto ~ o arrasto de sempre")
+	assert_eq(LanderPhysics.drag_at(0.0, 0.0, cfg), 0.0, "sem ar (Lua) nao ha arrasto")

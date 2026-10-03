@@ -53,7 +53,9 @@ func control(pos_px: Vector2, vel_m: Vector2, rotation: float, params: Dictionar
 				var stop_v := sqrt(2.0 * a_net * 0.5 * maxf(height, 0.0))
 				v_des.y = clampf(minf(height * 0.25, stop_v), 1.2, 8.0)
 			else:
-				v_des.y = clampf((pad_y - 30.0 - pos.y) * 0.3, -4.0, 4.0)
+				# aproxima 30 m acima da plataforma OU do ponto mais alto do relevo ate ela (cristas, picos)
+				var top := TerrainGen.highest_between(ridge, pos_px.x, float(target["x"])) / ppm - feet
+				v_des.y = clampf((minf(pad_y, top) - 30.0 - pos.y) * 0.3, -4.0, 4.0)
 			if absf(dx) < 12.0 and height < 25.0:
 				max_tilt = 0.15
 

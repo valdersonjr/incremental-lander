@@ -23,14 +23,21 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 ## Jogo (Fases 1–7 — voo, run, hangar, planetas, prestígio, frota, Expedição, final, save/opções)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
-                              # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo
+                              # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo;
+                              # terrain.crest (cristas entre plataformas), terrain.pad_tiers (largura/elevação por tipo),
+                              # atmosphere (ar denso perto do chão)
 scripts/world/
   world_config.gd             # WorldConfig: lê world.json, m↔px, registra input (InputMap) a partir do JSON
-  lander_physics.gd           # LanderPhysics.step(): gravidade + propulsor + arrasto; gás = Δv/eficiência (puro)
+  lander_physics.gd           # LanderPhysics.step(): gravidade + propulsor + arrasto; gás = Δv/eficiência (puro);
+                              # drag_at(drag_planeta, altitude, cfg): ar mais denso perto do chão (Lander usa a cada passo)
   landing_rules.gd            # LandingRules: tolerâncias (× gear^0.5), crash_reason(), quality() 0..1 (puro)
-  terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias): relevo + plataformas planas (puro)
+  terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias, tipos=[]): relevo + CRISTA entre plataformas
+                              # seguidas (12% da distância acima da mais alta; arco de 45° passa) + plataformas planas com
+                              # largura/elevação do tipo (estreita num vale, apertada num pico); pad = {id,x,y,half_width,tier,lift};
+                              # highest_between() p/ o autopiloto (puro)
   autopilot.gd                # Autopilot (--demo): decolagem → arco balístico (mira acima do alvo) → frenagem/pouso;
-                              # motor por sigma-delta (fração exata de empuxo) — voa na Lua, Ares e Kronos
+                              # motor por sigma-delta (fração exata de empuxo) — voa na Lua, Ares e Kronos; na aproximação
+                              # mira 30 m acima do ponto mais alto do relevo até o alvo (cristas/picos)
 game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
                               # → ofertas … → resumo → HANGAR → novo run. Args: --demo --seed=N --planet=id --hangar_wait=s.
                               # Demo libera planetas, compra o upgrade mais barato, vai ao melhor planeta voável; "HANGAR {json}".
@@ -117,7 +124,8 @@ autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
-tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen
+tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
+tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
 tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,
                               # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture

@@ -23,3 +23,53 @@ func test_pad_at() -> void:
 	var t := TerrainGen.generate(1, "luna", [800.0] as Array[float])
 	assert_eq(TerrainGen.pad_at(t["pads"], 0.0)["id"], 0)
 	assert_true(TerrainGen.pad_at(t["pads"], 400.0).is_empty())
+
+
+func test_crista_entre_plataformas_exige_subir() -> void:
+	# entre duas plataformas a 1000 m, o relevo no meio passa de 12% da distancia acima da mais alta
+	var t := TerrainGen.generate(5, "luna", [1000.0] as Array[float])
+	var a: Dictionary = t["pads"][0]
+	var b: Dictionary = t["pads"][1]
+	var top := TerrainGen.highest_between(t["ridge"], float(a["x"]) + 40.0, float(b["x"]) - 40.0)
+	var need := minf(float(a["y"]), float(b["y"])) - WorldConfig.m_to_px(120.0) * 0.95
+	assert_true(top <= need, "crista baixa demais: topo %s, precisava <= %s" % [top, need])
+	# ...mas um arco de 45 graus (sobe d/4) passa com folga sobre todo o trecho
+	for i in range(1, 20):
+		var x := lerpf(float(a["x"]), float(b["x"]), i / 20.0)
+		var u := (x - float(a["x"])) / (float(b["x"]) - float(a["x"]))
+		var arc_y := lerpf(float(a["y"]), float(b["y"]), u) - (x - float(a["x"])) * (1.0 - u)
+		assert_true(arc_y < TerrainGen.height_at(t["ridge"], x) - 20.0, "arco raspa a crista em x=%s" % x)
+
+
+func test_salto_curto_sem_crista() -> void:
+	var t := TerrainGen.generate(5, "luna", [150.0] as Array[float])
+	var flat := TerrainGen.generate(5, "luna", [150.0] as Array[float])
+	assert_eq(t["ridge"], flat["ridge"], "deterministico")
+	var a: Dictionary = t["pads"][0]
+	var top := TerrainGen.highest_between(t["ridge"], float(a["x"]) + 40.0, float(a["x"]) + 110.0)
+	assert_true(top > float(a["y"]) - 60.0, "salto curto nao ganha crista alta")
+
+
+func test_tipos_de_plataforma_largura_e_elevacao() -> void:
+	var t := TerrainGen.generate(9, "luna", [800.0, 1800.0, 2900.0] as Array[float],
+			["normal", "narrow", "tight"] as Array[String])
+	var pads: Array = t["pads"]
+	assert_eq(pads[1]["tier"], "normal")
+	assert_almost(float(pads[2]["half_width"]), WorldConfig.m_to_px(20.0), 1e-3, "estreita: 40 m")
+	assert_almost(float(pads[3]["half_width"]), WorldConfig.m_to_px(14.0), 1e-3, "apertada: 28 m")
+	# estreita fica num vale (bordas mais altas que a plataforma); apertada no alto de um pico
+	var n: Dictionary = pads[2]
+	var side := float(n["half_width"]) + WorldConfig.m_to_px(20.0)
+	assert_true(TerrainGen.height_at(t["ridge"], float(n["x"]) + side) < float(n["y"]) - 5.0, "vale")
+	var k: Dictionary = pads[3]
+	side = float(k["half_width"]) + WorldConfig.m_to_px(20.0)
+	assert_true(TerrainGen.height_at(t["ridge"], float(k["x"]) - side) > float(k["y"]) + 5.0, "pico")
+	for p: Dictionary in pads:
+		for dx in [-0.9, 0.0, 0.9]:
+			assert_almost(TerrainGen.height_at(t["ridge"], float(p["x"]) + dx * float(p["half_width"])),
+					float(p["y"]), 1e-3, "topo plano pad %d" % p["id"])
+
+
+func test_vizinha_perto_demais_tira_a_elevacao() -> void:
+	var t := TerrainGen.generate(9, "luna", [100.0] as Array[float], ["tight"] as Array[String])
+	assert_eq(float(t["pads"][1]["lift"]), 0.0)

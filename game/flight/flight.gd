@@ -55,6 +55,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	target_pad_id = -1
 	_rebuild_terrain()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.ridge = terrain.ridge
 	lander.visible = true
 	lander.can_takeoff = false
 	var start_pad: Dictionary = terrain.pads[0]
@@ -76,6 +77,7 @@ func set_target(distance_m: float) -> void:
 	target_pad_id = _pad_positions_m.size() - 1
 	_rebuild_terrain()
 	lander.pads = terrain.pads
+	lander.ridge = terrain.ridge
 	lander.can_takeoff = true
 	if _demo:
 		var ap := Autopilot.new()
