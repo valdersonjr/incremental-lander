@@ -34,6 +34,17 @@ Consequências de design (por que o modelo é bom para o jogo):
 - Batida: probabilidade `crash_base × (1 − q) × 2 / gear` → perde a entrega e termina o run.
 - Recompensas multi-recurso: `planeta.rewards = {"credits": 1, "ore": 0.02}` (fração do pagamento).
 
+## Variedade das entregas (v7)
+- `contracts.pad_tiers`: cada oferta sorteia um tipo de plataforma (peso `weight`) que multiplica o pagamento
+  (`mult`). Plataforma estreita derruba a qualidade de quem pilota pior: `q − q_drop·(1 − skill)·2`, e a
+  chance de batida × `crash_mult`. O piloto simulado escolhe pelo **valor esperado** por gás.
+- `contracts.combo`: pousos bons seguidos no run (`q ≥ q_min`) dão `1 + step·min(streak, max_steps)`;
+  pouso ruim zera. Runs "esperados" usam o streak médio: `E[s'] = P(bom)·(E[s] + 1)`.
+- `contracts.pickups`: `per_hop` cristais no arco, cada um `value_frac` do pagamento-base; o modelo coleta a
+  fração `skill` (o jogo coloca os cristais no caminho de um arco bom).
+- Pagamento da entrega: `delivery_pay = contract_pay·(1 + quality_bonus·q^quality_exp)·tier.mult·combo_mult`
+  (+ cristais). Espelho: `EconMath.delivery_pay / pickup_value / combo_mult / pad_tier`.
+
 ## Ofertas e escolha do piloto
 - Cada run oferece `contracts_per_run` distâncias log-uniformes em `planeta.distance = [min, max]`.
 - O piloto escolhe, entre as alcançáveis com o gás restante, a de **maior pagamento por gás**; repete

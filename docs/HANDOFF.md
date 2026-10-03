@@ -3,7 +3,14 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-01)
+## Estado atual (2026-10-03)
+- **Fase 11 — Voo com decisões (em andamento)**: pedido do usuário "faz tudo que for sabido que deixa os gamers felizes"
+  (pagamento só por distância era sem graça; nada obrigava a voar alto; andar de lado era entediante).
+  - 11.1 ✅ economia v7: plataformas normal/estreita/apertada (×1/×1,5/×2,2), combo de pousos bons, cristais no arco;
+    `EconMath.delivery_pay/pickup_value/combo_mult/pad_tier/draw_pad_tier/combo_counts`. **O jogo ainda paga só por
+    `contract_pay`** (pay_base caiu para 8,5) até a 11.3 ligar tipos e combo — não deixar assim muito tempo.
+  - Próximas: 11.2 relevo com cristas + ar denso perto do chão; 11.3 plataformas difíceis + combo no HUD; 11.4 cristais;
+    11.5 perigos por mundo.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
   "muito feio"; aprovou a cena da Lua (hoje em cinza clássico): céu em faixas, Terra com halo, montanhas facetadas, terreno com

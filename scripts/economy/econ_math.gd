@@ -244,6 +244,58 @@ static func contract_pay(planet_id: String, distance: float, stats: Dictionary, 
 	return pay * (1.0 + c.get("quality_bonus", 0.5) * pow(q, c.get("quality_exp", 1.0)))
 
 
+## Tipo de plataforma (contracts.pad_tiers): {id, name, mult, weight, q_drop, crash_mult}. Sem tipos -> normal x1.
+static func pad_tier(tier_id: String) -> Dictionary:
+	for t: Dictionary in spec["contracts"].get("pad_tiers", []):
+		if t["id"] == tier_id:
+			return t
+	return {"id": "normal", "name": "normal", "mult": 1.0, "weight": 1.0, "q_drop": 0.0, "crash_mult": 1.0}
+
+
+## Sorteia o tipo de plataforma de uma oferta pelos pesos da spec.
+static func draw_pad_tier(rng: RandomNumberGenerator) -> String:
+	var tiers: Array = spec["contracts"].get("pad_tiers", [])
+	if tiers.is_empty():
+		return "normal"
+	var total := 0.0
+	for t: Dictionary in tiers:
+		total += float(t["weight"])
+	var r := rng.randf() * total
+	for t: Dictionary in tiers:
+		r -= float(t["weight"])
+		if r <= 0.0:
+			return t["id"]
+	return tiers[tiers.size() - 1]["id"]
+
+
+## Multiplicador do combo: pousos bons seguidos no run antes desta entrega (contracts.combo).
+static func combo_mult(streak: int) -> float:
+	var c: Dictionary = spec["contracts"].get("combo", {})
+	if c.is_empty():
+		return 1.0
+	return 1.0 + float(c["step"]) * mini(streak, int(c["max_steps"]))
+
+
+## O pouso conta para o combo? (q >= combo.q_min)
+static func combo_counts(quality: float) -> bool:
+	var c: Dictionary = spec["contracts"].get("combo", {})
+	return not c.is_empty() and quality >= float(c["q_min"])
+
+
+## Valor de UM cristal coletado no salto: fracao do pagamento-base da entrega (sem qualidade).
+static func pickup_value(planet_id: String, distance: float, stats: Dictionary) -> float:
+	var pk: Dictionary = spec["contracts"].get("pickups", {})
+	if pk.is_empty():
+		return 0.0
+	return float(pk["value_frac"]) * contract_pay(planet_id, distance, stats, 0.0)
+
+
+## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo (mesma conta do simulador).
+static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,
+		tier_id: String = "normal", streak: int = 0) -> float:
+	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) * combo_mult(streak)
+
+
 ## Estimativa de delta-v de um salto (a mesma do simulador, sem desperdicio do piloto).
 ## Util para a UI mostrar "alcance estimado" e para validar a fisica real contra o modelo.
 static func estimated_hop_dv(planet_id: String, distance: float, stats: Dictionary) -> float:

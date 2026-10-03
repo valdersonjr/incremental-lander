@@ -10,4 +10,5 @@ mecânica, procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Eta
 | skill-stays-relevant | Habilidade continua importando (base + multiplicador de precisão, gás como limite) | GMTK roguelites, Idle Idol, jogos com multiplicador | contracts | 2026-09-29 |
 | prestige-shop | Loja de prestígio: nível passivo + itens (capital, ficha, manter planetas, portão de conteúdo) | Cookie Clicker, Egg Inc, Military Incremental Complex, Idle Planet Miner | prestige.shop | 2026-09-29 |
 | automation-fleet | Frota de drones que repete as rotas do jogador (+ lições sobre marcos de upgrade) | Idle Mine, Clicker Heroes, AdCap | upgrades.fleet/autopilot, milestones | 2026-09-29 |
+| delivery-reward-variety | Variedade na recompensa das entregas (plataforma difícil, carga, prazo, combo, cristais) | Lunar Lander 1979, Jupiter Lander, Cargo Please!, SS14 | contracts.pad_tiers/combo/pickups | 2026-10-03 |
 | staged-final-project | Megaprojeto final em etapas persistentes (Expedição a Titan) | Universal Paperclips, Space Station Designer, gradiente de meta | upgrades.exp1..exp8, planets.titan | 2026-09-29 |

@@ -332,6 +332,67 @@ def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
         * stats.get("pay_mult", 1.0)
 
 
+# --- Variedade das entregas (v7): plataformas com multiplicador, combo de pousos bons, cristais no ar ---
+# Espelho GDScript: EconMath.pad_tier / combo_mult / pickup_value / delivery_pay. Spec sem as chaves = v6 intacta.
+
+def pad_tier(E: dict, tier_id: str) -> dict:
+    """Tipo de plataforma (contracts.pad_tiers): mult (pagamento), weight (chance na oferta),
+    q_drop (perda de qualidade de um piloto mediano), crash_mult. Sem tipos -> plataforma normal x1."""
+    for t in E["contracts"].get("pad_tiers", []):
+        if t["id"] == tier_id:
+            return t
+    return {"id": "normal", "mult": 1.0, "weight": 1.0, "q_drop": 0.0, "crash_mult": 1.0}
+
+
+def combo_mult(E: dict, streak: float) -> float:
+    """Multiplicador do combo: pousos bons seguidos no run (antes desta entrega)."""
+    c = E["contracts"].get("combo")
+    if not c:
+        return 1.0
+    return 1.0 + c["step"] * min(streak, c["max_steps"])
+
+
+def pickup_value(E: dict, planet: dict, d: float, stats: dict) -> float:
+    """Valor de UM cristal coletado no salto: fracao do pagamento-base da entrega (sem qualidade)."""
+    pk = E["contracts"].get("pickups")
+    if not pk:
+        return 0.0
+    return pk["value_frac"] * contract_pay(E, planet, d, stats)
+
+
+def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
+                 streak: float = 0) -> float:
+    """Pagamento de uma entrega concluida: base x qualidade x plataforma x combo (o jogo usa a mesma conta)."""
+    C = E["contracts"]
+    q = min(1.0, max(0.0, q))
+    return contract_pay(E, planet, d, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
+        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak)
+
+
+def _draw_tier(E: dict, rng: random.Random) -> str:
+    tiers = E["contracts"].get("pad_tiers")
+    if not tiers:
+        return "normal"
+    r = rng.random() * sum(t["weight"] for t in tiers)
+    for t in tiers:
+        r -= t["weight"]
+        if r <= 0:
+            return t["id"]
+    return tiers[-1]["id"]
+
+
+def _q_on_tier(q: float, tier: dict, skill: float) -> float:
+    """Plataforma estreita derruba a qualidade de quem pilota pior (expert quase nao sente)."""
+    return min(1.0, max(0.0, q - tier.get("q_drop", 0.0) * (1 - skill) * 2))
+
+
+def _p_good(prof: Profile, tier: dict, q_min: float) -> float:
+    """Chance de um pouso contar para o combo (q >= q_min), com q ~ Normal(skill, skill_sd)."""
+    mu = _q_on_tier(prof.skill, tier, prof.skill)
+    sd = max(prof.skill_sd, 1e-6)
+    return 0.5 * (1 - math.erf((q_min - mu) / (sd * math.sqrt(2))))
+
+
 def contracts_for(E: dict, planet: dict, rng: random.Random) -> list[float]:
     """Distancias ofertadas no run (log-uniforme entre min e max do planeta)."""
     C = E["contracts"]
@@ -360,23 +421,35 @@ def _offer_stream(E: dict, planet: dict, seed: int, extra: int = 256) -> tuple[l
     sequencia da resultado identico e evita re-sortear centenas de milhares de vezes."""
     lo, hi = planet["distance"]
     n = planet.get("contracts_per_run", E["contracts"].get("per_run", 8))
-    key = (id(E), planet["id"], seed, n, lo, hi)
+    key = (id(E), planet["id"], seed, n, lo, hi, json.dumps(E["contracts"].get("pad_tiers"), sort_keys=True))
     st_ = _STREAM_CACHE.get(key)
     if st_ is None:
         rng = random.Random(seed)
         first = sorted(math.exp(rng.uniform(math.log(lo), math.log(hi))) for _ in range(n))
         more = [math.exp(rng.uniform(math.log(lo), math.log(hi))) for _ in range(extra)]
-        st_ = _STREAM_CACHE[key] = (first, more)
+        trng = random.Random(seed * 7919 + 1)               # tipos de plataforma: sequencia propria
+        tiers = [_draw_tier(E, trng) for _ in range(n + extra)]
+        st_ = _STREAM_CACHE[key] = (first, more, tiers[:n], tiers[n:])
     return st_
 
 
 def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random, expected: bool = False,
-           stream: tuple[list[float], list[float]] | None = None) -> RunResult:
+           stream: tuple | None = None, log: list | None = None) -> RunResult:
     """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
-    pega a de maior pagamento por gas. expected=True usa valores medios (sem sorte) - para ROI.
-    stream (so com expected) = sequencia de ofertas pre-sorteada (_offer_stream)."""
+    pega a de maior pagamento esperado por gas (plataforma dificil paga mais, mas derruba a qualidade e
+    aumenta a batida de quem pilota pior). Combo: pousos bons seguidos (q >= combo.q_min) multiplicam o
+    pagamento; cristais no arco somam pickups.per_hop x value_frac x skill do pagamento-base.
+    expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
+    pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita."""
     gas = stats["tank"]
-    offers = list(stream[0]) if stream else contracts_for(E, planet, rng)
+    C = E["contracts"]
+    has_tiers = bool(C.get("pad_tiers"))
+    if stream:
+        offers = list(stream[0])
+        tiers0 = list(stream[2])
+    else:
+        offers = contracts_for(E, planet, rng)
+        tiers0 = [_draw_tier(E, rng) if has_tiers else "normal" for _ in offers]
     more_i = 0
     rewards_w = planet.get("rewards", {"credits": 1.0})
     total = {k: 0.0 for k in rewards_w}
@@ -385,7 +458,6 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     maxd = 0.0
     dist = 0.0
     crashed = False
-    C = E["contracts"]
     qbonus = C.get("quality_bonus", 0.5)
     qexp = C.get("quality_exp", 1.0)          # >1 = precisao alta vale desproporcionalmente mais
     regenerate = C.get("regenerate", False)   # nova oferta aparece apos cada entrega (gas vira o limite)
@@ -395,39 +467,60 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     cargo = C.get("cargo_mass", 0.0)
     arcade = E.get("physics", {}).get("mode", "arcade") == "arcade"
     eff = stats["efficiency"]
+    combo = C.get("combo")
+    q_min = combo["q_min"] if combo else 2.0
+    pk = C.get("pickups")
+    pick_frac = pk["per_hop"] * pk["value_frac"] * min(1.0, prof.skill) if pk else 0.0
+    streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
 
-    def info(d):  # custo e pagamento de uma oferta nao mudam durante o run: calcula uma vez so
+    def info(d, tid):  # custo, pagamento e chances de uma oferta nao mudam durante o run: calcula uma vez so
+        tier = pad_tier(E, tid)
         dv = hop_dv(planet, d, stats, prof)
-        return (d, dv / eff if arcade else dv, contract_pay(E, planet, d, stats))
+        q_mu = _q_on_tier(prof.skill, tier, prof.skill)
+        pc_mu = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
+        base = contract_pay(E, planet, d, stats)
+        # valor esperado (para a escolha do piloto): qualidade media, plataforma e chance de bater
+        ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] + pick_frac) * (1 - pc_mu)
+        return (d, dv / eff if arcade else dv, base, tier, ev)
 
-    items = [info(d) for d in offers]
+    items = [info(d, tid) for d, tid in zip(offers, tiers0)]
     while items and n < max_per_run:
         bi, best_score, best_gas = -1, 0.0, 0.0
-        for i, (d, g_or_dv, pay0) in enumerate(items):
+        for i, it in enumerate(items):
+            g_or_dv = it[1]
             g_need = g_or_dv if arcade else gas_for(E, g_or_dv, stats, gas, cargo)  # rocket: depende da massa
             if g_need <= gas:
-                score = pay0 / max(g_need, 1e-9)
+                score = it[4] / max(g_need, 1e-9)
                 if score > best_score:
                     bi, best_score, best_gas = i, score, g_need
         if bi < 0:
             break
-        best, _, pay0 = items.pop(bi)
+        best, _, base, tier, _ = items.pop(bi)
         if regenerate:
             if stream and more_i < len(stream[1]):
-                items.append(info(stream[1][more_i]))
+                items.append(info(stream[1][more_i], stream[3][more_i]))
                 more_i += 1
             else:
-                items.append(info(math.exp(rng.uniform(log_lo, log_hi))))
+                nd = math.exp(rng.uniform(log_lo, log_hi))
+                items.append(info(nd, _draw_tier(E, rng) if has_tiers else "normal"))
         gas -= best_gas
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
-        pay = pay0 * (1 + qbonus * q ** qexp)
-        pc = crash_prob(planet, stats, q)
+        q = _q_on_tier(q, tier, prof.skill)
+        cm = combo_mult(E, streak)
+        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm + base * pick_frac
+        pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof)
         if expected:
             pay *= (1 - pc)
+            if combo:
+                streak = _p_good(prof, tier, q_min) * (streak + 1)
         elif rng.random() < pc:
             crashed = True
             break
+        elif combo:
+            streak = streak + 1 if q >= q_min else 0
+        if log is not None:
+            log.append((best, tier["id"], q, cm))
         for k, w in rewards_w.items():
             total[k] += pay * w
         n += 1

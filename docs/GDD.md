@@ -1,7 +1,7 @@
 # Incremental Lander — Documento de Design (GDD)
 
 > Documento vivo. **Números** de economia NÃO moram aqui: a fonte única é `data/economy.json`
-> (tabelas abaixo são um retrato da spec **v6**, 2026-09-29). Mudou a spec → atualize o retrato.
+> (tabelas abaixo são um retrato da spec **v7**, 2026-10-03). Mudou a spec → atualize o retrato.
 
 ## 1. Conceito
 Jogo **incremental** estilo **Lunar Lander**, **visão lateral**, feito em **Godot 4.7** para **computador**
@@ -28,6 +28,12 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
 - Entregas **se renovam**: a cada entrega feita, uma nova oferta aparece (o gás é sempre o limite).
 - Pagamento cresce com a distância (`d^1.1`), custo em gás cresce com `sqrt(g·d)` → ir mais longe
   compensa, mas exige gás num salto só.
+- **Variedade das entregas (v7, 2026-10-03)** — cada oferta é uma escolha de risco, não só de distância:
+  - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
+  - **Combo**: cada pouso bom seguido (q ≥ 0,55) soma +10% no pagamento, até +50%; pouso ruim zera.
+  - **Cristais** no caminho de um arco bem feito: cada um vale 5% do pagamento-base da entrega.
+  - O relevo tem **cristas** entre as plataformas: um arco bom passa por cima, voar rente ao chão não compensa
+    (e nos mundos com atmosfera o ar é mais denso perto do chão).
 
 ## 3. Pilotagem (física) — **a implementar e calibrar**
 - Controles (teclado): girar esquerda/direita, propulsor; Esc pausa o voo (volumes + lista de controles). (Detalhes finais na skill `godot-dev`/Fase 1.)
