@@ -93,3 +93,12 @@ func test_melhor_mundo_para_decolar_apos_recomeco() -> void:
 	assert_eq(Purchases.best_launchable(["luna", "ares", "kronos"], base), "luna")
 	var forte := EconMath.ship_stats({"thrust": 42, "tank": 38, "efficiency": 35})
 	assert_eq(Purchases.best_launchable(["luna", "ares", "kronos"], forte), "kronos")
+
+
+func test_marco_de_upgrade_para_o_jingle() -> void:
+	assert_true(Purchases.milestone_crossed("thrust", 24, 25), "nivel 25 = marco")
+	assert_true(Purchases.milestone_crossed("thrust", 10, 60), "comprar max passando dois marcos")
+	assert_false(Purchases.milestone_crossed("thrust", 25, 26))
+	assert_false(Purchases.milestone_crossed("gear", 0, 30), "sem marcos na spec")
+	assert_true(Purchases.milestone_crossed("exp1_station", 0, 1), "etapa da Expedicao")
+	assert_false(Purchases.milestone_crossed("thrust", 5, 5), "nada comprado")

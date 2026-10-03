@@ -15,7 +15,7 @@
 
 ## Tonalidade
 - Centro **D**. SFX tonais: **D pentatônica maior** (D E F# A B) via `snap()`.
-- Música: D lídio (exploração), D maior (menu/vitória), B menor (tensão). **(provisório)**
+- Música: D lídio (voo/exploração), D maior (menu/hangar/vitória), B menor (tensão). Confirmado 2026-10-03.
 
 ## Técnico
 - WAV PCM 16-bit, 44.1 kHz. SFX/UI/jingle/loop: mono. Ambiência/música: estéreo.
@@ -35,3 +35,4 @@
 ## Decisões registradas
 <!-- data — decisão — motivo -->
 - 2026-10-01 — propulsor = plasma suave (opção A de `audio/src/sfx/thruster.py`) — usuário: "escolhe qualquer 1"; o usuário prefere não auditar som por som: gerar o pacote seguindo a skill e tocar um resumo para aprovação geral
+- 2026-10-03 — pacote de trilha: ambiência por mundo (cama + eventos esparsos, 24 s), música de título/hangar (D maior 84 BPM) e de voo (D lídio 100 BPM), alarme de gás que baixa após 3 s, jingles de marco/mundo/recomeço/final com a música abaixando −9 dB — aprovado pelo usuário ouvindo o resumo ("Aprovado, integra")

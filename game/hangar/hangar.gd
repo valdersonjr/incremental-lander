@@ -286,7 +286,8 @@ func _make_row(r: Dictionary) -> HBoxContainer:
 	mx.disabled = not r["affordable"]
 	mx.set_meta(&"focus_key", "max:" + id)
 	mx.pressed.connect(func() -> void:
-		_bought(GameState.buy_upgrade_max(id) > 0, "up:" + id))
+		var before := int(GameState.levels.get(id, 0))
+		_bought(GameState.buy_upgrade_max(id) > 0, "up:" + id, id, before))
 	row.add_child(mx)
 	return row
 
@@ -307,7 +308,8 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 	buy.disabled = not r["affordable"]
 	buy.set_meta(&"focus_key", "buy:" + id)
 	buy.pressed.connect(func() -> void:
-		_bought(GameState.buy_upgrade(id), "up:" + id))
+		var before := int(GameState.levels.get(id, 0))
+		_bought(GameState.buy_upgrade(id), "up:" + id, id, before))
 	return buy
 
 
@@ -479,8 +481,12 @@ func _add_shop(st: Dictionary) -> void:
 # --- utilitarios -------------------------------------------------------------------------------------------------
 
 ## Resultado de uma compra: som, brilho na linha e no saldo (feedback imediato) e tela atualizada.
-func _bought(ok: bool, row_key: String) -> void:
+## Resultado de uma compra: som (jingle se passou um marco ou etapa da Expedicao), brilho na linha e no saldo.
+func _bought(ok: bool, row_key: String, upgrade_id: String = "", before: int = 0) -> void:
 	Sound.ui("buy" if ok else "denied")
+	if ok and upgrade_id != "" and Purchases.milestone_crossed(upgrade_id, before,
+			int(GameState.levels.get(upgrade_id, 0))):
+		Sound.jingle("milestone")
 	if ok:
 		_flash_row = row_key
 		_flash_money = true

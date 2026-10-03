@@ -63,6 +63,21 @@ static func upgrade_rows(resources: Dictionary, levels: Dictionary, unlocked: Ar
 	return rows
 
 
+## A compra de before -> after niveis passou um marco (milestones da spec, a cada N niveis) ou e uma etapa da
+## Expedicao (progress)? Usado para o jingle de marco no hangar.
+static func milestone_crossed(upgrade_id: String, before: int, after: int) -> bool:
+	if after <= before:
+		return false
+	var u := EconMath._find("upgrades", upgrade_id)
+	if u.get("progress", false):
+		return true
+	for m: Dictionary in u.get("milestones", []):
+		var every := int(m["every"])
+		if every > 0 and after / every > before / every:
+			return true
+	return false
+
+
 ## Maior distancia (m) alcancavel com `gas`, pelo delta-v ideal (sem desperdicio). Busca binaria.
 static func max_reach_m(planet_id: String, stats: Dictionary, gas: float) -> float:
 	var eff := float(stats["efficiency"])

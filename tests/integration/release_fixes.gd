@@ -1,7 +1,8 @@
 ## Teste de integracao das correcoes da auditoria de lancamento (2026-10-03), numa pasta propria (user://itest_fixes):
 ## recomeco com Cartas de navegacao volta a um mundo em que a nave decola; hangar nao decola num mundo impossivel;
 ## R na tela final nao comeca run; abrir o hangar esconde as ofertas (teclas nao vazam); E precisa de 2 toques;
-## Espaco nao confirma menus; o relogio do run para na pausa; save ilegivel e guardado a parte com aviso; recordes.
+## Espaco nao confirma menus; o relogio do run para na pausa; save ilegivel e guardado a parte com aviso; recordes;
+## audio: musica por tela, ambiencia do mundo, jingles dos eventos e alarme de gas baixo.
 ## Imprime RELEASE_FIXES_TEST OK ou FALHOU.
 extends Node
 
@@ -72,10 +73,22 @@ func _process(_d: float) -> void:
 		12:
 			var offers: OfferPanel = _main._offers
 			_check("run_comecou", offers.visible)
+			_check("musica_de_voo", Sound._music_name == "flight" and Sound._ambience_name == "luna")
+			# alarme de gas: em voo com gas abaixo de 15% toca; pousado nao
+			var l: Lander = _main._flight.lander
+			l.state = Lander.State.FLYING
+			l.gas = float(l.params["tank"]) * 0.1
+			set_meta(&"lander", l)
 			# E precisa de 2 toques
 			_key(KEY_E)
 		14:
 			_check("um_E_nao_encerra", not _main._run.over and _main._offers.end_armed > 0.0)
+			var l: Lander = get_meta(&"lander")
+			_check("alarme_de_gas_toca", l._alarm.playing)
+			l.state = Lander.State.LANDED
+			l.gas = float(l.params["tank"])
+			Events.planet_unlocked.emit("ares")
+			_check("jingle_ao_liberar_mundo", int(Sound.played.get("unlock", 0)) > 0)
 			# relogio do run para com o jogo pausado
 			_t0 = _main._run_time
 			get_tree().paused = true
@@ -86,6 +99,8 @@ func _process(_d: float) -> void:
 			_main._open_hangar()
 		26:
 			_check("hangar_esconde_ofertas", not _main._offers.visible)
+			_check("hangar_toca_musica_do_menu", Sound._music_name == "title")
+			_check("alarme_para_ao_pousar", not (get_meta(&"lander") as Lander)._alarm.playing)
 			_key(KEY_1)
 		28:
 			_check("tecla_1_nao_vaza", _main._flight.target_pad_id < 0)

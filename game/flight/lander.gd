@@ -27,11 +27,19 @@ var gas_at_takeoff := 0.0
 
 const THRUST_START := preload("res://assets/audio/sfx/thruster_start.wav")
 const THRUST_STOP := preload("res://assets/audio/sfx/thruster_stop.wav")
+const GAS_ALARM := preload("res://assets/audio/sfx/gas_alarm.wav")
+## Alarme de gas: toca em voo abaixo desta fracao do tanque (mesmo limite da barra vermelha do HUD).
+const ALARM_FRAC := 0.15
+## Alarme que nao irrita: comeca forte e, depois de ALARM_LOUD_S, cai para ALARM_QUIET_DB (o jogador ja sabe).
+const ALARM_LOUD_S := 3.0
+const ALARM_QUIET_DB := -14.0
 
 @onready var _visual: AnimatedSprite2D = %Visual
 @onready var _thrust_loop: AudioStreamPlayer2D = %ThrustLoop
 @onready var _thrust_fx: AudioStreamPlayer2D = %ThrustFx
 var _was_thrusting := false
+var _alarm: AudioStreamPlayer
+var _alarm_t := 0.0
 
 
 ## Configura a nave (stats do EconMath + planeta da spec) e as plataformas do terreno.
@@ -50,6 +58,13 @@ func setup(stats: Dictionary, planet: Dictionary, terrain_pads: Array[Dictionary
 	state = State.LANDED
 	vel_m = Vector2.ZERO
 	rotation = 0.0
+
+
+func _ready() -> void:
+	_alarm = AudioStreamPlayer.new()
+	_alarm.stream = GAS_ALARM
+	_alarm.bus = &"SFX"
+	add_child(_alarm)
 
 
 func _physics_process(delta: float) -> void:
@@ -83,11 +98,28 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	var anim := &"thrust" if thrusting else &"idle"
 	if _visual.animation != anim:
 		_visual.play(anim)
 	_update_thrust_sound()
+	_update_gas_alarm(delta)
+
+
+## Gas baixo em voo: bipe em loop que baixa de volume depois de alguns segundos; para ao pousar/bater/sem gas.
+func _update_gas_alarm(delta: float) -> void:
+	var tank := float(params.get("tank", 0.0))
+	var low := state == State.FLYING and tank > 0.0 and gas > 0.0 and gas / tank < ALARM_FRAC and autopilot == null
+	if not low:
+		if _alarm.playing:
+			_alarm.stop()
+		_alarm_t = 0.0
+		return
+	if not _alarm.playing:
+		_alarm.play()
+	_alarm_t += delta
+	_alarm.volume_db = 0.0 if _alarm_t < ALARM_LOUD_S else lerpf(0.0, ALARM_QUIET_DB,
+			clampf((_alarm_t - ALARM_LOUD_S) / 1.5, 0.0, 1.0))
 
 
 ## Propulsor (sound-design: plasma suave): ignicao por cima do loop ao ligar; corte ao desligar.
@@ -100,6 +132,9 @@ func _exit_tree() -> void:
 	for p: AudioStreamPlayer2D in [_thrust_loop, _thrust_fx]:
 		p.stop()
 		p.stream = null
+	if _alarm != null:
+		_alarm.stop()
+		_alarm.stream = null
 
 
 func _update_thrust_sound() -> void:

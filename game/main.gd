@@ -158,6 +158,8 @@ func _open_hangar() -> void:
 		if c != null and is_instance_valid(c):
 			c.visible = false
 	_hangar.open()
+	Sound.music("title")                                       # hangar = menu: a mesma musica calma do titulo
+	Sound.ambience(GameState.current_planet)
 
 
 ## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega). Voltar ao menu
@@ -170,6 +172,7 @@ func _show_title() -> void:
 	_build_title_world()
 	_gui.move_child(_title, -1)
 	_title.open()
+	Sound.music("title")
 
 
 ## Cena de fundo do menu: o mundo do jogo em uso, nave parada na plataforma.
@@ -178,6 +181,7 @@ func _build_title_world() -> void:
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
 	_flight.start(GameState.current_planet, _run_seed, GameState.ship_stats(), false)
+	Sound.ambience(GameState.current_planet)
 
 
 ## Continuar: com progresso vai ao hangar (gastar o que ganhou); sem progresso, decola o primeiro run.
@@ -243,6 +247,8 @@ func _start_run() -> void:
 	for c: Control in [_hud, _offers, _summary, _ending, _pause]:
 		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
+	Sound.music("flight")
+	Sound.ambience(GameState.current_planet)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
