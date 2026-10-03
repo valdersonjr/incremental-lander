@@ -28,6 +28,10 @@
     sozinho quando a nave chega perto da borda, para os dois lados; nada do que já existia muda (teste edge_flow).
   - **Fase 11 concluída.** Pendências: aprovação do usuário da arte nova (plataformas, cristal, perigos) e dos sons;
     calibrar com humanos (telemetria tier/crystals); autopiloto do demo não desvia de brinquedos nem pega cristais.
+- **Takes de trailer (2026-10-03)**: 19 takes de 4–10 s (1080p60 com som) + montagem bruta de 90 s, lista e ordem em
+  `trailer/TAKES.md` (vídeos fora do git). Diretor `tests/visual/trailer_director.tscn` (escolhe entregas, piloto pelo
+  arco dos cristais, sincroniza perigos, sem HUD/zoom opcionais); gravação `tests/tools/trailer_capture.py` (Movie
+  Maker + ffmpeg do `pip install imageio-ffmpeg`, janelas lado a lado para não congelar); montagem `trailer_montage.py`.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
   "muito feio"; aprovou a cena da Lua (hoje em cinza clássico): céu em faixas, Terra com halo, montanhas facetadas, terreno com

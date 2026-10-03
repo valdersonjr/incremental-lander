@@ -16,3 +16,7 @@ audio/previews/
 
 # Estado dos hooks de sessão (marcas de skill invocada)
 .claude/hooks/.state/
+
+# Takes de trailer gravados (regeneráveis: tests/tools/trailer_capture.py)
+trailer/takes/
+trailer/*.mp4
