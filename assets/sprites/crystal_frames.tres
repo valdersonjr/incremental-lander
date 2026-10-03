@@ -1,0 +1,100 @@
+[gd_resource type="SpriteFrames" load_steps=14 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/crystal.png" id="1_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
+atlas = ExtResource("1_tex")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4"]
+atlas = ExtResource("1_tex")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6"]
+atlas = ExtResource("1_tex")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
+atlas = ExtResource("1_tex")
+region = Rect2(96, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8"]
+atlas = ExtResource("1_tex")
+region = Rect2(112, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_9"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_10"]
+atlas = ExtResource("1_tex")
+region = Rect2(16, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_11"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_12"]
+atlas = ExtResource("1_tex")
+region = Rect2(48, 16, 16, 16)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.375,
+"texture": SubResource("AtlasTexture_1")
+}, {
+"duration": 1.125,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_3")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_4")
+}, {
+"duration": 1.375,
+"texture": SubResource("AtlasTexture_5")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_6")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_7")
+}, {
+"duration": 1.125,
+"texture": SubResource("AtlasTexture_8")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 12.500
+}, {
+"frames": [{
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_9")
+}, {
+"duration": 1.200,
+"texture": SubResource("AtlasTexture_10")
+}, {
+"duration": 1.400,
+"texture": SubResource("AtlasTexture_11")
+}, {
+"duration": 1.800,
+"texture": SubResource("AtlasTexture_12")
+}],
+"loop": false,
+"name": &"pop",
+"speed": 20.000
+}]

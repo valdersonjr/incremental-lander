@@ -15,8 +15,11 @@
     perigo) + "×N" escrito sob a plataforma, combo no HUD, aviso com ganho/plataforma/combo; pagamento já é `delivery_pay`.
     Telemetria ganhou coluna `tier`. **Arte das plataformas novas aguarda aprovação do usuário**
     (`art/previews/landing_pad_scene_zoom.png`). Invariante: plataforma criada nunca muda (teste).
-  - Próximas: 11.4 cristais;
-    11.5 perigos por mundo.
+  - 11.4 ✅ 3 cristais roxos por salto **sobre o arco ideal** (mostram o caminho eficiente; desviar custa gás), coleta com
+    estouro + nota que sobe (crystal_1..3) + "+X" flutuante; estalo de combo (combo_2..5) ao pousar com combo ≥ 2;
+    telemetria com `crystals`. O piloto automático do demo voa mais alto que o arco ideal e não pega cristais (ok: o
+    teste `crystal_flow` cobre a coleta). Calibrar com humanos a fração de coleta (modelo assume = skill).
+  - Próxima: 11.5 perigos por mundo.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
   "muito feio"; aprovou a cena da Lua (hoje em cinza clássico): céu em faixas, Terra com halo, montanhas facetadas, terreno com

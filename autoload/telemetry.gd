@@ -5,7 +5,7 @@ extends Node
 const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
-		"crashed", "pilot", "tier"]
+		"crashed", "pilot", "tier", "crystals"]
 
 var enabled := true
 var pilot := "human"      # "demo" quando o piloto automatico voa (nao misturar na calibracao)

@@ -94,7 +94,7 @@
 - [x] 11.2 Relevo com verticalidade: cristas entre as plataformas (um arco bom passa, voar baixo não), plataformas
       em pico/platô e em vale; ar mais denso perto do chão nos mundos com atmosfera (2026-10-03)
 - [x] 11.3 Plataformas difíceis no jogo (largura, multiplicador na oferta e no marcador) + combo no HUD + pop-ups (2026-10-03)
-- [ ] 11.4 Cristais no ar (coleta, bônus) + arte (pixel-art) + sons (sound-design)
+- [x] 11.4 Cristais no ar (coleta, bônus) + arte (pixel-art) + sons (sound-design) (2026-10-03)
 - [ ] 11.5 Perigos por mundo (Floresta vento; Doces calda; Quarto ventilador/objetos caindo)
 
 ## Fase 10 — Calibração, polimento e build · skills: `economy-balance` (Etapa 10), `godot-dev`

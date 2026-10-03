@@ -236,6 +236,8 @@ func _on_delivery_finished(result: Dictionary) -> void:
 			int(result.get("crystals", 0)))
 	GameState.add_rewards(rewards)
 	_hud.show_delivery(_run.deliveries[-1], _run.streak)
+	if _run.streak >= 2:                                       # combo: estalo que sobe com o tamanho, depois da entrega
+		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % mini(_run.streak, 5)))
 	_show_offers()
 
 

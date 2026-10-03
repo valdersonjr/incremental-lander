@@ -100,3 +100,18 @@ func test_plataforma_nova_nao_muda_as_antigas() -> void:
 						var x: float = float(p0["x"]) + dx * float(p0["half_width"])
 						assert_almost(TerrainGen.height_at(after["ridge"], x), float(p0["y"]), 1e-3,
 								"topo do pad %d mudou (+%s %s)" % [i, extra, tier])
+
+
+func test_cristais_no_caminho_do_arco_e_acima_da_crista() -> void:
+	var t := TerrainGen.generate(5, "luna", [1000.0] as Array[float])
+	var a: Dictionary = t["pads"][0]
+	var b: Dictionary = t["pads"][1]
+	var cs := Crystals.place(a, b, 3)
+	assert_eq(cs.size(), 3)
+	for c in cs:
+		assert_true(c.x > float(a["x"]) and c.x < float(b["x"]), "entre as plataformas")
+		assert_true(c.y < TerrainGen.height_at(t["ridge"], c.x) - 30.0, "acima do relevo/crista")
+	assert_true(cs[1].y < cs[0].y and cs[1].y < cs[2].y, "o do meio e o mais alto (arco)")
+	var taken: Array[bool] = [false, true, false]
+	assert_eq(Crystals.hits(cs, taken, cs[0] + Vector2(5, 5)), [0] as Array[int], "alcanca o perto")
+	assert_eq(Crystals.hits(cs, taken, cs[1]), [] as Array[int], "ja pego nao conta de novo")

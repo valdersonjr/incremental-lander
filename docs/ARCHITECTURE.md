@@ -123,7 +123,7 @@ scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButt
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
-                              # human/demo + tier; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
+                              # human/demo + tier + crystals; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
                               # nunca sobrescreve)
 autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
@@ -131,6 +131,10 @@ autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user
                               # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
+scripts/world/crystals.gd     # Crystals (puro): place(pad_a, pad_b, n) sobre o arco ideal de 45° (world.json crystals.arc_k);
+                              # hits(pos, taken, lander) com crystals.radius_m. Flight cria/coleta (pop, som crystal_N que sobe,
+                              # texto do ganho) e põe `crystals` no resultado; Main toca combo_N quando streak ≥ 2
+tests/integration/crystal_flow # cristais: cria 3, coleta, não repete, resultado com contagem e tipo, limpa
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
 tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,

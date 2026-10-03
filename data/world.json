@@ -177,5 +177,10 @@
     "notes": "Ar mais denso perto do chao (mundos com arrasto): arrasto = drag do planeta x (drag_scale + ground_drag x exp(-altitude/scale_height_m)). Voo alto quase nao sente; voar rente suga velocidade.",
     "ground_drag": 0.25,
     "scale_height_m": 120.0
+  },
+  "crystals": {
+    "notes": "Cristais sobre o arco ideal de 45 graus (o de menor gasto de gas): mostram o caminho eficiente; desviar para buscar custa gas. Quantidade e valor: economy.json contracts.pickups. arc_k = fracao da altura do arco (1 = no arco); radius_m = alcance da coleta (centro do lander).",
+    "arc_k": 1.0,
+    "radius_m": 24.0
   }
 }

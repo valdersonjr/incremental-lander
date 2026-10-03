@@ -16,6 +16,13 @@ var target_pad_id := -1
 
 const EXPLOSION_FRAMES := preload("res://assets/sprites/explosion_frames.tres")
 const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
+const CRYSTAL_FRAMES := preload("res://assets/sprites/crystal_frames.tres")
+
+## Cristais pegos no salto atual (vao no resultado da entrega).
+var crystals_taken := 0
+var _crystal_pos: Array[Vector2] = []
+var _crystal_taken: Array[bool] = []
+var _crystal_nodes: Array[AnimatedSprite2D] = []
 
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
@@ -36,6 +43,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
+	if lander.state == Lander.State.FLYING and not _crystal_pos.is_empty():
+		for i in Crystals.hits(_crystal_pos, _crystal_taken, lander.global_position):
+			_collect_crystal(i)
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
 	var target := -CameraMath.lift(alt, float(cam["ground_lift_px"]), float(cam["lift_fade_alt_px"]))
@@ -84,6 +94,7 @@ func set_target(distance_m: float, tier: String = "normal") -> void:
 	lander.pads = terrain.pads
 	lander.ridge = terrain.ridge
 	lander.can_takeoff = true
+	_spawn_crystals(terrain.pads[current_pad_id], terrain.pads[target_pad_id])
 	if _demo:
 		var ap := Autopilot.new()
 		ap.target = terrain.pads[target_pad_id]
@@ -110,6 +121,60 @@ func _planet_spec(pid: String) -> Dictionary:
 			return p
 	push_error("planeta '%s' nao existe na spec" % pid)
 	return EconMath.spec["planets"][0]
+
+
+## Cristais do novo salto (quantidade da economia; posicao no arco: Crystals.place).
+func _spawn_crystals(from_pad: Dictionary, to_pad: Dictionary) -> void:
+	_clear_crystals()
+	var pk: Dictionary = EconMath.spec["contracts"].get("pickups", {})
+	_crystal_pos = Crystals.place(from_pad, to_pad, int(pk.get("per_hop", 0)))
+	for p in _crystal_pos:
+		var s := AnimatedSprite2D.new()
+		s.sprite_frames = CRYSTAL_FRAMES
+		s.position = p
+		add_child(s)
+		s.play(&"spin")
+		s.frame = randi() % 8                                   # cristais nao giram em sincronia
+		_crystal_nodes.append(s)
+		_crystal_taken.append(false)
+
+
+func _clear_crystals() -> void:
+	for s in _crystal_nodes:
+		if is_instance_valid(s):
+			s.queue_free()
+	_crystal_nodes.clear()
+	_crystal_pos.clear()
+	_crystal_taken.clear()
+	crystals_taken = 0
+
+
+## Pegou um cristal: estoura, toca a nota da vez (sobe a cada cristal) e mostra o valor subindo.
+func _collect_crystal(i: int) -> void:
+	_crystal_taken[i] = true
+	crystals_taken += 1
+	var s := _crystal_nodes[i]
+	s.play(&"pop")
+	s.animation_finished.connect(s.queue_free)
+	Sound.sfx("crystal_%d" % mini(crystals_taken, 3))
+	var value := EconMath.pickup_value(planet_id, target_distance_m, stats)
+	_float_text("+" + EconMath.fmt(value), _crystal_pos[i] + Vector2(0, -10))
+
+
+## Texto que sobe e some no mundo (ganho de cristal).
+func _float_text(text: String, pos: Vector2) -> void:
+	var l := Label.new()
+	l.theme = UiKit.theme_for(planet_id)
+	l.theme_type_variation = &"MoneyLabel"
+	l.text = text
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.size = Vector2(60, 12)
+	l.position = pos - Vector2(30, 6)
+	add_child(l)
+	var tw := l.create_tween()
+	tw.tween_property(l, "position:y", l.position.y - 24.0, 0.9)
+	tw.parallel().tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.4)
+	tw.tween_callback(l.queue_free)
 
 
 func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
@@ -159,8 +224,10 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"hop_time_s": info["flight_time_m"],
 		"quality": quality,
 		"tier": target_tier,
+		"crystals": crystals_taken,
 		"crashed": crashed,
 		"reason": reason,
 	}
 	Telemetry.record_delivery(result)
+	_clear_crystals()
 	delivery_finished.emit(result)
