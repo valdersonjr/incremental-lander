@@ -66,3 +66,9 @@ desligado** (`--no_save`, caminho `tests/visual/` ou `SaveManager.set_dir()` num
   entrada: `gdtool.py test` fica minutos sem sair (0% de CPU). **Sempre `check` antes de `test`** (a ordem da skill)
   — o `check` mostra o erro com a linha em segundos. Ex.: `var x := float(a) + dx * b` com `dx` vindo de um array
   literal não tipado → "Cannot infer the type"; use `var x: float = ...`.
+
+## Armadilha (2026-10-03): tempo do MODELO × tempo REAL
+- A física corre em segundos do modelo (`time_scale` = 4,5× o tempo real). Tudo que o jogador precisa PERCEBER
+  (avisos de perigo, ciclos, quedas) deve ser em segundos reais — com tempos do modelo, um aviso de 1,4 s durava
+  0,3 s na tela. Forças continuam em m/s² do modelo (a física converte).
+- Prévia de algo cíclico: procurar o INÍCIO da fase (sair da fase atual e entrar na pedida), senão pega o fim dela.

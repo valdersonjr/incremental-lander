@@ -182,5 +182,72 @@
     "notes": "Cristais sobre o arco ideal de 45 graus (o de menor gasto de gas): mostram o caminho eficiente; desviar para buscar custa gas. Quantidade e valor: economy.json contracts.pickups. arc_k = fracao da altura do arco (1 = no arco); radius_m = alcance da coleta (centro do lander).",
     "arc_k": 1.0,
     "radius_m": 24.0
+  },
+  "hazards": {
+    "notes": "Perigos por mundo (Fase 11.5). Ciclos (period_s/on_s/warn_s/fall_s) em SEGUNDOS REAIS (o que o jogador percebe; o modelo corre time_scale x mais rapido); forcas em m/s2 do modelo; distancias em m. Sempre avisados (warn_s antes). Custo na economia: economy.json planets[].hazard. Lua: nenhum (planeta do arco puro).",
+    "ares": {
+      "type": "gust",
+      "count": [
+        1,
+        2
+      ],
+      "accel": 3.5,
+      "width_m": [
+        180,
+        320
+      ],
+      "height_m": [
+        160,
+        300
+      ],
+      "period_s": 6.0,
+      "on_s": 2.6,
+      "warn_s": 1.2
+    },
+    "kronos": {
+      "type": "geyser",
+      "count": [
+        1,
+        2
+      ],
+      "width_m": 36.0,
+      "height_frac": 0.18,
+      "height_m": [
+        90,
+        520
+      ],
+      "period_s": 7.0,
+      "on_s": 2.8,
+      "warn_s": 1.4,
+      "drag": 0.9,
+      "lift": 4.0
+    },
+    "titan": [
+      {
+        "type": "fan",
+        "count": [
+          1,
+          1
+        ],
+        "width_m": 90.0,
+        "height_m": [
+          260,
+          700
+        ],
+        "accel": 11.0
+      },
+      {
+        "type": "toy",
+        "count": [
+          1,
+          2
+        ],
+        "period_s": 5.0,
+        "warn_s": 1.4,
+        "radius_m": 12.0,
+        "drop_m": 320.0,
+        "fall_s": 1.6
+      }
+    ]
   }
 }

@@ -1,0 +1,17 @@
+{
+  "frame_width": 32,
+  "frame_height": 10,
+  "animations": [
+    {
+      "name": "bubble",
+      "row": 0,
+      "frames": 3,
+      "durations_ms": [
+        140,
+        140,
+        140
+      ],
+      "loop": true
+    }
+  ]
+}

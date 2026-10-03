@@ -17,6 +17,8 @@ var gas := 0.0
 var params: Dictionary = {}             # gravity, thrust, efficiency, drag, tank, gear, planet_drag
 var pads: Array[Dictionary] = []
 var ridge := PackedVector2Array()       # contorno do terreno (px): altitude para o ar denso perto do chao
+var env_accel := Vector2.ZERO           # perigos do mundo neste passo (o Flight calcula antes do lander mover)
+var env_drag := 0.0
 var autopilot: Autopilot = null
 var thrusting := false
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
@@ -67,7 +69,8 @@ func _physics_process(delta: float) -> void:
 			return
 	rotation += float(controls["rotate"]) * float(cfg["rotate_speed"]) * delta
 	var dt_m := delta * float(cfg["time_scale"])
-	params["drag"] = LanderPhysics.drag_at(float(params["planet_drag"]), altitude_m(), cfg)
+	params["drag"] = LanderPhysics.drag_at(float(params["planet_drag"]), altitude_m(), cfg) + env_drag
+	params["extra_accel"] = env_accel
 	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, params, dt_m)
 	vel_m = r["velocity"]
 	gas = r["gas"]
@@ -140,6 +143,15 @@ func _read_controls() -> Dictionary:
 		"rotate": Input.get_axis(&"rotate_left", &"rotate_right"),
 		"thrust": Input.is_action_pressed(&"thrust"),
 	}
+
+
+## Destruida por um perigo (brinquedo caindo): mesma saida de uma batida.
+func crash_now(reason: String) -> void:
+	if state == State.CRASHED:
+		return
+	state = State.CRASHED
+	thrusting = false
+	crashed.emit(reason, info())
 
 
 func _on_touch() -> void:

@@ -34,6 +34,10 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   - **Cristais** no caminho de um arco bem feito: cada um vale 5% do pagamento-base da entrega.
   - O relevo tem **cristas** entre as plataformas: um arco bom passa por cima, voar rente ao chão não compensa
     (e nos mundos com atmosfera o ar é mais denso perto do chão).
+  - **Perigos por mundo** (sempre avisados antes; pedem pilotagem, não sorte): Lua nenhum (o planeta do arco puro);
+    Silvânia rajadas de vento laterais (folhas voando avisam); Docelândia gêiseres de calda que nascem do chão (bolhas
+    avisam; freiam e empurram — pegam quem voa baixo); O Quarto ventilador gigante (corrente de ar que AJUDA a subir) e
+    bloquinhos caindo (sombra + "!" avisam; destroem a nave).
 
 ## 3. Pilotagem (física) — **a implementar e calibrar**
 - Controles (teclado): girar esquerda/direita, propulsor; Esc pausa o voo (volumes + lista de controles). (Detalhes finais na skill `godot-dev`/Fase 1.)

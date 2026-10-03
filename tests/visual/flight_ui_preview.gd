@@ -15,10 +15,11 @@ func _ready() -> void:
 	for i in 20:
 		await get_tree().process_frame
 	var hud := main.find_child("Hud", true, false) as Hud
-	if "--delivered" in args or "--crashed" in args:
-		var crashed := "--crashed" in args
-		hud._on_delivery_finished({"crashed": crashed, "reason": "vertical_rapido", "quality": 0.86,
-				"gas_used": 54.9})
+	if "--crashed" in args:
+		hud._on_delivery_finished({"crashed": true, "reason": "vertical_rapido", "quality": 0.0, "gas_used": 54.9})
+	if "--delivered" in args:                                  # aviso de entrega com plataforma, combo e cristais
+		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "combo": 1.2, "crystals": 2,
+				"crystal_pay": 31.0, "good": true}, 3)
 	if "--pause" in args:
 		(main.find_child("PauseMenu", true, false) as PauseMenu).open()
 	if "--hangar" in args:

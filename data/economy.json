@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 7,
-    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas."
+    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado)."
   },
   "physics": {
     "mode": "arcade",
@@ -466,6 +466,10 @@
       },
       "unlock": {
         "credits": 300000.0
+      },
+      "hazard": {
+        "dv": 0.08,
+        "crash": 0.0
       }
     },
     {
@@ -487,7 +491,11 @@
         "credits": 1500000000.0,
         "ore": 2000
       },
-      "requires": "ares"
+      "requires": "ares",
+      "hazard": {
+        "dv": 0.1,
+        "crash": 0.0
+      }
     },
     {
       "id": "titan",
@@ -510,6 +518,10 @@
       "requires": "kronos",
       "requires_upgrade": {
         "exp8_aurora": 1
+      },
+      "hazard": {
+        "dv": 0.0,
+        "crash": 0.02
       }
     }
   ],

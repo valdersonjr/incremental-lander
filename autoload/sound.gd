@@ -1,5 +1,6 @@
 ## Sons one-shot do jogo (arte sonora da skill sound-design: audio/src/** -> assets/audio/**).
-## Sound.ui("click"|"buy"|"denied") no bus UI; Sound.sfx("landing"|"crash"|"delivered"|"crystal_1..3"|"combo_2..5")
+## Sound.ui("click"|"buy"|"denied") no bus UI; Sound.sfx("landing"|"crash"|"delivered"|"crystal_1..3"|"combo_2..5"|
+## "gust"|"geyser"|"toy_fall")
 ## no bus SFX (cristal: sobe um grau por cristal do mesmo salto; combo: sobe com o tamanho do combo).
 ## Variacoes + pitch/volume aleatorios vem dos AudioStreamRandomizer (.tres). O propulsor (loop) mora no Lander.
 extends Node
@@ -18,6 +19,9 @@ const STREAMS := {
 	"combo_3": "res://assets/audio/sfx/combo_3.wav",
 	"combo_4": "res://assets/audio/sfx/combo_4.wav",
 	"combo_5": "res://assets/audio/sfx/combo_5.wav",
+	"gust": "res://assets/audio/sfx/gust.wav",
+	"geyser": "res://assets/audio/sfx/geyser.wav",
+	"toy_fall": "res://assets/audio/sfx/toy_fall.wav",
 }
 const VOICES := 8
 

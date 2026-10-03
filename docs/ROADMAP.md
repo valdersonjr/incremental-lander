@@ -85,7 +85,7 @@
 - [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)
 - [ ] Jingles (upgrade grande, planeta, prestígio) · alarme de gás baixo · ambiências por mundo · músicas
 
-## Fase 11 — Voo com decisões · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
+## Fase 11 — Voo com decisões ✅ (2026-10-03) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
 > Pedido do usuário (2026-10-03): pagamento só por distância é sem graça; nada obriga a voar alto; andar de lado é
 > entediante → "faz tudo que for sabido que deixa os gamers felizes". Padrões: Lunar Lander 1979 (plataforma estreita
 > = multiplicador), combos, coletáveis no arco, relevo que exige altitude.
@@ -95,7 +95,7 @@
       em pico/platô e em vale; ar mais denso perto do chão nos mundos com atmosfera (2026-10-03)
 - [x] 11.3 Plataformas difíceis no jogo (largura, multiplicador na oferta e no marcador) + combo no HUD + pop-ups (2026-10-03)
 - [x] 11.4 Cristais no ar (coleta, bônus) + arte (pixel-art) + sons (sound-design) (2026-10-03)
-- [ ] 11.5 Perigos por mundo (Floresta vento; Doces calda; Quarto ventilador/objetos caindo)
+- [x] 11.5 Perigos por mundo (Floresta vento; Doces calda; Quarto ventilador/objetos caindo) (2026-10-03)
 
 ## Fase 10 — Calibração, polimento e build · skills: `economy-balance` (Etapa 10), `godot-dev`
 - [ ] 10.1 Jogar, exportar telemetria, `calibrate()` → `profiles_override` → re-simular

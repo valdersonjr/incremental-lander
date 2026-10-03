@@ -134,6 +134,12 @@ tests/unit/world/             # test_lander_physics, test_landing_rules, test_te
 scripts/world/crystals.gd     # Crystals (puro): place(pad_a, pad_b, n) sobre o arco ideal de 45° (world.json crystals.arc_k);
                               # hits(pos, taken, lander) com crystals.radius_m. Flight cria/coleta (pop, som crystal_N que sobe,
                               # texto do ganho) e põe `crystals` no resultado; Main toca combo_N quando streak ≥ 2
+scripts/world/hazards.gd      # Hazards (puro): generate(seed, planeta, pad_a, pad_b, ridge) -> zonas do salto (gust/geyser/fan/toy;
+                              # world.json hazards); cycle(z, t) off/warn/on em SEGUNDOS REAIS; toy_pos; effect_at -> accel/drag/lethal.
+                              # Flight: relógio _hz_t, efeito no lander (env_accel/env_drag; brinquedo -> lander.crash_now('atingido')),
+                              # som ao ligar perto (gust/geyser/toy_fall). LanderPhysics.step soma params.extra_accel
+game/flight/hazard_view.gd    # HazardView: desenha folhas/traços, coluna de calda + bolhas, ventilador + ar, sombra/'!'/bloco
+tests/visual/hazard_preview   # prévia de cada perigo: -- --planet=ares|kronos|titan --zone=N --phase=on|warn
 tests/integration/crystal_flow # cristais: cria 3, coleta, não repete, resultado com contagem e tipo, limpa
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet

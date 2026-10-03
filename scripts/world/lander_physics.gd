@@ -6,7 +6,8 @@ extends RefCounted
 
 ## Um passo de integracao. Retorna {"velocity": Vector2 (m/s), "gas": float, "gas_used": float, "dv": float}.
 ## rotation: 0 = nariz para cima; y cresce para baixo (convencao do Godot).
-## params: gravity (m/s2), thrust (m/s2), efficiency (m/s por gas), drag (1/s).
+## params: gravity (m/s2), thrust (m/s2), efficiency (m/s por gas), drag (1/s), extra_accel (Vector2 m/s2, opcional:
+## perigos do mundo — vento, calda, ventilador).
 static func step(velocity: Vector2, rotation: float, thrusting: bool, gas: float,
 		params: Dictionary, dt: float) -> Dictionary:
 	var accel := Vector2(0.0, float(params["gravity"]))
@@ -20,6 +21,7 @@ static func step(velocity: Vector2, rotation: float, thrusting: bool, gas: float
 		dv = thrust * burn_time
 		gas_used = dv / eff
 		accel += Vector2.UP.rotated(rotation) * thrust * (burn_time / dt)
+	accel += params.get("extra_accel", Vector2.ZERO) as Vector2
 	accel -= velocity * float(params.get("drag", 0.0))
 	return {
 		"velocity": velocity + accel * dt,

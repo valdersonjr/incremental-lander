@@ -19,7 +19,13 @@
     estouro + nota que sobe (crystal_1..3) + "+X" flutuante; estalo de combo (combo_2..5) ao pousar com combo ≥ 2;
     telemetria com `crystals`. O piloto automático do demo voa mais alto que o arco ideal e não pega cristais (ok: o
     teste `crystal_flow` cobre a coleta). Calibrar com humanos a fração de coleta (modelo assume = skill).
-  - Próxima: 11.5 perigos por mundo.
+  - 11.5 ✅ perigos por mundo (sempre avisados; ciclos em segundos reais): Silvânia rajadas laterais na altura do arco
+    (folhas douradas + traços; som gust); Docelândia gêiseres de calda do chão (bolhas antes; freiam e empurram; som
+    geyser); Quarto ventilador gigante (coluna de ar que ajuda) + bloquinho caindo (sombra + "!" antes; destrói; som
+    toy_fall). Lua sem perigo. Economia: neutros (o run acaba pelo teto de 6 entregas, não pelo gás) — spec v7.1.
+    Prévia: `tests/visual/hazard_preview -- --planet= --zone= --phase=on|warn`.
+  - **Fase 11 concluída.** Pendências: aprovação do usuário da arte nova (plataformas, cristal, perigos) e dos sons;
+    calibrar com humanos (telemetria tier/crystals); autopiloto do demo não desvia de brinquedos nem pega cristais.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como
   "muito feio"; aprovou a cena da Lua (hoje em cinza clássico): céu em faixas, Terra com halo, montanhas facetadas, terreno com
@@ -58,7 +64,9 @@
 ## Próximo passo
 0. **Lua em guerra (2026-10-02, feito)** — só cena de fundo, sem história/progressão (decisão do usuário).
    Opcional depois: sons distantes da batalha (sound-design).
-1. **Perigos por mundo (aprovado em princípio, 2026-10-01: "pode ser")** — Lua nenhum; Floresta galhos/cipós + vento;
+1. ~~**Perigos por mundo**~~ ✅ feito na Fase 11.5 (2026-10-03). Próximo sugerido: jogar e calibrar (Fase 10.1) com a
+   telemetria nova (tier, crystals); depois Fase 9 (som) continuação. Texto antigo do item:
+   **Perigos por mundo (aprovado em princípio, 2026-10-01: "pode ser")** — Lua nenhum; Floresta galhos/cipós + vento;
    Doces calda que gruda e freia; Quarto objetos caindo + ventilador. Planejar com economy-balance (custo de gás/risco),
    godot-dev (física/obstáculos) e pixel-art (sprites). Antes: confirmar com o usuário que os controles funcionam.
    (Contexto: pergunta "o jogo é só sair de um lugar e pousar em outro?") —

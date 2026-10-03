@@ -1,0 +1,15 @@
+{
+  "frame_width": 3,
+  "frame_height": 14,
+  "animations": [
+    {
+      "name": "rise",
+      "row": 0,
+      "frames": 1,
+      "durations_ms": [
+        200
+      ],
+      "loop": true
+    }
+  ]
+}

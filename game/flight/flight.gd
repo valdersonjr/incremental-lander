@@ -17,12 +17,18 @@ var target_pad_id := -1
 const EXPLOSION_FRAMES := preload("res://assets/sprites/explosion_frames.tres")
 const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
 const CRYSTAL_FRAMES := preload("res://assets/sprites/crystal_frames.tres")
+## Som quando um perigo liga perto da nave (o ventilador fica sempre ligado: sem som de "ligou").
+const HAZARD_SFX := {"gust": "gust", "geyser": "geyser", "toy": "toy_fall"}
 
 ## Cristais pegos no salto atual (vao no resultado da entrega).
 var crystals_taken := 0
 var _crystal_pos: Array[Vector2] = []
 var _crystal_taken: Array[bool] = []
 var _crystal_nodes: Array[AnimatedSprite2D] = []
+var _zones: Array[Dictionary] = []                 # perigos do salto atual (Hazards)
+var _hz_t := 0.0                                   # relogio dos perigos (segundos reais)
+var _hz_last: Array[String] = []                   # fase anterior de cada zona (para o som ao ligar)
+var _hazard_view: HazardView
 
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
@@ -37,6 +43,9 @@ var _demo := false
 
 
 func _ready() -> void:
+	_hazard_view = HazardView.new()
+	add_child(_hazard_view)
+	move_child(_hazard_view, lander.get_index())              # atras do lander
 	lander.landed.connect(_on_lander_landed)
 	lander.crashed.connect(_on_lander_crashed)
 
@@ -46,6 +55,7 @@ func _physics_process(delta: float) -> void:
 	if lander.state == Lander.State.FLYING and not _crystal_pos.is_empty():
 		for i in Crystals.hits(_crystal_pos, _crystal_taken, lander.global_position):
 			_collect_crystal(i)
+	_tick_hazards(delta)
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
 	var target := -CameraMath.lift(alt, float(cam["ground_lift_px"]), float(cam["lift_fade_alt_px"]))
@@ -95,6 +105,10 @@ func set_target(distance_m: float, tier: String = "normal") -> void:
 	lander.ridge = terrain.ridge
 	lander.can_takeoff = true
 	_spawn_crystals(terrain.pads[current_pad_id], terrain.pads[target_pad_id])
+	_zones = Hazards.generate(_seed + target_pad_id, planet_id, terrain.pads[current_pad_id],
+			terrain.pads[target_pad_id], terrain.ridge)
+	_hz_last.assign(_zones.map(func(_z: Dictionary) -> String: return "off"))
+	_hazard_view.zones = _zones
 	if _demo:
 		var ap := Autopilot.new()
 		ap.target = terrain.pads[target_pad_id]
@@ -121,6 +135,37 @@ func _planet_spec(pid: String) -> Dictionary:
 			return p
 	push_error("planeta '%s' nao existe na spec" % pid)
 	return EconMath.spec["planets"][0]
+
+
+## Perigos do mundo: relogio, efeito no lander (vento/calda/ventilador; brinquedo destroi), som ao ligar perto.
+func _tick_hazards(delta: float) -> void:
+	_hz_t += delta
+	_hazard_view.t = _hz_t
+	var half := get_viewport_rect().size * 0.5
+	_hazard_view.view = Rect2(camera.get_screen_center_position() - half, half * 2.0)
+	lander.env_accel = Vector2.ZERO
+	lander.env_drag = 0.0
+	if _zones.is_empty():
+		return
+	for i in _zones.size():
+		var c := Hazards.cycle(_zones[i], _hz_t)
+		var snd: String = HAZARD_SFX.get(str(_zones[i]["type"]), "")
+		if snd != "" and c == "on" and _hz_last[i] != "on" and _near(_zones[i]):
+			Sound.sfx(snd)
+		_hz_last[i] = c
+	if lander.state != Lander.State.FLYING:
+		return
+	var e := Hazards.effect_at(_zones, lander.global_position, _hz_t)
+	lander.env_accel = e["accel"]
+	lander.env_drag = e["drag"]
+	if e["lethal"] != "":
+		lander.crash_now(e["lethal"])
+
+
+## Zona perto o bastante da nave para ser ouvida (~1 tela).
+func _near(z: Dictionary) -> bool:
+	var p: Vector2 = (z["rect"] as Rect2).get_center() if z.has("rect") else Vector2(float(z["x"]), float(z["ground"]))
+	return absf(p.x - lander.global_position.x) < 700.0
 
 
 ## Cristais do novo salto (quantidade da economia; posicao no arco: Crystals.place).

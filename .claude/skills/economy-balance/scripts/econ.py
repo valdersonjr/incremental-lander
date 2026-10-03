@@ -297,6 +297,8 @@ def hop_dv(planet: dict, d: float, stats: dict, prof: Profile) -> float:
     v0 = math.sqrt(g * d)
     dv = 2 * v0 * (1 + 0.707 * g / a)
     dv *= (1 + planet.get("drag", 0.0)) * prof.waste
+    # perigos do mundo (v7: vento, calda, ventilador): custo extra de correcao, maior para quem pilota pior
+    dv *= 1 + planet.get("hazard", {}).get("dv", 0.0) * (1 - min(prof.skill, 1.0)) * 2
     dv += 2 * g * prof.hover_s
     return dv
 
@@ -322,7 +324,7 @@ def gas_for(E: dict, dv: float, stats: dict, gas_left: float, cargo_mass: float 
 
 
 def crash_prob(planet: dict, stats: dict, quality: float) -> float:
-    base = planet.get("crash_base", 0.02)
+    base = planet.get("crash_base", 0.02) + planet.get("hazard", {}).get("crash", 0.0)
     return min(0.95, base * (1 - quality) * 2 / max(stats.get("gear", 1.0), 1e-6))
 
 

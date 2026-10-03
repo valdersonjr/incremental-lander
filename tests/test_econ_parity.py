@@ -29,7 +29,7 @@ P = {
     "pay_tight_combo": delivery_pay(E, planets["kronos"], 4200.0, st, 0.7, "tight", 3),
     "pay_narrow_combo9": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 9),
     "pickup_ares": pickup_value(E, planets["ares"], 3500.0, st),
-    "dv_kronos": hop_dv(planets["kronos"], 5000.0, st, Profile("x", waste=1.0, hover_s=0.0)),
+    "dv_kronos": hop_dv(planets["kronos"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),
     "fleet": 1e6 * st["drones"] * st["autopilot"],
     "bulk_tank": bulk_cost(u["tank"]["cost"]["credits"], 5, 10),
     "maxaff_tank": max_affordable(u["tank"]["cost"]["credits"], 5, 1e5),

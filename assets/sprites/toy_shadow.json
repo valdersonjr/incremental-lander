@@ -1,0 +1,16 @@
+{
+  "frame_width": 24,
+  "frame_height": 6,
+  "animations": [
+    {
+      "name": "warn",
+      "row": 0,
+      "frames": 2,
+      "durations_ms": [
+        160,
+        160
+      ],
+      "loop": true
+    }
+  ]
+}

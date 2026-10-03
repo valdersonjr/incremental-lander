@@ -1,0 +1,17 @@
+{
+  "frame_width": 32,
+  "frame_height": 16,
+  "animations": [
+    {
+      "name": "splash",
+      "row": 0,
+      "frames": 3,
+      "durations_ms": [
+        110,
+        110,
+        110
+      ],
+      "loop": true
+    }
+  ]
+}
