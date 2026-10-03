@@ -38,6 +38,8 @@ const EXTEND_NEAR := 800.0                         # nave a menos disso (px) da 
 const EXTEND_STEP := 2400.0
 var target_tier := "normal"
 var _demo := false
+var _lift_y := 0.0                                 # camera olhando para cima perto do chao (px; sem o tremor)
+var _shake := 0.0                                  # trauma do tremor de tela (0..1; world.json > camera)
 
 @onready var lander: Lander = %Lander
 @onready var terrain: Terrain = %Terrain
@@ -63,11 +65,26 @@ func _physics_process(delta: float) -> void:
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
 	var target := -CameraMath.lift(alt, float(cam["ground_lift_px"]), float(cam["lift_fade_alt_px"]))
-	camera.offset.y = lerpf(camera.offset.y, target, clampf(float(cam["lift_speed"]) * delta, 0.0, 1.0))
+	_lift_y = lerpf(_lift_y, target, clampf(float(cam["lift_speed"]) * delta, 0.0, 1.0))
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	var cam: Dictionary = WorldConfig.load_config()["camera"]
+	_shake = maxf(_shake - float(cam["shake_decay"]) * delta, 0.0)
+	var amp := _shake * _shake * float(cam["shake_px"]) if GameState.shake_enabled() else 0.0
+	camera.offset = Vector2(roundf(randf_range(-amp, amp)), _lift_y + roundf(randf_range(-amp, amp)))
 	backdrop.follow(camera.get_screen_center_position())
+
+
+## Tremor de tela (somado; 1 = batida). Desligavel nas opcoes.
+func shake(trauma: float) -> void:
+	_shake = clampf(_shake + trauma, 0.0, 1.0)
+
+
+## Fixa o "olhar para cima" da camera (previas).
+func set_camera_lift(px: float) -> void:
+	_lift_y = px
+	camera.offset.y = px
 
 
 ## Gera o terreno inicial e posiciona o lander na plataforma de partida (sem alvo ainda).
@@ -92,7 +109,9 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	lander.reset_physics_interpolation()
 	camera.global_position = lander.global_position
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
-	camera.offset.y = -float(cam["ground_lift_px"])
+	_lift_y = -float(cam["ground_lift_px"])
+	_shake = 0.0
+	camera.offset = Vector2(0.0, _lift_y)
 	camera.reset_smoothing()
 	camera.force_update_scroll()                              # ja no 1o quadro com o enquadramento certo
 	backdrop.setup(planet_id, camera.global_position.y + camera.offset.y)
@@ -254,6 +273,8 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 	# poeira (pixel-art: explosion.py): linha 15 do sprite = chao, x 24 = centro do lander
 	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, float(pad["y"]) - 15.0), false)
 	Sound.sfx("landing")
+	var max_vy := float(WorldConfig.load_config()["landing"]["max_vy"])
+	shake(float(WorldConfig.load_config()["camera"]["land_shake"]) * clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	current_pad_id = int(pad["id"])
 	if current_pad_id == target_pad_id:
 		Sound.sfx("delivered")
@@ -269,6 +290,7 @@ func _on_lander_crashed(reason: String, info: Dictionary) -> void:
 	# a nave some e explode; o resultado so sai depois da explosao (senao o resumo a cobre)
 	lander.visible = false
 	Sound.sfx("crash")
+	shake(1.0)
 	var fx := _spawn_fx(EXPLOSION_FRAMES, &"boom", lander.global_position, true)
 	await fx.animation_finished
 	_finish(true, 0.0, reason, info)

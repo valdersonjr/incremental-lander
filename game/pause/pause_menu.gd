@@ -73,6 +73,7 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	for bus: String in GameState.BUSES:
 		%Volumes.add_child(UiKit.volume_row(bus))
 	%Volumes.add_child(UiKit.crt_row())
+	%Volumes.add_child(UiKit.shake_row())
 	%Volumes.add_child(UiKit.fullscreen_row())
 	_fill_keys()
 	var hangar := mode == Mode.HANGAR

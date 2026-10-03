@@ -12,7 +12,10 @@ static func load_config(path: String = PATH) -> Dictionary:
 	if not data.is_empty():
 		return data
 	var f := FileAccess.open(path, FileAccess.READ)
-	assert(f != null, "world.json nao encontrado em %s" % path)
+	if f == null:                                              # build quebrado: avisa o jogador em vez de travar mudo
+		push_error("world.json nao encontrado em %s" % path)
+		OS.alert("Arquivo de dados do jogo ausente (%s). Reinstale o jogo." % path, "Incremental Lander")
+		return data
 	data = JSON.parse_string(f.get_as_text())
 	return data
 

@@ -3,7 +3,7 @@
 ## vermelho = perigo, ambar = gas acabando, barra de gas ciano). Fonte bitmap: tamanho 11 (1x) ou 22 (2x), nunca
 ## fracionario. Variacoes de tipo: SlimPanel, TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
 ## PrimaryButton, DangerButton, GasBar, WarnBar, DangerBar, XpBar. Foco de teclado = moldura de 1 px na cor de titulo
-## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, toggle_row (crt_row, fullscreen_row), key_row, stat_row, pulse.
+## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, toggle_row (crt_row, shake_row, fullscreen_row), key_row, stat_row, pulse.
 class_name UiKit
 extends RefCounted
 
@@ -231,6 +231,12 @@ static func toggle_row(title: String, tooltip: String, focus_key: String, getter
 static func crt_row() -> HBoxContainer:
 	return toggle_row("Filtro CRT", "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa", "crt",
 			GameState.crt_enabled, GameState.set_crt)
+
+
+## Linha "Tremor da tela" (batida e pouso duro sacodem a camera; desligue se incomodar).
+static func shake_row() -> HBoxContainer:
+	return toggle_row("Tremor da tela", "a câmera sacode na batida e em pousos duros; desligue se incomodar", "shake",
+			GameState.shake_enabled, GameState.set_shake)
 
 
 ## Linha "Tela cheia" (tambem F11 ou Alt+Enter).

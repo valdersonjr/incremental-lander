@@ -257,6 +257,7 @@ func _fill_options() -> void:
 		if first == null:
 			first = row.get_child(1) as Button
 	_options.add_child(UiKit.crt_row())
+	_options.add_child(UiKit.shake_row())
 	_options.add_child(UiKit.fullscreen_row())
 	var back := Button.new()
 	back.text = "Voltar [Esc]"

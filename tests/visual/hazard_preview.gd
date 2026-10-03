@@ -42,7 +42,7 @@ func _ready() -> void:
 	l.global_position = focus + Vector2(-60, 0)
 	flight.set_physics_process(false)
 	flight.camera.global_position = l.global_position
-	flight.camera.offset.y = 0.0
+	flight.set_camera_lift(0.0)
 	flight._hazard_view.t = t
 	var half := get_viewport().get_visible_rect().size * 0.5
 	flight._hazard_view.view = Rect2(l.global_position - half, half * 2.0)

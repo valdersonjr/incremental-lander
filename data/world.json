@@ -121,7 +121,11 @@
     "notes": "Perto do chao a camera olha para cima (nave ~3/4 da tela, mais ceu e menos chao); some ate centralizar acima de lift_fade_alt_px.",
     "ground_lift_px": 92,
     "lift_fade_alt_px": 420,
-    "lift_speed": 3.0
+    "lift_speed": 3.0,
+    "shake_notes": "Tremor de tela (game feel; opcao 'Tremor da tela' desliga): trauma 0..1 decai shake_decay/s; deslocamento = trauma^2 x shake_px (px de arte, inteiro). Batida = 1; pouso = land_shake x (velocidade vertical / max_vy).",
+    "shake_px": 6.0,
+    "shake_decay": 1.8,
+    "land_shake": 0.35
   },
   "input": {
     "thrust": [

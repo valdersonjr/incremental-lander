@@ -256,6 +256,16 @@ func set_crt(on: bool) -> void:
 	apply_settings()
 
 
+## Tremor de tela na batida e em pousos duros (padrao: sim).
+func shake_enabled() -> bool:
+	return bool(settings.get("shake", true))
+
+
+func set_shake(on: bool) -> void:
+	settings["shake"] = on
+	apply_settings()
+
+
 ## Tela cheia (padrao: nao). F11 / Alt+Enter alternam (Main).
 func fullscreen() -> bool:
 	return bool(settings.get("fullscreen", false))
