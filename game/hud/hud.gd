@@ -5,7 +5,6 @@ class_name Hud
 extends Control
 
 const TOAST_SECONDS := 2.5
-const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar"
 
 var flight: Flight = null
 var run: RunState = null
@@ -42,8 +41,8 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
 	run = p_run
 	flight.delivery_finished.connect(_on_delivery_finished)
-	flight.lander.took_off.connect(func() -> void: _set_status(_controls_hint()))   # resultado antigo nao fica no rodape
-	_set_status(_controls_hint())
+	flight.lander.took_off.connect(func() -> void: _set_status(_idle_status()))   # resultado antigo nao fica no rodape
+	_set_status(_idle_status())
 
 
 func _process(delta: float) -> void:
@@ -117,13 +116,15 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 	_toast_extra.theme_type_variation = &"BadLabel" if not bool(entry.get("good", true)) else &"MoneyLabel"
 
 
-func _controls_hint() -> String:
-	return ("SANDBOX   " if Sandbox.active() else "") + CONTROLS_HINT
+## Rodape em repouso: so a marca do sandbox. As teclas ficam no menu do Esc (CONTROLES), nao na tela.
+func _idle_status() -> String:
+	return "SANDBOX" if Sandbox.active() else ""
 
 
-## Rodape (dica de teclas ou resultado do ultimo pouso) (painel fino no Footer, da largura do texto).
+## Rodape (resultado do ultimo pouso ou marca do sandbox) (painel fino no Footer, da largura do texto; some se vazio).
 func _set_status(text: String, variation: StringName = &"DimLabel") -> void:
 	_msg.text = text
+	(_msg.get_parent() as Control).visible = text != ""
 	_msg.theme_type_variation = variation
 
 

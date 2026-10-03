@@ -54,6 +54,9 @@
 - **Esc no hangar (2026-10-03)**: sem botão "Menu" no canto (pedido do usuário); abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou
   que o Esc "mostrava o hangar" (a antiga aba OPÇÕES ficava dentro do hangar). Teste `tests/integration/esc_flow`.
   Prévia: `flight_ui_preview -- --no_title --hangar_menu [--confirm]`.
+- **Sem dica de teclas no voo (2026-10-03)**: o rodapé do HUD não mostra mais "W/Espaço: propulsor..." (pedido do usuário:
+  "o menu do Esc já oferta todas as opções" — as teclas estão em CONTROLES); o rodapé só aparece com o resultado do pouso
+  ou a marca SANDBOX. A dica da escolha de entrega no painel de ofertas continua (é instrução do momento).
 - **2ª auditoria de UX (2026-10-02)**: pausa no voo (Esc ou janela sem foco; `game/pause/`), dica de teclas em painel,
   cabeçalho nas ofertas, foco no resumo, formatos do hangar unificados, `fmt(1e6)`="1.00M". Regras intactas (demo idêntico).
   Prévia: `tests/visual/flight_ui_preview -- --no_title [--pause] [--delivered|--crashed]`. `controls_test` cobre a pausa.
