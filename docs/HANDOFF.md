@@ -21,7 +21,7 @@
 - **Auditoria de UX (2026-10-02)**: todas as telas revisadas só na apresentação/interação (padrões em
   `godot-dev/references/ui.md` §"Padrões de interação"); saída do demo idêntica antes/depois (nenhuma regra mudou).
   Prévias novas: `hangar_preview -- --late --top --pending|--keys`, `summary_preview -- --crash`.
-- **Esc no hangar (2026-10-03)**: abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou
+- **Esc no hangar (2026-10-03)**: sem botão "Menu" no canto (pedido do usuário); abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou
   que o Esc "mostrava o hangar" (a antiga aba OPÇÕES ficava dentro do hangar). Teste `tests/integration/esc_flow`.
   Prévia: `flight_ui_preview -- --no_title --hangar_menu [--confirm]`.
 - **2ª auditoria de UX (2026-10-02)**: pausa no voo (Esc ou janela sem foco; `game/pause/`), dica de teclas em painel,

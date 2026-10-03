@@ -34,8 +34,8 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   leva ("IR AO HANGAR", não "novo run" se abre o hangar). Dica de teclas dentro de painel, nunca solta sobre o cenário.
 - Tooltip e barra de rolagem usam o tema (`TooltipPanel`/`TooltipLabel`, `VScrollBar`) — nada com a cara padrão do Godot.
 - **Menu do jogo = `PauseMenu`** (`game/pause/`, modal, `PROCESS_MODE_ALWAYS`), o mesmo nos dois lugares:
-  voo (Esc ou janela sem foco) → modo FLIGHT "PAUSA", congela a árvore (`SceneTree.paused`), CONTINUAR; hangar (Esc ou
-  "Menu [Esc]") → modo HANGAR "MENU": **o hangar some** (Esc nunca abre "opções dentro do hangar" — reclamação do usuário em
+  voo (Esc ou janela sem foco) → modo FLIGHT "PAUSA", congela a árvore (`SceneTree.paused`), CONTINUAR; hangar (Esc; **sem
+  botão "Menu" na tela** — usuário: "todo gamer sabe disso") → modo HANGAR "MENU": **o hangar some** (Esc nunca abre "opções dentro do hangar" — reclamação do usuário em
   2026-10-03), + Menu inicial e Novo jogo (2 cliques, Esc cancela), VOLTAR AO HANGAR. Ambos: volumes + controles.
   Nunca no demo nem na gravação de quadros. O autoload `Sound` roda com o jogo pausado. Com o menu aberto, R não decola.
 - **Rodapé do HUD** (dica de teclas / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.

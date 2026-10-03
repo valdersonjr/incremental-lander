@@ -1,5 +1,5 @@
 ## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), MUNDOS (planetas),
-## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo. Esc / botao Opcoes pedem o menu do
+## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo. Esc (sem botao na tela) pede o menu do
 ## jogo (menu_requested: a Main esconde o hangar e abre o PauseMenu no modo HANGAR — volumes, menu inicial, novo jogo).
 ## Q/E trocam de aba, Enter decola (ou ativa o botao com foco, se o jogador navegou com setas/Tab). Tudo que e numero
 ## vem de GameState/EconMath. As linhas sao refeitas a cada refresh(): botoes levam meta "focus_key" para o foco do
@@ -10,7 +10,7 @@ extends PanelContainer
 signal launch_requested
 ## Voltar ao menu inicial (contrato mantido; hoje o pedido sai do menu do jogo, PauseMenu.title_requested).
 signal title_requested
-## Esc ou botao Opcoes: abrir o menu do jogo fora do hangar.
+## Esc: abrir o menu do jogo fora do hangar.
 signal menu_requested
 
 enum Tab { SHIP, WORLDS, PRESTIGE }
@@ -44,14 +44,11 @@ var _flash_money := false
 @onready var _scroll: ScrollContainer = %Scroll
 @onready var _rows: VBoxContainer = %Rows
 @onready var _launch: Button = %Launch
-@onready var _options: Button = %Options
 
 
 func _ready() -> void:
 	_launch.pressed.connect(func() -> void: launch_requested.emit())
 	launch_requested.connect(func() -> void: Sound.ui("click"))
-	_options.icon = UiKit.icon("options")
-	_options.pressed.connect(_request_menu)
 
 
 ## Mostra o hangar atualizado, na aba NAVE (o que se compra a cada visita).
@@ -75,13 +72,11 @@ func refresh() -> void:
 	if GameState.prestige_pending:
 		_tabs.visible = false
 		_expedition.visible = false
-		_options.visible = false
 		_add_pending_prestige()
 		_after_rebuild(focus_key)
 		return
 	_launch.disabled = false
 	_launch.text = "DECOLAR  [Enter]"
-	_options.visible = true
 	if _tab == Tab.PRESTIGE and not _prestige_unlocked():
 		_tab = Tab.SHIP
 	_fill_expedition()
