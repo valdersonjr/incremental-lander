@@ -80,7 +80,8 @@ scripts/save/sandbox.gd       # Sandbox (estático): begin(planeta, forte) guard
 autoload/crt.gd               # Crt (CanvasLayer 128 + ColorRect, game/screen/crt.gdshader): filtro CRT por cima de tudo;
                               # visível = GameState.crt_enabled() (settings "crt", padrão true); ouve Events.settings_changed
 game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS_MODE_ALWAYS). open(Mode.FLIGHT): "PAUSA",
-                              # congela a árvore; Main abre com Esc no voo ou NOTIFICATION_APPLICATION_FOCUS_OUT (_can_pause).
+                              # congela a árvore; Main abre com Esc no voo ou NOTIFICATION_APPLICATION_FOCUS_OUT (_can_pause);
+                              # tem "Menu inicial" (despausa; o run acaba, entregas já pagas) mas não "Novo jogo".
                               # open(Mode.HANGAR): "MENU" (Hangar.menu_requested → Main esconde o hangar); sinais
                               # title_requested, new_game_requested (Main: SaveManager.new_game → hangar), closed → hangar.
 game/ending/ending.*          # Ending (Control modal como o resumo): "VOCÊ CHEGOU AO QUARTO!" + resumo; Continuar jogando

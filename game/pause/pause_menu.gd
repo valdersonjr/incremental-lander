@@ -1,5 +1,6 @@
 ## Menu do jogo (arte: UiKit), janela modal sobre o mundo escurecido. Dois modos:
-## FLIGHT (Esc no voo): "PAUSA", congela a arvore (SceneTree.paused), volumes + controles + CONTINUAR.
+## FLIGHT (Esc no voo): "PAUSA", congela a arvore (SceneTree.paused), volumes + controles + Menu inicial (o run acaba;
+## as entregas feitas ja foram pagas) + CONTINUAR.
 ## HANGAR (Esc/Opções no hangar; a Main esconde o hangar): "MENU", volumes + controles + Menu inicial + Novo jogo
 ## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. No sandbox: "Sair do sandbox" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
 ## Roda com PROCESS_MODE_ALWAYS.
@@ -7,7 +8,7 @@ class_name PauseMenu
 extends Control
 
 signal closed
-## Modo HANGAR: voltar ao menu inicial (a Main salva e mostra o titulo).
+## Voltar ao menu inicial (a Main salva e mostra o titulo; no voo, o run em andamento acaba).
 signal title_requested
 ## Modo HANGAR: apagar o jogo em uso e comecar do zero (confirmado com 2 cliques).
 signal new_game_requested
@@ -33,6 +34,7 @@ func _ready() -> void:
 	%MenuButton.pressed.connect(func() -> void:
 		Sound.ui("click")
 		visible = false
+		get_tree().paused = false
 		title_requested.emit())
 	%NewGame.pressed.connect(_on_new_game)
 	for c: Array in CONTROLS:
@@ -64,13 +66,14 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	%Volumes.add_child(UiKit.crt_row())
 	var hangar := mode == Mode.HANGAR
 	%Title.text = "MENU" if hangar else "PAUSA"
-	%GameTitle.visible = hangar
-	%Game.visible = hangar
 	%Continue.text = "VOLTAR AO HANGAR  [Esc]" if hangar else "CONTINUAR  [Esc]"
 	var sandbox := Sandbox.active()                            # no sandbox: sair dele; nunca apagar o jogo salvo
-	%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)" if sandbox else "Voltar ao menu inicial (salva)"
+	if sandbox:
+		%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)"
+	else:
+		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Voltar ao menu inicial (salva; entregas feitas ficam)"
 	%MenuButton.text = "Sair do sandbox" if sandbox else "Menu inicial"
-	%NewGameRow.visible = not sandbox
+	%NewGameRow.visible = hangar and not sandbox                # apagar o jogo so com calma, no hangar
 	_show_new_game()
 	visible = true
 	if not hangar:

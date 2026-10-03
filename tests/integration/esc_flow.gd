@@ -1,5 +1,6 @@
 ## Teste de integracao do Esc como um jogador (teclas reais): hangar -> Esc abre o MENU do jogo com o hangar escondido
-## -> R nao decola -> Esc volta ao hangar -> Esc + "Menu inicial" vai ao titulo; no voo Esc pausa e Esc retoma.
+## -> R nao decola -> Esc volta ao hangar -> Esc + "Menu inicial" vai ao titulo; no voo Esc pausa e Esc retoma;
+## no voo, Esc + "Menu inicial" vai ao titulo (sem Novo jogo; arvore despausada).
 ## Tambem: filtro CRT ligado por padrao e o botao do menu liga/desliga a camada. Imprime ESC_FLOW_TEST OK ou FALHOU.
 extends Node
 
@@ -76,6 +77,15 @@ func _process(_d: float) -> void:
 			_key(KEY_ESCAPE)
 		110:
 			_check("esc_retoma", not menu.visible and not get_tree().paused and not hangar.visible)
+			_key(KEY_ESCAPE)
+		120:
+			var mb := menu.find_child("MenuButton", true, false) as Button
+			_check("voo_tem_menu_inicial", mb.is_visible_in_tree()
+					and not (menu.find_child("NewGameRow", true, false) as Control).visible)
+			mb.pressed.emit()
+		130:
+			_check("voo_volta_ao_titulo", title.visible and not menu.visible and not get_tree().paused
+					and _main._hud == null and not hangar.visible)
 			print("ESC_FLOW_LOG ", " | ".join(_log))
 			print("ESC_FLOW_TEST ", "OK" if _ok else "FALHOU")
 			get_tree().quit()

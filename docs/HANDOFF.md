@@ -54,6 +54,9 @@
 - **Esc no hangar (2026-10-03)**: sem botão "Menu" no canto (pedido do usuário); abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou
   que o Esc "mostrava o hangar" (a antiga aba OPÇÕES ficava dentro do hangar). Teste `tests/integration/esc_flow`.
   Prévia: `flight_ui_preview -- --no_title --hangar_menu [--confirm]`.
+- **Menu inicial a partir do voo (2026-10-03)**: o usuário não tinha como voltar ao menu principal de dentro do voo; a
+  PAUSA (Esc) agora tem "Menu inicial" (salva; o run acaba, as entregas feitas já foram pagas). "Novo jogo" segue só no
+  hangar. `esc_flow` cobre (voo → Esc → Menu inicial → título, sem pausa presa).
 - **Sem dica de teclas no voo (2026-10-03)**: o rodapé do HUD não mostra mais "W/Espaço: propulsor..." (pedido do usuário:
   "o menu do Esc já oferta todas as opções" — as teclas estão em CONTROLES); o rodapé só aparece com o resultado do pouso
   ou a marca SANDBOX. A dica da escolha de entrega no painel de ofertas continua (é instrução do momento).
