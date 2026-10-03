@@ -47,9 +47,14 @@ game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas �
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
                               # cria a próxima plataforma a partir da atual e estende o terreno;
                               # sinais delivery_finished(result) (→ Telemetry) e stranded (pousou sem gás fora do alvo)
-scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram), take_offer, complete_delivery
+scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram) com tipo de plataforma (offer_tiers),
+                              # take_offer (→ taken_tier), complete_delivery(d, q, gás, cristais) via EconMath.delivery_pay;
+                              # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/cristais p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
-game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, pagamento
+game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
+                              # com ganho + plataforma/combo/cristais; terrain.gd escreve o multiplicador sob plataformas difíceis
+game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, plataforma (×1,5 âmbar /
+                              # ×2,2 vermelho), pagamento típico (já com tipo e combo)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged, goal_reached
@@ -95,7 +100,7 @@ game/background/war_fx.gd     # WarFx (filho do Backdrop, logo após "mid"): gue
                               # abates, clarões); coordenadas da camada mid; contrato meta "war" (opcional por planeta)
 scripts/world/war_math.gd     # WarMath (puro): wrap_dx, screen_x (laço de 640), line_points (Bresenham)
 scripts/world/camera_math.gd  # CameraMath.lift: câmera sobe perto do chão (mais céu, menos terreno)
-scripts/world/terrain_art.gd  # TerrainArt (puro): load_meta, face_of, band (geometria das faixas), band_all (faixa única; UV do mundo ou cisalhado), rock_spots, layer_offset
+scripts/world/terrain_art.gd  # TerrainArt (puro): PAD_FRAMES/BEAM_FRAMES por tipo; pad_origin/beam_origin pela meia-largura; load_meta, face_of, band (geometria das faixas), band_all (faixa única; UV do mundo ou cisalhado), rock_spots, layer_offset
 assets/bg/luna_*              # cena da Lua (pixel-art): camadas + luna_layers.json (contrato de posições/tamanhos)
 assets/tiles/luna_ground_*    # crosta do terreno lit/flat/shade (128x26, repetem em x; abaixo transparente)
 assets/tiles/luna_body.png    # corpo em blocos de basalto (128x128, UV = mundo) — meta body_texture (opcional)
@@ -118,7 +123,8 @@ scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButt
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
-                              # human/demo; demo só grava com --telemetry; cabeçalho antigo → deliveries_old.csv)
+                              # human/demo + tier; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
+                              # nunca sobrescreve)
 autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;

@@ -7,8 +7,9 @@ signal offer_chosen(index: int)
 signal end_requested
 
 const HINT := "teclas 1-%d ou clique  >  depois W/Espaço decola"
-## Largura (px) das colunas distancia e gas (sem o icone de 12 px + 3 de espaco).
+## Largura (px) das colunas distancia e gas (sem o icone de 12 px + 3 de espaco) e da coluna da plataforma.
 const COL_W := [54, 28]
+const TIER_W := 26
 
 ## Segundos restantes do aviso piscando (tentou pilotar antes de escolher). Exposto para o teste de controles.
 var hint_flash := 0.0
@@ -20,7 +21,8 @@ var _count := 0
 
 func _ready() -> void:
 	# cabecalho das colunas (mesmas larguras das linhas de _make_row)
-	for c: Array in [["", 16], ["distância", COL_W[0] + 15], ["gás", COL_W[1] + 15], ["pagamento", 0]]:
+	for c: Array in [["", 16], ["distância", COL_W[0] + 15], ["gás", COL_W[1] + 15], ["plat.", TIER_W],
+			["pagamento", 0]]:
 		var l := Label.new()
 		l.text = c[0]
 		l.theme_type_variation = &"DimLabel"
@@ -65,6 +67,9 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 	# entrega acima do gas estimado continua escolhivel (tecla ou clique): o botao fica em vermelho, nao desabilitado
 	row.tooltip_text = "distância %s m  ·  gás estimado %s  ·  pagamento típico +%s" % [EconMath.fmt(info["distance"]),
 			EconMath.fmt(info["gas_est"]), EconMath.fmt(info["pay_typical"])]
+	if info["tier"] != "normal":
+		row.tooltip_text += "\nplataforma %s: paga %s, mas é mais difícil de pousar" % [
+				EconMath.pad_tier(info["tier"])["name"], UiKit.mult_text(info["mult"])]
 	if not ok:
 		row.tooltip_text += "\narriscada: precisa de mais gás do que resta"
 	var key := Button.new()
@@ -79,6 +84,8 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 	var cols := [["distance", "%s m" % EconMath.fmt(info["distance"]), COL_W[0]],
 			["gas", EconMath.fmt(info["gas_est"]), COL_W[1]], ["credits", "+" + EconMath.fmt(info["pay_typical"]), 0]]
 	for c: Array in cols:
+		if c[0] == "credits":
+			row.add_child(_tier_cell(info))
 		var cell := UiKit.icon_label(c[0], c[1], &"BadLabel" if not ok else (&"MoneyLabel" if c[0] == "credits"
 				else &"ValueLabel"))
 		cell.custom_minimum_size = Vector2(int(c[2]) + 15, 0) if int(c[2]) > 0 else Vector2.ZERO
@@ -95,6 +102,17 @@ func _make_row(index: int, info: Dictionary) -> HBoxContainer:
 			accept_event()
 			offer_chosen.emit(index))
 	return row
+
+
+## Coluna da plataforma: vazia na normal; "×1,5" ambar na estreita, "×2,2" vermelho na apertada (cor + numero).
+func _tier_cell(info: Dictionary) -> Label:
+	var l := Label.new()
+	l.custom_minimum_size = Vector2(TIER_W, 0)
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if info["tier"] != "normal":
+		l.text = UiKit.mult_text(info["mult"])
+		l.theme_type_variation = &"BadLabel" if info["tier"] == "tight" else &"MoneyLabel"
+	return l
 
 
 func _unhandled_input(event: InputEvent) -> void:

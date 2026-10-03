@@ -255,6 +255,12 @@ static func pulse(item: CanvasItem, strength: float = 1.7, seconds: float = 0.35
 			.set_ease(Tween.EASE_OUT)
 
 
+## Multiplicador para a tela: 1.5 -> "×1,5", 2.0 -> "×2" (virgula decimal, como o resto da interface).
+static func mult_text(m: float) -> String:
+	var s := ("%.1f" % m) if absf(m - roundf(m)) > 0.001 else str(int(roundf(m)))
+	return "×" + s.replace(".", ",")
+
+
 static func crash_text(reason: String) -> String:
 	return CRASH_TEXT.get(reason, reason.replace("_", " "))
 

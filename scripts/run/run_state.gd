@@ -1,12 +1,16 @@
 ## Estado de um run (logica pura, testavel): ofertas de entrega, entregas feitas, ganhos e fim do run.
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
-## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.contract_pay (com q).
+## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
+## tipo de plataforma x combo) + cristais coletados (EconMath.pickup_value).
 class_name RunState
 extends RefCounted
 
 var planet_id := ""
 var stats: Dictionary = {}
 var offers: Array[float] = []             # distancias (m do modelo) das ofertas atuais
+var offer_tiers: Array[String] = []       # tipo de plataforma de cada oferta (mesma ordem): normal/narrow/tight
+var streak := 0                           # pousos bons seguidos neste run (combo; EconMath.combo_mult)
+var taken_tier := "normal"                # tipo da plataforma da entrega em andamento
 var deliveries: Array[Dictionary] = []
 var earned: Dictionary = {}               # recurso -> quantidade ganha neste run
 var over := false
@@ -31,18 +35,23 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int) ->
 	var n := int(run._planet.get("contracts_per_run", c.get("per_run", 8)))
 	for i in n:
 		run.offers.append(run._draw_distance())
-	run.offers.sort()
+		run.offer_tiers.append(EconMath.draw_pad_tier(run._rng))
+	run._sort_offers()
 	return run
 
 
-## Dados de uma oferta para a UI/piloto: distancia, pagamento (perfeito e tipico), gas estimado, alcancavel.
+## Dados de uma oferta para a UI/piloto: distancia, tipo de plataforma e multiplicador, pagamento (perfeito e
+## tipico, ja com o combo atual), gas estimado, alcancavel.
 func offer_info(index: int, gas_left: float) -> Dictionary:
 	var d: float = offers[index]
+	var tier: String = offer_tiers[index]
 	var gas_est := EconMath.estimated_hop_dv(planet_id, d, stats) / float(stats["efficiency"])
 	return {
 		"distance": d,
-		"pay_best": EconMath.contract_pay(planet_id, d, stats, 1.0),
-		"pay_typical": EconMath.contract_pay(planet_id, d, stats, 0.7),
+		"tier": tier,
+		"mult": float(EconMath.pad_tier(tier)["mult"]),
+		"pay_best": EconMath.delivery_pay(planet_id, d, stats, 1.0, tier, streak),
+		"pay_typical": EconMath.delivery_pay(planet_id, d, stats, 0.7, tier, streak),
 		"gas_est": gas_est,
 		"reachable": gas_est <= gas_left,
 	}
@@ -63,25 +72,39 @@ func best_offer(gas_left: float, margin: float = 2.2) -> int:
 	return best
 
 
-## Aceita uma oferta: remove da lista e (se a spec manda) sorteia uma nova. Retorna a distancia.
+## Aceita uma oferta: remove da lista e (se a spec manda) sorteia uma nova. Retorna a distancia;
+## o tipo da plataforma fica em taken_tier.
 func take_offer(index: int) -> float:
 	var d: float = offers[index]
+	taken_tier = offer_tiers[index]
 	offers.remove_at(index)
+	offer_tiers.remove_at(index)
 	if EconMath.spec["contracts"].get("regenerate", false):
 		offers.append(_draw_distance())
-		offers.sort()
+		offer_tiers.append(EconMath.draw_pad_tier(_rng))
+		_sort_offers()
 	return d
 
 
-## Registra uma entrega concluida e devolve as recompensas {recurso: qtd}.
-func complete_delivery(distance: float, quality: float, gas_used: float) -> Dictionary:
-	var pay := EconMath.contract_pay(planet_id, distance, stats, quality)
+## Registra uma entrega concluida (na plataforma taken_tier, com o combo atual e os cristais coletados no salto)
+## e devolve as recompensas {recurso: qtd}. Depois atualiza o combo: pouso bom soma, pouso ruim zera.
+## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, cristais) para o HUD mostrar.
+func complete_delivery(distance: float, quality: float, gas_used: float, crystals: int = 0) -> Dictionary:
+	var combo := EconMath.combo_mult(streak)
+	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
+	var crystal_pay := crystals * EconMath.pickup_value(planet_id, distance, stats)
+	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak) + crystal_pay
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
 	for res: String in weights:
 		rewards[res] = pay * float(weights[res])
 		earned[res] = float(earned.get(res, 0.0)) + rewards[res]
-	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards})
+	var good := EconMath.combo_counts(quality)
+	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards,
+			"tier": taken_tier, "mult": mult, "combo": combo, "crystals": crystals, "crystal_pay": crystal_pay,
+			"good": good})
+	streak = streak + 1 if good else 0
+	taken_tier = "normal"
 	if deliveries.size() >= max_deliveries:
 		finish("limite_de_entregas")
 	return rewards
@@ -120,6 +143,19 @@ func summary() -> Dictionary:
 		"earned": earned,
 		"reason": end_reason,
 	}
+
+
+## Ordena as ofertas por distancia levando o tipo de plataforma junto.
+func _sort_offers() -> void:
+	var idx := range(offers.size())
+	idx.sort_custom(func(a: int, b: int) -> bool: return offers[a] < offers[b])
+	var d: Array[float] = []
+	var t: Array[String] = []
+	for i: int in idx:
+		d.append(offers[i])
+		t.append(offer_tiers[i])
+	offers = d
+	offer_tiers = t
 
 
 func _draw_distance() -> float:

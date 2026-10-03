@@ -5,7 +5,7 @@ extends Node
 const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
-		"crashed", "pilot"]
+		"crashed", "pilot", "tier"]
 
 var enabled := true
 var pilot := "human"      # "demo" quando o piloto automatico voa (nao misturar na calibracao)
@@ -39,7 +39,8 @@ func record_delivery(result: Dictionary) -> void:
 	f.store_csv_line(row)
 
 
-## Se o arquivo existente tem outro cabecalho (versao antiga), guarda como deliveries_old.csv.
+## Se o arquivo existente tem outro cabecalho (versao antiga), guarda como deliveries_old.csv
+## (ou deliveries_old2.csv, 3... — nunca sobrescreve dados antigos).
 func _rotate_if_old_header() -> void:
 	if not FileAccess.file_exists(DELIVERIES):
 		return
@@ -47,5 +48,10 @@ func _rotate_if_old_header() -> void:
 	var head := f.get_csv_line()
 	f.close()
 	if Array(head) != HEADER:
-		var old := ProjectSettings.globalize_path(DIR.path_join("deliveries_old.csv"))
-		DirAccess.rename_absolute(ProjectSettings.globalize_path(DELIVERIES), old)
+		var n := 1
+		var name := "deliveries_old.csv"
+		while FileAccess.file_exists(DIR.path_join(name)):
+			n += 1
+			name = "deliveries_old%d.csv" % n
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(DELIVERIES),
+				ProjectSettings.globalize_path(DIR.path_join(name)))

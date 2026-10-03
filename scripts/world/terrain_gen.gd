@@ -49,10 +49,13 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		var tc: Dictionary = cfg["pad_tiers"].get(tiers[i], cfg["pad_tiers"]["normal"])
 		var half := WorldConfig.m_to_px(float(tc["width_m"])) * 0.5
 		var lift := WorldConfig.m_to_px(float(tc["lift_m"]))
-		# pico/vale precisa de espaco: vizinha perto demais -> plataforma no nivel do relevo
+		# pico/vale precisa de espaco ate a plataforma ANTERIOR (so ela: uma plataforma nunca muda quando outra e
+		# criada depois — o lander pode estar pousado nela); perto demais -> plataforma no nivel do relevo
 		var reach := half + absf(lift) / side_slope + WorldConfig.m_to_px(10.0)
-		for j in [i - 1, i + 1]:
-			if j >= 0 and j < pad_xs.size() and absf(pad_xs[j] - pad_xs[i]) < reach * 2.0:
+		if i > 0:
+			var prev: Dictionary = pads[i - 1]
+			var prev_reach := float(prev["half_width"]) + absf(float(prev["lift"])) / side_slope
+			if pad_xs[i] - pad_xs[i - 1] < reach + prev_reach:
 				lift = 0.0
 		pads.append({"id": i, "x": pad_xs[i], "half_width": half, "y": _height_at(ridge, pad_xs[i]) - lift,
 				"tier": tiers[i], "lift": lift})
@@ -60,7 +63,8 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		_add_crest(ridge, pads[i], pads[i + 1], cfg["crest"], pcfg)
 	for p in pads:
 		_shape_pad(ridge, p, side_slope)
-	for p in pads:                                             # topo plano garantido (vizinhas nao estragam)
+	for k in range(pads.size() - 1, -1, -1):                   # topo plano garantido; a mais antiga ganha
+		var p: Dictionary = pads[k]
 		for j in ridge.size():
 			if absf(ridge[j].x - float(p["x"])) <= float(p["half_width"]) + 0.001:
 				ridge[j] = Vector2(ridge[j].x, float(p["y"]))

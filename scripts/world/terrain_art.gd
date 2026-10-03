@@ -6,10 +6,22 @@ class_name TerrainArt
 extends RefCounted
 
 const FACES: Array[String] = ["lit", "flat", "shade"]
-# contrato com art/src/sprites/landing_pad.py (pad 80x28 com topo do deck na linha 10; feixe 64x84; marcador 11x9)
-const PAD_ORIGIN := Vector2(-40, -10)
-const BEAM_ORIGIN := Vector2(-32, -84)
+# contrato com art/src/sprites/landing_pad.py: pad = deck + 16 px de largura, deck comeca em x=8, topo do deck na
+# linha 10; feixe da largura do deck x 84 de altura; marcador 11x9. Sprites por tipo (normal/narrow/tight).
+const PAD_MARGIN := 8.0
+const PAD_TOP := 10.0
+const BEAM_HEIGHT := 84.0
 const MARKER_ORIGIN := Vector2(-5, -92)
+const PAD_FRAMES := {
+	"normal": preload("res://assets/sprites/landing_pad_frames.tres"),
+	"narrow": preload("res://assets/sprites/landing_pad_narrow_frames.tres"),
+	"tight": preload("res://assets/sprites/landing_pad_tight_frames.tres"),
+}
+const BEAM_FRAMES := {
+	"normal": preload("res://assets/sprites/target_beam_frames.tres"),
+	"narrow": preload("res://assets/sprites/target_beam_narrow_frames.tres"),
+	"tight": preload("res://assets/sprites/target_beam_tight_frames.tres"),
+}
 
 
 ## Metadados de arte do planeta ({} se o planeta ainda nao tem arte -> placeholder).
@@ -109,12 +121,12 @@ static func layer_offset(cam: Vector2, ref_y: float, factor: Vector2, min_y: flo
 
 ## Canto sup. esq. do sprite da plataforma (topo do deck = altura da plataforma).
 static func pad_origin(pad: Dictionary) -> Vector2:
-	return Vector2(float(pad["x"]), float(pad["y"])) + PAD_ORIGIN
+	return Vector2(float(pad["x"]) - float(pad["half_width"]) - PAD_MARGIN, float(pad["y"]) - PAD_TOP)
 
 
 ## Canto sup. esq. do feixe do alvo (base encostada no topo do deck).
 static func beam_origin(pad: Dictionary) -> Vector2:
-	return Vector2(float(pad["x"]), float(pad["y"])) + BEAM_ORIGIN
+	return Vector2(float(pad["x"]) - float(pad["half_width"]), float(pad["y"]) - BEAM_HEIGHT)
 
 
 ## Canto sup. esq. do marcador (acima do feixe).

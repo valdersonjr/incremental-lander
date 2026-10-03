@@ -19,6 +19,8 @@ const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
 
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
+var _pad_tiers: Array[String] = []                 # tipo de cada plataforma de entrega (sem a partida)
+var target_tier := "normal"
 var _demo := false
 
 @onready var lander: Lander = %Lander
@@ -51,6 +53,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	_seed = seed_value
 	_demo = demo
 	_pad_positions_m = [0.0]
+	_pad_tiers = []
 	current_pad_id = 0
 	target_pad_id = -1
 	_rebuild_terrain()
@@ -70,10 +73,12 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	backdrop.setup(planet_id, camera.global_position.y + camera.offset.y)
 
 
-## Define a proxima entrega: plataforma a distance_m a frente da plataforma atual.
-func set_target(distance_m: float) -> void:
+## Define a proxima entrega: plataforma do tipo tier (normal/narrow/tight) a distance_m a frente da atual.
+func set_target(distance_m: float, tier: String = "normal") -> void:
 	target_distance_m = distance_m
+	target_tier = tier
 	_pad_positions_m.append(_pad_positions_m[current_pad_id] + distance_m)
+	_pad_tiers.append(tier)
 	target_pad_id = _pad_positions_m.size() - 1
 	_rebuild_terrain()
 	lander.pads = terrain.pads
@@ -96,7 +101,7 @@ func _rebuild_terrain() -> void:
 	for i in range(1, _pad_positions_m.size()):
 		distances.append(_pad_positions_m[i])
 	terrain.target_pad_id = target_pad_id
-	terrain.build(_seed, planet_id, distances)
+	terrain.build(_seed, planet_id, distances, _pad_tiers)
 
 
 func _planet_spec(pid: String) -> Dictionary:
@@ -153,6 +158,7 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"gas_used": info["gas_used"],
 		"hop_time_s": info["flight_time_m"],
 		"quality": quality,
+		"tier": target_tier,
 		"crashed": crashed,
 		"reason": reason,
 	}

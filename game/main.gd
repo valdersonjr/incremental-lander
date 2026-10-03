@@ -218,7 +218,7 @@ func _on_offer_chosen(index: int) -> void:
 	Sound.ui("click")
 	var d := _run.take_offer(index)
 	_offers.visible = false
-	_flight.set_target(d)
+	_flight.set_target(d, _run.taken_tier)
 
 
 func _on_end_requested() -> void:
@@ -232,8 +232,10 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		_run.crash(str(result["reason"]))
 		_end_run()
 		return
-	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"])
+	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"],
+			int(result.get("crystals", 0)))
 	GameState.add_rewards(rewards)
+	_hud.show_delivery(_run.deliveries[-1], _run.streak)
 	_show_offers()
 
 

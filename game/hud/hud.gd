@@ -1,5 +1,6 @@
 ## HUD do voo (arte: UiKit): gas (barra ciano -> ambar -> vermelho), velocidades com cor de seguranca,
-## altitude, distancia ao alvo (seta aponta o lado), creditos e entregas; resultado do pouso em aviso central.
+## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, combo;
+## resultado do pouso em aviso central (pagamento com plataforma x combo x cristais, chamado pelo Main).
 class_name Hud
 extends Control
 
@@ -24,6 +25,9 @@ var _toast_left := 0.0
 @onready var _toast: Control = %Toast
 @onready var _toast_title: Label = %ToastTitle
 @onready var _toast_text: Label = %ToastText
+@onready var _toast_extra: Label = %ToastExtra
+@onready var _combo_panel: Control = %ComboPanel
+@onready var _combo: Label = %Combo
 
 
 func _ready() -> void:
@@ -62,12 +66,18 @@ func _process(delta: float) -> void:
 		var pad := flight.target_pad()
 		var dx := WorldConfig.px_to_m(float(pad["x"]) - l.global_position.x)
 		_dist.text = "ALVO %d m" % int(absf(dx))
+		if flight.target_tier != "normal":
+			_dist.text += "  " + UiKit.mult_text(float(EconMath.pad_tier(flight.target_tier)["mult"]))
 		_dist_icon.flip_h = dx < 0.0                           # a seta aponta para o lado da plataforma
 	else:
 		_dist.text = "escolha uma entrega"
 		_dist_icon.flip_h = false
 	_credits.text = EconMath.fmt(GameState.amount("credits"))
 	_deliveries.text = "%d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
+	var streak := run.streak if run != null else 0
+	_combo_panel.visible = streak > 0
+	if streak > 0:
+		_combo.text = "COMBO %d  %s" % [streak, UiKit.mult_text(EconMath.combo_mult(streak))]
 
 
 func _set_speed(label: Label, value: float, limit: float) -> void:
@@ -81,10 +91,30 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		var why := UiKit.crash_text(str(result["reason"]))
 		_set_status("BATEU: " + why, &"BadLabel")
 		_show_toast("BATEU!", why, &"BadLabel")
-	else:
-		var text := "qualidade %d%%   gás usado %s" % [int(result["quality"] * 100.0), EconMath.fmt(result["gas_used"])]
-		_set_status("ENTREGA! " + text, &"GoodLabel")
-		_show_toast("ENTREGA!", text, &"GoodLabel")
+	# pouso bom: o Main chama show_delivery() depois de calcular o pagamento
+
+
+## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, combo, cristais).
+## entry = RunState.deliveries[-1]; streak = combo depois desta entrega.
+func show_delivery(entry: Dictionary, streak: int) -> void:
+	var gain := float(entry["rewards"].get("credits", 0.0))
+	var text := "+%s   qualidade %d%%" % [EconMath.fmt(gain), int(float(entry["quality"]) * 100.0)]
+	var parts: Array[String] = []
+	if float(entry.get("mult", 1.0)) > 1.0:
+		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))
+	if float(entry.get("combo", 1.0)) > 1.0:
+		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
+	if int(entry.get("crystals", 0)) > 0:
+		parts.append("cristais +%s" % EconMath.fmt(float(entry["crystal_pay"])))
+	if not bool(entry.get("good", true)):
+		parts.append("pouso duro: combo zerou")
+	elif streak >= 2:
+		parts.append("combo %d!" % streak)
+	_set_status("ENTREGA! " + text, &"GoodLabel")
+	_show_toast("ENTREGA!", text, &"GoodLabel")
+	_toast_extra.text = "  ·  ".join(parts)
+	_toast_extra.visible = not parts.is_empty()
+	_toast_extra.theme_type_variation = &"BadLabel" if not bool(entry.get("good", true)) else &"MoneyLabel"
 
 
 func _controls_hint() -> String:
@@ -102,6 +132,7 @@ func _show_toast(title: String, text: String, variation: StringName) -> void:
 	_toast_title.text = title
 	_toast_title.add_theme_color_override(&"font_color", get_theme_color(&"font_color", variation))
 	_toast_text.text = text
+	_toast_extra.visible = false
 	_toast.modulate.a = 1.0
 	_toast.visible = true
 	_toast_left = TOAST_SECONDS

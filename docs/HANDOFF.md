@@ -8,10 +8,14 @@
   (pagamento só por distância era sem graça; nada obrigava a voar alto; andar de lado era entediante).
   - 11.1 ✅ economia v7: plataformas normal/estreita/apertada (×1/×1,5/×2,2), combo de pousos bons, cristais no arco;
     `EconMath.delivery_pay/pickup_value/combo_mult/pad_tier/draw_pad_tier/combo_counts`. **O jogo ainda paga só por
-    `contract_pay`** (pay_base caiu para 8,5) até a 11.3 ligar tipos e combo — não deixar assim muito tempo.
+    `contract_pay`** (pay_base caiu para 8,5) até a 11.3 ligar tipos e combo — ✅ ligado na 11.3.
   - 11.2 ✅ relevo com cristas entre plataformas + pico/vale por tipo (TerrainGen já aceita `pad_tiers`) + ar denso perto do
     chão (`LanderPhysics.drag_at`); autopiloto respeita o relevo na aproximação. Perfil: `tests/tools/dump_terrain.gd`.
-  - Próximas: 11.3 plataformas difíceis + combo no HUD; 11.4 cristais;
+  - 11.3 ✅ ofertas com tipo de plataforma (coluna "plat."), sprites estreita (âmbar, traços) e apertada (vermelha, listras de
+    perigo) + "×N" escrito sob a plataforma, combo no HUD, aviso com ganho/plataforma/combo; pagamento já é `delivery_pay`.
+    Telemetria ganhou coluna `tier`. **Arte das plataformas novas aguarda aprovação do usuário**
+    (`art/previews/landing_pad_scene_zoom.png`). Invariante: plataforma criada nunca muda (teste).
+  - Próximas: 11.4 cristais;
     11.5 perigos por mundo.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
 - **Direção de arte**: futurista na nave + **cenas ricas em camadas** (o usuário reprovou terreno minimalista como

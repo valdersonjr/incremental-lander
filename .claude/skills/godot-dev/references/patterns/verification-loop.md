@@ -60,3 +60,9 @@ Uma prévia de `tests/visual/` que simulava uma compra (`--keys`) disparou o aut
 se desliga (não carrega nem grava) quando a cena da linha de comando começa com `res://tests/visual/`; a prévia ainda
 põe `SaveManager.enabled = false` por garantia. Regra: **toda cena de verificação que mexe no GameState roda com save
 desligado** (`--no_save`, caminho `tests/visual/` ou `SaveManager.set_dir()` numa pasta própria nos testes de integração).
+
+## Armadilha (2026-10-03): erro de parse num teste TRAVA o `test`
+- Um `SCRIPT ERROR: Parse Error` num arquivo de `tests/unit/` faz o Godot headless parar no depurador esperando
+  entrada: `gdtool.py test` fica minutos sem sair (0% de CPU). **Sempre `check` antes de `test`** (a ordem da skill)
+  — o `check` mostra o erro com a linha em segundos. Ex.: `var x := float(a) + dx * b` com `dx` vindo de um array
+  literal não tipado → "Cannot infer the type"; use `var x: float = ...`.

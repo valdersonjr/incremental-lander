@@ -6,7 +6,6 @@ extends Node2D
 
 const COLOR_FILL := Color("#3e3546")      # shadow
 const COLOR_SURFACE := Color("#9babb2")   # steel
-const PAD_FRAMES := preload("res://assets/sprites/landing_pad_frames.tres")
 
 var ridge := PackedVector2Array()
 var pads: Array[Dictionary] = []
@@ -17,6 +16,7 @@ var target_pad_id := -1:
 		if is_node_ready():
 			_sync_target()
 
+var _planet_id := "luna"
 var _rocks: Array[Dictionary] = []
 var _rock_tex: Texture2D
 var _rock_cell := Vector2.ZERO
@@ -35,9 +35,11 @@ var _time := 0.0
 @onready var _marker: AnimatedSprite2D = %Marker
 
 
-## Gera o terreno e devolve os dados (ridge, pads, polygon).
-func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) -> Dictionary:
-	var data := TerrainGen.generate(seed_value, planet_id, pad_distances_m)
+## Gera o terreno e devolve os dados (ridge, pads, polygon). pad_tiers = tipo de cada plataforma de entrega.
+func build(seed_value: int, planet_id: String, pad_distances_m: Array[float],
+		pad_tiers: Array[String] = []) -> Dictionary:
+	_planet_id = planet_id
+	var data := TerrainGen.generate(seed_value, planet_id, pad_distances_m, pad_tiers)
 	ridge = data["ridge"]
 	var look: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(planet_id, {})
 	RenderingServer.set_default_clear_color(Color(str(look.get("sky", "#2e222f"))))
@@ -70,33 +72,46 @@ func build(seed_value: int, planet_id: String, pad_distances_m: Array[float]) ->
 	return data
 
 
-## Um sprite por plataforma (arte da pixel-art: landing_pad.py; contrato em TerrainArt.PAD_ORIGIN).
+## Um sprite por plataforma, do tipo dela (arte da pixel-art: landing_pad.py; contrato em TerrainArt.pad_origin).
+## Plataformas dificeis ganham o multiplicador escrito embaixo ("×1,5"), na cor do risco (como o Lunar Lander).
 func _build_pads() -> void:
 	for c in _pads_root.get_children():
 		c.queue_free()
+	var ui := UiKit.theme_for(_planet_id)
 	for p in pads:
+		var tier := str(p.get("tier", "normal"))
 		var s := AnimatedSprite2D.new()
-		s.sprite_frames = PAD_FRAMES
+		s.sprite_frames = TerrainArt.PAD_FRAMES.get(tier, TerrainArt.PAD_FRAMES["normal"])
 		s.centered = false
 		s.position = TerrainArt.pad_origin(p)
 		s.set_meta("pad_id", int(p["id"]))
 		_pads_root.add_child(s)
+		if tier != "normal":
+			var l := Label.new()
+			l.theme = ui
+			l.theme_type_variation = &"BadLabel" if tier == "tight" else &"MoneyLabel"
+			l.text = UiKit.mult_text(float(EconMath.pad_tier(tier)["mult"]))
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l.size = Vector2(40, 12)
+			l.position = Vector2(float(p["x"]) - 20.0, float(p["y"]) + 18.0)
+			_pads_root.add_child(l)
 	_sync_target()
 
 
 func _sync_target() -> void:
 	var target: Dictionary = {}
-	for s: AnimatedSprite2D in _pads_root.get_children():
-		if s.is_queued_for_deletion():
+	for s in _pads_root.get_children():
+		if s.is_queued_for_deletion() or not s is AnimatedSprite2D:
 			continue
 		var is_target := int(s.get_meta("pad_id")) == target_pad_id
-		s.play(&"target" if is_target else &"idle")
+		(s as AnimatedSprite2D).play(&"target" if is_target else &"idle")
 	for p in pads:
 		if int(p["id"]) == target_pad_id:
 			target = p
 	_beam.visible = not target.is_empty()
 	_marker.visible = _beam.visible
 	if _beam.visible:
+		_beam.sprite_frames = TerrainArt.BEAM_FRAMES.get(str(target.get("tier", "normal")), TerrainArt.BEAM_FRAMES["normal"])
 		_beam.position = TerrainArt.beam_origin(target)
 		_marker.position = TerrainArt.marker_origin(target)
 		_beam.play(&"pulse")

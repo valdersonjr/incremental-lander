@@ -25,9 +25,11 @@
 ## Telemetria para calibração
 Registrar cada entrega em CSV (`user://telemetry.csv`, copiar para `balance/telemetry/`):
 ```
-planet,distance,thrust,efficiency,tank,gas_used,hop_time_s,quality,crashed
-luna,1830.5,4.6,3.21,112,41.7,58.2,0.81,0
+planet,distance,thrust,efficiency,tank,gas_used,hop_time_s,quality,crashed,pilot,tier
+luna,1830.5,4.6,3.21,112,41.7,58.2,0.81,0,human,narrow
 ```
+(No jogo: `user://telemetry/deliveries.csv`; `pilot` = human/demo — não misturar na calibração; `tier` = tipo
+da plataforma (v7): calibrar `q_drop`/`crash_mult` por tipo comparando qualidade e batidas de humanos.)
 E por run: `run_id,planet,duration_s,deliveries,earned,crashed,gas_left_pct` (para comparar com
 `do_run`). `econ.calibrate()` usa o CSV de entregas.
 Métricas de funil úteis depois: tempo até cada planeta, abandono por fase (onde jogadores param).

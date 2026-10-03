@@ -1,0 +1,29 @@
+{
+  "frame_width": 44,
+  "frame_height": 28,
+  "animations": [
+    {
+      "name": "idle",
+      "row": 0,
+      "frames": 1,
+      "durations_ms": [
+        500
+      ],
+      "loop": true
+    },
+    {
+      "name": "target",
+      "row": 1,
+      "frames": 6,
+      "durations_ms": [
+        160,
+        140,
+        120,
+        120,
+        140,
+        260
+      ],
+      "loop": true
+    }
+  ]
+}

@@ -71,5 +71,32 @@ func test_tipos_de_plataforma_largura_e_elevacao() -> void:
 
 
 func test_vizinha_perto_demais_tira_a_elevacao() -> void:
-	var t := TerrainGen.generate(9, "luna", [100.0] as Array[float], ["tight"] as Array[String])
+	var t := TerrainGen.generate(9, "luna", [90.0] as Array[float], ["tight"] as Array[String])
 	assert_eq(float(t["pads"][1]["lift"]), 0.0)
+
+
+func test_plataforma_nova_nao_muda_as_antigas() -> void:
+	# o lander pode estar pousado numa plataforma quando a proxima entrega e criada (terreno regenerado)
+	var cases := [[[1402.0], ["tight"]], [[600.0, 1300.0], ["narrow", "tight"]]]
+	for c: Array in cases:
+		var d: Array[float] = []
+		d.assign(c[0])
+		var t: Array[String] = []
+		t.assign(c[1])
+		var before := TerrainGen.generate(7, "luna", d, t)
+		for extra: float in [100.0, 127.0, 900.0]:            # 100 m = menor distancia do jogo (Lua)
+			for tier: String in ["normal", "narrow", "tight"]:
+				var d2 := d.duplicate()
+				d2.append(d[d.size() - 1] + extra)
+				var t2 := t.duplicate()
+				t2.append(tier)
+				var after := TerrainGen.generate(7, "luna", d2, t2)
+				for i in before["pads"].size():
+					var p0: Dictionary = before["pads"][i]
+					var p1: Dictionary = after["pads"][i]
+					assert_almost(float(p1["y"]), float(p0["y"]), 1e-3, "pad %d mudou de altura (+%s %s)" % [i, extra, tier])
+					assert_almost(float(p1["lift"]), float(p0["lift"]), 1e-3)
+					for dx in [-0.9, 0.0, 0.9]:
+						var x: float = float(p0["x"]) + dx * float(p0["half_width"])
+						assert_almost(TerrainGen.height_at(after["ridge"], x), float(p0["y"]), 1e-3,
+								"topo do pad %d mudou (+%s %s)" % [i, extra, tier])
