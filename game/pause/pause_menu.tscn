@@ -82,6 +82,7 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="MenuLabel" type="Label" parent="Center/Panel/VBox/Game/MenuRow"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Voltar ao menu inicial (salva)"
@@ -94,6 +95,7 @@ tooltip_text = "salva e volta ao menu inicial (lá você troca de jogo salvo)"
 text = "Menu inicial"
 
 [node name="NewGameRow" type="HBoxContainer" parent="Center/Panel/VBox/Game"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 4
 

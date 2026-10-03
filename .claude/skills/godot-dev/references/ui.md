@@ -41,7 +41,10 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
 - **Filtro CRT** (padrão ligado, 2026-10-03): autoload `Crt` + `game/screen/crt.gdshader`. No modo viewport o shader roda
   na resolução da arte (640×360, antes da ampliação) — por isso nada de curvatura (deforma pixel/texto); linhas = linhas de
   arte alternadas (12%), brilho, separação de cor leve, vinheta, cantos. Opção `UiKit.crt_row()` no título e no menu do jogo.
-- **Rodapé do HUD** (dica de teclas / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.
+- **Sandbox** (2026-10-03): título → "Sandbox" (mundo + nave Básica/Forte, escolha única = botão cheio) → hangar com
+  "SANDBOX: nada é salvo" no cabeçalho e "SANDBOX" no rodapé do HUD; menu do jogo troca "Menu inicial" por "Sair do
+  sandbox" e esconde "Novo jogo". Hints de convenção universal (Esc = menu) **não** vão para a tela (pedido do usuário).
+- **Rodapé do HUD** (dica de teclas do jogo, sem "Esc" / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.
 - **Modais** bloqueiam o clique no que está atrás (`Dim` com mouse_filter STOP). Botão de modal que aparece no meio do
   voo ganha foco com atraso (`RunSummary.FOCUS_DELAY`): Espaço do propulsor não fecha a janela sem querer.
 - Tabelas com **cabeçalho de colunas** (ofertas: distância / gás / pagamento). Stats do mesmo valor no mesmo formato em

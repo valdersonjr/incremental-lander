@@ -1,7 +1,7 @@
 ## Menu do jogo (arte: UiKit), janela modal sobre o mundo escurecido. Dois modos:
 ## FLIGHT (Esc no voo): "PAUSA", congela a arvore (SceneTree.paused), volumes + controles + CONTINUAR.
 ## HANGAR (Esc/Opções no hangar; a Main esconde o hangar): "MENU", volumes + controles + Menu inicial + Novo jogo
-## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
+## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. No sandbox: "Sair do sandbox" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
 ## Roda com PROCESS_MODE_ALWAYS.
 class_name PauseMenu
 extends Control
@@ -67,6 +67,10 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	%GameTitle.visible = hangar
 	%Game.visible = hangar
 	%Continue.text = "VOLTAR AO HANGAR  [Esc]" if hangar else "CONTINUAR  [Esc]"
+	var sandbox := Sandbox.active()                            # no sandbox: sair dele; nunca apagar o jogo salvo
+	%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)" if sandbox else "Voltar ao menu inicial (salva)"
+	%MenuButton.text = "Sair do sandbox" if sandbox else "Menu inicial"
+	%NewGameRow.visible = not sandbox
 	_show_new_game()
 	visible = true
 	if not hangar:

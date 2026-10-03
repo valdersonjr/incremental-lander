@@ -109,5 +109,11 @@
     "target_distance_m": 800.0,
     "seed": 7
   },
-  "drag_scale": 0.02
+  "drag_scale": 0.02,
+  "sandbox": {
+    "notes": "Modo sandbox (menu inicial): estado de teste, nunca salvo. Recursos repostos a cada visita ao hangar. Nao e economia: so o ponto de partida do teste.",
+    "resources": {"credits": 1e14, "ore": 1e10, "stardust": 1000.0},
+    "unlocked": ["luna", "ares", "kronos"],
+    "strong_levels": {"thrust": 42, "tank": 38, "efficiency": 35, "contracts": 30, "gear": 12, "refinery": 8}
+  }
 }

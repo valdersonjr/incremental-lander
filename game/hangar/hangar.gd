@@ -65,7 +65,7 @@ func refresh() -> void:
 	var focus_key := _focused_key()
 	var planet := GameState.current_planet
 	theme = UiKit.theme_for(planet)                            # a cor do hangar acompanha o mundo atual
-	_planet.text = _planet_name(planet)
+	_planet.text = _planet_name(planet) + ("   ·   SANDBOX: nada é salvo" if Sandbox.active() else "")
 	_fill_resources()
 	_fill_ship(planet)
 	_clear(_rows)

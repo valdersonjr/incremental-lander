@@ -74,6 +74,7 @@
       volumes e controles; dica de teclas do HUD em painel; cabeçalho de colunas nas ofertas; foco visível (com atraso) no
       resumo; modais bloqueiam clique atrás; números do hangar num só formato, "MÁX"; `fmt(1e6)` = "1.00M" (era "1000K");
       glifo inexistente "—" trocado; prévia `flight_ui_preview` (2026-10-02)
+- [x] Modo sandbox no menu inicial (mundo + nave, tudo liberado, recursos repostos, nada salvo, sem telemetria) (2026-10-03)
 - [x] Filtro CRT ligado por padrão, com opção de desligar no título e no menu do jogo (2026-10-03)
 - [x] Esc no hangar abre o **menu do jogo** (hangar escondido; volumes, controles, menu inicial, novo jogo), não mais uma
       "aba de opções" dentro do hangar; teste `esc_flow` (2026-10-03)

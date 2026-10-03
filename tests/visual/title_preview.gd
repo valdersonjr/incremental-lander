@@ -1,5 +1,5 @@
 ## Previa do menu inicial. gdtool.py capture res://tests/visual/title_preview.tscn [-- --progress --options --confirm --planet=id]
-## --progress: com jogo salvo (Continuar + resumo). --options: volumes. --saves: lista de jogos salvos (pasta propria
+## --progress: com jogo salvo (Continuar + resumo). --options: volumes. --sandbox: tela do sandbox. --saves: lista de jogos salvos (pasta propria
 ## user://preview_saves com jogos 1 e 3; nunca le o save real). --confirm: com --saves, apagar pedindo confirmacao.
 extends Node
 
@@ -29,6 +29,8 @@ func _ready() -> void:
 		t._set_screen(TitleScreen.Screen.SAVES)
 		if "--confirm" in args:
 			t._on_delete(3)
+	if "--sandbox" in args:
+		t._set_screen(TitleScreen.Screen.SANDBOX)
 	if "--options" in args:
 		t._set_screen(TitleScreen.Screen.OPTIONS)
 

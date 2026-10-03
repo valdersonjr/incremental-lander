@@ -21,6 +21,10 @@
 - **Auditoria de UX (2026-10-02)**: todas as telas revisadas só na apresentação/interação (padrões em
   `godot-dev/references/ui.md` §"Padrões de interação"); saída do demo idêntica antes/depois (nenhuma regra mudou).
   Prévias novas: `hangar_preview -- --late --top --pending|--keys`, `summary_preview -- --crash`.
+- **Modo sandbox (2026-10-03)**: menu inicial → Sandbox (mundo + nave) → hangar com tudo liberado e recursos repostos;
+  nada é salvo, sem telemetria; "Sair do sandbox" no menu do jogo devolve o jogo verdadeiro. `scripts/save/sandbox.gd`,
+  `data/world.json > sandbox`. Teste `sandbox_flow`. Prévias: `title_preview -- --sandbox`, `flight_ui_preview -- --no_title
+  --sandbox [--hangar|--hangar_menu]`.
 - **Filtro CRT (2026-10-03)**: ligado por padrão (autoload `Crt`), "Filtro CRT Ligado/Desligado" nas opções do título e no
   menu do jogo; salvo em settings.json.
 - **Esc no hangar (2026-10-03)**: sem botão "Menu" no canto (pedido do usuário); abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou

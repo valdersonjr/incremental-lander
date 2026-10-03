@@ -44,7 +44,7 @@ func _ready() -> void:
 	_ending = ENDING_SCENE.instantiate()
 	_gui.add_child(_ending)
 	_ending.visible = false
-	_ending.closed.connect(func() -> void: _hangar.open())
+	_ending.closed.connect(_open_hangar)
 	Events.goal_reached.connect(_on_goal_reached)
 	_hangar.title_requested.connect(_show_title)
 	_title = TITLE_SCENE.instantiate()
@@ -58,6 +58,11 @@ func _ready() -> void:
 		SaveManager.new_game(slot)
 		_start_run())
 	_title.current_slot_changed.connect(_build_title_world)
+	_title.sandbox_requested.connect(func(planet_id: String, strong: bool) -> void:
+		Sandbox.begin(planet_id, strong)
+		_title.visible = false
+		_build_title_world()                                   # fundo do hangar = o mundo escolhido
+		_open_hangar())
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().quit())
@@ -112,8 +117,17 @@ func _back_to_hangar() -> void:
 	_hangar.refresh()
 
 
-## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega).
+## Abre o hangar (no sandbox, repoe antes os recursos de teste).
+func _open_hangar() -> void:
+	if Sandbox.active():
+		Sandbox.top_up()
+	_hangar.open()
+
+
+## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega). Voltar ao menu
+## encerra o sandbox (o jogo salvo verdadeiro volta).
 func _show_title() -> void:
+	Sandbox.end()
 	_hangar.visible = false
 	_ending.visible = false
 	_build_title_world()
@@ -133,7 +147,7 @@ func _build_title_world() -> void:
 func _on_title_play() -> void:
 	_title.visible = false
 	if TitleScreen.has_progress():
-		_hangar.open()
+		_open_hangar()
 	else:
 		_start_run()
 
@@ -248,7 +262,7 @@ func _end_run() -> void:
 func _on_continue() -> void:
 	_summary.visible = false
 	_hud.visible = false
-	_hangar.open()
+	_open_hangar()
 	if _demo:
 		_demo_shop()
 		await get_tree().create_timer(float(_args.get("hangar_wait", 0.5))).timeout

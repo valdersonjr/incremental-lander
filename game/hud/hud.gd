@@ -4,7 +4,7 @@ class_name Hud
 extends Control
 
 const TOAST_SECONDS := 2.5
-const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar   Esc: pausa"
+const CONTROLS_HINT := "W/Espaço: propulsor   A/D: girar   R: reiniciar"
 
 var flight: Flight = null
 var run: RunState = null
@@ -38,8 +38,8 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
 	run = p_run
 	flight.delivery_finished.connect(_on_delivery_finished)
-	flight.lander.took_off.connect(func() -> void: _set_status(CONTROLS_HINT))   # resultado antigo nao fica no rodape
-	_set_status(CONTROLS_HINT)
+	flight.lander.took_off.connect(func() -> void: _set_status(_controls_hint()))   # resultado antigo nao fica no rodape
+	_set_status(_controls_hint())
 
 
 func _process(delta: float) -> void:
@@ -85,6 +85,10 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		var text := "qualidade %d%%   gás usado %s" % [int(result["quality"] * 100.0), EconMath.fmt(result["gas_used"])]
 		_set_status("ENTREGA! " + text, &"GoodLabel")
 		_show_toast("ENTREGA!", text, &"GoodLabel")
+
+
+func _controls_hint() -> String:
+	return ("SANDBOX   " if Sandbox.active() else "") + CONTROLS_HINT
 
 
 ## Rodape (dica de teclas ou resultado do ultimo pouso) (painel fino no Footer, da largura do texto).

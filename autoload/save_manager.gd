@@ -13,6 +13,8 @@ var TMP := "user://save.json.tmp"
 var BAK := "user://save.bak"
 
 var enabled := true
+## Modo sandbox (Sandbox.begin/end): o jogo de teste nunca e gravado; so as opcoes globais.
+var sandbox := false
 ## Jogo salvo em uso (1..SLOTS): o autosave grava nele.
 var slot := 1
 var _dir := "user://"
@@ -71,6 +73,8 @@ func save_game() -> bool:
 	if not enabled:
 		return false
 	_save_prefs()
+	if sandbox:
+		return false
 	var f := FileAccess.open(TMP, FileAccess.WRITE)
 	if f == null:
 		push_warning("save: nao abriu %s" % TMP)
@@ -106,6 +110,9 @@ func slot_summary(n: int) -> Dictionary:
 
 ## Passa a usar o jogo salvo n: carrega o progresso dele (ou comeca do zero, se vazio). As opcoes nao mudam.
 func load_slot(n: int) -> void:
+	if sandbox:                                               # jogos salvos so mudam fora do sandbox
+		push_warning("save: load_slot ignorado no sandbox")
+		return
 	var settings: Dictionary = GameState.settings.duplicate()
 	_use_slot(n)
 	GameState.reset()
@@ -118,6 +125,9 @@ func load_slot(n: int) -> void:
 
 ## Novo jogo no espaco n (padrao: o atual): apaga o progresso dele e passa a usa-lo (mantem as opcoes).
 func new_game(n: int = -1) -> void:
+	if sandbox:                                               # jogos salvos so mudam fora do sandbox
+		push_warning("save: new_game ignorado no sandbox")
+		return
 	if n < 0:
 		n = slot
 	var settings: Dictionary = GameState.settings.duplicate()
@@ -130,6 +140,9 @@ func new_game(n: int = -1) -> void:
 
 ## Apaga um jogo salvo. Se for o jogo em uso, o estado em memoria volta ao inicio (sem gravar nada).
 func delete_slot(n: int) -> void:
+	if sandbox:                                               # jogos salvos so mudam fora do sandbox
+		push_warning("save: delete_slot ignorado no sandbox")
+		return
 	if not enabled:
 		return
 	_remove_slot_files(n)
