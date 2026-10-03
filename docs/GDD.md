@@ -111,7 +111,9 @@ deixar com história forte... a ideia era só algo passando de fundo mesmo").
   3. Escudo Térmico Ablativo (pagamento ×1,2) · 4. Rede de Satélites de Navegação (eficiência ×1,15) ·
   5. Módulo de Habitação (pagamento ×1,2) · 6. Reator de Fusão Compacto (motor ×1,15) ·
   7. Âncora Gravitacional (piloto automático ×1,3) · 8. **Nave-mãe Aurora** (pagamento ×1,25) → **Titan**.
-- Objetivo final: chegar a Titan. (Pós-jogo: a definir.)
+- Objetivo final: chegar a Titan (O Quarto). **Pós-jogo** (2026-10-03): continuar jogando para bater **recordes pessoais**
+  (maior entrega, salto mais longo, maior combo, run mais rico) — mostrados na tela final, na aba PRESTÍGIO e como
+  "NOVO RECORDE" no resumo do run; recomeçar por mais Poeira; Sandbox sempre disponível.
 
 ## 9. Ritmo esperado (simulado, spec v6)
 Expert ~4,3 h · engajado ~4,9 h · casual ~5,6 h até Titan; Ares ~0,7 h; Kronos ~2,7 h; pior espera entre
@@ -121,10 +123,13 @@ compras ≤ 30 min. Relatório: `balance/reports/2026-09-29-v6-expedition/`.
 - **Arte**: pixel art **futurista** (casco branco + turquesa, propulsor de plasma ciano), paleta **Resurrect 64** travada, lander 32×32, tiles/texturas 16×16, resolução
   interna **640×360** (escala inteira). Tudo via skill `pixel-art` (`references/style-guide.md`).
 - **Som**: retro-synth espacial 100% sintetizado, escala em D, loudness por categoria, via skill
-  `sound-design` (`references/style-guide.md`).
+  `sound-design` (`references/style-guide.md`). Trilha: música calma de menu/hangar (D maior) e de voo (D lídio),
+  ambiência própria de cada mundo, alarme de gás baixo que não irrita, jingles de marco/mundo/recomeço/final.
 
 ## 11. Técnico
-Godot 4.7.2 · desktop (Mac/PC) · teclado · 640×360 viewport, escala inteira (janela 1280×720) ·
+Godot 4.7.2 (renderer Compatibility) · desktop (Mac/PC/Linux; presets em export_presets.cfg) · teclado (teclas
+remapeáveis) e controle (A/RT propulsor, analógico gira, LB/RB abas, Start menu) · tela cheia (opção, F11, Alt+Enter) ·
+tremor de tela opcional · 640×360 viewport, escala inteira (janela 1280×720) ·
 filtro Nearest · snap de pixel · buses de áudio Master/Music/Ambience/SFX→Engine/UI ·
 **3 jogos salvos** independentes (menu inicial → Jogos salvos: jogar, novo jogo, apagar com 2 cliques), autosave no
 jogo em uso; volumes e último jogo usado são globais ·
@@ -132,4 +137,4 @@ economia em `data/economy.json` + `scripts/economy/econ_math.gd` (paridade testa
 
 ## 12. Em aberto
 - Controles exatos e sensação de voo (Fase 1). · Geração dos mapas (procedural? quantos por planeta?).
-- Pós-jogo após Titan. · Nome final do jogo (o menu inicial usa "INCREMENTAL LANDER" provisório).
+- Nome final do jogo (o menu inicial usa "INCREMENTAL LANDER" provisório) e logo em pixel art.

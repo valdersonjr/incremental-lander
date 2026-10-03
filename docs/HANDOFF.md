@@ -4,6 +4,30 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-03)
+- **Auditoria de lançamento + correções (2026-10-03)**: auditoria (QA/produção) deu NÃO PRONTO; o usuário pediu "arrume
+  todos os problemas". Feito (commits 2cfbd4b, 39047ed, 6dde4a1 + docs):
+  - Desempenho: `rock_spots`/`height_at` eram quadráticos (4,5 s por reconstrução no fim de jogo) → busca binária,
+    laços só na faixa afetada, pedras desenhadas só na tela, extensão de borda ¼ do mapa. Pior caso ~0,1 s; saída
+    idêntica ao gerador antigo (100 casos).
+  - Progressão: recomeço com Cartas de navegação deixava o jogador num mundo em que a nave não decola (run acabava na
+    hora "sem gás") → volta para `Purchases.best_launchable`; hangar desliga DECOLAR com o motivo; resumo "sem_alcance".
+  - Save: arquivo ilegível nunca é sobrescrito (vira save.unreadable.json + aviso no menu inicial); SaveData valida
+    tipos; autosave a cada entrega; pasta de dados própria `IncrementalLander` (cópia automática da antiga — o save do
+    usuário já foi copiado e conferido idêntico).
+  - Input/UX: Espaço fora de ui_accept (não decola sem querer pelo hangar); R/E pedem 2 toques; R ignorado na tela
+    final; hangar esconde as ofertas; Esc abre o menu com recomeço pendente; teclas remapeáveis (menu do jogo, coluna
+    CONTROLES); controle (A/RT, analógico, LB/RB, Start); tela cheia (opção, F11, Alt+Enter); tremor de tela opcional;
+    ofertas navegáveis por setas; menu do jogo em duas colunas.
+  - Frota: relógio do run sem pausa; sair do voo pelo menu/R fecha a conta do run (sem entregas não conta).
+  - Pós-jogo: recordes pessoais (final, resumo, aba PRESTÍGIO); texto final sem "protótipo".
+  - Áudio (aprovado ouvindo): ambiência dos 4 mundos, música título/hangar + voo, alarme de gás, jingles.
+  - Build: renderer Compatibility, versão 0.9.0, ícone (aprovado), export_presets.cfg (macOS/Windows/Linux, sem tests/),
+    telemetria/logs/`--dev_*` só no build de depuração. `.pck` exportado e rodado: ok.
+  - Testes: 81 unitários + integração `release_fixes` (todos verdes).
+  - **Ainda pendente para lançar**: (1) templates de export 4.7.2 não instalados (pasta vazia) → gerar e testar os
+    executáveis numa máquina limpa; (2) calibração com humanos (Fase 10.1); (3) nome final/logo (decisão do usuário);
+    (4) aprovação no jogo da arte nova (plataformas, cristal, perigos); (5) não verificado: Cmd+Q salva no macOS, monitores
+    120/144 Hz, Retina/telas pequenas, Windows.
 - **Fase 11 — Voo com decisões (em andamento)**: pedido do usuário "faz tudo que for sabido que deixa os gamers felizes"
   (pagamento só por distância era sem graça; nada obrigava a voar alto; andar de lado era entediante).
   - 11.1 ✅ economia v7: plataformas normal/estreita/apertada (×1/×1,5/×2,2), combo de pousos bons, cristais no arco;
@@ -74,6 +98,9 @@
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
+- **Lançamento**: instalar os templates de export (Editor → Gerenciar templates → Baixar 4.7.2), exportar macOS e
+  Windows (`godot --headless --export-release "macOS" builds/mac/...`), testar numa máquina limpa; jogar 1–2 h e calibrar
+  (Fase 10.1, telemetria em ~/Library/Application Support/IncrementalLander/telemetry/); decidir nome/logo.
 0. **Lua em guerra (2026-10-02, feito)** — só cena de fundo, sem história/progressão (decisão do usuário).
    Opcional depois: sons distantes da batalha (sound-design).
 1. ~~**Perigos por mundo**~~ ✅ feito na Fase 11.5 (2026-10-03). Próximo sugerido: jogar e calibrar (Fase 10.1) com a
@@ -91,7 +118,8 @@ opções descartadas em `art/previews/moon_recolor/grid.png`.)
 
 ## Como jogar no editor (lembrar o usuário)
 - Play → **clicar dentro da tela do jogo** (o jogo roda embutido na aba Game do Godot 4.7) → escolher a entrega com
-  **1–8 ou clique** → **W/Espaço** propulsor, **A/D** girar, **R** reinicia, **E** encerra o run.
+  **1–8, setas + Enter ou clique** → **W/Espaço** propulsor, **A/D** girar, **R R** reinicia, **E E** encerra o run
+  (teclas remapeáveis no menu do Esc; controle também funciona). Dados do jogo: ~/Library/Application Support/IncrementalLander/.
 
 ## Pendências conhecidas
 - Save do jogador sobrescrito por engano por uma prévia (2026-10-02): causa corrigida no SaveManager; o usuário já

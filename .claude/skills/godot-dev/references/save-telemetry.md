@@ -29,4 +29,11 @@ Fontes: docs Godot (Saving games, FileAccess, user://), práticas de versionamen
 - `distance` e `gas_used` nas **unidades do modelo** (converter px → m com `WorldConfig.PX_PER_M`).
 - Ativa por padrão durante o desenvolvimento; copiar para `balance/telemetry/` e rodar
   `econ.calibrate(E, "balance/telemetry/deliveries.csv", "engaged")`.
-- Caminho real de `user://` no Mac: `~/Library/Application Support/Godot/app_userdata/Incremental Lander/`.
+- Caminho real de `user://` no Mac: `~/Library/Application Support/IncrementalLander/` (desde 2026-10-03:
+  `config/use_custom_user_dir` — renomear o jogo não muda a pasta; o SaveManager copia uma vez a pasta antiga
+  `Godot/app_userdata/Incremental Lander/`, nunca sobrescrevendo). Telemetria só no build de depuração ou com `--telemetry`.
+- **Save ilegível nunca é sobrescrito** (2026-10-03): `load_game` marca o espaço; o próximo `save_game` renomeia os
+  arquivos para `save.unreadable[N].json/.bak` antes de gravar e o menu inicial mostra `SaveManager.load_warning`.
+  Versão de save maior que a do jogo = ilegível (nunca interpretar um save do futuro). Autosave também a cada entrega.
+- Validação: `SaveData._num/_flag` — só int/float/texto numérico (NaN/inf = 0); objeto ou lista no lugar de número
+  não pode derrubar o carregamento.

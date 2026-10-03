@@ -49,3 +49,12 @@ distâncias (gravidade, arrasto, faixa de distância) sempre de `data/economy.js
   nave. Armadilha antiga: começar o limite de inclinação na borda esquerda fazia qualquer mudança de borda mexer no
   relevo inteiro. Pedregulhos: duas sequências de RNG a partir de 0 (direita e esquerda), pelo mesmo motivo.
 - `Flight._extend_terrain_if_near_edge`: nave a < 800 px da borda → +2400 px naquele lado e reconstrução.
+
+## Desempenho em mapas longos (2026-10-03, auditoria de lançamento)
+- O fim de jogo tem saltos de até 60 km × 6 entregas (360 km, ~22 mil pontos de contorno). Tudo que percorre o contorno
+  por ponto vira quadrático: `rock_spots` chamava `height_at` (linear) para 15 mil pedras = 4,5 s por reconstrução.
+- Regras: `height_at` por **busca binária** (contorno crescente em x); laços de crista/pico/topo plano só no intervalo
+  afetado (`_first_at_or_after`); `_draw` de enfeites só no retângulo visível (lista ordenada por x + busca binária);
+  extensão de borda proporcional ao mapa (¼ da largura). Medir com um script `--script` de bancada antes/depois e
+  comparar a saída com o gerador antigo (não pode mudar nada já visto).
+

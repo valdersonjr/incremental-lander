@@ -49,6 +49,13 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   voo ganha foco com atraso (`RunSummary.FOCUS_DELAY`): Espaço do propulsor não fecha a janela sem querer.
 - Tabelas com **cabeçalho de colunas** (ofertas: distância / gás / pagamento). Stats do mesmo valor no mesmo formato em
   toda a tela (`Hangar._num`: 2 casas < 10, 1 casa até 1000 sem ",0" em inteiros, depois `EconMath.fmt`). "MÁX", não "MAX".
+- **Input entre telas** (auditoria de lançamento 2026-10-03): Espaço é o propulsor e **não** confirma botões (fora de
+  `ui_accept`/`ui_select` em `WorldConfig.register_input`); ações que perdem algo pedem 2 toques com aviso no rodapé
+  (R no meio do salto, E na escolha); abrir o hangar esconde HUD/ofertas (painel escondido não pode ouvir teclas); R
+  nunca age sob tela modal (final, menu, título). Teclas remapeáveis por `UiKit.key_row` (`world.json > remappable`),
+  controle por `world.json > joypad`; ofertas focáveis (setas/direcional + Enter/A).
+- **Menu do jogo em duas colunas** (SOM E IMAGEM + JOGO | CONTROLES): uma coluna só passava de 360 px de altura.
+- Opções liga/desliga por `UiKit.toggle_row` (Filtro CRT, Tremor da tela, Tela cheia), iguais no título e no menu.
 - Só caracteres que a fonte tem (sem "—", "²", setas): conferir `assets/ui/font.fnt` antes de usar símbolo novo.
 
 ## Hangar (layout aprovado 2026-10-02)

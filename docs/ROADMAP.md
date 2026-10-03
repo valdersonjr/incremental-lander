@@ -60,8 +60,7 @@
 - [x] Mundo 2 **Silvânia** (floresta fechada, id ares) e mundo 3 **Docelândia** (planeta dos doces, id kronos) (2026-10-01)
 - [x] Mapa animado: vento na floresta, pirulitos girando, nuvens passando, estrelas cintilando (2026-10-01)
 - [x] Mundo 4 **O Quarto** (quarto bagunçado, id titan), animado (2026-10-01)
-- [ ]
-      FX
+- [x] FX: explosão da batida, poeira do pouso, estouro de cristal, perigos; tremor de tela opcional (2026-10-03)
 - [x] Interface: fonte pixel com acentos, painéis, botões, barras e ícones; cor de destaque por mundo; todos os
       menus (HUD, entregas, resumo, hangar, final) (2026-10-01)
 - [x] Menu inicial: título sobre a cena do mundo atual (nave na plataforma), Continuar/Jogar, Novo jogo (confirma),
@@ -83,7 +82,8 @@
 
 ## Fase 9 — Áudio · skill: `sound-design` (obrigatória para TODO som)
 - [x] Propulsor (plasma suave: ignição, loop, corte) · pouso · batida · entrega · UI (clique, compra, negado) (2026-10-01)
-- [ ] Jingles (upgrade grande, planeta, prestígio) · alarme de gás baixo · ambiências por mundo · músicas
+- [x] Jingles (marco de upgrade/etapa, mundo liberado, recomeço, final) · alarme de gás baixo · ambiências dos 4 mundos ·
+      músicas de título/hangar e de voo (2026-10-03; aprovado ouvindo o resumo)
 
 ## Fase 11 — Voo com decisões ✅ (2026-10-03) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
 > Pedido do usuário (2026-10-03): pagamento só por distância é sem graça; nada obriga a voar alto; andar de lado é
@@ -98,5 +98,16 @@
 - [x] 11.5 Perigos por mundo (Floresta vento; Doces calda; Quarto ventilador/objetos caindo) (2026-10-03)
 
 ## Fase 10 — Calibração, polimento e build · skills: `economy-balance` (Etapa 10), `godot-dev`
-- [ ] 10.1 Jogar, exportar telemetria, `calibrate()` → `profiles_override` → re-simular
-- [ ] 10.2 Game feel (tremor, partículas, feedback) · 10.3 Export desktop (Mac/PC)
+- [ ] 10.1 Jogar, exportar telemetria, `calibrate()` → `profiles_override` → re-simular (**precisa de sessões humanas**:
+      a telemetria tem 16 entregas humanas; o modelo ainda avisa run de ~450 s e esperas de 10–17 min na 1ª hora)
+- [x] 10.2 Game feel: tremor de tela (batida/pouso duro, opcional), jingles, alarme, feedback de compra (2026-10-03)
+- [ ] 10.3 Export desktop: presets prontos (macOS universal, Windows x86_64, Linux; sem tests/), ícone, versão 0.9.0,
+      renderer Compatibility; `.pck` exportado e testado (roda, JSON incluídos). **Falta**: instalar os templates de
+      export 4.7.2 (Editor → Gerenciar templates de exportação → Baixar), gerar os executáveis e testar numa máquina
+      limpa; assinatura/notarização do macOS se for distribuir fora do itch.io
+
+## Auditoria de lançamento (2026-10-03) ✅ correções · skills: todas
+- [x] Travadas do terreno no fim de jogo (4,5 s → ~0,1 s) · [x] recomeço preso em mundo impossível · [x] save ilegível
+      protegido + aviso · [x] input (Espaço, R/E 2x, R no final, teclas atrás do hangar) · [x] relógio do run sem pausa ·
+      [x] autosave por entrega · [x] teclas remapeáveis, controle, tela cheia · [x] pós-jogo (recordes) · [x] áudio completo
+      · [x] ícone · [x] build (presets, renderer, pasta de dados, sem dev/telemetria no público)

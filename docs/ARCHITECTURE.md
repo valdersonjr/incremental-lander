@@ -119,16 +119,32 @@ art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito (referê
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
-autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); propulsor fica no Lander (ThrustLoop/ThrustFx)
+autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); music("title"|"flight"|"") e ambience(mundo|"")
+                              # com crossfade de 1,2 s (a mesma faixa não reinicia; um tween por par); jingle("milestone"|
+                              # "unlock"|"prestige"|"goal") um por vez, música abaixa -9 dB (AudioEffectAmplify no bus Music);
+                              # unlock/prestige/goal tocam sozinhos pelo Events. Main: título/hangar = "title", voo = "flight",
+                              # ambiência = mundo atual. Propulsor e alarme de gás (<15% em voo, baixa após 3 s) no Lander
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
+audio/src/ambience/world_ambience.py # ambiência dos 4 mundos -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
+audio/src/music/soundtrack.py # música title (D maior 84 BPM) e flight (D lídio 100 BPM) -> assets/audio/music/
+audio/src/sfx/progress_sfx.py # gas_alarm (loop) + jingles milestone/unlock/prestige/goal -> assets/audio/sfx/
+art/src/ui/app_icon.py        # ícone do jogo -> assets/ui/icon.png (32) + icon_512.png (project.godot config/icon, presets)
+export_presets.cfg            # macOS (universal, .zip), Windows (x86_64, pck embutido), Linux; exclui tests/ trailer/ docs/
+                              # balance/ art/ audio/; inclui *.json de data/ e assets/. Saída em builds/ (ignorado no git)
 scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButton, tooltip, scrollbar), icon(nome), icon_label,
-                              # color, volume_row(bus) (opções do título e do hangar), stat_row, pulse (brilho), crash_text
+                              # color, volume_row(bus), toggle_row (crt_row, shake_row, fullscreen_row), key_row(ação)
+                              # (remapear: clica e aperta a tecla; Esc desiste), stat_row, pulse (brilho), crash_text
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
-autoload/telemetry.gd         # Telemetry: user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
+autoload/telemetry.gd         # Telemetry (só no build de depuração/editor, ou com --telemetry; > 5 MB vira _old):
+                              # user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo + tier + crystals; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
                               # nunca sobrescreve)
-autoload/save_manager.gd      # SaveManager: SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
+autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custom_user_dir_name = IncrementalLander; na 1ª vez
+                              # copia saves/opções/telemetria de Godot/app_userdata/Incremental Lander, sem sobrescrever);
+                              # save ILEGÍVEL (danificado/versão futura) nunca é sobrescrito: guardado como
+                              # save.unreadable[N].json antes do próximo save + load_warning mostrado no menu inicial;
+                              # autosave também a cada entrega paga. SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
@@ -150,6 +166,9 @@ tests/unit/run/               # test_run_state, test_purchases, test_prestige, t
 tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,
                               # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
+tests/integration/release_fixes # correções da auditoria de lançamento: recomeço volta a mundo que decola, DECOLAR desligado
+                              # em mundo impossível, R no final, hangar esconde ofertas, E 2x, Espaço fora do ui_accept, relógio
+                              # do run parado na pausa, save ilegível guardado + aviso, recordes, música/ambiência/alarme/jingle
 tests/integration/            # save_roundtrip.tscn (salva/carrega/backup + jogos salvos numa pasta própria), slots_flow.tscn
                               # (Main + menu: novo jogo no espaço 2, trocar de jogo) — rodados por gdtool test
 ```
@@ -162,14 +181,28 @@ assets/ (skills pixel-art / sound-design)             # Fases 8–9
 ```
 
 ## Autoloads
-- **Implementados** (ordem no project.godot): `Events`, `GameState`, `Telemetry`, `SaveManager`.
+- **Implementados** (ordem no project.godot): `Events`, `GameState`, `Telemetry`, `SaveManager`, `Sound`, `Crt`.
+- `GameState.settings`: volumes, `crt`, `shake` (tremor), `fullscreen` (só aplica quando muda; F11/Alt+Enter na Main),
+  `keys` (teclas remapeadas das ações `world.json > remappable`; `remap_key` tira a tecla de outras ações). `records`
+  (recordes pessoais do pós-jogo) vai no save. `apply_settings()` registra o input (WorldConfig.register_input tira
+  Espaço de ui_accept/ui_select; controle: world.json > joypad).
 
 Planejados (`godot-dev`):
 - `Events` — event bus (sinais globais, sem estado).
 - `GameState` — recursos, níveis de upgrades, loja, planetas, prestígio; usa `EconMath`.
 - `SaveManager` — salvar/carregar com versão da spec (`meta.version`) e migração.
 - `Telemetry` — grava CSV de entregas/runs para calibrar o modelo (`economy-balance`).
-- `AudioManager` — players por bus; propulsor controlado pela potência (ver `sound-design/references/godot-audio.md`).
+- (o papel do `AudioManager` ficou com `Sound` + `Lander`).
+
+## Regras de fluxo (auditoria de lançamento, 2026-10-03)
+- `Main._abandon_run()`: R, voltar ao título ou trocar de jogo no meio do run fecham a conta como um fim normal
+  (frota pelo tempo voado, conta como run) — sem entregas, não conta. O relógio do run (`_run_time`) só anda com o jogo
+  despausado. `_open_hangar()` esconde HUD/ofertas/resumo (nada atrás do hangar recebe teclas).
+- `Purchases.can_launch(mundo, stats)`: motor vence a gravidade e o tanque cheio alcança a entrega mais curta. O hangar
+  desliga DECOLAR (com o motivo) se o mundo atual não passa; o recomeço com Cartas de navegação volta para
+  `best_launchable`; run sem nenhuma entrega alcançável termina como "sem_alcance".
+- `TerrainGen`: busca binária na altura e laços só na faixa afetada (mapas de centenas de km); `Terrain` desenha só as
+  pedras na tela; a extensão de borda cresce com o mapa (¼ da largura).
 
 ## Contratos entre sistemas
 - **Economia**: todo número vem de `data/economy.json` via `EconMath` — nada de constantes de economia no código.
