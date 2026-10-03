@@ -21,6 +21,8 @@
 - **Auditoria de UX (2026-10-02)**: todas as telas revisadas só na apresentação/interação (padrões em
   `godot-dev/references/ui.md` §"Padrões de interação"); saída do demo idêntica antes/depois (nenhuma regra mudou).
   Prévias novas: `hangar_preview -- --late --top --pending|--keys`, `summary_preview -- --crash`.
+- **Filtro CRT (2026-10-03)**: ligado por padrão (autoload `Crt`), "Filtro CRT Ligado/Desligado" nas opções do título e no
+  menu do jogo; salvo em settings.json.
 - **Esc no hangar (2026-10-03)**: sem botão "Menu" no canto (pedido do usuário); abre o menu do jogo (`PauseMenu` modo HANGAR) com o hangar escondido — o usuário reclamou
   que o Esc "mostrava o hangar" (a antiga aba OPÇÕES ficava dentro do hangar). Teste `tests/integration/esc_flow`.
   Prévia: `flight_ui_preview -- --no_title --hangar_menu [--confirm]`.

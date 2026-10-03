@@ -38,6 +38,9 @@ Fontes: docs Godot (Using fonts, ResourceImporterImageFont, Themes, Control), de
   botão "Menu" na tela** — usuário: "todo gamer sabe disso") → modo HANGAR "MENU": **o hangar some** (Esc nunca abre "opções dentro do hangar" — reclamação do usuário em
   2026-10-03), + Menu inicial e Novo jogo (2 cliques, Esc cancela), VOLTAR AO HANGAR. Ambos: volumes + controles.
   Nunca no demo nem na gravação de quadros. O autoload `Sound` roda com o jogo pausado. Com o menu aberto, R não decola.
+- **Filtro CRT** (padrão ligado, 2026-10-03): autoload `Crt` + `game/screen/crt.gdshader`. No modo viewport o shader roda
+  na resolução da arte (640×360, antes da ampliação) — por isso nada de curvatura (deforma pixel/texto); linhas = linhas de
+  arte alternadas (12%), brilho, separação de cor leve, vinheta, cantos. Opção `UiKit.crt_row()` no título e no menu do jogo.
 - **Rodapé do HUD** (dica de teclas / resultado) num `SlimPanel` (painel de 1 linha) no `Footer`, nunca solto no cenário.
 - **Modais** bloqueiam o clique no que está atrás (`Dim` com mouse_filter STOP). Botão de modal que aparece no meio do
   voo ganha foco com atraso (`RunSummary.FOCUS_DELAY`): Espaço do propulsor não fecha a janela sem querer.

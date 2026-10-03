@@ -16,3 +16,6 @@ signal planet_unlocked(planet_id: String)
 signal prestiged(gain: float, total_points: float)
 @warning_ignore("unused_signal")
 signal goal_reached(planet_id: String)
+## Opcoes mudaram (volumes, filtro CRT): quem mostra algo das opcoes se atualiza.
+@warning_ignore("unused_signal")
+signal settings_changed

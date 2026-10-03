@@ -1,6 +1,6 @@
 ## Teste de integracao do Esc como um jogador (teclas reais): hangar -> Esc abre o MENU do jogo com o hangar escondido
 ## -> R nao decola -> Esc volta ao hangar -> Esc + "Menu inicial" vai ao titulo; no voo Esc pausa e Esc retoma.
-## Imprime ESC_FLOW_TEST OK ou FALHOU.
+## Tambem: filtro CRT ligado por padrao e o botao do menu liga/desliga a camada. Imprime ESC_FLOW_TEST OK ou FALHOU.
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -46,6 +46,13 @@ func _process(_d: float) -> void:
 			_check("hangar", hangar.visible)
 			_key(KEY_ESCAPE)
 		30:
+			var crt := get_tree().root.get_node("Crt") as CanvasLayer
+			_check("crt_padrao_ligado", crt.visible)
+			var toggle: Button = menu.find_children("*", "Button", true, false).filter(func(b: Node) -> bool:
+				return b.get_meta(&"focus_key", "") == "crt")[0]
+			toggle.pressed.emit()
+			_check("crt_desliga_pelo_menu", not crt.visible and toggle.text == "Desligado")
+			toggle.pressed.emit()
 			_check("esc_no_hangar_abre_menu", menu.visible and not hangar.visible and menu.mode == PauseMenu.Mode.HANGAR)
 			_check("menu_nao_pausa", not get_tree().paused)
 			_key(KEY_R)

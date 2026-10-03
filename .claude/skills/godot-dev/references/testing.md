@@ -44,3 +44,6 @@ milhares de frames. Crie uma cena mínima que instancia só a tela com dados de 
 Para o que depende de autoloads/arquivos (save, fluxo entre telas): uma cena que monta o cenário, verifica e
 imprime `<NOME>_TEST OK` (ou `FALHOU ...`) e chama `get_tree().quit()`. `gdtool.py test` roda todas com
 `--no_save`. Nunca usar o save real: `SaveManager.set_dir("user://itest")`.
+**Armadilha**: testes unitários (`tests/unit`) rodam no `_init` de um SceneTree (`--script`) — **autoloads não existem**
+ali (GameState, Events, Crt...). Um teste que os toca dá erro de script, o `quit()` nunca roda e o `gdtool test` **trava**.
+Tudo que usa autoload vai para teste de integração.

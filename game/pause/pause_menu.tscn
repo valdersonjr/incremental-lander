@@ -49,7 +49,7 @@ horizontal_alignment = 1
 [node name="VolumeTitle" type="Label" parent="Center/Panel/VBox"]
 layout_mode = 2
 theme_type_variation = &"SectionLabel"
-text = "VOLUME"
+text = "SOM E IMAGEM"
 
 [node name="Volumes" type="VBoxContainer" parent="Center/Panel/VBox"]
 unique_name_in_owner = true

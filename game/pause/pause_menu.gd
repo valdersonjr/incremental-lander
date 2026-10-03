@@ -61,6 +61,7 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 		c.queue_free()
 	for bus: String in GameState.BUSES:
 		%Volumes.add_child(UiKit.volume_row(bus))
+	%Volumes.add_child(UiKit.crt_row())
 	var hangar := mode == Mode.HANGAR
 	%Title.text = "MENU" if hangar else "PAUSA"
 	%GameTitle.visible = hangar

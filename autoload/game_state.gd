@@ -220,7 +220,17 @@ func set_volume(bus: String, value: float) -> void:
 	apply_settings()
 
 
-## Aplica as opcoes (volumes) nos buses de audio.
+## Filtro CRT ligado (padrao: sim).
+func crt_enabled() -> bool:
+	return bool(settings.get("crt", true))
+
+
+func set_crt(on: bool) -> void:
+	settings["crt"] = on
+	apply_settings()
+
+
+## Aplica as opcoes (volumes nos buses de audio) e avisa quem mostra as outras (filtro CRT).
 func apply_settings() -> void:
 	for bus: String in BUSES:
 		var idx := AudioServer.get_bus_index(bus)
@@ -228,3 +238,4 @@ func apply_settings() -> void:
 			var v := volume(bus)
 			AudioServer.set_bus_mute(idx, v <= 0.0)
 			AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.0001)))
+	Events.settings_changed.emit()

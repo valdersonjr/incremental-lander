@@ -3,7 +3,7 @@
 ## vermelho = perigo, ambar = gas acabando, barra de gas ciano). Fonte bitmap: tamanho 11 (1x) ou 22 (2x), nunca
 ## fracionario. Variacoes de tipo: SlimPanel, TitleLabel, SectionLabel, DimLabel, ValueLabel, MoneyLabel, DustLabel, BadLabel,
 ## PrimaryButton, DangerButton, GasBar, WarnBar, DangerBar, XpBar. Foco de teclado = moldura de 1 px na cor de titulo
-## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, stat_row, pulse.
+## do mundo (toda tela navegavel por setas/Tab mostra onde esta). Widgets compartilhados: volume_row, crt_row, stat_row, pulse.
 class_name UiKit
 extends RefCounted
 
@@ -199,6 +199,30 @@ static func volume_row(bus: String) -> HBoxContainer:
 			row.add_child(bar)
 	row.add_child(pct)
 	show.call()
+	return row
+
+
+## Linha "Filtro CRT": nome | botao Ligado/Desligado (alterna, salva e toca o clique). Igual no titulo e nos menus.
+static func crt_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 4)
+	var name := Label.new()
+	name.text = "Filtro CRT"
+	name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(name)
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(70, 15)
+	b.tooltip_text = "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa"
+	b.set_meta(&"focus_key", "crt")
+	var show := func() -> void:
+		b.text = "Ligado" if GameState.crt_enabled() else "Desligado"
+	b.pressed.connect(func() -> void:
+		GameState.set_crt(not GameState.crt_enabled())
+		SaveManager.request_save()
+		Sound.ui("click")
+		show.call())
+	show.call()
+	row.add_child(b)
 	return row
 
 

@@ -228,7 +228,7 @@ func _find_focus(key: String) -> Button:
 
 # --- opcoes ------------------------------------------------------------------------------------------------------
 
-## Volumes por bus (- e +), a mesma linha das opcoes do hangar (UiKit.volume_row).
+## Volumes por bus (- e +) e filtro CRT, as mesmas linhas do menu do jogo (UiKit.volume_row / crt_row).
 func _fill_options() -> void:
 	for c in _options.get_children():
 		if c.name != &"OptionsTitle":
@@ -240,6 +240,7 @@ func _fill_options() -> void:
 		_options.add_child(row)
 		if first == null:
 			first = row.get_child(1) as Button
+	_options.add_child(UiKit.crt_row())
 	var back := Button.new()
 	back.text = "Voltar [Esc]"
 	back.pressed.connect(func() -> void: _set_screen(Screen.MENU))

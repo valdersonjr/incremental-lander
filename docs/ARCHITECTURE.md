@@ -59,6 +59,8 @@ game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Fli
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
                               # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
+autoload/crt.gd               # Crt (CanvasLayer 128 + ColorRect, game/screen/crt.gdshader): filtro CRT por cima de tudo;
+                              # visível = GameState.crt_enabled() (settings "crt", padrão true); ouve Events.settings_changed
 game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS_MODE_ALWAYS). open(Mode.FLIGHT): "PAUSA",
                               # congela a árvore; Main abre com Esc no voo ou NOTIFICATION_APPLICATION_FOCUS_OUT (_can_pause).
                               # open(Mode.HANGAR): "MENU" (Hangar.menu_requested → Main esconde o hangar); sinais
