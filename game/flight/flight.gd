@@ -33,6 +33,9 @@ var _hazard_view: HazardView
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
 var _pad_tiers: Array[String] = []                 # tipo de cada plataforma de entrega (sem a partida)
+var _extend := Vector2.ZERO                        # terreno extra alem da margem (px; x esquerda, y direita)
+const EXTEND_NEAR := 800.0                         # nave a menos disso (px) da borda -> estende
+const EXTEND_STEP := 2400.0
 var target_tier := "normal"
 var _demo := false
 
@@ -56,6 +59,7 @@ func _physics_process(delta: float) -> void:
 		for i in Crystals.hits(_crystal_pos, _crystal_taken, lander.global_position):
 			_collect_crystal(i)
 	_tick_hazards(delta)
+	_extend_terrain_if_near_edge()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
 	var target := -CameraMath.lift(alt, float(cam["ground_lift_px"]), float(cam["lift_fade_alt_px"]))
@@ -74,6 +78,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	_demo = demo
 	_pad_positions_m = [0.0]
 	_pad_tiers = []
+	_extend = Vector2.ZERO
 	current_pad_id = 0
 	target_pad_id = -1
 	_rebuild_terrain()
@@ -126,7 +131,7 @@ func _rebuild_terrain() -> void:
 	for i in range(1, _pad_positions_m.size()):
 		distances.append(_pad_positions_m[i])
 	terrain.target_pad_id = target_pad_id
-	terrain.build(_seed, planet_id, distances, _pad_tiers)
+	terrain.build(_seed, planet_id, distances, _pad_tiers, _extend)
 
 
 func _planet_spec(pid: String) -> Dictionary:
@@ -135,6 +140,27 @@ func _planet_spec(pid: String) -> Dictionary:
 			return p
 	push_error("planeta '%s' nao existe na spec" % pid)
 	return EconMath.spec["planets"][0]
+
+
+## O mapa nao acaba: perto de uma borda, estende o terreno naquele lado (o que ja existia nao muda).
+func _extend_terrain_if_near_edge() -> void:
+	var ridge := terrain.ridge
+	if ridge.is_empty():
+		return
+	var x := lander.global_position.x
+	var grow := Vector2.ZERO
+	if x < ridge[0].x + EXTEND_NEAR:
+		grow.x = EXTEND_STEP
+	if x > ridge[ridge.size() - 1].x - EXTEND_NEAR:
+		grow.y = EXTEND_STEP
+	if grow == Vector2.ZERO:
+		return
+	_extend += grow
+	_rebuild_terrain()
+	lander.pads = terrain.pads
+	lander.ridge = terrain.ridge
+	if lander.autopilot != null:
+		lander.autopilot.ridge = terrain.ridge
 
 
 ## Perigos do mundo: relogio, efeito no lander (vento/calda/ventilador; brinquedo destroi), som ao ligar perto.

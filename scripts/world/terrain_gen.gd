@@ -9,8 +9,11 @@ extends RefCounted
 ## pad_tiers: tipo de cada plataforma de entrega (mesma ordem; faltando = "normal") -> largura e elevacao
 ## (world.json terrain.pad_tiers: plataforma estreita num vale, apertada no alto de um pico).
 ## Entre plataformas seguidas ergue uma CRISTA (terrain.crest): um arco bom passa por cima, voar rente nao.
+## extend = px extras alem da margem (x: a esquerda, y: a direita) — o Flight estende quando a nave chega perto da
+## borda. O relevo e ancorado em x = 0 (grade e limite de inclinacao correm de 0 para cada lado): estender ou criar
+## plataformas novas NUNCA muda os pontos que ja existiam.
 static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[float],
-		pad_tiers: Array[String] = []) -> Dictionary:
+		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO) -> Dictionary:
 	var cfg: Dictionary = WorldConfig.load_config()["terrain"]
 	var pcfg: Dictionary = cfg["planets"].get(planet_id, cfg["planets"]["luna"])
 	var step := WorldConfig.m_to_px(cfg["step_m"])
@@ -28,19 +31,26 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 	for i in pad_distances_m.size():
 		pad_xs.append(WorldConfig.m_to_px(pad_distances_m[i]))
 		tiers.append(pad_tiers[i] if i < pad_tiers.size() else "normal")
-	var x_min := -margin
-	var x_max: float = pad_xs.max() + margin
+	var k_min := floori((-margin - extend.x) / step)
+	var k_max := ceili((pad_xs.max() + margin + extend.y) / step)
+	var x_min := k_min * step
+	var x_max := k_max * step
 
-	var ridge := PackedVector2Array()
-	var prev_y := 0.0
-	var x := x_min
-	while x <= x_max + 0.001:
-		var y := -noise.get_noise_1d(x) * amp
-		if not ridge.is_empty():
-			y = clampf(y, prev_y - max_slope * step, prev_y + max_slope * step)
-		ridge.append(Vector2(x, y))
+	# relevo de base: de 0 para a direita e de 0 para a esquerda, limitando a inclinacao a partir da ancora
+	var right := PackedVector2Array()
+	var prev_y := -noise.get_noise_1d(0.0) * amp
+	for k in range(0, k_max + 1):
+		var y := clampf(-noise.get_noise_1d(k * step) * amp, prev_y - max_slope * step, prev_y + max_slope * step)
+		right.append(Vector2(k * step, y))
 		prev_y = y
-		x += step
+	var left := PackedVector2Array()
+	prev_y = right[0].y
+	for k in range(-1, k_min - 1, -1):
+		var y := clampf(-noise.get_noise_1d(k * step) * amp, prev_y - max_slope * step, prev_y + max_slope * step)
+		left.append(Vector2(k * step, y))
+		prev_y = y
+	left.reverse()
+	var ridge := left + right
 
 	# plataformas: largura e elevacao do tipo; altura decidida no relevo de base (antes das cristas)
 	var side_slope: float = cfg["pad_side_slope"]

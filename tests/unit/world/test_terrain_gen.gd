@@ -115,3 +115,25 @@ func test_cristais_no_caminho_do_arco_e_acima_da_crista() -> void:
 	var taken: Array[bool] = [false, true, false]
 	assert_eq(Crystals.hits(cs, taken, cs[0] + Vector2(5, 5)), [0] as Array[int], "alcanca o perto")
 	assert_eq(Crystals.hits(cs, taken, cs[1]), [] as Array[int], "ja pego nao conta de novo")
+
+
+func test_estender_o_mapa_nao_muda_o_que_existia() -> void:
+	# a nave voou para longe: o terreno cresce dos dois lados e nada do que ja existia muda
+	var d: Array[float] = [900.0, 2100.0]
+	var t: Array[String] = ["tight", "narrow"]
+	var a := TerrainGen.generate(3, "luna", d, t)
+	var b := TerrainGen.generate(3, "luna", d, t, Vector2(2400.0, 4800.0))
+	var ra: PackedVector2Array = a["ridge"]
+	var rb: PackedVector2Array = b["ridge"]
+	assert_true(rb[0].x < ra[0].x - 2000.0 and rb[rb.size() - 1].x > ra[ra.size() - 1].x + 4000.0, "cresceu")
+	for x in range(int(ra[0].x) + 1, int(ra[ra.size() - 1].x), 37):
+		assert_almost(TerrainGen.height_at(rb, x), TerrainGen.height_at(ra, x), 1e-3, "relevo mudou em x=%d" % x)
+	for i in a["pads"].size():
+		assert_eq(a["pads"][i], b["pads"][i])
+	var meta := TerrainArt.load_meta("luna")
+	var pads: Array[Dictionary] = []
+	pads.assign(a["pads"])
+	var rocks_a := TerrainArt.rock_spots(ra, pads, 3, meta)
+	var rocks_b := TerrainArt.rock_spots(rb, pads, 3, meta)
+	for r in rocks_a:
+		assert_true(rocks_b.has(r), "pedra mudou de lugar ao estender")

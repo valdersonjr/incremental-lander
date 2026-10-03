@@ -90,24 +90,26 @@ static func rock_spots(ridge: PackedVector2Array, pads: Array[Dictionary], seed_
 	var spots: Array[Dictionary] = []
 	if meta.is_empty() or ridge.size() < 2:
 		return spots
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
 	var cell: Array = meta["rock_cell"]
 	var base_row := float(meta["rock_base_row"])
 	var count := int(meta["rock_count"])
 	var spacing: Array = meta.get("rock_spacing", [14.0, 46.0])
-	var x := ridge[0].x + rng.randf_range(4.0, 30.0)
-	while x < ridge[ridge.size() - 1].x:
-		var clear := true
-		for p in pads:
-			if absf(x - float(p["x"])) < float(p["half_width"]) + 12.0:
-				clear = false
-				break
-		if clear:
-			var y := TerrainGen.height_at(ridge, x) + float(rng.randi_range(0, 2))
-			spots.append({"pos": Vector2(roundf(x - float(cell[0]) * 0.5), roundf(y - base_row)),
-				"frame": rng.randi_range(0, count - 1), "phase": rng.randi_range(0, 7)})
-		x += rng.randf_range(float(spacing[0]), float(spacing[1]))
+	# duas sequencias ancoradas em x = 0 (direita e esquerda): estender o terreno nao muda pedras ja vistas
+	for dir: float in [1.0, -1.0]:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value if dir > 0.0 else seed_value + 7919
+		var x := dir * rng.randf_range(4.0, 30.0)
+		while x < ridge[ridge.size() - 1].x and x > ridge[0].x:
+			var clear := true
+			for p in pads:
+				if absf(x - float(p["x"])) < float(p["half_width"]) + 12.0:
+					clear = false
+					break
+			if clear:
+				var y := TerrainGen.height_at(ridge, x) + float(rng.randi_range(0, 2))
+				spots.append({"pos": Vector2(roundf(x - float(cell[0]) * 0.5), roundf(y - base_row)),
+					"frame": rng.randi_range(0, count - 1), "phase": rng.randi_range(0, 7)})
+			x += dir * rng.randf_range(float(spacing[0]), float(spacing[1]))
 	return spots
 
 

@@ -42,3 +42,10 @@ distâncias (gravidade, arrasto, faixa de distância) sempre de `data/economy.js
 - Verificar o formato: `godot --headless --path . --script res://tests/tools/dump_terrain.gd` (JSON) + plot em PIL.
 - Armadilha: o arco do demo voa 200–350 m acima do chão, e a 1 px/m a tela (360 px) não mostra o relevo no meio do
   salto — captura de frames não serve para ver cristas; use o perfil.
+
+## Mapa sem fim (2026-10-03)
+- O terreno é ancorado em x = 0: grade `k·step` e limite de inclinação correndo de 0 para a direita e de 0 para a
+  esquerda. Assim `extend` (px extras de cada lado) e plataformas novas só ACRESCENTAM pontos — nada muda debaixo da
+  nave. Armadilha antiga: começar o limite de inclinação na borda esquerda fazia qualquer mudança de borda mexer no
+  relevo inteiro. Pedregulhos: duas sequências de RNG a partir de 0 (direita e esquerda), pelo mesmo motivo.
+- `Flight._extend_terrain_if_near_edge`: nave a < 800 px da borda → +2400 px naquele lado e reconstrução.

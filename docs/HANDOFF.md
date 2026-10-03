@@ -24,6 +24,8 @@
     geyser); Quarto ventilador gigante (coluna de ar que ajuda) + bloquinho caindo (sombra + "!" antes; destrói; som
     toy_fall). Lua sem perigo. Economia: neutros (o run acaba pelo teto de 6 entregas, não pelo gás) — spec v7.1.
     Prévia: `tests/visual/hazard_preview -- --planet= --zone= --phase=on|warn`.
+  - Mapa sem fim (2026-10-03, pedido do usuário: "se eu for muito pra direita o mapa acaba"): o terreno cresce
+    sozinho quando a nave chega perto da borda, para os dois lados; nada do que já existia muda (teste edge_flow).
   - **Fase 11 concluída.** Pendências: aprovação do usuário da arte nova (plataformas, cristal, perigos) e dos sons;
     calibrar com humanos (telemetria tier/crystals); autopiloto do demo não desvia de brinquedos nem pega cristais.
 - **Fases 0–7 concluídas; Fase 8 (arte) em andamento.**
@@ -86,7 +88,7 @@ opções descartadas em `art/previews/moon_recolor/grid.png`.)
   restaurou o save reconstruído (Lua, sem upgrades, 0 cr — como mostrava a telemetria).
 - "Alcance max (ideal)" no hangar é otimista (delta-v ideal); ao saturar mostra "> 1000K m".
 - Calibração: gasto de gás humano × modelo virá dos testes manuais (Fase 10).
-- Terreno regenerado inteiro a cada entrega (sem chunks) — ok até ~30 km testados; rever se ficar lento.
+- Terreno regenerado inteiro a cada entrega e a cada extensão de borda (sem chunks) — ok até ~30 km testados; rever se ficar lento.
 - Telemetria antiga (antes da coluna pilot) misturava demo e humano: foi para `deliveries_old.csv` — não usar na calibração.
 - Autopiloto do demo às vezes pousa fora da plataforma em Titan (gravidade 15) — só afeta verificação.
 - Em aberto no design: pós-jogo, nome final (GDD §12). Menu inicial usa título em texto; logo em pixel art

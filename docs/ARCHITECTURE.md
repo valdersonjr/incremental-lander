@@ -34,7 +34,9 @@ scripts/world/
   terrain_gen.gd              # TerrainGen.generate(seed, planeta, distâncias, tipos=[]): relevo + CRISTA entre plataformas
                               # seguidas (12% da distância acima da mais alta; arco de 45° passa) + plataformas planas com
                               # largura/elevação do tipo (estreita num vale, apertada num pico); pad = {id,x,y,half_width,tier,lift};
-                              # highest_between() p/ o autopiloto (puro)
+                              # highest_between() p/ o autopiloto (puro); extend (px a esquerda/direita) estende o mapa — relevo ANCORADO
+                              # em x = 0 (grade e limite de inclinação de 0 para cada lado): estender nunca muda o que existia;
+                              # Flight._extend_terrain_if_near_edge cresce 2,4 km quando a nave chega a 800 m da borda
   autopilot.gd                # Autopilot (--demo): decolagem → arco balístico (mira acima do alvo) → frenagem/pouso;
                               # motor por sigma-delta (fração exata de empuxo) — voa na Lua, Ares e Kronos; na aproximação
                               # mira 30 m acima do ponto mais alto do relevo até o alvo (cristas/picos)
@@ -140,6 +142,7 @@ scripts/world/hazards.gd      # Hazards (puro): generate(seed, planeta, pad_a, p
                               # som ao ligar perto (gust/geyser/toy_fall). LanderPhysics.step soma params.extra_accel
 game/flight/hazard_view.gd    # HazardView: desenha folhas/traços, coluna de calda + bolhas, ventilador + ar, sombra/'!'/bloco
 tests/visual/hazard_preview   # prévia de cada perigo: -- --planet=ares|kronos|titan --zone=N --phase=on|warn
+tests/integration/edge_flow   # o mapa não acaba: 18 km à direita e 10 km à esquerda sempre com chão; partida igual
 tests/integration/crystal_flow # cristais: cria 3, coleta, não repete, resultado com contagem e tipo, limpa
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
