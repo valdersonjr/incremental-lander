@@ -5,9 +5,10 @@
   "time_scale": 4.5,
   "rotate_speed": 4.0,
   "landing": {
-    "max_vy": 3.0,
-    "max_vx": 2.0,
-    "max_tilt": 0.2,
+    "notes": "Tolerancias de pouso em m/s e rad do modelo (na tela: x time_scale = px de arte por segundo; 7 m/s ~ 31 px/s). 2026-10-04: 3/2/0,2 -> 7/5/0,35 (usuario: 'a velocidade vertical e horizontal precisa ser muito baixa'; telemetria humana: ~33 de 40 entregas bateram). Trem de pouso multiplica por gear^gear_exp.",
+    "max_vy": 7.0,
+    "max_vx": 5.0,
+    "max_tilt": 0.35,
     "gear_exp": 0.5,
     "weights": {
       "vy": 0.35,

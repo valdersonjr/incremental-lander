@@ -7,7 +7,7 @@ extends Node
 const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
-		"crashed", "pilot", "tier", "crystals"]
+		"crashed", "pilot", "tier", "crystals", "vy", "vx", "tilt", "reason"]
 
 const MAX_BYTES := 5 * 1024 * 1024
 

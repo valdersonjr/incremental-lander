@@ -322,6 +322,10 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"crystals": crystals_taken,
 		"crashed": crashed,
 		"reason": reason,
+		# velocidade e inclinacao no toque (m/s e rad do modelo): calibram as tolerancias de pouso (world.json > landing)
+		"vy": snappedf(float(info.get("vy", 0.0)), 0.01),
+		"vx": snappedf(float(info.get("vx", 0.0)), 0.01),
+		"tilt": snappedf(float(info.get("tilt", 0.0)), 0.001),
 	}
 	Telemetry.record_delivery(result)
 	_clear_crystals()

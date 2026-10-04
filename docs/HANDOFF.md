@@ -4,6 +4,9 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-03)
+- **Pouso mais tolerante (2026-10-04)**: limites 7 m/s vertical, 5 m/s lateral, ~20° (eram 3 / 2 / ~11°); a telemetria agora
+  grava vy/vx/tilt/motivo de cada toque (o CSV antigo vira deliveries_old3.csv sozinho). Depois de jogar: conferir no CSV
+  se as batidas caíram e recalibrar (Fase 10.1) — a qualidade média sobe com limites maiores (demo 0,87 → 0,94).
 - **Auditoria de lançamento + correções (2026-10-03)**: auditoria (QA/produção) deu NÃO PRONTO; o usuário pediu "arrume
   todos os problemas". Feito (commits 2cfbd4b, 39047ed, 6dde4a1 + docs):
   - Desempenho: `rock_spots`/`height_at` eram quadráticos (4,5 s por reconstrução no fim de jogo) → busca binária,
