@@ -120,7 +120,10 @@ Expert ~4,3 h · engajado ~4,9 h · casual ~5,6 h até Titan; Ares ~0,7 h; Krono
 compras ≤ 30 min. Relatório: `balance/reports/2026-09-29-v6-expedition/`.
 
 ## 10. Direção de arte e som
-- **Arte**: pixel art **futurista** (casco branco + turquesa, propulsor de plasma ciano), paleta **Resurrect 64** travada, lander 32×32, tiles/texturas 16×16, resolução
+- **Arte**: pixel art **fofa/cozy** (referência: Shelldiver; desde 2026-10-04) — o lander é pilotado por um **gatinho
+  astronauta** numa cúpula de vidro sobre um disco branco + turquesa, propulsor de plasma ciano; personagem e
+  primeiro plano com contorno escuro, cor chapada, formas redondas (cenas ainda no estilo anterior, a refazer).
+  Paleta **Resurrect 64** travada, lander 32×32, tiles/texturas 16×16, resolução
   interna **640×360** (escala inteira). Tudo via skill `pixel-art` (`references/style-guide.md`).
 - **Som**: retro-synth espacial 100% sintetizado, escala em D, loudness por categoria, via skill
   `sound-design` (`references/style-guide.md`). Trilha: música calma de menu/hangar (D maior) e de voo (D lídio),

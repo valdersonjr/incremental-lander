@@ -1,6 +1,6 @@
 ## Lander: fisica propria (LanderPhysics) em unidades do modelo, pouso/batida por LandingRules.
 ## Controlado pelo teclado ou por um Autopilot (modo --demo). Visual: AnimatedSprite2D %Visual com
-## assets/sprites/lander_frames.tres (skill pixel-art, estilo futurista): "idle" / "thrust".
+## assets/sprites/lander_frames.tres (skill pixel-art, gatinho astronauta): "idle" (pisca) / "thrust".
 class_name Lander
 extends CharacterBody2D
 

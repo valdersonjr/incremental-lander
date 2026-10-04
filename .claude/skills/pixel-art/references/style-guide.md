@@ -38,6 +38,15 @@
   brilhos ciano; evitar ferrugem/sujeira e formas "fofas".
 - Fundo espacial: `space` (+ estrelas `mist`/`white` esparsas, `scatter` com `min_dist`).
 
+## DIREÇÃO FOFA / COZY (2026-10-04 — substitui "futurista limpa" e "rico em camadas")
+- Usuário: quer o jogo **todo fofinho**, cozy, referência **Shelldiver**. Regras em `patterns/cute-style.md`:
+  rosto/personagem (olhos grandes, baixos e afastados, com brilho), proporção chibi, **formas redondas**,
+  **contorno escuro (`ink`) no primeiro plano** (personagem, objetos, borda do terreno), **cor chapada** (2–3 tons
+  por material, quase sem pontilhado), **fundos simples** em silhuetas tingidas pelo bioma, sem contorno.
+- Lander = **gatinho astronauta** (`art/src/sprites/lander_cute.py`, aprovado). Paleta continua Resurrect 64.
+- As cenas/terreno/UI existentes ainda estão no estilo antigo (pontilhado, facetado): refazer mundo a mundo
+  nesta direção. Seções abaixo valem só onde não conflitam com esta.
+
 ## ESTILO DO JOGO (regra do usuário, vale para TODO asset novo)
 - **Referência visual obrigatória: a cena da Lua aprovada** (`art/previews/moon_scene_rich_2x.png`,
   padrão `patterns/moon-scene.md`) + o lander futurista. Todo asset novo (plataformas, FX, outros planetas, UI)
@@ -54,6 +63,7 @@
 
 ## Decisões registradas
 <!-- Adicione aqui: data — decisão — motivo -->
+- 2026-10-04 — **direção fofa/cozy** (ref. Shelldiver) + lander com gatinho astronauta; paleta mantida — usuário quer o jogo "todo fofinho"; teste de paleta (comfy52) não trouxe fofura
 - 2026-09-30 — **riqueza de detalhe**: cenas em camadas com perspectiva atmosférica, céu em faixas, relevo facetado, textura no chão; arte minimalista/chapada foi reprovada ("muito feia", "todos horríveis") — referências do usuário em patterns/moon-scene.md
 - 2026-09-30 — estilo futurista (lander B) define a arte do jogo; propulsor de plasma ciano — escolha do usuário entre 5 propostas
 - 2026-09-29 — resolução 640×360 e terreno em polígono irregular — respostas do usuário / padrão da skill (§7) + modelo de run da economy-balance

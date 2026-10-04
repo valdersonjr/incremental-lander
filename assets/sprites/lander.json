@@ -5,9 +5,12 @@
     {
       "name": "idle",
       "row": 0,
-      "frames": 1,
+      "frames": 4,
       "durations_ms": [
-        200
+        2400,
+        130,
+        1100,
+        130
       ],
       "loop": true
     },

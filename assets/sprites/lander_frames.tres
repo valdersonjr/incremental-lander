@@ -1,4 +1,4 @@
-[gd_resource type="SpriteFrames" load_steps=7 format=3]
+[gd_resource type="SpriteFrames" load_steps=10 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/sprites/lander.png" id="1_tex"]
 
@@ -8,42 +8,63 @@ region = Rect2(0, 0, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_2"]
 atlas = ExtResource("1_tex")
-region = Rect2(0, 32, 32, 32)
+region = Rect2(32, 0, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_3"]
 atlas = ExtResource("1_tex")
-region = Rect2(32, 32, 32, 32)
+region = Rect2(64, 0, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4"]
 atlas = ExtResource("1_tex")
-region = Rect2(64, 32, 32, 32)
+region = Rect2(96, 0, 32, 32)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_5"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8"]
 atlas = ExtResource("1_tex")
 region = Rect2(96, 32, 32, 32)
 
 [resource]
 animations = [{
 "frames": [{
-"duration": 1.000,
+"duration": 18.462,
 "texture": SubResource("AtlasTexture_1")
-}],
-"loop": true,
-"name": &"idle",
-"speed": 5.000
 }, {
-"frames": [{
 "duration": 1.000,
 "texture": SubResource("AtlasTexture_2")
 }, {
-"duration": 1.000,
+"duration": 8.462,
 "texture": SubResource("AtlasTexture_3")
 }, {
 "duration": 1.000,
 "texture": SubResource("AtlasTexture_4")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 7.692
 }, {
+"frames": [{
 "duration": 1.000,
 "texture": SubResource("AtlasTexture_5")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_6")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_7")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_8")
 }],
 "loop": true,
 "name": &"thrust",

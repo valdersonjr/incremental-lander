@@ -1,5 +1,8 @@
 # Lander (nave do jogador)
 
+> **2026-10-04: substituído pelo lander fofo com gatinho astronauta** — ver `cute-style.md`. O estilo B futurista
+> abaixo fica como histórico (`lander_styles.py`).
+
 - **Slug**: lander
 - **Tipo**: sprite + animação (idle, thrust)
 - **Grade**: 32x32 (sprite principal; silhueta + cabine + pernas + bocal)
