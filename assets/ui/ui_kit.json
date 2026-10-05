@@ -69,10 +69,10 @@
   },
   "worlds": {
     "luna": {
-      "accent": "#30e1b9",
-      "title": "#8ff8e2",
-      "base": "#0eaf9b",
-      "deep": "#0b5e65"
+      "accent": "#eaaded",
+      "title": "#fdcbb0",
+      "base": "#a884f3",
+      "deep": "#6b3e75"
     },
     "ares": {
       "accent": "#91db69",

@@ -76,13 +76,13 @@ def panel(w: int, h: int, header: int = 0) -> Canvas:
             d = depth(x, y)
             lit = (x + y) < (w - 1 - x) + (h - 1 - y)
             c = "ink" if d == 0 else ("bright" if lit else "mid") if d == 1 else "deep" if d == 2 else "low"
-            cv.px(x, y, BASE_RAMP[c])
+            cv.px(x, y, "ink" if c == "ink" else BASE_RAMP[c])
     if header:
         for y in range(3, header):
             for x in range(3, w - 3):
                 if inside(x, y) and depth(x, y) >= 3:
                     c = "base" if y == 3 else "mid" if y == header - 1 else "deep"
-                    cv.px(x, y, BASE_RAMP[c])
+                    cv.px(x, y, "ink" if c == "ink" else BASE_RAMP[c])
     return cv
 
 
