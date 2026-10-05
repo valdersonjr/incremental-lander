@@ -26,6 +26,8 @@ func _ready() -> void:
 		GameState.levels = {"thrust": 42, "tank": 38, "efficiency": 35, "contracts": 30, "gear": 12,
 				"refinery": 8, "fleet": 5, "autopilot": 3, "exp1_station": 1, "exp2_cryo": 1}
 		GameState.cycle_earned = {"credits": 5.0e9}
+	if "--end" in args:                                        # fase final: motor de dobra libera frota (8 cartoes)
+		GameState.shop["warp_drive"] = 1
 	GameState.set_volume("Music", 0.75)
 	if "--pending" in args:
 		GameState.prestige_pending = true

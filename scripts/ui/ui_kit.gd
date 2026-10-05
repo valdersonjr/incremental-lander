@@ -22,12 +22,16 @@ const DIM_ALPHA := 0.6
 static var _meta: Dictionary = {}
 static var _themes: Dictionary = {}
 static var _icons: Dictionary = {}
+static var _kids: Dictionary = {}
+static var _kids_meta: Dictionary = {}
 
 
 ## Solta os caches estaticos (chamado na saida do jogo; senao o Godot acusa recursos vivos no fim).
 static func clear_cache() -> void:
 	_themes.clear()
 	_icons.clear()
+	_kids.clear()
+	_kids_meta.clear()
 	_meta.clear()
 
 
@@ -142,6 +146,21 @@ static func theme_for(world: String) -> Theme:
 	t.set_constant(&"shadow_offset_y", &"TooltipLabel", 1)
 	_themes[world] = t
 	return t
+
+
+## Peca 24x24 do atlas da interface "para criancas" (assets/ui/kids.png, contrato kids.json): pinos dos pedidos,
+## rostinhos dos clientes (rat, bunny, alien, bear), estrelas de dificuldade, pilha de moedas, navezinha.
+static func kid(name: String) -> Texture2D:
+	if _kids.has(name):
+		return _kids[name]
+	if _kids_meta.is_empty():
+		_kids_meta = JSON.parse_string(FileAccess.get_file_as_string(DIR + "kids.json"))
+	var size := int(_kids_meta["size"])
+	var at := AtlasTexture.new()
+	at.atlas = load(DIR + "kids.png")
+	at.region = Rect2((_kids_meta["names"] as Array).find(name) * size, 0, size, size)
+	_kids[name] = at
+	return at
 
 
 ## Linha "icone + texto" pronta (HBox) — usada pelas telas.

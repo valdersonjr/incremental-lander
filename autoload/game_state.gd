@@ -120,6 +120,10 @@ func unlock_planet(planet_id: String) -> bool:
 
 
 ## Linhas de planetas para o hangar.
+func locked_upgrades() -> Array[Dictionary]:
+	return Purchases.locked_upgrades(levels, unlocked_planets, shop)
+
+
 func planet_rows() -> Array[Dictionary]:
 	return Purchases.planet_rows(resources, unlocked_planets, shop, levels, ship_stats())
 

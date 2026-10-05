@@ -43,7 +43,8 @@ scripts/world/
 game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas → set_target → entrega → GameState.add_rewards
                               # → ofertas … → resumo → HANGAR → novo run. Args: --demo --seed=N --planet=id --hangar_wait=s.
                               # Demo libera planetas, compra o upgrade mais barato, vai ao melhor planeta voável; "HANGAR {json}".
-                              # Args de dev: --dev_levels=id:n,... --dev_credits=N --dev_ore=N --dev_shop=id:n,...
+                              # Args de dev: --dev_cargo=towed|fragile|urgent|rescue|box --dev_dir=-1|1 (pedidos iniciais),
+                              # --dev_levels=id:n,... --dev_credits=N --dev_ore=N --dev_shop=id:n,...
                               # --dev_unlock=a,b --planet=id (validado). Imprime também GOAL_REACHED/PRESTIGE.
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
@@ -55,8 +56,9 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
                               # com ganho + plataforma/combo/cristais; terrain.gd escreve o multiplicador sob plataformas difíceis
-game/run/offer_panel.*        # OfferPanel: teclas 1–8 escolhem, E encerra; mostra distância, gás mínimo, plataforma (×1,5 âmbar /
-                              # ×2,2 vermelho), pagamento típico (já com tipo e combo)
+game/run/offer_panel.*        # OfferPanel (tela cheia, só pinos + mini-cartão): pedidos no mundo — pino fincado no chão onde a
+                              # plataforma vai nascer (ground_at = Flight.offer_ground_screen) ou na coluna da borda direita
+                              # com setinha se fica além da tela; teclas 1–9/setas/clique escolhem, E encerra (2 toques)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged, goal_reached
@@ -66,7 +68,7 @@ autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio (
                               # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
-scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, max_reach_m,
+scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (o que vem pela frente), max_reach_m,
                               # can_fly (motor vence a gravidade), unlock_planet, planet_rows
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Continuar · Jogos salvos ·
                               # Opções · Sair. Sinais play_requested (Continuar → hangar; sem progresso → run),
@@ -101,6 +103,13 @@ game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/pl
                               # anima quadros (meta anim) e rola nuvens
 game/background/war_fx.gd     # WarFx (filho do Backdrop, logo após "mid"): guerra viva no fundo (discos, lasers, traçantes,
                               # abates, clarões); coordenadas da camada mid; contrato meta "war" (opcional por planeta)
+scripts/world/cargo_tow.gd    # CargoTow (puro): queijao rebocado — ponto com massa + cabo de comprimento maximo (impulso
+                              # dividido pelas massas), quica/rola no chao, damaged se bater acima de break_speed (Lua)
+scripts/world/cargo_art.gd    # CargoArt: atlas assets/sprites/cargo.png (+ .json): tex(nome), icon(carga, falhou)
+                              # Flight: set_target(d, tier, dir, cargo) + target_position_m (desvia de plataformas antigas);
+                              # cargas: _setup_cargo/_tick_cargo/_judge_cargo; resultado ganha dir/cargo/cargo_ok;
+                              # RunState: offer_dirs/offer_cargo (sorteador proprio), complete_delivery(..., cargo_ok);
+                              # Lander: habilidades stabilizer (acao stabilize) e turbo (acao turbo) via stats
 scripts/world/war_math.gd     # WarMath (puro): wrap_dx, screen_x (laço de 640), line_points (Bresenham)
 scripts/world/camera_math.gd  # CameraMath.lift: câmera sobe perto do chão (mais céu, menos terreno)
 scripts/world/terrain_art.gd  # TerrainArt (puro): PAD_FRAMES/BEAM_FRAMES por tipo; pad_origin/beam_origin pela meia-largura; load_meta, face_of, band (geometria das faixas), band_all (faixa única; UV do mundo ou cisalhado), rock_spots, layer_offset

@@ -108,6 +108,34 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"ValueLabel"
 
+[node name="CargoRow" type="HBoxContainer" parent="Stats/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="CargoIcon" type="TextureRect" parent="Stats/VBox/CargoRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+stretch_mode = 3
+
+[node name="CargoBar" type="ProgressBar" parent="Stats/VBox/CargoRow"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(60, 8)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"WarnBar"
+show_percentage = false
+
+[node name="CargoText" type="Label" parent="Stats/VBox/CargoRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+
 [node name="Money" type="PanelContainer" parent="."]
 layout_mode = 0
 offset_left = 504.0

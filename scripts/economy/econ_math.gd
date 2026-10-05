@@ -290,10 +290,50 @@ static func pickup_value(planet_id: String, distance: float, stats: Dictionary) 
 	return float(pk["value_frac"]) * contract_pay(planet_id, distance, stats, 0.0)
 
 
-## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo (mesma conta do simulador).
+## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (mesma conta do simulador;
+## cargo_m = cargo_mult(tipo, cumpriu)).
 static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,
-		tier_id: String = "normal", streak: int = 0) -> float:
-	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) * combo_mult(streak)
+		tier_id: String = "normal", streak: int = 0, cargo_m: float = 1.0) -> float:
+	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) * combo_mult(streak) \
+			* cargo_m
+
+
+## Cargas do planeta (contracts.cargo, v8): [] se o planeta nao tem cargas especiais (so caixa).
+static func cargo_kinds(planet_id: String) -> Array:
+	var cg: Dictionary = spec["contracts"].get("cargo", {})
+	if cg.is_empty() or not (cg.get("planets", []) as Array).has(planet_id):
+		return []
+	return cg["kinds"]
+
+
+## Tipo de carga {id, name, mult, weight, fail_mult, fail_p, dv_mult}; desconhecido -> caixa x1.
+static func cargo_kind(kind_id: String) -> Dictionary:
+	for k: Dictionary in spec["contracts"].get("cargo", {}).get("kinds", []):
+		if k["id"] == kind_id:
+			return k
+	return {"id": "box", "name": "caixa", "mult": 1.0, "weight": 1.0, "fail_mult": 1.0, "fail_p": 0.0, "dv_mult": 1.0}
+
+
+## Multiplicador de pagamento da carga: cumpriu a regra (ok) -> mult; falhou -> mult x fail_mult.
+static func cargo_mult(kind_id: String, ok: bool = true) -> float:
+	var k := cargo_kind(kind_id)
+	return float(k.get("mult", 1.0)) * (1.0 if ok else float(k.get("fail_mult", 1.0)))
+
+
+## Sorteia a carga de uma oferta pelos pesos (planeta sem cargas -> "box").
+static func draw_cargo(planet_id: String, rng: RandomNumberGenerator) -> String:
+	var kinds := cargo_kinds(planet_id)
+	if kinds.is_empty():
+		return "box"
+	var total := 0.0
+	for k: Dictionary in kinds:
+		total += float(k["weight"])
+	var r := rng.randf() * total
+	for k: Dictionary in kinds:
+		r -= float(k["weight"])
+		if r <= 0.0:
+			return k["id"]
+	return kinds[kinds.size() - 1]["id"]
 
 
 ## Estimativa de delta-v de um salto (a mesma do simulador, sem desperdicio do piloto).

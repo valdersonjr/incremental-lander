@@ -6,6 +6,8 @@ class_name WarFx
 extends Node2D
 
 var _period := 640.0   # largura do laço da camada mid (luna_layers.json > war.period; padrão 640)
+var _peaceful := false # war.peaceful: discos só levam/entregam coisas com feixe de luz (sem tiros nem explosões)
+var _beam_time := 0.35 # duração do feixe/laser (war.beam_time)
 const LASER_TIME := 0.35
 const TRACER_SPEED := 150.0
 const TRACER_LIFE := 1.1
@@ -38,6 +40,8 @@ var _smoke: Array[Dictionary] = []
 ## Monta a batalha a partir do contrato do planeta. seed_value deixa a cena reproduzivel (demo/testes).
 func setup(cfg: Dictionary, seed_value: int) -> void:
 	_period = float(cfg.get("period", 640.0))
+	_peaceful = bool(cfg.get("peaceful", false))
+	_beam_time = float(cfg.get("beam_time", LASER_TIME))
 	_rng.seed = seed_value
 	_band = _vec(cfg["sky_band"])
 	_speed = _vec(cfg["speed"])
@@ -72,6 +76,9 @@ func _draw() -> void:
 		var key := "saucer_far" if s["far"] else "saucer"
 		_draw_sprite(key, s["pos"], int(s["phase"]))
 	for l in _lasers:
+		if _peaceful:
+			_draw_beam(l)
+			continue
 		var from: Vector2 = l["from"]
 		var to: Vector2 = from + Vector2(WarMath.wrap_dx(from.x, (l["to"] as Vector2).x, _period),
 			(l["to"] as Vector2).y - from.y)
@@ -102,7 +109,7 @@ func _step(delta: float) -> void:
 		_step_turret(tr, delta)
 	for l in _lasers:
 		l["t"] = float(l["t"]) + delta
-	_lasers = _lasers.filter(func(l: Dictionary) -> bool: return float(l["t"]) < LASER_TIME)
+	_lasers = _lasers.filter(func(l: Dictionary) -> bool: return float(l["t"]) < _beam_time)
 	for t in _tracers:
 		t["pos"] = (t["pos"] as Vector2) + (t["vel"] as Vector2) * delta
 		t["t"] = float(t["t"]) + delta
@@ -115,7 +122,7 @@ func _step(delta: float) -> void:
 		sm["t"] = float(sm["t"]) + delta
 		sm["pos"] = (sm["pos"] as Vector2) + Vector2(3, -6) * delta
 	_smoke = _smoke.filter(func(sm: Dictionary) -> bool: return float(sm["t"]) < 1.4)
-	if _rng.randf() < delta * 0.5:                                # flak estourando no ceu
+	if not _peaceful and _rng.randf() < delta * 0.5:              # flak estourando no ceu
 		_blasts.append({"pos": Vector2(_rng.randf_range(0, _period), _rng.randf_range(_band.x, _band.y)), "t": 0.0})
 
 
@@ -177,8 +184,33 @@ func _fire_laser(s: Dictionary) -> void:
 			best = t
 	if absf(WarMath.wrap_dx(from.x, best.x, _period)) > 220.0:
 		return                                                      # longe demais: so atira quando passa perto
+	if _peaceful and absf(WarMath.wrap_dx(from.x, best.x, _period)) > 24.0:
+		s["cool"] = 0.25                                            # feixe so com o disco em cima do alvo
+		return
 	_lasers.append({"from": from, "to": best, "t": 0.0})
-	_blasts.append({"pos": best, "t": -LASER_TIME * 0.6})
+	if not _peaceful:
+		_blasts.append({"pos": best, "t": -LASER_TIME * 0.6})
+
+
+## Feixe de luz em cone (modo peaceful): bordas pontilhadas e brilhinhos subindo do alvo ate o disco.
+func _draw_beam(l: Dictionary) -> void:
+	var from: Vector2 = l["from"]
+	var to: Vector2 = from + Vector2(WarMath.wrap_dx(from.x, (l["to"] as Vector2).x, _period),
+		(l["to"] as Vector2).y - from.y)
+	var life := float(l["t"]) / _beam_time
+	var span := to - from
+	var steps := maxi(int(span.length()), 1)
+	for i in steps + 1:
+		var f := float(i) / steps
+		var c := from + span * f
+		var half := 2.0 + 7.0 * f                                     # abre em cone ate o alvo
+		if (i + int(_time * 20.0)) % 3 != 0:
+			_draw_px((c + Vector2(-half, 0)).round(), _laser_colors[0])
+			_draw_px((c + Vector2(half, 0)).round(), _laser_colors[0])
+	for k in 5:                                                       # brilhinhos subindo pelo feixe
+		var f := 1.0 - fposmod(life * 2.0 + k * 0.2, 1.0)
+		var side := (float(k % 3) - 1.0) * (1.5 + 4.0 * f)
+		_draw_px((from + span * f + Vector2(side, 0)).round(), _laser_colors[1 if k % 2 else 2])
 
 
 func _check_hit(t: Dictionary) -> void:

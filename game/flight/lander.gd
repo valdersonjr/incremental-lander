@@ -21,6 +21,7 @@ var env_accel := Vector2.ZERO           # perigos do mundo neste passo (o Flight
 var env_drag := 0.0
 var autopilot: Autopilot = null
 var thrusting := false
+var turbo_on := false                   # Turbo (habilidade) ligado neste passo
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
@@ -52,6 +53,8 @@ func setup(stats: Dictionary, planet: Dictionary, terrain_pads: Array[Dictionary
 		"efficiency": float(stats["efficiency"]),
 		"tank": float(stats["tank"]),
 		"gear": float(stats.get("gear", 1.0)),
+		"stabilizer": float(stats.get("stabilizer", 0.0)) >= 1.0,
+		"turbo": float(stats.get("turbo", 0.0)) >= 1.0,
 	}
 	gas = params["tank"]
 	pads = terrain_pads
@@ -86,7 +89,12 @@ func _physics_process(delta: float) -> void:
 	var dt_m := delta * float(cfg["time_scale"])
 	params["drag"] = LanderPhysics.drag_at(float(params["planet_drag"]), altitude_m(), cfg) + env_drag
 	params["extra_accel"] = env_accel
-	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, params, dt_m)
+	turbo_on = bool(controls.get("turbo", false)) and controls["thrust"]
+	var p := params
+	if turbo_on:                                              # Turbo: empuxo x turbo_mult (mesmo gas por delta-v)
+		p = params.duplicate()
+		p["thrust"] = float(params["thrust"]) * float(cfg["abilities"]["turbo_mult"])
+	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, p, dt_m)
 	vel_m = r["velocity"]
 	gas = r["gas"]
 	thrusting = float(r["gas_used"]) > 0.0
@@ -102,6 +110,7 @@ func _process(delta: float) -> void:
 	var anim := &"thrust" if thrusting else &"idle"
 	if _visual.animation != anim:
 		_visual.play(anim)
+	_visual.speed_scale = 2.0 if turbo_on and thrusting else 1.0   # Turbo: chama tremendo mais rapido
 	_update_thrust_sound()
 	_update_gas_alarm(delta)
 
@@ -174,10 +183,19 @@ func info() -> Dictionary:
 func _read_controls() -> Dictionary:
 	if autopilot != null:
 		return autopilot.control(global_position, vel_m, rotation, params)
+	var rot := Input.get_axis(&"rotate_left", &"rotate_right")
+	if params.get("stabilizer", false) and Input.is_action_pressed(&"stabilize"):
+		rot = stabilize_input(rotation, float(WorldConfig.load_config()["abilities"]["stabilize_gain"]))
 	return {
-		"rotate": Input.get_axis(&"rotate_left", &"rotate_right"),
+		"rotate": rot,
 		"thrust": Input.is_action_pressed(&"thrust"),
+		"turbo": params.get("turbo", false) and Input.is_action_pressed(&"turbo"),
 	}
+
+
+## Estabilizador (habilidade): giro que leva a nave de volta a ficar de pe (-1..1, proporcional a inclinacao).
+static func stabilize_input(rot: float, gain: float) -> float:
+	return clampf(-wrapf(rot, -PI, PI) * gain, -1.0, 1.0)
 
 
 ## Destruida por um perigo (brinquedo caindo): mesma saida de uma batida.

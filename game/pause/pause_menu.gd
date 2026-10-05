@@ -22,6 +22,8 @@ const KEY_TITLES := {
 	"rotate_right": "girar à direita",
 	"restart": "reiniciar o run (2x no voo)",
 	"end_run": "encerrar o run (2x, na escolha)",
+	"stabilize": "estabilizador (habilidade)",
+	"turbo": "turbo (habilidade)",
 }
 const CONTROLS_FIXED := [
 	["1-9, setas + Enter ou clique", "escolher entrega"],

@@ -37,6 +37,20 @@
 Lições: multiplicador alto + combo forte (variante a: ×2,5, +15%) dispara o expert (razão 1,98); batida em
 plataforma difícil gera variância de renda por run (paredes curtas de ~1 run).
 
+## v8 (2026-10-05): cargas com regra própria (só Lua)
+`contracts.cargo = {planets: ["luna"], kinds: [...]}`; cada carga: `mult` (cumpriu), `fail_mult` (falhou: paga
+mult×fail_mult, **nunca acaba o run**), `fail_p` (chance de falhar = fail_p×(1−skill)×2, mesmo idioma do q_drop),
+`dv_mult` (gás extra: queijão rebocado ×1,1). Modelo: média ponderada (`cargo_expect`) multiplica pagamento e Δv
+(o piloto virtual não escolhe carga). Habilidades (`ability: true`, max_level 1): o modelo não vê efeito na renda;
+compra quando `ability_value`×renda/custo vence os outros upgrades.
+| Métrica (screen, 1 seed) | v7.1 | Previsto | v8 |
+|---|---|---|---|
+| Pagamento médio das cargas casual/engaged/expert | — | ~×1,15 | ×1,12 / ×1,17 / ×1,23 |
+| Ares casual/engaged/expert | 0,81/0,69/0,54 h | 5–8% antes | 0,73/0,71/0,45 h |
+| Pior parede casual na 1ª hora | 15,2 min | igual | 11,3 min |
+Lição: bônus cheios (×1,5–1,7) + gás ×1,25 criaram parede de 21,7 min antes de Ares no casual (renda maior →
+compra mais upgrades de alcance antes de juntar para o planeta); bônus ×0,7 e gás ×1,1 resolveram.
+
 ## Decisões do usuário
 - 2026-10-03: gostou do multiplicador por plataforma; pediu "tudo que for sabido que deixa os gamers felizes".
 
@@ -47,3 +61,5 @@ plataforma difícil gera variância de renda por run (paredes curtas de ~1 run).
 - https://docs.spacestation14.com/en/space-station-14/departments/cargo/proposals/mail-delivery.html — frágil sem prejuízo
 - https://com.prosperousuniverse.com/t/shipping-bonuses-for-lm-ads-optional/6049 — bônus por prazo opcional
 - https://www.wayline.io/blog/blessing-roulette-boosts-roguelite-engagement — modificadores por run
+- https://deathstrandingpc.505games.com/porters-advice-for-improving-your-delivery-score/ — carga danificada/prazo reduzem a nota da entrega
+- https://www.c64-wiki.com/wiki/Space_Taxi — passageiro paga menos quanto mais demora; rotas para todos os lados

@@ -363,12 +363,58 @@ def pickup_value(E: dict, planet: dict, d: float, stats: dict) -> float:
 
 
 def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
-                 streak: float = 0) -> float:
-    """Pagamento de uma entrega concluida: base x qualidade x plataforma x combo (o jogo usa a mesma conta)."""
+                 streak: float = 0, cargo_m: float = 1.0) -> float:
+    """Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (o jogo usa a mesma
+    conta; cargo_m = cargo_mult(kind, ok))."""
     C = E["contracts"]
     q = min(1.0, max(0.0, q))
     return contract_pay(E, planet, d, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
-        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak)
+        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak) * cargo_m
+
+
+# Cargas (v8, so nos planetas de contracts.cargo.planets). Espelho GDScript: EconMath.cargo_kinds / cargo_kind /
+# cargo_mult / draw_cargo. Cada carga tem uma regra no voo (fragil: pouso suave; urgente: prazo; rebocada: nao
+# bater o queijo; resgate: pegar o ratinho). Cumpriu -> mult; falhou -> mult x fail_mult. Nunca acaba o run.
+_BOX = {"id": "box", "name": "caixa", "mult": 1.0, "weight": 1.0, "fail_mult": 1.0, "fail_p": 0.0, "dv_mult": 1.0}
+
+
+def cargo_kinds(E: dict, planet_id: str) -> list[dict]:
+    cg = E["contracts"].get("cargo")
+    if not cg or planet_id not in cg.get("planets", []):
+        return []
+    return cg["kinds"]
+
+
+def cargo_kind(E: dict, kind_id: str) -> dict:
+    for k in (E["contracts"].get("cargo") or {}).get("kinds", []):
+        if k["id"] == kind_id:
+            return k
+    return _BOX
+
+
+def cargo_mult(E: dict, kind_id: str, ok: bool = True) -> float:
+    k = cargo_kind(E, kind_id)
+    return k.get("mult", 1.0) * (1.0 if ok else k.get("fail_mult", 1.0))
+
+
+def cargo_fail_p(kind: dict, skill: float) -> float:
+    """Chance de falhar a regra da carga: fail_p x (1 - skill) x 2 (mesmo idioma do q_drop; expert quase nunca)."""
+    return min(1.0, max(0.0, kind.get("fail_p", 0.0) * (1 - min(skill, 1.0)) * 2))
+
+
+def cargo_expect(E: dict, planet: dict, prof: Profile) -> tuple[float, float]:
+    """(multiplicador medio de pagamento, multiplicador medio de delta-v) das cargas do planeta para o perfil.
+    O modelo nao escolhe carga (aproximacao pela media ponderada dos sorteios)."""
+    kinds = cargo_kinds(E, planet["id"])
+    if not kinds:
+        return 1.0, 1.0
+    tw = sum(k["weight"] for k in kinds)
+    pay = dv = 0.0
+    for k in kinds:
+        pf = cargo_fail_p(k, prof.skill)
+        pay += k["weight"] * k.get("mult", 1.0) * ((1 - pf) + pf * k.get("fail_mult", 1.0))
+        dv += k["weight"] * k.get("dv_mult", 1.0)
+    return pay / tw, dv / tw
 
 
 def _draw_tier(E: dict, rng: random.Random) -> str:
@@ -474,15 +520,16 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     pk = C.get("pickups")
     pick_frac = pk["per_hop"] * pk["value_frac"] * min(1.0, prof.skill) if pk else 0.0
     streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
+    cg_pay, cg_dv = cargo_expect(E, planet, prof)
 
     def info(d, tid):  # custo, pagamento e chances de uma oferta nao mudam durante o run: calcula uma vez so
         tier = pad_tier(E, tid)
-        dv = hop_dv(planet, d, stats, prof)
+        dv = hop_dv(planet, d, stats, prof) * cg_dv
         q_mu = _q_on_tier(prof.skill, tier, prof.skill)
         pc_mu = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
         base = contract_pay(E, planet, d, stats)
         # valor esperado (para a escolha do piloto): qualidade media, plataforma e chance de bater
-        ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] + pick_frac) * (1 - pc_mu)
+        ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] * cg_pay + pick_frac) * (1 - pc_mu)
         return (d, dv / eff if arcade else dv, base, tier, ev)
 
     items = [info(d, tid) for d, tid in zip(offers, tiers0)]
@@ -509,7 +556,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         cm = combo_mult(E, streak)
-        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm + base * pick_frac
+        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + base * pick_frac
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof)
         if expected:
@@ -687,6 +734,8 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                     ck = _value(E, {r: bulk_cost(spec, lv, k) for r, spec in u["cost"].items()})
                     best_ratio = max(best_ratio, (inc - base_inc) / (ck + 1e-9))
                 score = best_ratio * _value(E, cost)
+                if u.get("ability"):  # habilidade (v8): nao muda a renda no modelo; vale ~ability_value da renda
+                    score = base_inc * u.get("ability_value", 0.03)
                 if u.get("progress"):  # etapa de megaprojeto: vale como progressao (igual planetas)
                     score = max(score, 0.0) + base_inc * 0.5
                 opts.append(("upgrade", u["id"], cost, score))

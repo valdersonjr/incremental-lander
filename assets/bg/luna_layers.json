@@ -8,7 +8,7 @@
   "far_y": 0,
   "mid_y": 0,
   "plain_y": 267,
-  "deep_color": "#cd683d",
+  "deep_color": "#7a3045",
   "strip_depth": 26,
   "body_texture": "res://assets/tiles/luna_body.png",
   "depth_texture": "res://assets/tiles/luna_depth.png",
@@ -41,34 +41,29 @@
     "plain": {
       "frames": 4,
       "ms": 140
+    },
+    "clouds": {
+      "frames": 4,
+      "ms": 300
     }
   },
   "war": {
-    "muzzles": [
-      [
-        1246,
-        212
-      ],
-      [
-        1878,
-        213
-      ]
-    ],
+    "muzzles": [],
     "targets": [
       [
-        474,
-        208
+        398,
+        258
       ],
       [
         1238,
-        221
+        211
       ],
       [
         1870,
-        222
+        212
       ]
     ],
-    "saucers": 3,
+    "saucers": 0,
     "sky_band": [
       70,
       175
@@ -78,9 +73,9 @@
       26
     ],
     "laser": [
-      "#d5e04b",
-      "#cddf6c",
-      "#239063"
+      "#ffffff",
+      "#fbff86",
+      "#f9c22b"
     ],
     "tracer": [
       "#f9c22b",
@@ -115,6 +110,12 @@
         70
       ]
     },
-    "period": 1920
+    "period": 1920,
+    "peaceful": true,
+    "beam_time": 1.6
+  },
+  "clouds": {
+    "y": 0,
+    "speed": 3
   }
 }

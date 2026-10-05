@@ -26,6 +26,19 @@ const COL_LEVEL := 40
 const COL_EFFECT := 118
 const COL_ACTION := 120
 const COL_MAX := 30
+## Oficina: cartoes de cada lado da nave (de cima para baixo) e onde cada um encosta no sprite 32x32 da nave.
+const WORKSHOP_SIDES := [["contracts", "tank", "refinery", "thrust"], ["fleet", "autopilot", "efficiency", "gear"]]
+const WORKSHOP_ANCHORS := {"contracts": Vector2(10, 2), "tank": Vector2(4, 17), "refinery": Vector2(9, 20),
+		"thrust": Vector2(16, 22), "fleet": Vector2(24, 3), "autopilot": Vector2(16, 9), "efficiency": Vector2(28, 17),
+		"gear": Vector2(27, 25)}
+## Efeito de cada melhoria em figura (atlas kids): antes > depois.
+const WORKSHOP_FX := {"thrust": ["flame_s", "flame_b"], "tank": ["bar_s", "bar_b"], "efficiency": ["drop_b", "drop_s"],
+		"contracts": ["coin", "coins"], "gear": ["pad_s", "pad_b"], "refinery": ["rock", "drop_b"],
+		"fleet": ["drone", "drones"], "autopilot": ["drone", "drone_coin"]}
+const CARD_W := 176
+## O que cada habilidade faz (tooltip do botao; a tecla vem do mapa de teclas).
+const ABILITY_TIP := {"stabilizer": "a nave volta a ficar de pé sozinha", "turbo": "motor com o dobro da força"}
+const SHIP_SCALE := 4.0
 const REACH_CAP_M := 1.0e6                                     # limite da busca de Purchases.max_reach_m
 
 var _tab := Tab.SHIP
@@ -68,6 +81,7 @@ func refresh() -> void:
 	_planet.text = _planet_name(planet) + ("   ·   SANDBOX: nada é salvo" if Sandbox.active() else "")
 	_fill_resources()
 	_fill_ship(planet)
+	_ship.visible = true
 	_clear(_rows)
 	if GameState.prestige_pending:
 		_tabs.visible = false
@@ -77,11 +91,13 @@ func refresh() -> void:
 		return
 	var launchable := Purchases.can_launch(planet, GameState.ship_stats())
 	_launch.disabled = not launchable
-	_launch.text = "DECOLAR  [Enter]" if launchable else "nave fraca para este mundo: melhore a nave ou troque em MUNDOS"
+	_launch.icon = UiKit.kid("ship") if launchable else null   # botao principal: navezinha (sem precisar ler)
+	_launch.text = "DECOLAR!  [Enter]" if launchable else "nave fraca para este mundo: melhore a nave ou troque em MUNDOS"
 	if _tab == Tab.PRESTIGE and not _prestige_unlocked():
 		_tab = Tab.SHIP
 	_fill_expedition()
 	_fill_tabs()
+	_ship.visible = _tab != Tab.SHIP                            # na oficina a nave e o alcance ficam no meio
 	match _tab:
 		Tab.SHIP:
 			_add_upgrades()
@@ -129,7 +145,10 @@ func _fill_resources() -> void:
 	if _flash_money:
 		_flash_money = false
 		UiKit.pulse(_resources, 1.5)
-	_resources.add_child(UiKit.icon_label("credits", EconMath.fmt(GameState.amount("credits")), &"MoneyLabel"))
+	var money := UiKit.icon_label("credits", EconMath.fmt(GameState.amount("credits")), &"MoneyLabel")
+	(money.get_child(1) as Label).add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)   # moedas em destaque
+	(money.get_child(0) as TextureRect).custom_minimum_size = Vector2(12, 22)
+	_resources.add_child(money)
 	if GameState.amount("ore") > 0.0:
 		_resources.add_child(UiKit.icon_label("ore", EconMath.fmt(GameState.amount("ore")), &"ValueLabel"))
 	var dust_id: String = EconMath.spec["prestige"]["resource"]
@@ -143,8 +162,8 @@ func _fill_ship(planet: String) -> void:
 	var reach_txt := "> %s" % EconMath.fmt(REACH_CAP_M) if reach >= REACH_CAP_M * 0.99 else "~%s" % EconMath.fmt(reach)
 	_clear(_ship)
 	_ship.add_child(UiKit.icon_label("thrust", "motor %s m/s2" % _num(s["thrust"])))   # mesmo formato da tabela
-	_ship.add_child(UiKit.icon_label("tank", "tanque %s gás" % _num(s["tank"])))
-	_ship.add_child(UiKit.icon_label("efficiency", "bocais %s m/s/gás" % _num(s["efficiency"])))
+	_ship.add_child(UiKit.icon_label("tank", "gasolina %s gás" % _num(s["tank"])))
+	_ship.add_child(UiKit.icon_label("efficiency", "eficiência %s m/s/gás" % _num(s["efficiency"])))
 	_ship.add_child(UiKit.icon_label("distance", "alcance máx %s m" % reach_txt))
 
 
@@ -192,9 +211,17 @@ func _fill_tabs() -> void:
 	_tabs.visible = true
 	for info: Array in TAB_INFO:
 		var t: Tab = info[0]
-		if t == Tab.PRESTIGE and not _prestige_unlocked():
-			continue
 		var b := Button.new()
+		if t == Tab.PRESTIGE and not _prestige_unlocked():    # existe, mas com cadeado ate chegar ao mundo exigido
+			b.focus_mode = Control.FOCUS_NONE
+			b.icon = UiKit.icon(info[2])
+			b.text = str(info[1])
+			b.disabled = true
+			b.custom_minimum_size = Vector2(70, 15)
+			b.tooltip_text = "libera quando você chegar a " + _planet_title(
+					str(EconMath.spec["prestige"].get("requires_planet", "")))
+			_tabs.add_child(b)
+			continue
 		b.focus_mode = Control.FOCUS_NONE
 		b.icon = UiKit.icon(info[2])
 		b.custom_minimum_size = Vector2(70, 15)
@@ -256,40 +283,340 @@ func _tab_has_news(t: Tab) -> bool:
 # --- aba NAVE ----------------------------------------------------------------------------------------------------
 
 func _add_upgrades() -> void:
-	_rows.add_child(_header_row(["UPGRADE", "NÍVEL", "ATUAL > PRÓXIMO", "CUSTO"]))
+	_add_workshop()
+
+
+## Oficina (2026-10-05, interface "para criancas"): a nave grande no meio e cada melhoria num cartao ligado por um
+## tracejado a peca dela (motor embaixo, pezinhos na perna...). Nivel = numero + barrinha ate o proximo marco;
+## botao de preco verde quando da para comprar. Os numeros tecnicos ficam no tooltip do cartao.
+func _add_workshop() -> void:
+	var rows := GameState.upgrade_rows().filter(func(r: Dictionary) -> bool:
+		return not _is_stage(str(r["id"])) and not _is_ability(str(r["id"])))
+	var by_id := {}
+	for r: Dictionary in rows:
+		by_id[r["id"]] = r
+	for r: Dictionary in GameState.locked_upgrades():          # o que vem pela frente: apagado, com cadeado
+		r["locked"] = true
+		rows.append(r)
+		by_id[r["id"]] = r
+	var shop := HBoxContainer.new()
+	shop.add_theme_constant_override(&"separation", 6)
+	shop.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shop.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_rows.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	var cols: Array[VBoxContainer] = []
+	var stage := Control.new()
+	stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for side in 2:
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override(&"separation", 3)     # 4 cartoes com nome por lado cabem na tela
+		col.custom_minimum_size = Vector2(CARD_W, 0)
+		col.alignment = BoxContainer.ALIGNMENT_CENTER
+		cols.append(col)
+	shop.add_child(cols[0])
+	shop.add_child(stage)
+	shop.add_child(cols[1])
+	# cada melhoria no lado preferido (WORKSHOP_SIDES); a que nao esta no mapa vai para o lado mais curto; depois
+	# equilibra os lados (no maximo 1 de diferenca) para nunca passar da altura da tela
+	var sides: Array = [[], []]
+	for side in 2:
+		for id: String in WORKSHOP_SIDES[side]:
+			if by_id.has(id):
+				sides[side].append(id)
+	for r: Dictionary in rows:
+		if not (sides[0].has(r["id"]) or sides[1].has(r["id"])):
+			sides[0 if sides[0].size() <= sides[1].size() else 1].append(r["id"])
+	while absi(sides[0].size() - sides[1].size()) > 1:
+		var big := 0 if sides[0].size() > sides[1].size() else 1
+		sides[1 - big].append(sides[big].pop_back())
+	var cards := {}
+	for side in 2:
+		for id: String in sides[side]:
+			var card := _make_locked_card(by_id[id]) if by_id[id].get("locked", false) else _make_card(by_id[id])
+			cols[side].add_child(card)
+			cards[id] = card
+	var ship := TextureRect.new()
+	var at := AtlasTexture.new()
+	at.atlas = load("res://assets/sprites/lander.png")
+	at.region = Rect2(0, 0, 32, 32)
+	ship.texture = at
+	ship.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ship.stretch_mode = TextureRect.STRETCH_SCALE
+	ship.size = Vector2(32, 32) * SHIP_SCALE
+	ship.pivot_offset = ship.size * 0.5
+	ship.name = "Ship"
+	stage.add_child(ship)
+	var s := GameState.ship_stats()
+	var reach := Purchases.max_reach_m(GameState.current_planet, s, float(s["tank"]))
+	var reach_row := UiKit.icon_label("distance", "%s m" % (("> " + EconMath.fmt(REACH_CAP_M))
+			if reach >= REACH_CAP_M * 0.99 else EconMath.fmt(reach)), &"ValueLabel")
+	reach_row.name = "Reach"
+	stage.add_child(reach_row)
+	var abilities := _ability_row()
+	stage.add_child(abilities)
+	stage.resized.connect(func() -> void:
+		ship.position = ((stage.size - ship.size) * 0.5 - Vector2(0, 10)).round()
+		reach_row.position = Vector2(roundf((stage.size.x - reach_row.get_combined_minimum_size().x) * 0.5),
+				ship.position.y + ship.size.y + 6)
+		abilities.position = Vector2(roundf((stage.size.x - abilities.get_combined_minimum_size().x) * 0.5),
+				reach_row.position.y + 14)
+		stage.queue_redraw())
+	stage.draw.connect(_draw_links.bind(stage, ship, cards))
+	for card: Control in cards.values():                       # cartoes centralizados mudam de lugar depois
+		card.item_rect_changed.connect(stage.queue_redraw)
+	_rows.add_child(shop)
+	if _flash_row.begins_with("up:"):                          # comprou: a nave da um pulinho
+		var tw := ship.create_tween()
+		tw.tween_property(ship, "scale", Vector2(1.12, 0.9), 0.08)
+		tw.tween_property(ship, "scale", Vector2(0.95, 1.08), 0.1)
+		tw.tween_property(ship, "scale", Vector2.ONE, 0.12)
+
+
+func _is_ability(id: String) -> bool:
+	return bool(EconMath._find("upgrades", id).get("ability", false))
+
+
+## Habilidades (2026-10-05): botoes com a figura embaixo da nave. Sem comprar: preco (cheio e "respirando" quando
+## da). Comprada: a tecla que usa (nao e convencao de jogo: precisa aparecer). Tooltip explica.
+func _ability_row() -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "Abilities"
+	row.add_theme_constant_override(&"separation", 4)
+	var rows := {}
 	for r: Dictionary in GameState.upgrade_rows():
-		if not _is_stage(str(r["id"])):
-			_rows.add_child(_make_row(r))
+		rows[r["id"]] = r
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		if not u.get("ability", false):
+			continue
+		var id: String = u["id"]
+		var b := Button.new()
+		b.icon = CargoArt.tex(id)
+		b.custom_minimum_size = Vector2(0, 20)
+		b.set_meta(&"focus_key", "ability:" + id)
+		var keys := WorldConfig.current_keys(id if id != "stabilizer" else "stabilize")
+		var key_txt := WorldConfig.key_label(keys[0]) if not keys.is_empty() else ""
+		b.tooltip_text = "%s: %s" % [u["name"], ABILITY_TIP.get(id, "")]
+		if int(GameState.levels.get(id, 0)) >= int(u.get("max_level", 1)):
+			b.text = key_txt
+			b.tooltip_text += "\nsegure %s no voo" % key_txt
+			b.focus_mode = Control.FOCUS_NONE
+		elif rows.has(id):
+			var r: Dictionary = rows[id]
+			b.text = EconMath.fmt(float(r["cost"].get("credits", 0.0)))
+			b.disabled = not r["affordable"]
+			if r["affordable"]:
+				b.theme_type_variation = &"PrimaryButton"
+				var tw := b.create_tween().set_loops()
+				tw.tween_property(b, "modulate", Color(1.25, 1.25, 1.25), 0.45).set_trans(Tween.TRANS_SINE)
+				tw.tween_property(b, "modulate", Color.WHITE, 0.45).set_trans(Tween.TRANS_SINE)
+			b.pressed.connect(func() -> void:
+				_bought(GameState.buy_upgrade(id), "up:" + id, id, 0))
+		else:
+			continue
+		row.add_child(b)
+	return row
 
 
-## Linha de upgrade: icone | nome (+ proximo marco) | nivel | atual > proximo | custo (compra 1) | MAX
-func _make_row(r: Dictionary) -> HBoxContainer:
+## Tracejado do cartao ate a peca da nave (pontos em WORKSHOP_ANCHORS, coordenadas do sprite 32x32).
+func _draw_links(stage: Control, ship: TextureRect, cards: Dictionary) -> void:
+	var inv := stage.get_global_transform().affine_inverse()
+	var c := UiKit.color("mist")
+	for id: String in cards:
+		var card: Control = cards[id]
+		if not is_instance_valid(card):
+			continue
+		var r := card.get_global_rect()
+		var left_side := r.position.x < stage.get_global_rect().position.x
+		var from := inv * Vector2(r.end.x if left_side else r.position.x, r.get_center().y)
+		var to := ship.position + (WORKSHOP_ANCHORS.get(id, Vector2(16, 16)) as Vector2) * SHIP_SCALE
+		var steps := int(from.distance_to(to) / 5.0)
+		for i in steps:
+			if i % 2 == 0:
+				var p := from.lerp(to, float(i) / steps).round()
+				stage.draw_rect(Rect2(p, Vector2(2, 2)), c)
+		stage.draw_rect(Rect2(to.round() - Vector2(2, 2), Vector2(4, 4)), UiKit.color("gold"))
+
+
+## Cartao de melhoria: nome do atributo + nivel | icone da peca | figura antes > depois | barrinha ate a estrela do
+## marco; botao de preco + MAX. Os numeros ficam no tooltip.
+func _make_card(r: Dictionary) -> PanelContainer:
 	var id: String = r["id"]
-	var row := _table_row(ICONS.get(id, "options"), str(r["name"]))
-	row.set_meta(&"row_key", "up:" + id)
-	if not (r["milestone"] as Dictionary).is_empty():
-		var ms := Label.new()
-		ms.text = "marco nv %d: ×%s " % [int(r["milestone"]["level"]), str(r["milestone"]["mult"])]
-		ms.theme_type_variation = &"DimLabel"
-		ms.tooltip_text = "no nível %d o pagamento é multiplicado por %s" % [int(r["milestone"]["level"]),
-				str(r["milestone"]["mult"])]
-		ms.mouse_filter = Control.MOUSE_FILTER_PASS
-		row.add_child(ms)
-	row.add_child(_cell("nv %d" % int(r["level"]), COL_LEVEL, &"DimLabel"))
-	row.add_child(_cell("%s > %s %s" % [_num(r["current"]), _num(r["next"]), UNITS.get(r["stat"], "")], COL_EFFECT,
-			&"ValueLabel"))
-	row.add_child(_buy_button(r, COL_ACTION))
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"SlimPanel"                   # margens finas: cabem 4 cartoes por lado
+	card.set_meta(&"row_key", "up:" + id)
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.tooltip_text = "%s (nível %d)\nagora %s  >  depois %s %s" % [r["name"], int(r["level"]), _num(r["current"]),
+			_num(r["next"]), UNITS.get(r["stat"], "")]
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 0)
+	card.add_child(box)
+	# nome de atributo + nivel (usuario, 2026-10-05: "motor, gasolina..."), encaixado sobre a borda de cima como
+	# etiqueta: ocupa so 6 px de altura para 4 cartoes por lado caberem na tela
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(0, 6)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(holder)
+	var title := Label.new()
+	title.text = "%s  %d" % [r["name"], int(r["level"])]
+	title.theme_type_variation = &"DimLabel"
+	title.position = Vector2(2, -6)
+	var tag := StyleBoxFlat.new()                              # fundo da cor do painel: a etiqueta "corta" a borda
+	tag.bg_color = UiKit.color("deep", GameState.current_planet)
+	tag.content_margin_left = 2
+	tag.content_margin_right = 2
+	title.add_theme_stylebox_override(&"normal", tag)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(title)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override(&"separation", 5)
+	box.add_child(top)
+	var ic := TextureRect.new()
+	ic.texture = UiKit.icon(ICONS.get(id, "options"))
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_SCALE
+	ic.custom_minimum_size = Vector2(24, 24)
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(ic)
+	# efeito em figura (antes > depois), sem texto: uma crianca de 6 anos entende olhando (usuario, 2026-10-05)
+	var fx: Array = WORKSHOP_FX.get(id, [])
+	for i in fx.size():
+		if i == 1:
+			top.add_child(_kid_rect("arrow"))
+		var pic := _kid_rect(fx[i])
+		top.add_child(pic)
+		if i == 1:                                             # o "depois" pula de leve, chamando o olho
+			pic.pivot_offset = Vector2(12, 12)
+			var tw := pic.create_tween().set_loops()
+			tw.tween_property(pic, "scale", Vector2(1.15, 1.15), 0.4).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(pic, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_SINE)
+	var pad := Control.new()
+	pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(pad)
+	var ms: Dictionary = r["milestone"]
+	if not ms.is_empty():                                      # barrinha ate a estrela do proximo marco (premio ×N)
+		var every := _milestone_every(id)
+		var bar := ProgressBar.new()
+		bar.show_percentage = false
+		bar.theme_type_variation = &"XpBar"
+		bar.custom_minimum_size = Vector2(30, 6)
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.max_value = every
+		bar.value = every - (int(ms["level"]) - int(r["level"]))
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		top.add_child(bar)
+		var star := _kid_rect("star_on")
+		star.custom_minimum_size = Vector2(14, 24)
+		top.add_child(star)
+		card.tooltip_text += "\nno nível %d ganha um prêmio: ×%s" % [int(ms["level"]), str(ms["mult"])]
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override(&"separation", 3)
+	box.add_child(bottom)
+	var buy := _buy_button(r, 0)
+	buy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buy.custom_minimum_size = Vector2(0, 16)
+	if r["affordable"]:                                        # da para comprar: botao cheio que "respira"
+		buy.theme_type_variation = &"PrimaryButton"
+		var tw := buy.create_tween().set_loops()
+		tw.tween_property(buy, "modulate", Color(1.25, 1.25, 1.25), 0.45).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(buy, "modulate", Color.WHITE, 0.45).set_trans(Tween.TRANS_SINE)
+	bottom.add_child(buy)
 	var mx := Button.new()
 	mx.text = "MÁX"
 	mx.tooltip_text = "comprar o máximo de níveis possível"
-	mx.custom_minimum_size = Vector2(COL_MAX, 15)
+	mx.custom_minimum_size = Vector2(COL_MAX, 16)
 	mx.disabled = not r["affordable"]
 	mx.set_meta(&"focus_key", "max:" + id)
 	mx.pressed.connect(func() -> void:
 		var before := int(GameState.levels.get(id, 0))
 		_bought(GameState.buy_upgrade_max(id) > 0, "up:" + id, id, before))
-	row.add_child(mx)
-	return row
+	bottom.add_child(mx)
+	return card
+
+
+## Cartao de melhoria que ainda vai liberar: mesmo formato do normal, apagado, com cadeado e o que falta.
+## Exige planeta -> mostra o nome e o planeta; exige item da loja da Poeira -> "???" (surpresa).
+func _make_locked_card(r: Dictionary) -> PanelContainer:
+	var id: String = r["id"]
+	var need_planet: String = r["requires_planet"]
+	var surprise := need_planet.is_empty()
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"SlimPanel"
+	card.modulate = Color(0.6, 0.6, 0.68)
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.tooltip_text = ("algo novo! libera com a Poeira Estelar" if surprise
+			else "%s: libera quando você chegar a %s" % [r["name"], _planet_title(need_planet)])
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 0)
+	card.add_child(box)
+	var holder := Control.new()
+	holder.custom_minimum_size = Vector2(0, 6)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(holder)
+	var title := Label.new()
+	title.text = "???" if surprise else str(r["name"])
+	title.theme_type_variation = &"DimLabel"
+	title.position = Vector2(2, -6)
+	var tag := StyleBoxFlat.new()
+	tag.bg_color = UiKit.color("deep", GameState.current_planet)
+	tag.content_margin_left = 2
+	tag.content_margin_right = 2
+	title.add_theme_stylebox_override(&"normal", tag)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(title)
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override(&"separation", 5)
+	box.add_child(top)
+	var ic := TextureRect.new()
+	ic.texture = UiKit.icon(ICONS.get(id, "options"))
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_SCALE
+	ic.custom_minimum_size = Vector2(24, 24)
+	ic.modulate = Color.BLACK if surprise else Color.WHITE  # surpresa: so a silhueta da peca
+	ic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top.add_child(ic)
+	top.add_child(_kid_rect("lock"))
+	top.add_child(_kid_rect("mystery" if surprise else "arrow"))
+	if not surprise:                                           # cadeado -> planeta: "chegue la"
+		var pl := TextureRect.new()
+		pl.texture = UiKit.icon("planet")
+		pl.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pl.stretch_mode = TextureRect.STRETCH_SCALE
+		pl.custom_minimum_size = Vector2(24, 24)
+		pl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		top.add_child(pl)
+	var b := Button.new()
+	b.disabled = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.custom_minimum_size = Vector2(0, 16)
+	b.icon = UiKit.icon("stardust" if surprise else "planet")
+	b.text = "???" if surprise else "chegue a " + _planet_title(need_planet)
+	box.add_child(b)
+	return card
+
+
+## Nome curto do planeta para frases ("Silvânia (floresta fechada)" -> "Silvânia").
+func _planet_title(id: String) -> String:
+	for p: Dictionary in EconMath.spec["planets"]:
+		if p["id"] == id:
+			return str(p["name"]).get_slice(" (", 0)
+	return id
+
+
+func _kid_rect(name: String) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.texture = UiKit.kid(name)
+	tr.custom_minimum_size = Vector2(24, 24)
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tr
+
+
+func _milestone_every(id: String) -> int:
+	for m: Dictionary in EconMath._find("upgrades", id).get("milestones", []):
+		return int(m["every"])
+	return 25
 
 
 ## Botao de compra de 1 nivel: icone do recurso principal + custo (largura fixa para alinhar a coluna).
@@ -318,11 +645,15 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 func _add_worlds() -> void:
 	_rows.add_child(_header_row(["MUNDO", "GRAVIDADE", "PAGAMENTO", ""],
 			[0, COL_LEVEL + 34, COL_EFFECT - 34, COL_ACTION + COL_MAX + 4]))
+	var prev := ""
 	for p: Dictionary in GameState.planet_rows():
 		if p["unlocked"] or p["available"]:
 			_rows.add_child(_make_planet_row(p))
+		else:                                                  # o que vem pela frente: cadeado (o Quarto = destino final)
+			_rows.add_child(_make_locked_planet_row(p, prev))
+		prev = p["id"]
 	var note := Label.new()
-	note.text = "Mundos novos pagam muito mais, mas a gravidade gasta mais gás: compre Motor e Tanque antes."
+	note.text = "Mundos novos pagam muito mais, mas a gravidade gasta mais gás: compre Motor e Gasolina antes."
 	note.theme_type_variation = &"DimLabel"
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_rows.add_child(note)
@@ -360,7 +691,7 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 			b.tooltip_text = "o motor ainda não vence a gravidade deste mundo"
 			b.disabled = true
 		else:
-			b.text = "alcance curto: compre Tanque"
+			b.text = "alcance curto: compre Gasolina"
 			b.tooltip_text = "com o tanque cheio a nave ainda não chega à entrega mais curta deste mundo"
 			b.disabled = true
 	else:
@@ -373,6 +704,35 @@ func _make_planet_row(p: Dictionary) -> HBoxContainer:
 		b.disabled = not p["affordable"]
 		b.pressed.connect(func() -> void:
 			_bought(GameState.unlock_planet(id), "planet:" + id))
+	row.add_child(b)
+	return row
+
+
+## Mundo ainda bloqueado: nome apagado, "?" no lugar dos numeros e o que falta (o mundo anterior). O ultimo mundo
+## (objetivo do jogo, targets.goal) aparece marcado como destino final desde o comeco.
+func _make_locked_planet_row(p: Dictionary, prev: String) -> HBoxContainer:
+	var id: String = p["id"]
+	var goal := id == str(EconMath.spec["targets"]["goal"].get("planet", ""))
+	var row := _table_row("planet", str(p["name"]), &"DimLabel")
+	row.set_meta(&"row_key", "planet:" + id)
+	row.modulate = Color(0.7, 0.7, 0.78)
+	row.add_child(_cell("?", COL_LEVEL + 34, &"DimLabel"))
+	row.add_child(_cell("?", COL_EFFECT - 34, &"DimLabel"))
+	var b := Button.new()
+	b.custom_minimum_size = Vector2(COL_ACTION + COL_MAX + 4, 15)
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.disabled = true
+	b.focus_mode = Control.FOCUS_NONE
+	b.icon = UiKit.kid("lock")
+	b.add_theme_constant_override(&"icon_max_width", 12)      # cadeado 24x24 do atlas kids cabe na linha
+	if goal:
+		b.text = "DESTINO FINAL"
+		b.tooltip_text = "o fim da jornada: termine a Expedição ao Quarto"
+		row.modulate = Color.WHITE
+		b.add_theme_color_override(&"font_disabled_color", UiKit.color("gold"))
+	else:
+		b.text = "depois de " + _planet_title(prev)
+		b.tooltip_text = "libera depois de chegar a " + _planet_title(prev)
 	row.add_child(b)
 	return row
 
@@ -512,7 +872,7 @@ func _focused_key() -> String:
 
 ## Depois de refazer as linhas: brilho da compra e foco (mesmo botao se o jogador usa teclado; senao DECOLAR).
 func _after_rebuild(focus_key: String) -> void:
-	for n: Node in _rows.find_children("*", "HBoxContainer", true, false):
+	for n: Node in _rows.find_children("*", "Control", true, false):
 		if _flash_row != "" and n.get_meta(&"row_key", "") == _flash_row:
 			UiKit.pulse(n as CanvasItem)
 	_flash_row = ""

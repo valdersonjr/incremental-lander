@@ -1,7 +1,7 @@
 """Peças de cenário da Lua de queijo (2026-10-04). Skill pixel-art, receita cute-scene-method.
 
 Usuário: "o background sempre tem as mesmas coisas" → o fundo dos morros vira 3 trechos (1920 px de laço):
-  1 Mina dos ratinhos  ·  2 Vila dos coelhos  ·  3 Parquinho lunar   (a guerra continua no céu).
+  1 Mina dos ratinhos  ·  2 Vila dos ratinhos  ·  3 Parquinho lunar   (2026-10-05: sem coelhos nem alienígenas).
 Cada peça: contorno ink (objeto), volume com sphere(), animação em FR=4 quadros (fr = 0..3).
 Usado por moon_cute.py (mid_layer). Rodar a prévia das peças: python3 art/src/bg/moon_props.py
 """
@@ -30,20 +30,23 @@ WOOD = ["copper", "rust", "rust", "wine"]
 
 # ------------------------------------------------------------------ 1. mina dos ratinhos
 def mouse(fr: int, phase: int = 0, helmet: bool = True) -> Canvas:
-    """Ratinho de capacete com lanterna (14x13), quica ao andar."""
+    """Ratinho de capacete com lanterna (18x17), quica ao andar.
+    v2 (revisão 2026-10-04): era cinza de 14 px e virava borrão sobre o morro → pelo creme claro (salta do
+    morro escuro), cabeça chibi maior que o corpo, orelhona rosa, olho 1x2 com brilho."""
     mc = _h()
     up = 1 if (fr + phase) % FR in (1, 3) else 0
-    k = Canvas(14, 13)
-    mc.sphere(k, 6, 9 - up, 4.2, 2.8, GREY)                       # corpo
-    mc.sphere(k, 9.5, 6 - up, 3.2, 3, GREY)                       # cabeça
-    mc.disc(k, 7.5, 3 - up, 1.9, "steel"); k.px(7, 3 - up, "pink")  # orelha
-    k.px(12, 7 - up, "pink")                                      # nariz
-    k.px(10, 5 - up, "ink"); k.px(10, 6 - up, "ink")              # olhinho
-    k.px(9, 7 - up, "pink")                                       # bochecha
-    k.line(2, 9 - up, 0, 7 - up, "pink")                          # rabo
-    k.px(4 + (fr + phase) % 2, 12 - up, "slate"); k.px(8 - (fr + phase) % 2, 12 - up, "slate")
+    fur = ["white", "white", "cream", "peach"]
+    k = Canvas(18, 17)
+    mc.sphere(k, 6.5, 12.5 - up, 4.6, 3.2, fur)                   # corpinho
+    mc.disc(k, 8.5, 4.5 - up, 2.9, "cream"); mc.disc(k, 8.5, 4.5 - up, 1.6, "pink")   # orelhona
+    mc.sphere(k, 11.5, 8.5 - up, 4.6, 4.2, fur)                   # cabeça (≈ corpo: chibi)
+    k.px(15, 9 - up, "pink"); k.px(16, 9 - up, "pink")            # focinho
+    k.px(12, 7 - up, "ink"); k.px(12, 8 - up, "ink"); k.px(13, 7 - up, "white")   # olhinho com brilho
+    k.px(11, 10 - up, "pink"); k.px(12, 10 - up, "pink")          # bochecha
+    k.line(2, 12 - up, 0, 9 - up, "pink")                         # rabo
+    k.px(4 + (fr + phase) % 2, 16 - up, "salmon"); k.px(8 - (fr + phase) % 2, 16 - up, "salmon")
     if helmet:
-        k.hline(7, 11, 3 - up, "gold"); k.hline(8, 11, 2 - up, "gold"); k.px(12, 3 - up, "lemon")
+        k.hline(9, 14, 4 - up, "gold"); k.hline(10, 13, 3 - up, "gold"); k.px(15, 4 - up, "lemon")
     return ol(k)
 
 
@@ -129,9 +132,9 @@ def cheese_pile() -> Canvas:
     return ol(k)
 
 
-# ------------------------------------------------------------------ 2. vila dos coelhos
+# ------------------------------------------------------------------ 2. vila dos ratinhos
 def hut(size: float = 1.0, lit: bool = True) -> Canvas:
-    """Casinha redonda de coelho: parede creme com volume, telhado de palha cônico, porta redonda, janela acesa."""
+    """Casinha redonda de ratinho: parede creme com volume, telhado de palha cônico, porta redonda, janela acesa."""
     mc = _h()
     w, h = int(30 * size), int(30 * size)
     k = Canvas(w + 2, h + 2)

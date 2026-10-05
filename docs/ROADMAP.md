@@ -85,6 +85,16 @@
 - [x] Jingles (marco de upgrade/etapa, mundo liberado, recomeço, final) · alarme de gás baixo · ambiências dos 4 mundos ·
       músicas de título/hangar e de voo (2026-10-03; aprovado ouvindo o resumo)
 
+## Fase 12 — Lua mais divertida ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
+> Pedido: "o que não existir no nosso jogo, adicione de forma divertida e dada a temática do mapa (só a Lua)" + "tira
+> todos coelhos e alienígena do mapa". Pesquisa: Space Taxi, Thrust/Solar Jetman, Lunar Lander Beyond, Death Stranding.
+- [x] 12.1 Economia v8: cargas (multiplicador/falha/gás) + habilidades (modelo + espelho + paridade + screen) (2026-10-05)
+- [x] 12.2 Pedidos para os dois lados (terreno, pinos na borda esquerda, autopiloto) (2026-10-05)
+- [x] 12.3 Cargas no voo: bolo, sorvete, queijão no cabo (pêndulo), ratinho (resgate) + HUD + cartão (2026-10-05)
+- [x] 12.4 Habilidades Estabilizador e Turbo (teclas remapeáveis, controle, botões na oficina) (2026-10-05)
+- [x] 12.5 Arte: atlas de cargas/ícones; Lua sem coelhos e sem alienígenas (2026-10-05)
+- [ ] 12.6 Aprovação do usuário jogando (sensação do cabo, prazo do sorvete, raio do resgate) + sons próprios (sound-design)
+
 ## Fase 11 — Voo com decisões ✅ (2026-10-03) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
 > Pedido do usuário (2026-10-03): pagamento só por distância é sem graça; nada obriga a voar alto; andar de lado é
 > entediante → "faz tudo que for sabido que deixa os gamers felizes". Padrões: Lunar Lander 1979 (plataforma estreita

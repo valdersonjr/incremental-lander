@@ -25,6 +25,36 @@ func test_linha_inclusiva_e_continua() -> void:
 func test_contrato_da_guerra_na_lua() -> void:
 	var war: Dictionary = TerrainArt.load_meta("luna").get("war", {})
 	assert_false(war.is_empty(), "luna tem guerra no fundo")
-	assert_true((war["targets"] as Array).size() > 0 and (war["muzzles"] as Array).size() > 0)
+	assert_true((war["targets"] as Array).size() > 0)
+	if bool(war.get("peaceful", false)):
+		assert_eq((war["muzzles"] as Array).size(), 0, "lua fofa: sem torres atirando")
+	else:
+		assert_true((war["muzzles"] as Array).size() > 0)
 	for key: String in war["sprites"]:
 		assert_true(ResourceLoader.exists(str(war["sprites"][key])), "sprite %s existe" % key)
+
+
+func test_disco_pacifico_so_solta_feixe_em_cima_do_alvo() -> void:
+	var cfg: Dictionary = (TerrainArt.load_meta("luna")["war"] as Dictionary).duplicate(true)
+	cfg["targets"] = [[300, 200]]
+	cfg["saucers"] = 1
+	var fx := WarFx.new()
+	fx.setup(cfg, 1)
+	var s: Dictionary = fx._saucers[0]
+	s["far"] = false
+	s["speed"] = 0.0
+	s["pos"] = Vector2(200, 120)                                  # longe (100 px): nada de feixe
+	s["base_y"] = 120.0
+	s["cool"] = 0.0
+	fx._step(0.016)
+	assert_eq(fx._lasers.size(), 0, "longe do alvo nao solta feixe")
+	s["pos"] = Vector2(290, 120)                                  # centro do disco em x=302: em cima
+	s["cool"] = 0.0
+	var fired := false
+	for i in 200:
+		fx._step(0.016)
+		fired = fired or fx._lasers.size() > 0
+	assert_true(fired, "solta o feixe em cima do alvo")
+	assert_eq(fx._blasts.size(), 0, "modo pacifico: sem explosoes")
+	assert_eq(fx._tracers.size(), 0, "modo pacifico: sem tracantes")
+	fx.free()

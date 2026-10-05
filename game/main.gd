@@ -230,6 +230,7 @@ func _start_run() -> void:
 	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed)
+	_force_offer_extras()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
 	_hud = HUD_SCENE.instantiate()
@@ -252,6 +253,7 @@ func _start_run() -> void:
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
+	_offers.ground_at = _flight.offer_ground_screen
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
 	_summary.continue_requested.connect(_on_continue)
@@ -284,7 +286,7 @@ func _on_offer_chosen(index: int) -> void:
 	Sound.ui("click")
 	var d := _run.take_offer(index)
 	_offers.visible = false
-	_flight.set_target(d, _run.taken_tier)
+	_flight.set_target(d, _run.taken_tier, _run.taken_dir, _run.taken_cargo)
 
 
 func _on_end_requested() -> void:
@@ -299,7 +301,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		_end_run()
 		return
 	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"],
-			int(result.get("crystals", 0)))
+			int(result.get("crystals", 0)), bool(result.get("cargo_ok", true)))
 	GameState.add_rewards(rewards)
 	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
 	_note_record("longest_hop", float(result["distance"]))
@@ -427,6 +429,18 @@ func _apply_dev_args() -> void:
 			push_warning("--planet=%s nao existe na spec; usando luna" % pid)
 		if not GameState.current_planet in GameState.unlocked_planets:
 			GameState.unlocked_planets.append(GameState.current_planet)
+
+
+## Dev (verificacao/capturas): --dev_cargo=towed|fragile|urgent|rescue|box e --dev_dir=-1|1 forcam a carga e o
+## lado de TODOS os pedidos do run (os que regeneram tambem nao mudam: so os iniciais sao forcados).
+func _force_offer_extras() -> void:
+	if not OS.is_debug_build():
+		return
+	for i in _run.offers.size():
+		if _args.has("dev_cargo"):
+			_run.offer_cargo[i] = str(_args["dev_cargo"])
+		if _args.has("dev_dir"):
+			_run.offer_dirs[i] = int(_args["dev_dir"])
 
 
 ## Linha de verificacao (gdtool run/capture leem o stdout); fora no build publico.

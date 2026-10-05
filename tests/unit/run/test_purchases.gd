@@ -102,3 +102,21 @@ func test_marco_de_upgrade_para_o_jingle() -> void:
 	assert_false(Purchases.milestone_crossed("gear", 0, 30), "sem marcos na spec")
 	assert_true(Purchases.milestone_crossed("exp1_station", 0, 1), "etapa da Expedicao")
 	assert_false(Purchases.milestone_crossed("thrust", 5, 5), "nada comprado")
+
+
+func test_bloqueados_mostram_o_que_vem_e_somem_ao_liberar() -> void:
+	var ids := Purchases.locked_upgrades({}, ["luna"], {}).map(func(r: Dictionary) -> String: return r["id"])
+	assert_true("refinery" in ids)
+	assert_true("fleet" in ids)
+	assert_false("thrust" in ids)
+	assert_false(ids.any(func(id: String) -> bool: return id.begins_with("exp")))   # Expedicao fica surpresa
+	var depois := Purchases.locked_upgrades({}, ["luna", "ares"], {"warp_drive": 1})
+	assert_eq(depois.size(), 0)
+
+
+func test_bloqueado_diz_o_que_falta() -> void:
+	for r: Dictionary in Purchases.locked_upgrades({}, ["luna"], {}):
+		if r["id"] == "refinery":
+			assert_eq(r["requires_planet"], "ares")
+		if r["id"] == "fleet":
+			assert_eq(r["requires_shop"], "warp_drive")

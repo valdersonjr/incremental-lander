@@ -1,0 +1,33 @@
+{
+  "notes": "Gerado por art/src/ui/kids_ui.py (pixel-art). C\u00e9lulas quadradas na ordem de names.",
+  "size": 24,
+  "names": [
+    "pin",
+    "pin_sel",
+    "pin_off",
+    "rat",
+    "bunny",
+    "alien",
+    "bear",
+    "star_on",
+    "star_off",
+    "coins",
+    "ship",
+    "flame_s",
+    "flame_b",
+    "bar_s",
+    "bar_b",
+    "drop_b",
+    "drop_s",
+    "coin",
+    "pad_s",
+    "pad_b",
+    "rock",
+    "drone",
+    "drones",
+    "drone_coin",
+    "arrow",
+    "lock",
+    "mystery"
+  ]
+}

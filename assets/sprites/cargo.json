@@ -1,0 +1,18 @@
+{
+  "cell": 16,
+  "names": [
+    "box",
+    "cake",
+    "cake_squashed",
+    "icecream",
+    "icecream_melted",
+    "wheel",
+    "wheel_cracked",
+    "mouse_wait0",
+    "mouse_wait1",
+    "mouse_safe",
+    "stabilizer",
+    "turbo"
+  ],
+  "notes": "Gerado por art/src/sprites/cargo.py (pixel-art). C\u00e9lulas 16x16 numa linha."
+}

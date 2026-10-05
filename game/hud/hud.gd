@@ -1,6 +1,8 @@
 ## HUD do voo (arte: UiKit): gas (barra ciano -> ambar -> vermelho), velocidades com cor de seguranca,
 ## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, combo;
 ## resultado do pouso em aviso central (pagamento com plataforma x combo x cristais, chamado pelo Main).
+## Carga (Lua): linha com a figura da carga + o que importa agora (barra do sorvete derretendo; bolo deixa o
+## V.VERT mais exigente; ratinho fica colorido quando resgatado; queijo rachado).
 class_name Hud
 extends Control
 
@@ -28,6 +30,14 @@ var _hint_left := 0.0
 @onready var _toast_extra: Label = %ToastExtra
 @onready var _combo_panel: Control = %ComboPanel
 @onready var _combo: Label = %Combo
+@onready var _cargo_row: Control = %CargoRow
+@onready var _cargo_icon: TextureRect = %CargoIcon
+@onready var _cargo_bar: ProgressBar = %CargoBar
+@onready var _cargo_text: Label = %CargoText
+
+## Texto curto de cada carga no HUD (a figura vem antes; frase de crianca).
+const CARGO_HUD := {"fragile": "devagar!", "urgent": "", "towed": "não bata!", "rescue": "pegue o ratinho!"}
+const CARGO_FAIL := {"fragile": "amassou!", "urgent": "derreteu!", "towed": "rachou!", "rescue": "ficou para trás"}
 
 
 func _ready() -> void:
@@ -62,7 +72,11 @@ func _process(delta: float) -> void:
 	_gas.text = EconMath.fmt(l.gas)
 	_gas_bar.value = frac * 100.0
 	_gas_bar.theme_type_variation = &"GasBar" if frac > 0.35 else (&"WarnBar" if frac > 0.15 else &"DangerBar")
-	_set_speed(_vy, l.vel_m.y, tol["max_vy"])
+	var vy_limit: float = tol["max_vy"]
+	if flight.target_pad_id >= 0 and flight.cargo == "fragile":  # bolo: o limite que importa e o do bolo
+		vy_limit = minf(vy_limit, float(cfg["cargo"]["fragile"]["max_vy"]))
+	_set_speed(_vy, l.vel_m.y, vy_limit)
+	_update_cargo()
 	_set_speed(_vx, absf(l.vel_m.x), tol["max_vx"])
 	var ground := TerrainGen.height_at(flight.terrain.ridge, l.global_position.x)
 	_alt.text = "%d m" % int(WorldConfig.px_to_m(ground - l.global_position.y))
@@ -82,6 +96,33 @@ func _process(delta: float) -> void:
 	_combo_panel.visible = streak > 0
 	if streak > 0:
 		_combo.text = "COMBO %d  %s" % [streak, UiKit.mult_text(EconMath.combo_mult(streak))]
+
+
+func _update_cargo() -> void:
+	var kind := flight.cargo
+	var show := flight.target_pad_id >= 0 and kind != "box"
+	_cargo_row.visible = show
+	if not show:
+		return
+	var ok := flight.cargo_ok
+	var pic := CargoArt.icon(kind, not ok)
+	if kind == "rescue" and flight.rescued:
+		pic = CargoArt.tex("mouse_safe")
+	_cargo_icon.texture = pic
+	_cargo_bar.visible = kind == "urgent" and ok
+	if _cargo_bar.visible:
+		var frac := flight.urgent_left / maxf(flight.urgent_limit, 0.001)
+		_cargo_bar.value = frac * 100.0
+		_cargo_bar.theme_type_variation = &"GasBar" if frac > 0.5 else (&"WarnBar" if frac > 0.2 else &"DangerBar")
+	if not ok:
+		_cargo_text.text = CARGO_FAIL.get(kind, "")
+		_cargo_text.theme_type_variation = &"BadLabel"
+	elif kind == "rescue" and flight.rescued:
+		_cargo_text.text = "a bordo!"
+		_cargo_text.theme_type_variation = &"GoodLabel"
+	else:
+		_cargo_text.text = CARGO_HUD.get(kind, "")
+		_cargo_text.theme_type_variation = &"MoneyLabel"
 
 
 func _set_speed(label: Label, value: float, limit: float) -> void:
@@ -110,6 +151,11 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
 	if int(entry.get("crystals", 0)) > 0:
 		parts.append("cristais +%s" % EconMath.fmt(float(entry["crystal_pay"])))
+	var kind := str(entry.get("cargo", "box"))
+	if kind != "box":
+		var cm := float(entry.get("cargo_mult", 1.0))
+		parts.append(("%s %s" % [EconMath.cargo_kind(kind)["name"], UiKit.mult_text(cm)]) if bool(entry.get("cargo_ok", true))
+				else "%s %s" % [CARGO_FAIL.get(kind, ""), UiKit.mult_text(cm)])
 	if not bool(entry.get("good", true)):
 		parts.append("pouso duro: combo zerou")
 	elif streak >= 2:

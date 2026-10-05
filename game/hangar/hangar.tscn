@@ -20,7 +20,7 @@ theme_override_constants/separation = 8
 [node name="Title" type="Label" parent="VBox/HeaderRow"]
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-text = "HANGAR"
+text = "OFICINA"
 
 [node name="Planet" type="Label" parent="VBox/HeaderRow"]
 unique_name_in_owner = true
@@ -73,4 +73,4 @@ custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-text = "DECOLAR  [Enter]"
+text = "DECOLAR!  [Enter]"

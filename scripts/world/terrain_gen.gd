@@ -31,7 +31,7 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 	for i in pad_distances_m.size():
 		pad_xs.append(WorldConfig.m_to_px(pad_distances_m[i]))
 		tiers.append(pad_tiers[i] if i < pad_tiers.size() else "normal")
-	var k_min := floori((-margin - extend.x) / step)
+	var k_min := floori((minf(pad_xs.min(), 0.0) - margin - extend.x) / step)
 	var k_max := ceili((pad_xs.max() + margin + extend.y) / step)
 	var x_min := k_min * step
 	var x_max := k_max * step
@@ -65,12 +65,12 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		if i > 0:
 			var prev: Dictionary = pads[i - 1]
 			var prev_reach := float(prev["half_width"]) + absf(float(prev["lift"])) / side_slope
-			if pad_xs[i] - pad_xs[i - 1] < reach + prev_reach:
+			if absf(pad_xs[i] - pad_xs[i - 1]) < reach + prev_reach:
 				lift = 0.0
 		pads.append({"id": i, "x": pad_xs[i], "half_width": half, "y": _height_at(ridge, pad_xs[i]) - lift,
 				"tier": tiers[i], "lift": lift})
 	for i in pads.size() - 1:
-		_add_crest(ridge, pads[i], pads[i + 1], cfg["crest"], pcfg)
+		_add_crest(ridge, pads[i], pads[i + 1], cfg["crest"], pcfg, pads)
 	var y_range := _y_range(ridge)
 	for p in pads:
 		y_range = _shape_pad(ridge, p, side_slope, y_range)
@@ -99,11 +99,18 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 ## Crista entre duas plataformas seguidas: lombada em cosseno no meio do trecho, com o pico pelo menos
 ## frac x distancia acima da plataforma mais alta (o arco de 45 graus sobe 1/4 da distancia: passa com folga).
 ## A inclinacao da lombada e limitada (max_bump_slope) para a arte e o pouso continuarem legiveis.
+## Funciona para os dois lados (pedido a esquerda: b antes de a). Sem crista se outra plataforma fica entre as duas
+## (voltar por cima de plataformas antigas: a lombada as afundaria num buraco).
 static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, crest: Dictionary,
-		pcfg: Dictionary) -> void:
-	var d := float(b["x"]) - float(a["x"])
+		pcfg: Dictionary, pads: Array[Dictionary] = []) -> void:
+	var d := absf(float(b["x"]) - float(a["x"]))
 	if d < WorldConfig.m_to_px(float(crest["min_distance_m"])):
 		return
+	var lo := minf(float(a["x"]), float(b["x"]))
+	var hi := maxf(float(a["x"]), float(b["x"]))
+	for p in pads:
+		if p["id"] != a["id"] and p["id"] != b["id"] and float(p["x"]) > lo and float(p["x"]) < hi:
+			return
 	var h := minf(float(crest["frac"]) * d, WorldConfig.m_to_px(float(pcfg["crest_max_m"])))
 	var w := float(crest["half_width_frac"]) * d
 	var mid := (float(a["x"]) + float(b["x"])) * 0.5

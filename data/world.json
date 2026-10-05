@@ -159,6 +159,13 @@
     ],
     "fullscreen": [
       "F11"
+    ],
+    "stabilize": [
+      "S",
+      "Down"
+    ],
+    "turbo": [
+      "Shift"
     ]
   },
   "input_notes": "Teclas por acao (nomes de OS.find_keycode_from_string, tecla fisica). remappable = acoes que o jogador pode trocar no menu do jogo (settings.json > keys). joypad: botoes (JoyButton) e eixos (JoyAxis, value = direcao) — controle com layout Xbox: A/RT propulsor, analogico/direcional gira, Y encerra, Back reinicia, LB/RB trocam aba, Start abre o menu.",
@@ -167,7 +174,9 @@
     "rotate_left",
     "rotate_right",
     "restart",
-    "end_run"
+    "end_run",
+    "stabilize",
+    "turbo"
   ],
   "joypad": {
     "thrust": [
@@ -220,6 +229,20 @@
     "ui_cancel": [
       {
         "button": 6
+      }
+    ],
+    "stabilize": [
+      {
+        "button": 1
+      }
+    ],
+    "turbo": [
+      {
+        "button": 2
+      },
+      {
+        "axis": 4,
+        "value": 1.0
       }
     ]
   },
@@ -325,5 +348,41 @@
         "fall_s": 1.6
       }
     ]
+  },
+  "routes": {
+    "notes": "Pedidos para os dois lados (2026-10-05, ref. Space Taxi): left_chance = chance de um pedido nascer a ESQUERDA da plataforma atual. Planeta ausente = sempre a direita. Se a plataforma nova cairia em cima de outra, anda nudge_m no mesmo sentido ate ficar livre.",
+    "luna": {
+      "left_chance": 0.45
+    },
+    "nudge_m": 60.0,
+    "clear_m": 40.0
+  },
+  "cargo": {
+    "notes": "Regras das cargas (2026-10-05, so na Lua; pagamento/pesos em economy.json contracts.cargo). fragile: pouso com vy <= max_vy (m/s do modelo). urgent: prazo em SEGUNDOS REAIS desde a decolagem = base_s + per_sqrt_m x sqrt(distancia). towed: queijao pendurado num cabo (pendulo, ref. Thrust): rope_m comprimento, mass relativa a nave (1), quebra se bater no chao acima de break_speed (m/s), radius_m raio. rescue: ratinho no meio do caminho; pega se o centro da nave passar a radius_m dele com velocidade < max_speed (m/s).",
+    "fragile": {
+      "max_vy": 3.0
+    },
+    "urgent": {
+      "base_s": 10.0,
+      "per_sqrt_m": 0.35
+    },
+    "towed": {
+      "rope_m": 26.0,
+      "mass": 0.6,
+      "break_speed": 6.0,
+      "radius_m": 6.0,
+      "bounce": 0.25,
+      "friction": 0.7
+    },
+    "rescue": {
+      "radius_m": 20.0,
+      "max_speed": 4.5,
+      "at": 0.5
+    }
+  },
+  "abilities": {
+    "notes": "Habilidades compradas na oficina (economy.json upgrades com ability). stabilizer: segurando a tecla, a nave volta a ficar de pe (gira com stabilize_gain x inclinacao, ate a velocidade normal de giro). turbo: segurando, empuxo x turbo_mult (o gas por delta-v e o mesmo: gasta mais rapido).",
+    "stabilize_gain": 4.0,
+    "turbo_mult": 2.0
   }
 }

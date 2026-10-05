@@ -3,7 +3,22 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-03)
+## Estado atual (2026-10-05)
+- **Fase 12 — Lua mais divertida (2026-10-05)**: pedido "o que não existir no nosso jogo, adicione de forma divertida e
+  dada a temática do mapa (só a Lua)" + "tira todos coelhos e alienígena do mapa". Feito:
+  - Economia **v8** (`contracts.cargo` só na Lua + habilidades `stabilizer`/`turbo`), espelho EconMath, paridade 21 grupos.
+  - Pedidos para os **dois lados** (world.json `routes.luna.left_chance` 0,45; pinos na borda esquerda abaixo do HUD).
+  - **Cargas**: bolo (pouso ≤ 3 m/s), sorvete (prazo real = 10 + 0,35·√d s, conta só voando), queijão no cabo
+    (`CargoTow`, cabo 26 m, massa 0,6, racha > 6 m/s), ratinho (raio 20 m, velocidade < 4,5 m/s). Falhar paga menos.
+  - **Habilidades**: Estabilizador (S/↓) e Turbo (Shift), remapeáveis, controle B / X+LT; botões embaixo da nave.
+  - **Arte**: `art/src/sprites/cargo.py` → `assets/sprites/cargo.png` (cargas + versões estragadas + ícones); Lua sem
+    coelhos (vila/parque dos ratinhos) e sem alienígenas (já não havia nave-mãe/discos; sprites war_* seguem no disco,
+    sem uso: saucers 0).
+  - Verificado: 95 testes + 8 integrações verdes; demo na Lua sem erros; capturas do queijão, do resgate, dos pinos à
+    esquerda e da oficina. **Pendente**: o usuário jogar e aprovar (sensação do cabo, prazo, raio do resgate, arte das
+    cargas); sons próprios (hoje reaproveita crystal_3/denied); o autopiloto do demo não pega o ratinho.
+- **Trabalho anterior não commitado incluído no commit da Fase 12** (sessão de 2026-10-05 antes desta): menus para
+  crianças (pedidos no mundo, oficina), nomes de atributo, mina de queijo (trecho 1), nuvens — ver DECISIONS 2026-10-05.
 - **Direção de arte FOFA/COZY (2026-10-04)**: usuário quer o jogo "todo fofinho", referência Shelldiver. Teste de paleta
   (Resurrect 64 × comfy52) mostrou que a fofura vem do traço → **paleta mantida**. Regras em
   `.claude/skills/pixel-art/references/patterns/cute-style.md` (rosto, contorno escuro no primeiro plano, cor chapada,
@@ -113,6 +128,8 @@
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
+- **Jogar a Lua nova** (Fase 12.6): conferir cabo/sorvete/ratinho/bolo e as habilidades; ajustar `data/world.json > cargo`.
+  Capturas de verificação: `gdtool capture res://game/main.tscn -- --demo --planet=luna --dev_cargo=towed --dev_dir=-1`.
 - **Arte fofa (2026-10-04)**: Lua ✅. Próximo: **plataforma de pouso** (normal/estreita/apertada + feixe + marcador)
   e **HUD** no estilo fofo; depois os outros mundos com a receita `cute-scene-method.md`. Mostrar sempre em página
   HTML aberta no Chrome, com capturas do jogo.

@@ -36,6 +36,23 @@ static func buy_max(resources: Dictionary, levels: Dictionary, upgrade_id: Strin
 	return n
 
 
+## Melhorias que ainda vao liberar (mostradas apagadas, com cadeado, para o jogador saber o que vem pela frente).
+## Ficam de fora as etapas da Expedicao (surpresa da fase final) e o que ja chegou ao nivel maximo.
+## Cada item: {id, name, requires_planet, requires_shop} ("" quando nao exige).
+static func locked_upgrades(levels: Dictionary, unlocked: Array, shop: Dictionary) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		var id: String = u["id"]
+		var lv := int(levels.get(id, 0))
+		if u.get("progress", false) or u.has("requires_upgrade") or lv >= int(u.get("max_level", 1000000000)):
+			continue
+		if EconMath.upgrade_available(id, lv, unlocked, shop, levels):
+			continue
+		out.append({"id": id, "name": u.get("name", id), "requires_planet": str(u.get("requires_planet", "")),
+				"requires_shop": str(u.get("requires_shop", ""))})
+	return out
+
+
 ## Linhas para a UI do hangar: upgrades disponiveis com nivel, custo, stat atual -> proximo e proximo marco.
 static func upgrade_rows(resources: Dictionary, levels: Dictionary, unlocked: Array, shop: Dictionary,
 		prestige_points: float) -> Array[Dictionary]:

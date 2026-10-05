@@ -1,7 +1,7 @@
 # Incremental Lander — Documento de Design (GDD)
 
 > Documento vivo. **Números** de economia NÃO moram aqui: a fonte única é `data/economy.json`
-> (tabelas abaixo são um retrato da spec **v7**, 2026-10-03). Mudou a spec → atualize o retrato.
+> (tabelas abaixo são um retrato da spec **v8**, 2026-10-05). Mudou a spec → atualize o retrato.
 
 ## 1. Conceito
 Jogo **incremental** estilo **Lunar Lander**, **visão lateral**, feito em **Godot 4.7** para **computador**
@@ -38,6 +38,16 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
     Silvânia rajadas de vento laterais (folhas voando avisam); Docelândia gêiseres de calda que nascem do chão (bolhas
     avisam; freiam e empurram — pegam quem voa baixo); O Quarto ventilador gigante (corrente de ar que AJUDA a subir) e
     bloquinhos caindo (sombra + "!" avisam; destroem a nave).
+- **Lua mais divertida (v8, 2026-10-05)** — pesquisa do que falta no gênero (Space Taxi, Thrust, Lunar Lander Beyond,
+  Death Stranding), aplicada só na Lua, no tema "Lua de queijo dos ratinhos":
+  - **Pedidos para os dois lados**: ~45% dos pedidos nascem à esquerda (pino na coluna da borda esquerda); voltar por
+    cima de plataformas antigas não muda nenhuma delas.
+  - **Cargas com regra própria** (figura no pino, no cartão e no HUD; falhar paga menos mas **não acaba o run**):
+    caixa de queijo (normal) · **bolo de queijo** (frágil: pouso bem suave, V.VERT fica mais exigente) · **sorvete**
+    (prazo: barra derretendo enquanto voa) · **queijão no cabo** (pêndulo pendurado na nave, puxa e balança; não pode
+    bater forte no chão) · **ratinho perdido** (no meio do caminho: passe devagar pertinho para ele pular na nave).
+  - **Habilidades** compráveis na oficina (botões embaixo da nave): **Estabilizador** (segurar S/↓: a nave volta a
+    ficar de pé) e **Turbo** (segurar Shift: motor com o dobro da força, gasta gás mais rápido).
 
 ## 3. Pilotagem (física) — **a implementar e calibrar**
 - Controles (teclado): girar esquerda/direita, propulsor; Esc pausa o voo (volumes + lista de controles). (Detalhes finais na skill `godot-dev`/Fase 1.)
@@ -74,20 +84,22 @@ Os mundos são **animados** (vento, pirulitos girando, nuvens, estrelas) — ped
 
 **Cenas vivas de fundo (2026-10-02)** — só ambientação, **sem história nem progressão** (usuário: "não precisa
 deixar com história forte... a ideia era só algo passando de fundo mesmo").
-- **Lua — guerra alienígena passando ao fundo**: nave-mãe no céu, discos atacando bases nas montanhas, traçantes,
-  abates, base em chamas, disco caído na planície. Não interage com o jogo nem muda com o avanço.
+- **Lua — mina de queijo dos ratinhos** (2026-10-05): sem coelhos nem alienígenas (pedido do usuário); ratinhos
+  minerando, vila e parquinho dos ratinhos, caminhão de queijo na estrada. Não interage com o jogo.
 - Terreno da Lua: crosta de regolito com crateras sobre blocos de basalto (2026-10-02).
 
 ## 6. Upgrades (créditos; resetam no prestígio, exceto a Expedição)
 | Upgrade | Efeito | Observação |
 |---|---|---|
-| Motor (velocidade) | +0,6 m/s² por nível | vence gravidades maiores, menos perda por gravidade |
-| Tanque de gás | ×1,12 gás por nível | alcance |
-| Bocais (eficiência) | ×1,07 Δv por gás | alcance |
+| Motor | +0,6 m/s² por nível | vence gravidades maiores, menos perda por gravidade |
+| Gasolina (tanque) | ×1,12 gás por nível | alcance |
+| Eficiência (bocais) | ×1,07 Δv por gás | alcance |
 | Reputação | ×1,1 pagamento | — |
-| Trem de pouso | reduz batidas (retorno decrescente) | — |
+| Resistência (trem de pouso) | reduz batidas (retorno decrescente) | — |
 | Refinaria | ×1,15 eficiência | custa créditos + minério |
-| **Marcos** | a cada 25 níveis de Motor/Tanque/Bocais/Reputação: pagamento ×1,5 | estilo AdVenture Capitalist |
+| Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | compra única (Lua em diante) |
+| Turbo (habilidade) | segurar Shift: empuxo ×2 | compra única |
+| **Marcos** | a cada 25 níveis de Motor/Gasolina/Eficiência/Reputação: pagamento ×1,5 | estilo AdVenture Capitalist |
 
 ## 7. Prestígio — Poeira Estelar
 - Recomeçar (após chegar a Ares) converte créditos ganhos em **Poeira Estelar**: `(créditos/800)^0,25`.

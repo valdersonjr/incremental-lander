@@ -46,15 +46,19 @@ T = dict(
     sparkle=["white", "cream", "peach"], cloud=["white", "cream", "peach"], cloud_ol="salmon",
     # escada de valor (pesquisa Slynyrd/sprite-ai, teste P&B): horizonte creme > cordilheira pêssego >
     # morros de trás rosa > morros da frente escuros (amora) > planície ameixa — personagens claros saltam
-    far_ramp=["cream", "peach", "peach", "salmon"], far_haze="cream",
-    back=["peach", "salmon", "rose", "rose"], back_haze="salmon",
-    front=["salmon", "rose", "berry", "berry_dark"], front_ol="plum_dark", haze="berry_dark",
-    front_tex=["berry_dark", "rose"],
-    plain=["berry_dark", "plum_dark", "plum_dark"], plain_line="berry",
+    # v6 (revisão 2026-10-04, teste P&B no jogo): o gatinho (~L165) sumia sobre os morros rosa (L136-164) →
+    # fundo um degrau mais CLARO (cordilheira creme, morros de trás pêssego) e frente um degrau mais ESCURA
+    # (amora escura com luz de borda salmão); personagens claros e o queijo jogável saltam dos dois.
+    far_ramp=["white", "cream", "cream", "peach"], far_haze="cream",
+    back=["cream", "peach", "peach", "salmon"], back_haze="cream",
+    front=["salmon", "berry", "berry_dark", "plum"], front_ol="plum_dark", haze="plum",
+    front_tex=["plum", "berry"],
+    plain=["plum", "plum_dark", "plum_dark"], plain_line="berry_dark",
     rim={"lit": ["white", "lemon"], "flat": ["lemon", "gold"], "shade": ["gold", "amber"]},
     ol="rust", ao="amber", body="gold", strata="honey", hole="amber", hole_dark="copper", lip="lemon",
-    pebble="honey", depth=["amber", "copper", "terracotta"], rock=["lemon", "gold", "white"],
+    pebble="honey", depth=["copper", "terracotta", "rust"], deep="wine", rock=["lemon", "gold", "white"],
     smoke=["white", "cream", "peach"], smoke_ol="rose", earth_glow=["peach", "salmon"],
+    beam=["white", "lemon", "gold"],
 )
 
 
@@ -130,7 +134,7 @@ def sky_color(x: int, y: int):
     return c
 
 
-SPARKLES = [(228, 104, 3), (566, 30, 2), (612, 168, 2)]          # 3 (ímpar), longe do HUD
+SPARKLES = [(228, 104, 3), (392, 74, 2), (512, 174, 2)]          # 3 (ímpar): 2 em volta da Terra (grupo)
 
 
 def sparkle(cv: Canvas, x: int, y: int, size: int) -> None:
@@ -193,11 +197,19 @@ def sky(fr: int) -> Canvas:
             cv.px(x, y, "peach" if y > 60 else "cream")
     for i, (x, y, s) in enumerate(SPARKLES):
         sparkle(cv, x, y, max(1, s - [0, 1, 1, 0, 0, 0][(fr + i * 2) % SKY_FRAMES]))
+    return cv
+
+
+CLOUD_H = 220
+
+
+def clouds_layer(fr: int) -> Canvas:
+    """Nuvens + nave-mãe numa camada própria que flutua devagar (laço 640). Antes ficavam pintadas no céu,
+    presas à tela: a nave-mãe parecia um enfeite do HUD."""
+    cv = Canvas(W, CLOUD_H)
     for x, y, kind, flip in CLOUDS:
         cloud(cv, x, y, kind, flip)
-    ringed(cv, 522, 60)                                       # companheiro da Terra
-    mothership(cv, fr)
-    return cv
+    return cv                                                  # mina (2026-10-05): sem nave-mãe; o céu é da Terra
 
 
 def ringed(cv: Canvas, cx: int, cy: int) -> None:
@@ -211,7 +223,7 @@ def ringed(cv: Canvas, cx: int, cy: int) -> None:
     cv.stamp(k, cx - 15, cy - 11)
 
 
-MOTHER_C = (300, 42)                                          # foco secundário, longe do HUD
+MOTHER_C = (300, 52)                                          # foco secundário (flutua; passa atrás do HUD)
 
 
 def mothership(cv: Canvas, fr: int) -> None:
@@ -252,10 +264,8 @@ def planet() -> Canvas:
     for y in range(c.h):
         for x in range(c.w):
             d = math.hypot(x + 0.5 - o, y + 0.5 - o)
-            if r + 3 <= d < r + 4.2:
+            if r + 2 <= d < r + 4.4:                            # halo: uma faixa só (eram 2 anéis finos)
                 c.px(x, y, g0)
-            elif r + 7 <= d < r + 8:
-                c.px(x, y, g1)
     rng = random.Random(3)
     blobs = [(o - 12, o - 14, 9), (o + 14, o - 6, 7), (o - 16, o + 12, 8), (o + 8, o + 18, 6)]
     for y in range(c.h):
@@ -266,19 +276,21 @@ def planet() -> Canvas:
                 continue
             land = any(math.hypot(x + 0.5 - bx, y + 0.5 - by) < br + 2 * math.sin(x * 0.7 + y * 0.5) for bx, by, br in blobs)
             i = -0.5 * nx - 0.6 * ny + 0.62 * math.sqrt(1 - d)
+            # v6: tons pastel (azul-céu claro, verde-folha) — antes era o azul mais forte da tela e roubava o foco
             if land:
-                c.px(x, y, "leaf" if i > 0.6 else "green" if i > 0.1 else "pine")
+                c.px(x, y, "sprout" if i > 0.75 else "leaf" if i > 0.25 else "green")
             else:
-                c.px(x, y, "pale_sky" if i > 0.92 else "sky" if i > 0.55 else "blue" if i > 0.1 else "indigo")
+                c.px(x, y, "white" if i > 0.95 else "pale_sky" if i > 0.6 else "sky" if i > 0.12 else "blue")
     for bx, by, rr in ((o - 4, o - 24, 3.5), (o + 1, o - 24, 4), (o + 6, o - 23, 3), (o + 18, o + 9, 3), (o + 22, o + 9, 2.5)):
         disc(c, bx, by, rr, "white")
     ex, ey = int(o), int(o + 3)                                  # rosto dormindo, grande e central
-    for sx in (-12, 7):
-        for j, dy in enumerate((0, 1, 1, 1, 0)):
-            c.px(ex + sx + j, ey + dy, "ink")
-        bx = ex + sx - 3 if sx < 0 else ex + sx + 4                 # bochecha por fora e abaixo do olho
-        c.hline(bx, bx + 2, ey + 3, "pink")
-    c.px(ex - 1, ey + 6, "ink"); c.px(ex, ey + 7, "ink"); c.px(ex + 1, ey + 6, "ink")   # boquinha
+    for sx in (-13, 6):                                          # olhos fechados de 2 px de espessura
+        for j, dy in enumerate((0, 1, 2, 2, 2, 1, 0)):
+            c.px(ex + sx + j, ey + dy, "navy"); c.px(ex + sx + j, ey + dy + 1, "navy")
+        bx = ex + sx - 3 if sx < 0 else ex + sx + 5                 # bochecha por fora e abaixo do olho
+        disc(c, bx + 2, ey + 6, 2.2, "pink")
+    c.px(ex - 2, ey + 7, "navy"); c.px(ex - 1, ey + 8, "navy"); c.px(ex, ey + 8, "navy")
+    c.px(ex + 1, ey + 8, "navy"); c.px(ex + 2, ey + 7, "navy")       # sorrisinho
     edge = Canvas(c.w, c.h)
     for y in range(c.h):
         for x in range(c.w):
@@ -355,11 +367,14 @@ HILLS = {
     "grande_fundo": [(0, 0), (10, 20), (22, 34), (34, 40), (46, 36), (56, 26), (66, 30), (76, 22), (90, 0)],
     "fundo_alto":   [(0, 0), (12, 26), (24, 42), (34, 47), (44, 41), (58, 20), (70, 0)],
 }
+import moon_mine as mm
+HILLS["mina"] = mm.MINE_HILL
+MINE_X = 16
 MW = 1920                      # laço da camada mid: 3 trechos de 640 (mina · vila · parquinho)
 BACK = [(n, x + 640 * i, f != (i == 1)) for i in range(3)
         for n, x, f in (("grande_fundo", -60, False), ("fundo_alto", 190, True), ("grande_fundo", 360, True))]
-FRONT = [  # trecho 1: mina dos ratinhos
-         ("planalto", 30, False), ("dois_calombos", 230, True), ("domo_calombo", 380, False), ("baixinho", 530, False),
+FRONT = [  # trecho 1: extração (pedreira de queijo) — 2026-10-05, moon_mine.py
+         ("mina", MINE_X, False), ("baixinho", 450, False), ("bolinha", 548, True),
          # trecho 2: vila dos coelhos
          ("baixinho", 640, True), ("domo_calombo", 730, False), ("bolinha", 880, False), ("dois_calombos", 960, False),
          ("baixinho", 1110, True), ("bolinha", 1200, True),
@@ -369,6 +384,8 @@ FRONT = [  # trecho 1: mina dos ratinhos
 
 
 def piece(name: str, flip: bool, ramp: list, ol, lit_w: int, ao: int = 2, tex=None) -> Canvas:
+    if name == "mina":
+        return mm.mine_hill(ramp, ol, tex)[0]
     hs = profile_from(HILLS[name])
     h = int(max(hs)) + 2
     k = Canvas(len(hs), h)
@@ -505,7 +522,8 @@ def small_dome(fr: int, i: int) -> Canvas:
 
 def mid_layer(base: Canvas, tops: list, fr: int) -> tuple:
     """Os 3 trechos (2026-10-04, usuário: "o fundo sempre tem as mesmas coisas"): mina dos ratinhos · vila dos
-    coelhos · parquinho. A guerra segue no céu: base atingida na mina e postinhos humanos na vila e no parque."""
+    ratinhos · parquinho. 2026-10-05: sem coelhos nem alienígenas (usuário: "tira todos coelhos e alienígena do
+    mapa") — a Lua é dos ratinhos: eles moram na vila e brincam no parque."""
     import moon_props as mp
     c = base.copy()
     muzzles, targets = [], []
@@ -519,37 +537,33 @@ def mid_layer(base: Canvas, tops: list, fr: int) -> tuple:
         stamp_wrap(c, k, x - k.w // 2, b - k.h, MW)
         return b
 
-    # ---- trecho 1: mina dos ratinhos
-    pk = sp[("planalto", 30)][1]
-    put(mp.crane(fr), pk - 22)
-    put(mp.cheese_pile(), pk + 20)
-    put(mp.mouse(fr, 0), pk)
-    w, pk = sp[("dois_calombos", 230)]
-    put(mp.door(), 262, dy=14); put(mp.mouse(fr, 1), 280, dy=4)
-    put(mp.shaft(), 318, dy=4)                                   # boca do poço: buraco afunda no chão
-    w, pk = sp[("domo_calombo", 380)]
-    for x in range(pk - 34, pk - 2):                             # trilho no topo
-        stamp_wrap(c, Canvas(1, 1, "slate"), x, floor(x, 0) - 1, MW)
-    put(mp.cart(fr), pk - 20, dy=-1); put(mp.mouse(fr, 2), pk - 6, dy=-1)
-    b = put(base_dome(fr, 0, ruined=True), pk + 26, dy=4)
-    stamp_wrap(c, smoke(fr), pk + 26 - 15, b - 31 - 40, MW)
-    targets.append((pk + 26, b - 16))
-    put(mp.door(lit=False), 452, dy=18)
-    put(mp.door(), 576, dy=10); put(mp.mouse(fr, 3), 598, dy=2)
-    # ---- trecho 2: vila dos coelhos
+    # ---- trecho 1: extração (2026-10-05). Tudo ligado: túnel no paredão → trilho → carrinho → monte de queijo
+    hill, steps = mm.mine_hill(T["front"], T["front_ol"], T["front_tex"])
+    top = MID_BASE + 1 - hill.h
+    (s1a, s1b, s1y), (s2a, s2b, s2y), (fa, fb_, fy) = [(MINE_X + a, MINE_X + b, top + y) for a, b, y in steps]
+    k = mm.pick_mouse(fr, 0, flip=True); stamp_wrap(c, k, s1a + 6, s1y + 2 - k.h, MW)       # cavando o degrau
+    k = mm.drill(fr); k.flip_h(); stamp_wrap(c, k, s2a + 2, s2y + 2 - k.h, MW)             # broca no paredão
+    stamp_wrap(c, mm.tunnel(fr), fa + 2, fy + 2 - 30, MW)                                    # boca do túnel
+    rail_y = fy - 1
+    stamp_wrap(c, mm.rails(fb_ - fa + 70), fa + 12, rail_y, MW)
+    stamp_wrap(c, mp.cart(fr), fa + 44, rail_y - 13, MW)
+    stamp_wrap(c, mp.mouse(fr, 2), fa + 27, rail_y - 16, MW)                                 # empurrando o carrinho
+    b = put(mp.cheese_pile(), fb_ + 54, dy=1)
+    put(mm.sign(fr), MINE_X + 30, dy=2)
+    targets.append((fb_ + 54, b - 10))
+    # ---- trecho 2: vila dos ratinhos
     put(mp.hut(0.75), 680, dy=3)
     pk = sp[("domo_calombo", 730)][1]
     put(mp.windmill(fr), pk, dy=3)
     pk = sp[("bolinha", 880)][1]
     hut_b = put(mp.hut(1.0), pk, dy=3)
-    put(mp.mochi(fr), 1000, dy=2)
-    put(mp.carrots(30), 1046, half=4, dy=4)
+    put(mp.cheese_pile(), 1000, dy=2)                            # estoque de queijo da vila
     put(mp.hut(0.85), 1150, dy=3)
     wm = sp[("domo_calombo", 730)][1]                             # varal: do moinho até o telhado da casinha
     lan = mp.lanterns(pk - wm - 20, fr); stamp_wrap(c, lan, wm + 10, hut_b - 30, MW)
-    put(bunny(fr, 1), 948); k = bunny(fr, 3); k.flip_h(); put(k, 1084)
+    put(mp.mouse(fr, 1, helmet=False), 948); k = mp.mouse(fr, 3); k.flip_h(); put(k, 1084)
     k = small_dome(fr, 1); b = put(k, sp[("bolinha", 1200)][1], dy=3)
-    muzzles.append((sp[("bolinha", 1200)][1] + 8, b - 17)); targets.append((sp[("bolinha", 1200)][1], b - 8))
+    targets.append((sp[("bolinha", 1200)][1], b - 18))           # feixe de entrega na casinha
     # ---- trecho 3: parquinho lunar
     pk = sp[("planalto", 1300)][1]
     fb = put(mp.ferris(fr), pk + 4, half=12, dy=2)
@@ -564,9 +578,9 @@ def mid_layer(base: Canvas, tops: list, fr: int) -> tuple:
         k = mp.balloon(fr, col, i, s); stamp_wrap(c, k, x - 6, floor(x, 0) + 1 - k.h, MW)
     pk3 = sp[("domo_calombo", 1530)][1]
     put(mp.toy_rocket(fr), pk3 - 14, dy=2); put(mp.toy_rocket((fr + 1) % FR), pk3 + 14, dy=4)
-    put(bunny(fr, 0), 1730); k = bunny(fr, 2); k.flip_h(); put(k, 1750)
+    put(mp.mouse(fr, 0, helmet=False), 1730); k = mp.mouse(fr, 2, helmet=False); k.flip_h(); put(k, 1752)
     k = small_dome(fr, 2); x = sp[("bolinha", 1830)][1]; b = put(k, x, dy=3)
-    muzzles.append((x + 8, b - 17)); targets.append((x, b - 8))
+    targets.append((x, b - 18))
     return c, muzzles, targets
 
 
@@ -590,22 +604,109 @@ def plain(fr: int) -> Canvas:
         x, y, ln = rng.randrange(W), rng.randint(4, 15), rng.randint(14, 34)
         for i in range(ln):
             c.px((x + i) % W, y, T["plain_line"])
-    x0, y0 = WRECK
-    s = saucer(0)
-    for x in range(36):
-        for y in range(15):
-            v = s.get(int(x / 1.5), int(y / 1.5))
-            yy = y0 - 12 + y + x // 5
-            if v is not None and yy <= y0:
-                c.px(x0 + x, yy, COLOR_NAMES[v])
-    for x in range(x0 - 8, x0 + 44):
-        hump = int(3 * math.sin(math.pi * (x - x0 + 8) / 52))
-        for k in range(hump + 1):
-            c.px(x, y0 - k, T["plain_line"] if k == hump else p0)
-    c.px(x0 + 12, y0 - 8, "gold" if fr % 2 else "rose")
-    k = smoke(fr)
-    c.stamp(k.crop(0, 16, 30, 32), x0 + 8, y0 - 36)
+    # v6 (revisão 2026-10-04): a planície era uma faixa vazia de ~1/6 da tela com a nave no alto → primeiro
+    # plano baixo: crateras rasas e pedrinhas (textura só neste plano), mais vida (alien acenando, coelho, bandeira)
+    # mina (2026-10-05): o plano de perto é a ESTRADA da mina — trilho atrás, estrada de terra batida na frente,
+    # caminhão-queijo dos ratinhos (o maior veículo da cena: está mais perto). Crateras só abaixo da estrada.
+    for x in range(W):
+        c.px(x, 3, "berry_dark"); c.px(x, 4, "steel"); c.px(x, 5, "lilac_grey")      # trilho
+        if x % 6 < 3:
+            c.px(x, 6, "rust")
+        for y in range(10, 19):                                                       # estrada
+            c.px(x, y, "berry" if y == 10 else "berry_dark" if y < 18 else "plum_dark")
+        if x % 16 < 7:
+            c.px(x, 14, "rose")                                                       # faixa tracejada
+    for x, y, rx in ((70, 40, 14), (352, 48, 18), (600, 52, 9), (150, 84, 22),
+                     (420, 100, 16), (300, 140, 26), (560, 128, 14), (40, 170, 20), (470, 196, 24)):
+        crater(c, x, y, rx, y >= 60)
+    for x, y in ((24, 30), (196, 40), (468, 44), (330, 74), (90, 110), (520, 84), (230, 120), (380, 176), (130, 210)):
+        pebble(c, x, y, y >= 60)
+    import moon_mine as mm
+    k = mm.truck(fr)
+    for x in range(250, 250 + k.w - 4):
+        c.px(x, 18, "plum_dark")
+    c.stamp(k, 248, 19 - k.h)
     return c
+
+
+def stamp_ground(c: Canvas, k: Canvas, cx: int, base: int) -> None:
+    """Apoia a peça com a base na linha `base` e põe uma sombrinha escura embaixo (não flutua)."""
+    for x in range(cx - k.w // 2 + 2, cx + k.w // 2 - 1):
+        c.px(x % W, base + 1, "plum_dark")
+    for dx in (-W, 0, W):
+        c.stamp(k, cx - k.w // 2 + dx, base + 1 - k.h)
+
+
+def crater(c: Canvas, cx: int, cy: int, rx: float, deep: bool) -> None:
+    """Cratera rasa vista quase de lado: borda de cima clara, fundo escuro, lábio de baixo claro."""
+    ry = max(2.0, rx * 0.32)
+    p0, p1, p2 = T["plain"]
+    base = p1 if deep else p0
+    for y in range(int(cy - ry) - 2, int(cy + ry) + 3):
+        for x in range(int(cx - rx) - 2, int(cx + rx) + 3):
+            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            d = nx * nx + ny * ny
+            if d <= 1:
+                c.px(x % W, y, "plum_dark" if not deep else "shadow" if ny < 0.2 else p1)
+            elif d <= 1.5 and ny > 0.35:
+                c.px(x % W, y, "berry_dark" if not deep else "plum")
+            elif d <= 1.35 and ny < -0.5:
+                c.px(x % W, y, base)
+
+
+def pebble(c: Canvas, x: int, y: int, deep: bool) -> None:
+    hi, mid = ("berry", "berry_dark") if not deep else ("plum", "berry_dark")
+    c.hline(x, x + 2, y, mid); c.px(x + 1, y - 1, hi); c.px(x, y - 1, mid)
+    c.hline(x, x + 3, y + 1, "plum_dark" if not deep else "shadow")
+
+
+def parked_saucer(fr: int) -> Canvas:
+    """Discão estacionado com pezinhos (o alien desceu para passear)."""
+    k = Canvas(40, 20)
+    for y in range(1, 11):
+        for x in range(10, 30):
+            if ((x + 0.5 - 20) / 8.5) ** 2 + ((y + 0.5 - 10.5) / 9) ** 2 <= 1:
+                k.px(x, y, "pale_sky" if x < 24 else "sky")
+    for x, y in ((14, 6), (15, 5), (16, 4)):
+        k.px(x, y, "white")
+    sphere(k, 19.5, 12, 18.5, 3.6, ["white", "mist", "steel", "lilac_grey"])
+    for i, x in enumerate((7, 13, 19, 25, 31)):
+        disc(k, x + 0.5, 12.5, 1.2, ("gold" if i % 2 else "hot_pink") if (i + fr) % 3 == 0 else "slate")
+    for x in (10, 29):
+        k.line(x, 15, x - (2 if x < 20 else -2), 18, "lilac_grey")
+        k.hline(x - (3 if x < 20 else -1), x - (1 if x < 20 else -3), 19, "slate")
+    k.outline("ink")
+    return k
+
+
+def alien(fr: int) -> Canvas:
+    """Alienzinho verde de olhão acenando (14x17)."""
+    k = Canvas(16, 18)
+    sphere(k, 7.5, 13.5, 4, 3.5, ["sprout", "leaf", "leaf", "green"])             # corpinho
+    sphere(k, 7.5, 7.5, 5, 4.5, ["sprout", "leaf", "leaf", "green"])              # cabeça
+    for s in (-1, 1):
+        k.line(7 + s * 2, 3, 7 + s * 3, 1, "leaf"); k.px(7 + s * 3, 0, "lemon")
+    k.rect(5, 6, 2, 3, "ink"); k.rect(9, 6, 2, 3, "ink"); k.px(5, 6, "white"); k.px(9, 6, "white")
+    k.px(4, 9, "pink"); k.px(11, 9, "pink"); k.px(7, 10, "green"); k.px(8, 10, "green")
+    up = fr % 2 == 0                                                              # braço acenando
+    k.line(11, 12, 14, 8 if up else 10, "leaf"); k.px(14, 7 if up else 9, "sprout")
+    k.line(4, 12, 2, 14, "leaf")
+    k.outline("ink")
+    return k
+
+
+def flag(fr: int) -> Canvas:
+    """Bandeirinha de queijo fincada no chão (tremula)."""
+    k = Canvas(14, 20)
+    k.vline(2, 1, 19, "lilac_grey"); k.px(2, 0, "gold")
+    for x in range(3, 12):
+        dy = int(round(math.sin((x + fr * 2) * 0.9)))
+        for y in range(2, 8):
+            k.px(x, y + dy, "gold" if y < 6 else "amber")
+        if x in (5, 9):
+            k.px(x, 4 + dy, "amber")
+    k.outline("ink")
+    return k
 
 
 # ------------------------------------------------------------------ terreno jogável (queijo)
@@ -635,9 +736,11 @@ def body() -> Canvas:
             if x % 2 == 0:
                 c.px(x, (int(a) - 1) % BODY_T, T["strata"])
     rng = random.Random(23)
-    craters = [(rng.randrange(BODY_T), rng.randrange(BODY_T), r) for r in (6.5, 5, 4, 3.5, 3, 2.5, 2.5)]
-    for x, y, r in craters:
-        rx = r * 1.7
+    # v6: furos de tamanhos bem variados e alguns mais redondos (antes 7 ovais parecidos = "carimbo")
+    craters = [(rng.randrange(BODY_T), rng.randrange(BODY_T), r, a) for r, a in
+               ((7, 1.6), (5, 1.3), (4, 1.8), (3.5, 1.1), (3, 1.5), (2.5, 1.2), (2.5, 1.7), (2.2, 1.0))]
+    for x, y, r, a in craters:
+        rx = r * a
         for yy in range(int(y - r - 2), int(y + r + 3)):
             for xx in range(int(x - rx - 2), int(x + rx + 3)):
                 d = ((xx + 0.5 - x) / rx) ** 2 + ((yy + 0.5 - y) / r) ** 2
@@ -664,6 +767,19 @@ def depth() -> Canvas:
         c.vline(x, e + 1, DEPTH_D - 1, d2)
         if x % 2 == 0:
             c.px(x, a - 1, d0); c.px(x, b, d1); c.px(x, e, d2)
+    # v6: furinhos também nas camadas fundas (o queijo continua queijo até embaixo), escuros e calmos
+    rng = random.Random(57)
+    for cy, col, lip, n in ((82, d1, "honey", 2), (120, d2, "copper", 2), (158, T["deep"], "terracotta", 1)):
+        for _ in range(n):
+            cx, r = rng.randrange(SW), rng.choice((4.5, 6, 7.5))
+            ry = r * 0.75
+            for y in range(int(cy - ry) - 1, int(cy + ry) + 3):
+                for x in range(int(cx - r) - 1, int(cx + r) + 2):
+                    d = ((x + 0.5 - cx) / r) ** 2 + ((y + 0.5 - cy) / ry) ** 2
+                    if d <= 1:
+                        c.px(x % SW, y, col)
+                    elif d <= 1.5 and y + 0.5 > cy and c.get(x % SW, y) is not None:
+                        c.px(x % SW, y, lip)
     return c
 
 
@@ -675,15 +791,28 @@ def rocks_atlas() -> Canvas:
     cw, ch = ms.ROCK_CELL
     c = Canvas(cw * len(ROCK_SIZES), ch)
     rh, rb, rs = T["rock"][0], T["rock"][1], T["ao"]
+    # v6: formas variadas (bolinha, fatia de queijo, migalha dupla, achatada) — eram 6 bolinhas iguais
+    shapes = ["ball", "wedge", "ball", "twin", "flat", "wedge"]
     for i, (w, h) in enumerate(ROCK_SIZES):
         k = Canvas(16, 8)
         cx, cy, rx, ry = 7.5, 7 - h / 2, w / 2, h / 2 - 0.01
         for y in range(8):
             for x in range(16):
                 nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
-                if nx * nx + ny * ny <= 1:
+                s = shapes[i]
+                if s == "wedge":                                  # fatia: triângulo com a ponta à esquerda
+                    inside = -1 <= nx <= 1 and -1 <= ny <= 1 and ny >= -((nx + 1) / 2) * 2 + 1
+                elif s == "twin":                                 # duas migalhas encostadas
+                    inside = ((nx + 0.45) / 0.6) ** 2 + ny * ny <= 1 or ((nx - 0.5) / 0.5) ** 2 + ((ny - 0.3) / 0.7) ** 2 <= 1
+                elif s == "flat":
+                    inside = nx * nx + (ny * 1.25) ** 2 <= 1 and ny > -0.8
+                else:
+                    inside = nx * nx + ny * ny <= 1
+                if inside:
                     j = -0.6 * nx - 0.75 * ny
                     k.px(x, y, rh if j > 0.55 else rb if j > -0.25 else rs)
+        if shapes[i] == "wedge":                                  # furinho na fatia
+            k.px(int(cx + rx * 0.35), int(cy + ry * 0.3), T["hole"])
         k.outline(T["ol"])
         cut = Canvas(16, 8)
         cut.stamp(k, 0, -1)
@@ -767,6 +896,7 @@ def far() -> Canvas:
 def build() -> dict:
     L = {"sky_frames": [sky(fr) for fr in range(SKY_FRAMES)], "planet": planet(), "far": far()}
     L["sky"] = L["sky_frames"][0]
+    L["cloud_frames"] = [clouds_layer(fr) for fr in range(FR)]; L["clouds"] = L["cloud_frames"][0]
     mbase, tops = mid_ground()
     mids = [mid_layer(mbase, tops, fr) for fr in range(FR)]
     L["mid_frames"] = [m[0] for m in mids]; L["mid"] = mids[0][0]
@@ -779,10 +909,10 @@ def build() -> dict:
     return L
 
 
-def scene(L: dict, lander=None, extras: bool = True, zone: int = 0) -> Canvas:
+def scene(L: dict, lander=None, extras: bool = False, zone: int = 0) -> Canvas:
     import moon_ground as mg
     cv = Canvas(W, H)
-    cv.stamp(L["sky"]); cv.stamp(L["planet"], PLANET[0] - PLANET[2] - 12, PLANET[1] - PLANET[2] - 12)
+    cv.stamp(L["sky"]); cv.stamp(L["clouds"]); cv.stamp(L["planet"], PLANET[0] - PLANET[2] - 12, PLANET[1] - PLANET[2] - 12)
     cv.stamp(L["far"]); cv.stamp(L["mid"].crop(zone * W, 0, W, L["mid"].h)); cv.stamp(L["plain"], 0, PLAIN_TOP)
     pad = ms.PREVIEW_PAD
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
@@ -809,6 +939,7 @@ def scene(L: dict, lander=None, extras: bool = True, zone: int = 0) -> Canvas:
 
 def export(L: dict) -> None:
     au.stack(L["sky_frames"]).save("assets/bg/luna_sky.png", preview=False)
+    au.stack(L["cloud_frames"]).save("assets/bg/luna_clouds.png", preview=False)
     L["planet"].save("assets/bg/luna_planet.png", preview=False)
     L["far"].save("assets/bg/luna_far.png", preview=False)
     au.stack(L["mid_frames"]).save("assets/bg/luna_mid.png", preview=False)
@@ -830,10 +961,15 @@ def export(L: dict) -> None:
     meta.update({
         "notes": "Gerado por art/src/bg/moon_cute.py (pixel-art, estilo fofo, Lua de queijo). Posições em px na tela 640x360.",
         "planet_pos": [cx - r - 12, cy - r - 12], "strip_depth": CRUST_D, "depth_depth": DEPTH_D,
-        "deep_color": "#" + "%02x%02x%02x" % tuple(PALETTE_RGB[resolve(T["depth"][2])]),
+        "deep_color": "#" + "%02x%02x%02x" % tuple(PALETTE_RGB[resolve(T["deep"])]),
+        "clouds": {"y": 0, "speed": 3},                            # nuvens + nave-mãe flutuam devagar
     })
+    meta["anim"]["clouds"] = {"frames": FR, "ms": 300}
     meta["war"].update(L["war"])
-    meta["war"]["period"] = MW
+    hexc = lambda n: "#" + "%02x%02x%02x" % tuple(PALETTE_RGB[resolve(n)])
+    # v6: "guerra" → disco fofo que leva queijo/entrega com feixe de luz (sem tiros, sem explosões)
+    meta["war"].update({"period": MW, "peaceful": True, "saucers": 0, "muzzles": [], "beam_time": 1.6,
+                        "laser": [hexc(c) for c in T["beam"]]})
     with open("assets/bg/luna_layers.json", "w") as f:
         json.dump(meta, f, indent=2)
 

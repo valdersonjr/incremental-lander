@@ -156,3 +156,33 @@ func test_altura_por_busca_binaria_igual_a_linear() -> void:
 				expected = lerpf(a.y, b.y, (x - a.x) / maxf(b.x - a.x, 0.0001))
 				break
 		assert_almost(TerrainGen.height_at(ridge, x), expected)
+
+
+func test_pedido_a_esquerda_plano_e_com_crista() -> void:
+	# Lua (2026-10-05): plataforma a esquerda da partida — topo plano e crista no meio do trecho, como a direita
+	var t := TerrainGen.generate(5, "luna", [-1000.0] as Array[float])
+	var b: Dictionary = t["pads"][1]
+	assert_almost(float(b["x"]), WorldConfig.m_to_px(-1000.0), 1e-3)
+	for dx in [-0.9, 0.0, 0.9]:
+		assert_almost(TerrainGen.height_at(t["ridge"], float(b["x"]) + dx * float(b["half_width"])), float(b["y"]), 1e-3)
+	var a: Dictionary = t["pads"][0]
+	var top := TerrainGen.highest_between(t["ridge"], float(b["x"]) + 40.0, float(a["x"]) - 40.0)
+	var need := minf(float(a["y"]), float(b["y"])) - WorldConfig.m_to_px(120.0) * 0.95
+	assert_true(top <= need, "crista baixa demais a esquerda: topo %s, precisava <= %s" % [top, need])
+
+
+func test_voltar_por_cima_de_plataformas_nao_muda_as_antigas() -> void:
+	# ida para a direita e volta para a esquerda passando por cima da partida: nenhuma plataforma antiga muda
+	var d: Array[float] = [700.0, 1500.0]
+	var t: Array[String] = ["normal", "narrow"]
+	var before := TerrainGen.generate(9, "luna", d, t)
+	var d2 := d.duplicate()
+	d2.append(-600.0)
+	var t2 := t.duplicate()
+	t2.append("tight")
+	var after := TerrainGen.generate(9, "luna", d2, t2)
+	for i in before["pads"].size():
+		var p0: Dictionary = before["pads"][i]
+		for dx in [-0.9, 0.0, 0.9]:
+			var x: float = float(p0["x"]) + dx * float(p0["half_width"])
+			assert_almost(TerrainGen.height_at(after["ridge"], x), float(p0["y"]), 1e-3, "topo do pad %d mudou" % i)
