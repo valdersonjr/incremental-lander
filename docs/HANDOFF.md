@@ -11,6 +11,9 @@
   → `assets/sprites/lander.png`; idle pisca; mesmo contrato 32×32, pés y=24, half_width 13 — sem mudança de física).
   **Lua refeita e aprovada no jogo** ("Lua de queijo", `art/src/bg/moon_cute.py --export`) com o método de
   `.claude/skills/pixel-art/references/cute-scene-method.md` (kit desenhado em meia resolução + Scale2x).
+  Fundo dos morros em **3 trechos** (laço de 1920 px, `war.period` no JSON): mina dos ratinhos · vila dos coelhos ·
+  parquinho (peças em `art/src/bg/moon_props.py`). Regra: todo objeto tem um porquê no lugar (escada desce num poço,
+  varal preso nas duas pontas, balão amarrado).
   **Pendente**: plataforma de pouso e painel do HUD (aparecem na Lua no estilo antigo), depois Silvânia, Docelândia,
   O Quarto, perigos, UI e ícone do app.
 - **Pouso mais tolerante (2026-10-04)**: limites 7 m/s vertical, 5 m/s lateral, ~20° (eram 3 / 2 / ~11°); a telemetria agora

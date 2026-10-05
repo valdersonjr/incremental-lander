@@ -31,7 +31,8 @@ import moon_war as mw
 import anim_util as au
 
 W, H = 640, 360
-HORIZON, PLANET = ms.HORIZON, ms.PLANET
+HORIZON = ms.HORIZON
+PLANET = (450, 118, 38)        # composição (2026-10-04): Terra = foco principal, na linha dos terços
 MID_BASE, PLAIN_TOP = ms.MID_BASE, ms.PLAIN_TOP
 SKY_FRAMES, SKY_MS = ms.SKY_FRAMES, ms.SKY_MS
 FR, LAYER_MS = mw.FR, mw.LAYER_MS
@@ -43,9 +44,13 @@ T = dict(
     name="Lua de queijo",
     sky=[(0, "plum"), (64, "berry"), (122, "rose"), (172, "salmon"), (214, "peach"), (246, "cream")],
     sparkle=["white", "cream", "peach"], cloud=["white", "cream", "peach"], cloud_ol="salmon",
-    back=["cream", "peach", "peach", "salmon"],                   # morros de trás: quase o horizonte
-    front=["peach", "salmon", "rose", "berry"], front_ol="berry_dark", haze="berry",
-    plain=["berry", "berry_dark", "plum_dark"], plain_line="rose",
+    # escada de valor (pesquisa Slynyrd/sprite-ai, teste P&B): horizonte creme > cordilheira pêssego >
+    # morros de trás rosa > morros da frente escuros (amora) > planície ameixa — personagens claros saltam
+    far_ramp=["cream", "peach", "peach", "salmon"], far_haze="cream",
+    back=["peach", "salmon", "rose", "rose"], back_haze="salmon",
+    front=["salmon", "rose", "berry", "berry_dark"], front_ol="plum_dark", haze="berry_dark",
+    front_tex=["berry_dark", "rose"],
+    plain=["berry_dark", "plum_dark", "plum_dark"], plain_line="berry",
     rim={"lit": ["white", "lemon"], "flat": ["lemon", "gold"], "shade": ["gold", "amber"]},
     ol="rust", ao="amber", body="gold", strata="honey", hole="amber", hole_dark="copper", lip="lemon",
     pebble="honey", depth=["amber", "copper", "terracotta"], rock=["lemon", "gold", "white"],
@@ -125,7 +130,7 @@ def sky_color(x: int, y: int):
     return c
 
 
-SPARKLES = [(46, 30, 3), (186, 20, 2), (566, 26, 3), (118, 108, 2), (612, 120, 2)]
+SPARKLES = [(228, 104, 3), (566, 30, 2), (612, 168, 2)]          # 3 (ímpar), longe do HUD
 
 
 def sparkle(cv: Canvas, x: int, y: int, size: int) -> None:
@@ -145,7 +150,8 @@ CLOUD_TOPS = {
     "pequena": [7, 5, 4, 3, 3, 4, 3, 2, 1, 1, 1, 2, 2, 3, 2, 2, 2, 3, 4, 4, 5, 6, 7, 8],
     "grande": [8, 6, 4, 3, 2, 2, 3, 3, 2, 1, 0, 0, 1, 2, 2, 1, 1, 1, 2, 3, 3, 4, 3, 4, 5, 6, 7, 8, 9],
 }
-CLOUDS = [(84, 170, "grande", False), (500, 188, "grande", True), (236, 84, "pequena", False)]
+CLOUDS = [(96, 186, "grande", False), (156, 198, "pequena", True), (46, 200, "pequena", False),
+          (372, 160, "pequena", False)]                              # grupo de 3 + uma solta
 
 
 def cloud(cv: Canvas, x: int, y: int, kind: str, flip: bool) -> None:
@@ -189,7 +195,7 @@ def sky(fr: int) -> Canvas:
         sparkle(cv, x, y, max(1, s - [0, 1, 1, 0, 0, 0][(fr + i * 2) % SKY_FRAMES]))
     for x, y, kind, flip in CLOUDS:
         cloud(cv, x, y, kind, flip)
-    ringed(cv, 404, 30)
+    ringed(cv, 522, 60)                                       # companheiro da Terra
     mothership(cv, fr)
     return cv
 
@@ -205,7 +211,7 @@ def ringed(cv: Canvas, cx: int, cy: int) -> None:
     cv.stamp(k, cx - 15, cy - 11)
 
 
-MOTHER_C = (236, 50)
+MOTHER_C = (300, 42)                                          # foco secundário, longe do HUD
 
 
 def mothership(cv: Canvas, fr: int) -> None:
@@ -349,15 +355,20 @@ HILLS = {
     "grande_fundo": [(0, 0), (10, 20), (22, 34), (34, 40), (46, 36), (56, 26), (66, 30), (76, 22), (90, 0)],
     "fundo_alto":   [(0, 0), (12, 26), (24, 42), (34, 47), (44, 41), (58, 20), (70, 0)],
 }
-BACK = [("grande_fundo", -60, False), ("fundo_alto", 190, True), ("grande_fundo", 360, True)]
-FRONT = [("planalto", 296, False), ("domo_calombo", -6, False), ("domo_calombo", 470, True),
-         ("dois_calombos", 196, True), ("baixinho", 150, False), ("bolinha", 116, False),
-         ("baixinho", 420, True), ("bolinha", 590, False)]
-BASES = [(64, "dome"), (374, "ruin"), (562, "dome")]
-BUNNIES = [(196, False), (466, True)]
+MW = 1920                      # laço da camada mid: 3 trechos de 640 (mina · vila · parquinho)
+BACK = [(n, x + 640 * i, f != (i == 1)) for i in range(3)
+        for n, x, f in (("grande_fundo", -60, False), ("fundo_alto", 190, True), ("grande_fundo", 360, True))]
+FRONT = [  # trecho 1: mina dos ratinhos
+         ("planalto", 30, False), ("dois_calombos", 230, True), ("domo_calombo", 380, False), ("baixinho", 530, False),
+         # trecho 2: vila dos coelhos
+         ("baixinho", 640, True), ("domo_calombo", 730, False), ("bolinha", 880, False), ("dois_calombos", 960, False),
+         ("baixinho", 1110, True), ("bolinha", 1200, True),
+         # trecho 3: parquinho
+         ("planalto", 1300, False), ("bolinha", 1460, False), ("domo_calombo", 1530, True), ("baixinho", 1700, False),
+         ("bolinha", 1830, False)]
 
 
-def piece(name: str, flip: bool, ramp: list, ol, lit_w: int, ao: int = 2) -> Canvas:
+def piece(name: str, flip: bool, ramp: list, ol, lit_w: int, ao: int = 2, tex=None) -> Canvas:
     hs = profile_from(HILLS[name])
     h = int(max(hs)) + 2
     k = Canvas(len(hs), h)
@@ -365,6 +376,14 @@ def piece(name: str, flip: bool, ramp: list, ol, lit_w: int, ao: int = 2) -> Can
         if hh >= 0.5:
             k.vline(x, int(h - 1 - hh), h - 1, ramp[2])
     shade_piece(k, ramp, h - 1, lit_w, ao)
+    if tex:                                                     # covinhas/pedrinhas (só no plano da frente)
+        rng = random.Random(len(hs) * 7 + h)
+        for _ in range(max(2, len(hs) // 12)):
+            x = rng.randrange(3, len(hs) - 3)
+            top = int(h - 1 - hs[x])
+            y = rng.randint(top + 4, h - 3) if h - 3 > top + 4 else None
+            if y is not None and k.get(x - 1, y) is not None and k.get(x + 1, y) is not None:
+                k.px(x - 1, y, tex[0]); k.px(x, y, tex[0]); k.px(x, y + 1, tex[1])
     if ol:
         k.outline(ol, inside=True)
     if flip:
@@ -372,27 +391,44 @@ def piece(name: str, flip: bool, ramp: list, ol, lit_w: int, ao: int = 2) -> Can
     return scale2x(k)
 
 
-def stamp_wrap(c: Canvas, k: Canvas, x: int, y: int) -> None:
-    for dx in (-W, 0, W):
+def stamp_wrap(c: Canvas, k: Canvas, x: int, y: int, period: int = W) -> None:
+    for dx in (-period, 0, period):
         c.stamp(k, x + dx, y)
 
 
+def hill_spans() -> list:
+    """(nome, x, flip, largura, x do pico) de cada morro da frente — para apoiar as peças."""
+    out = []
+    for name, x, flip in FRONT:
+        hs = profile_from(HILLS[name])
+        peak = max(range(len(hs)), key=lambda i: hs[i])
+        if flip:
+            peak = len(hs) - 1 - peak
+        out.append((name, x, flip, len(hs) * 2, x + peak * 2))
+    return out
+
+
 def mid_ground() -> tuple:
-    c = Canvas(W, MID_BASE + 1)
+    c = Canvas(MW, MID_BASE + 1)
     for name, x, flip in BACK:
         k = piece(name, flip, T["back"], None, 4, ao=0)
-        stamp_wrap(c, k, x, MID_BASE + 1 - k.h)
-    front = Canvas(W, MID_BASE + 1)
-    for name, x, flip in FRONT:
-        k = piece(name, flip, T["front"], T["front_ol"], 6)
-        stamp_wrap(front, k, x, MID_BASE + 1 - k.h)
+        stamp_wrap(c, k, x, MID_BASE + 1 - k.h, MW)
+    for x in range(MW):                                          # névoa clara na base dos morros de trás
+        y0 = int(MID_BASE - 12 + wave(x, 27, 2, period=MW, freqs=(9, 18, 27)))
+        for y in range(y0, MID_BASE + 1):
+            if c.get(x, y) is not None:
+                c.px(x, y, T["back_haze"])
+    front = Canvas(MW, MID_BASE + 1)
+    for name, x, flip in sorted(FRONT, key=lambda f: -max(h for _, h in HILLS[f[0]])):
+        k = piece(name, flip, T["front"], T["front_ol"], 6, tex=T["front_tex"])
+        stamp_wrap(front, k, x, MID_BASE + 1 - k.h, MW)
     c.stamp(front)
-    for x in range(W):                                           # névoa lisa na base (liga com a planície)
-        y0 = int(MID_BASE - 5 + wave(x, 21, 1.5, freqs=(4, 7, 11)))
+    for x in range(MW):                                          # névoa lisa na base (liga com a planície)
+        y0 = int(MID_BASE - 5 + wave(x, 21, 1.5, period=MW, freqs=(12, 21, 33)))
         for y in range(y0, MID_BASE + 1):
             if c.get(x, y) is not None:
                 c.px(x, y, T["haze"])
-    tops = [next((y for y in range(MID_BASE + 1) if front.get(x, y) is not None), MID_BASE) for x in range(W)]
+    tops = [next((y for y in range(MID_BASE + 1) if front.get(x, y) is not None), MID_BASE) for x in range(MW)]
     return c, tops
 
 
@@ -455,25 +491,82 @@ def smoke(fr: int) -> Canvas:
     return k
 
 
+def small_dome(fr: int, i: int) -> Canvas:
+    """Casinha-cúpula pequena da vila (26x20): janela acesa e luzinha na antena."""
+    k = Canvas(26, 20)
+    sphere(k, 13, 17, 9, 9, ["white", "mist", "steel", "lilac_grey"], clip=lambda x, y: y <= 17)
+    k.hline(3, 22, 18, "lilac_grey")
+    disc(k, 13, 13, 2, "gold" if (fr + i) % 3 else "honey"); k.px(12, 12, "lemon")
+    k.line(18, 9, 21, 3, "lilac_grey")
+    disc(k, 21.5, 2.5, 1.5, "hot_pink" if (fr + i) % 4 < 2 else "rose")
+    k.outline("ink")
+    return k
+
+
 def mid_layer(base: Canvas, tops: list, fr: int) -> tuple:
+    """Os 3 trechos (2026-10-04, usuário: "o fundo sempre tem as mesmas coisas"): mina dos ratinhos · vila dos
+    coelhos · parquinho. A guerra segue no céu: base atingida na mina e postinhos humanos na vila e no parque."""
+    import moon_props as mp
     c = base.copy()
     muzzles, targets = [], []
-    for i, (x, kind) in enumerate(BASES):
-        b = min(tops[(x + d) % W] for d in range(-6, 7)) + 3
-        k = base_dome(fr, i, ruined=kind == "ruin")
-        c.stamp(k, x - 22, b - 31)
-        if kind == "ruin":
-            c.stamp(smoke(fr), x - 15, b - 31 - 40)
-            targets.append((x, b - 16))
-        else:
-            muzzles.append((x + 14, b - 26))
-            targets.append((x, b - 12))
-    for i, (x, flip) in enumerate(BUNNIES):
-        b = min(tops[(x + d) % W] for d in range(-3, 4)) + 2
-        k = bunny(fr, i * 2)
-        if flip:
-            k.flip_h()
-        c.stamp(k, x - 7, b - 18)
+    sp = {(n, x): (w, pk) for n, x, f, w, pk in hill_spans()}
+
+    def floor(x, half=3):                                       # ponto mais baixo sob a peça (não flutua)
+        return max(tops[(x + d) % MW] for d in range(-half, half + 1))
+
+    def put(k, x, half=None, dy=0):                              # x = centro da peça; apoia a base no chão
+        b = floor(x, half if half is not None else max(2, k.w // 3)) + 1 + dy
+        stamp_wrap(c, k, x - k.w // 2, b - k.h, MW)
+        return b
+
+    # ---- trecho 1: mina dos ratinhos
+    pk = sp[("planalto", 30)][1]
+    put(mp.crane(fr), pk - 22)
+    put(mp.cheese_pile(), pk + 20)
+    put(mp.mouse(fr, 0), pk)
+    w, pk = sp[("dois_calombos", 230)]
+    put(mp.door(), 262, dy=14); put(mp.mouse(fr, 1), 280, dy=4)
+    put(mp.shaft(), 318, dy=4)                                   # boca do poço: buraco afunda no chão
+    w, pk = sp[("domo_calombo", 380)]
+    for x in range(pk - 34, pk - 2):                             # trilho no topo
+        stamp_wrap(c, Canvas(1, 1, "slate"), x, floor(x, 0) - 1, MW)
+    put(mp.cart(fr), pk - 20, dy=-1); put(mp.mouse(fr, 2), pk - 6, dy=-1)
+    b = put(base_dome(fr, 0, ruined=True), pk + 26, dy=4)
+    stamp_wrap(c, smoke(fr), pk + 26 - 15, b - 31 - 40, MW)
+    targets.append((pk + 26, b - 16))
+    put(mp.door(lit=False), 452, dy=18)
+    put(mp.door(), 576, dy=10); put(mp.mouse(fr, 3), 598, dy=2)
+    # ---- trecho 2: vila dos coelhos
+    put(mp.hut(0.75), 680, dy=3)
+    pk = sp[("domo_calombo", 730)][1]
+    put(mp.windmill(fr), pk, dy=3)
+    pk = sp[("bolinha", 880)][1]
+    hut_b = put(mp.hut(1.0), pk, dy=3)
+    put(mp.mochi(fr), 1000, dy=2)
+    put(mp.carrots(30), 1046, half=4, dy=4)
+    put(mp.hut(0.85), 1150, dy=3)
+    wm = sp[("domo_calombo", 730)][1]                             # varal: do moinho até o telhado da casinha
+    lan = mp.lanterns(pk - wm - 20, fr); stamp_wrap(c, lan, wm + 10, hut_b - 30, MW)
+    put(bunny(fr, 1), 948); k = bunny(fr, 3); k.flip_h(); put(k, 1084)
+    k = small_dome(fr, 1); b = put(k, sp[("bolinha", 1200)][1], dy=3)
+    muzzles.append((sp[("bolinha", 1200)][1] + 8, b - 17)); targets.append((sp[("bolinha", 1200)][1], b - 8))
+    # ---- trecho 3: parquinho lunar
+    pk = sp[("planalto", 1300)][1]
+    fb = put(mp.ferris(fr), pk + 4, half=12, dy=2)
+    pk2 = sp[("bolinha", 1460)][1]
+    tb = put(mp.tent(), pk2, dy=3)
+    # bandeirinhas presas nas duas pontas: pé direito da roda-gigante → mastro da barraca
+    ax, ay = pk + 4 + 11, fb - 24                                # ponto do pé (36,32)→(58,79) em y=56
+    tx, ty = pk2, tb - 30                                        # topo do mastro da barraca
+    stamp_wrap(c, mp.bunting(tx - ax + 1, 5, ty - ay), ax, min(ay, ty), MW)
+    for i, (dx, col, s) in enumerate(((16, "hot_pink", 16), (21, "gold", 22), (26, "aqua", 13))):
+        x = pk2 + dx                                             # balões amarrados no chão ao lado da barraca
+        k = mp.balloon(fr, col, i, s); stamp_wrap(c, k, x - 6, floor(x, 0) + 1 - k.h, MW)
+    pk3 = sp[("domo_calombo", 1530)][1]
+    put(mp.toy_rocket(fr), pk3 - 14, dy=2); put(mp.toy_rocket((fr + 1) % FR), pk3 + 14, dy=4)
+    put(bunny(fr, 0), 1730); k = bunny(fr, 2); k.flip_h(); put(k, 1750)
+    k = small_dome(fr, 2); x = sp[("bolinha", 1830)][1]; b = put(k, x, dy=3)
+    muzzles.append((x + 8, b - 17)); targets.append((x, b - 8))
     return c, muzzles, targets
 
 
@@ -647,9 +740,27 @@ def blast(fr: int) -> Canvas:
     return c
 
 
+FAR_RIDGE = [(0, 0), (14, 9), (30, 14), (44, 12), (58, 20), (70, 23), (84, 17), (100, 15), (116, 22), (130, 18),
+             (146, 10), (160, 0)]                                 # cordilheira distante (meia res.), laço de 320
+
+
 def far() -> Canvas:
-    """Sem colinas extras (os morros de trás já fazem a distância) — camada vazia mantém o contrato."""
-    return Canvas(W, HORIZON + 1)
+    """Cordilheira bem distante: clara, quase a cor do horizonte, sem contorno, névoa creme na base (laço 640)."""
+    c = Canvas(W, HORIZON + 1)
+    hs = profile_from(FAR_RIDGE)
+    k = Canvas(W // 2, 46)
+    for x in range(W // 2):
+        hh = hs[x % len(hs)] + hs[(x + 120) % len(hs)] * 0.6 + 6
+        k.vline(x, int(45 - hh), 45, T["far_ramp"][2])
+    shade_piece(k, T["far_ramp"], 45, 3, 0)
+    k = scale2x(k)
+    c.stamp(k, 0, HORIZON + 1 - k.h)
+    for x in range(W):
+        y0 = int(HORIZON - 8 + wave(x, 33, 1.5, freqs=(4, 8, 13)))
+        for y in range(y0, HORIZON + 1):
+            if c.get(x, y) is not None:
+                c.px(x, y, T["far_haze"])
+    return c
 
 
 # ------------------------------------------------------------------ montagem
@@ -668,11 +779,11 @@ def build() -> dict:
     return L
 
 
-def scene(L: dict, lander=None, extras: bool = True) -> Canvas:
+def scene(L: dict, lander=None, extras: bool = True, zone: int = 0) -> Canvas:
     import moon_ground as mg
     cv = Canvas(W, H)
     cv.stamp(L["sky"]); cv.stamp(L["planet"], PLANET[0] - PLANET[2] - 12, PLANET[1] - PLANET[2] - 12)
-    cv.stamp(L["far"]); cv.stamp(L["mid"]); cv.stamp(L["plain"], 0, PLAIN_TOP)
+    cv.stamp(L["far"]); cv.stamp(L["mid"].crop(zone * W, 0, W, L["mid"].h)); cv.stamp(L["plain"], 0, PLAIN_TOP)
     pad = ms.PREVIEW_PAD
     pts = profile(W, seed=7, base=292, amp=60, pad=pad)
     faces = ms.segment_faces(pts)
@@ -722,6 +833,7 @@ def export(L: dict) -> None:
         "deep_color": "#" + "%02x%02x%02x" % tuple(PALETTE_RGB[resolve(T["depth"][2])]),
     })
     meta["war"].update(L["war"])
+    meta["war"]["period"] = MW
     with open("assets/bg/luna_layers.json", "w") as f:
         json.dump(meta, f, indent=2)
 
@@ -733,6 +845,9 @@ if __name__ == "__main__":
         print("assets exportados")
     else:
         lander = Canvas.from_image("assets/sprites/lander.png").crop(0, 0, 32, 32)
+        for z in range(3):
+            cv = scene(L, lander, zone=z)
+            cv.save(f"art/previews/moon_cute_z{z}.png", preview=False)
         cv = scene(L, lander)
-        print("cores:", len(cv.colors_used()), {k: L[k].lint(wrap=True) for k in ("lit", "body")})
         cv.save("art/previews/moon_cute.png", preview=False)
+        print("ok")

@@ -35,6 +35,34 @@
 9. **Objetos com volume** via `sphere()` (elipse com normal de bola): nave-mãe, bases, Terra, coelhos.
 10. Fumaça = pufes grandes e sobrepostos (uma nuvem só), não "colar de contas".
 
+## 2b. Construção de fundo (pesquisa 2026-10-04: Slynyrd Pixelblog 62, sprite-ai backgrounds)
+- **Planeje os planos por valor antes de desenhar**: escada clara → escura do horizonte para a frente
+  (dia/pôr do sol: o distante clareia e puxa para a cor do céu; o próximo é mais saturado e contrastado).
+  Lua: horizonte creme → cordilheira distante pêssego (camada `far`) → morros de trás rosa → morros da frente
+  amora escuros → planície ameixa → chão de queijo claro.
+- **Teste em preto e branco** (captura do jogo + `ImageOps.grayscale`): se dois planos têm o mesmo cinza, eles se
+  fundem; se o personagem some, corrija valor (não matiz). Personagens/objetos claros sobre plano escuro.
+- **Névoa clara** em faixa na base de cada plano distante (liga com o plano de trás).
+- **Escala da textura por plano**: covinhas/pedrinhas só no plano da frente; distantes lisos (só massa e silhueta).
+- Fundo apagado e com poucas cores; contraste máximo reservado para o que é jogável.
+- Fontes: https://www.slynyrd.com/blog/2026/5/27/pixelblog-62-landscape-backgrounds ·
+  https://www.sprite-ai.art/blog/pixel-art-backgrounds
+
+## 2c. Composição: o que ter, quanto e onde (pesquisa 2026-10-04: MAGES, Wayline, Clip Studio)
+- **1 foco principal + 1 secundário + pequenos**: Lua = Terra grande na linha dos terços (direita-alto) com o
+  planetinha de companheiro; nave-mãe secundária no alto. Nada grande colado nos painéis do HUD (cantos de cima).
+- **Agrupar em vez de espalhar por igual**: props formam um grupo (vilinha de 3 cúpulas de tamanhos diferentes) e
+  um elemento sozinho faz contraste (base atingida com fumaça = destaque vertical).
+- **Números ímpares** (3 coelhos, 3 brilhos, grupo de 3 nuvens + 1 solta) e **tamanhos variados**.
+- **Sem tangentes**: nada exatamente no pico do morro nem encostado em outro elemento; usar os "ombros".
+- **Todo objeto tem um porquê no lugar onde está** (usuário, 2026-10-04: "escada na montanha nada a ver"): escada só
+  onde leva a algo (desce num poço), varal/bandeirinha preso nas duas pontas, balão amarrado em algo, nada
+  flutuando sem motivo. Antes de posicionar, pergunte "quem pôs isso aqui e para quê?".
+- **Espaço negativo**: deixar uma região calma (Lua: direita) — o olho descansa e o jogável aparece.
+- Lembrar que o jogo desloca as camadas (parallax): conferir a composição na captura do jogo, não só na prévia.
+- Fontes: https://mages.edu.sg/blog/effective-composition-in-concept-art-environments/ ·
+  https://wayline.io/blog/less-is-more-why-negative-space-wins-in-game-design · https://tips.clip-studio.com/en-us/articles/1773
+
 ## 3. Como validar e mostrar (o que convenceu o usuário)
 - Prévia parada engana: **exportar e ver NO JOGO**. Exportar (`--export`), rodar `gdtool.py check` (reimporta os
   PNG — sem isso a captura mostra a arte antiga!) e `gdtool.py capture res://game/main.tscn ... -- --demo`.

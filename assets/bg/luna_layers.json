@@ -2,8 +2,8 @@
   "notes": "Gerado por art/src/bg/moon_cute.py (pixel-art, estilo fofo, Lua de queijo). Posi\u00e7\u00f5es em px na tela 640x360.",
   "horizon": 262,
   "planet_pos": [
-    432,
-    46
+    400,
+    68
   ],
   "far_y": 0,
   "mid_y": 0,
@@ -46,26 +46,26 @@
   "war": {
     "muzzles": [
       [
-        78,
-        172
+        1246,
+        212
       ],
       [
-        576,
-        172
+        1878,
+        213
       ]
     ],
     "targets": [
       [
-        64,
-        186
+        474,
+        208
       ],
       [
-        374,
-        168
+        1238,
+        221
       ],
       [
-        562,
-        186
+        1870,
+        222
       ]
     ],
     "saucers": 3,
@@ -114,6 +114,7 @@
         6,
         70
       ]
-    }
+    },
+    "period": 1920
   }
 }

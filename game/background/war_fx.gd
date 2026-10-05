@@ -5,7 +5,7 @@
 class_name WarFx
 extends Node2D
 
-const PERIOD := 640.0
+var _period := 640.0   # largura do laço da camada mid (luna_layers.json > war.period; padrão 640)
 const LASER_TIME := 0.35
 const TRACER_SPEED := 150.0
 const TRACER_LIFE := 1.1
@@ -37,6 +37,7 @@ var _smoke: Array[Dictionary] = []
 
 ## Monta a batalha a partir do contrato do planeta. seed_value deixa a cena reproduzivel (demo/testes).
 func setup(cfg: Dictionary, seed_value: int) -> void:
+	_period = float(cfg.get("period", 640.0))
 	_rng.seed = seed_value
 	_band = _vec(cfg["sky_band"])
 	_speed = _vec(cfg["speed"])
@@ -55,7 +56,7 @@ func setup(cfg: Dictionary, seed_value: int) -> void:
 		_turrets.append({"pos": _vec(m), "cool": _rng.randf_range(0.3, 2.0), "left": 0, "aim": Vector2.UP})
 	_saucers.clear()
 	for i in int(cfg["saucers"]):
-		_saucers.append(_new_saucer(_rng.randf_range(0.0, PERIOD), i == int(cfg["saucers"]) - 1))
+		_saucers.append(_new_saucer(_rng.randf_range(0.0, _period), i == int(cfg["saucers"]) - 1))
 
 
 func _process(delta: float) -> void:
@@ -72,7 +73,7 @@ func _draw() -> void:
 		_draw_sprite(key, s["pos"], int(s["phase"]))
 	for l in _lasers:
 		var from: Vector2 = l["from"]
-		var to: Vector2 = from + Vector2(WarMath.wrap_dx(from.x, (l["to"] as Vector2).x, PERIOD),
+		var to: Vector2 = from + Vector2(WarMath.wrap_dx(from.x, (l["to"] as Vector2).x, _period),
 			(l["to"] as Vector2).y - from.y)
 		var k := 0
 		for p in WarMath.line_points(Vector2i(from), Vector2i(to)):
@@ -115,7 +116,7 @@ func _step(delta: float) -> void:
 		sm["pos"] = (sm["pos"] as Vector2) + Vector2(3, -6) * delta
 	_smoke = _smoke.filter(func(sm: Dictionary) -> bool: return float(sm["t"]) < 1.4)
 	if _rng.randf() < delta * 0.5:                                # flak estourando no ceu
-		_blasts.append({"pos": Vector2(_rng.randf_range(0, PERIOD), _rng.randf_range(_band.x, _band.y)), "t": 0.0})
+		_blasts.append({"pos": Vector2(_rng.randf_range(0, _period), _rng.randf_range(_band.x, _band.y)), "t": 0.0})
 
 
 func _step_saucer(s: Dictionary, delta: float) -> void:
@@ -124,7 +125,7 @@ func _step_saucer(s: Dictionary, delta: float) -> void:
 	match s["state"]:
 		"fly":
 			var pos: Vector2 = s["pos"]
-			pos.x = fposmod(pos.x + float(s["dir"]) * float(s["speed"]) * delta, PERIOD)
+			pos.x = fposmod(pos.x + float(s["dir"]) * float(s["speed"]) * delta, _period)
 			pos.y = float(s["base_y"]) + 4.0 * sin(_time * 2.0 + float(s["seed"]))
 			s["pos"] = pos
 			s["cool"] = float(s["cool"]) - delta
@@ -142,7 +143,7 @@ func _step_saucer(s: Dictionary, delta: float) -> void:
 		"dead":
 			s["cool"] = float(s["cool"]) - delta
 			if float(s["cool"]) <= 0.0:
-				var fresh := _new_saucer(scroll_x - 40.0 if _rng.randf() < 0.5 else scroll_x + PERIOD + 10.0, false)
+				var fresh := _new_saucer(scroll_x - 40.0 if _rng.randf() < 0.5 else scroll_x + _period + 10.0, false)
 				s.merge(fresh, true)
 
 
@@ -158,7 +159,7 @@ func _step_turret(tr: Dictionary, delta: float) -> void:
 		tr["left"] = _rng.randi_range(3, 5)
 		var to: Vector2 = target["pos"] + Vector2(12, 5)
 		var from: Vector2 = tr["pos"]
-		tr["aim"] = Vector2(WarMath.wrap_dx(from.x, to.x, PERIOD), to.y - from.y).normalized()
+		tr["aim"] = Vector2(WarMath.wrap_dx(from.x, to.x, _period), to.y - from.y).normalized()
 	var spread := _rng.randf_range(-0.08, 0.08)
 	_tracers.append({"pos": tr["pos"], "vel": (tr["aim"] as Vector2).rotated(spread) * TRACER_SPEED, "t": 0.0})
 	tr["left"] = int(tr["left"]) - 1
@@ -172,9 +173,9 @@ func _fire_laser(s: Dictionary) -> void:
 	var from: Vector2 = (s["pos"] as Vector2) + Vector2(12, 10)
 	var best := _targets[0]
 	for t in _targets:
-		if absf(WarMath.wrap_dx(from.x, t.x, PERIOD)) < absf(WarMath.wrap_dx(from.x, best.x, PERIOD)):
+		if absf(WarMath.wrap_dx(from.x, t.x, _period)) < absf(WarMath.wrap_dx(from.x, best.x, _period)):
 			best = t
-	if absf(WarMath.wrap_dx(from.x, best.x, PERIOD)) > 220.0:
+	if absf(WarMath.wrap_dx(from.x, best.x, _period)) > 220.0:
 		return                                                      # longe demais: so atira quando passa perto
 	_lasers.append({"from": from, "to": best, "t": 0.0})
 	_blasts.append({"pos": best, "t": -LASER_TIME * 0.6})
@@ -186,7 +187,7 @@ func _check_hit(t: Dictionary) -> void:
 			continue
 		var c: Vector2 = (s["pos"] as Vector2) + Vector2(12, 5)
 		var p: Vector2 = t["pos"]
-		if Vector2(WarMath.wrap_dx(c.x, p.x, PERIOD), p.y - c.y).length() < HIT_RADIUS:
+		if Vector2(WarMath.wrap_dx(c.x, p.x, _period), p.y - c.y).length() < HIT_RADIUS:
 			t["t"] = TRACER_LIFE
 			_blasts.append({"pos": p.round(), "t": 0.2})
 			if _rng.randf() < SHOOT_DOWN_CHANCE:
@@ -201,7 +202,7 @@ func _nearest_saucer(from: Vector2) -> Dictionary:
 	for s in _saucers:
 		if s["state"] != "fly" or s["far"]:
 			continue
-		var d := absf(WarMath.wrap_dx(from.x, (s["pos"] as Vector2).x, PERIOD))
+		var d := absf(WarMath.wrap_dx(from.x, (s["pos"] as Vector2).x, _period))
 		if d < best_d and d < 260.0:
 			best_d = d
 			best = s
@@ -210,7 +211,7 @@ func _nearest_saucer(from: Vector2) -> Dictionary:
 
 func _new_saucer(x: float, far: bool) -> Dictionary:
 	var y := _rng.randf_range(_band.x, _band.x + 25.0) if far else _rng.randf_range(_band.x + 20.0, _band.y)
-	return {"pos": Vector2(fposmod(x, PERIOD), y), "base_y": y, "dir": 1.0 if _rng.randf() < 0.5 else -1.0,
+	return {"pos": Vector2(fposmod(x, _period), y), "base_y": y, "dir": 1.0 if _rng.randf() < 0.5 else -1.0,
 		"speed": _rng.randf_range(_speed.x, _speed.y) * (0.6 if far else 1.0), "far": far,
 		"cool": _rng.randf_range(0.5, 3.0), "state": "fly", "vy": 0.0, "phase": 0, "seed": _rng.randf() * 6.0}
 
@@ -220,14 +221,14 @@ func _draw_sprite(key: String, pos: Vector2, frame: int) -> void:
 	var f: Array = _frames[key]
 	var size := Vector2(float(f[0]), float(f[1]))
 	var src := Rect2(Vector2(size.x * frame, 0), size)
-	var sx := WarMath.screen_x(pos.x, scroll_x, PERIOD)
-	for x: float in [sx, sx - PERIOD]:
+	var sx := WarMath.screen_x(pos.x, scroll_x, _period)
+	for x: float in [sx, sx - _period]:
 		draw_texture_rect_region(_tex[key], Rect2(Vector2(x, pos.y).round(), size), src)
 
 
 func _draw_px(p: Vector2, c: Color) -> void:
-	var sx := WarMath.screen_x(p.x, scroll_x, PERIOD)
-	for x: float in [sx, sx - PERIOD]:
+	var sx := WarMath.screen_x(p.x, scroll_x, _period)
+	for x: float in [sx, sx - _period]:
 		draw_rect(Rect2(Vector2(x, p.y).round(), Vector2.ONE), c)
 
 
