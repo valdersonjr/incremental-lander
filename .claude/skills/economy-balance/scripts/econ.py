@@ -334,8 +334,8 @@ def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
         * stats.get("pay_mult", 1.0)
 
 
-# --- Variedade das entregas (v7): plataformas com multiplicador, combo de pousos bons, cristais no ar ---
-# Espelho GDScript: EconMath.pad_tier / combo_mult / pickup_value / delivery_pay. Spec sem as chaves = v6 intacta.
+# --- Variedade das entregas (v7): plataformas com multiplicador, combo de pousos bons (cristais sairam na v9) ---
+# Espelho GDScript: EconMath.pad_tier / combo_mult / delivery_pay. Spec sem as chaves = v6 intacta.
 
 def pad_tier(E: dict, tier_id: str) -> dict:
     """Tipo de plataforma (contracts.pad_tiers): mult (pagamento), weight (chance na oferta),
@@ -352,14 +352,6 @@ def combo_mult(E: dict, streak: float) -> float:
     if not c:
         return 1.0
     return 1.0 + c["step"] * min(streak, c["max_steps"])
-
-
-def pickup_value(E: dict, planet: dict, d: float, stats: dict) -> float:
-    """Valor de UM cristal coletado no salto: fracao do pagamento-base da entrega (sem qualidade)."""
-    pk = E["contracts"].get("pickups")
-    if not pk:
-        return 0.0
-    return pk["value_frac"] * contract_pay(E, planet, d, stats)
 
 
 def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
@@ -486,7 +478,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
     pega a de maior pagamento esperado por gas (plataforma dificil paga mais, mas derruba a qualidade e
     aumenta a batida de quem pilota pior). Combo: pousos bons seguidos (q >= combo.q_min) multiplicam o
-    pagamento; cristais no arco somam pickups.per_hop x value_frac x skill do pagamento-base.
+    pagamento.
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
     pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita."""
     gas = stats["tank"]
@@ -517,8 +509,6 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     eff = stats["efficiency"]
     combo = C.get("combo")
     q_min = combo["q_min"] if combo else 2.0
-    pk = C.get("pickups")
-    pick_frac = pk["per_hop"] * pk["value_frac"] * min(1.0, prof.skill) if pk else 0.0
     streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
     cg_pay, cg_dv = cargo_expect(E, planet, prof)
 
@@ -529,7 +519,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         pc_mu = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
         base = contract_pay(E, planet, d, stats)
         # valor esperado (para a escolha do piloto): qualidade media, plataforma e chance de bater
-        ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] * cg_pay + pick_frac) * (1 - pc_mu)
+        ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] * cg_pay) * (1 - pc_mu)
         return (d, dv / eff if arcade else dv, base, tier, ev)
 
     items = [info(d, tid) for d, tid in zip(offers, tiers0)]
@@ -556,7 +546,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         cm = combo_mult(E, streak)
-        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + base * pick_frac
+        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof)
         if expected:

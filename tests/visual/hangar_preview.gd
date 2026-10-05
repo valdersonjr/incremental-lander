@@ -1,6 +1,6 @@
 ## Previa visual do hangar. gdtool.py capture res://tests/visual/hangar_preview.tscn [-- --top --planet=ares]
 ## Padrao: rolado ate o fim. --top: comeco. --planet: mundo (cor da interface). --late: meio de jogo (prestigio,
-## expedicao). --tab=1|2: aba MUNDOS/PRESTIGIO. --menu: menu do jogo (Esc), como a Main abre. --pending: recomeco em andamento (so loja + concluir).
+## expedicao). --tab=1|2|3: aba AJUDAS/MUNDOS/PRESTIGIO. --assists: ja tem parte da arvore. --menu: menu do jogo (Esc), como a Main abre. --pending: recomeco em andamento (so loja + concluir).
 ## --keys: simula navegacao por teclado (foco no 1o botao de compra, depois de uma compra) e tooltip de custo.
 extends Node
 
@@ -24,8 +24,11 @@ func _ready() -> void:
 		GameState.current_planet = "kronos"
 		GameState.prestige_points = 30.0
 		GameState.levels = {"thrust": 42, "tank": 38, "efficiency": 35, "contracts": 30, "gear": 12,
-				"refinery": 8, "fleet": 5, "autopilot": 3, "exp1_station": 1, "exp2_cryo": 1}
+				"fleet": 5, "autopilot": 3, "exp1_station": 1, "exp2_cryo": 1}
 		GameState.cycle_earned = {"credits": 5.0e9}
+	if "--assists" in args:                                    # arvore pela metade: comprada, desligada, compravel, bloqueada
+		GameState.levels.merge({"nav_color": 1, "nav_trail": 1, "land_shadow": 1})
+		GameState.set_assist("land_shadow", false)
 	if "--end" in args:                                        # fase final: motor de dobra libera frota (8 cartoes)
 		GameState.shop["warp_drive"] = 1
 	GameState.set_volume("Music", 0.75)

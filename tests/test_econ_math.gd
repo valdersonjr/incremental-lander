@@ -18,7 +18,6 @@ func _init() -> void:
 		"dv_kronos": EconMath.estimated_hop_dv("kronos", 5000.0, st),
 		"pay_tight_combo": EconMath.delivery_pay("kronos", 4200.0, st, 0.7, "tight", 3),
 		"pay_narrow_combo9": EconMath.delivery_pay("luna", 900.0, st, 0.95, "narrow", 9),
-		"pickup_ares": EconMath.pickup_value("ares", 3500.0, st),
 		"pay_towed_fail": EconMath.delivery_pay("luna", 1200.0, st, 0.8, "tight", 2, EconMath.cargo_mult("towed", false)),
 		"cargo_rescue_ok": EconMath.cargo_mult("rescue", true),
 		"cargo_kinds_ares": EconMath.cargo_kinds("ares").size(),

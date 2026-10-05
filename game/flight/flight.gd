@@ -16,19 +16,14 @@ var target_pad_id := -1
 
 const EXPLOSION_FRAMES := preload("res://assets/sprites/explosion_frames.tres")
 const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
-const CRYSTAL_FRAMES := preload("res://assets/sprites/crystal_frames.tres")
 ## Som quando um perigo liga perto da nave (o ventilador fica sempre ligado: sem som de "ligou").
 const HAZARD_SFX := {"gust": "gust", "geyser": "geyser", "toy": "toy_fall"}
 
-## Cristais pegos no salto atual (vao no resultado da entrega).
-var crystals_taken := 0
-var _crystal_pos: Array[Vector2] = []
-var _crystal_taken: Array[bool] = []
-var _crystal_nodes: Array[AnimatedSprite2D] = []
 var _zones: Array[Dictionary] = []                 # perigos do salto atual (Hazards)
 var _hz_t := 0.0                                   # relogio dos perigos (segundos reais)
 var _hz_last: Array[String] = []                   # fase anterior de cada zona (para o som ao ligar)
 var _hazard_view: HazardView
+var _assist_view: AssistView
 
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
@@ -64,15 +59,16 @@ func _ready() -> void:
 	_hazard_view = HazardView.new()
 	add_child(_hazard_view)
 	move_child(_hazard_view, lander.get_index())              # atras do lander
+	_assist_view = AssistView.new()
+	_assist_view.flight = self
+	add_child(_assist_view)
+	move_child(_assist_view, lander.get_index())              # ajudas de voo (Painel de bordo), atras do lander
 	lander.landed.connect(_on_lander_landed)
 	lander.crashed.connect(_on_lander_crashed)
 
 
 func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
-	if lander.state == Lander.State.FLYING and not _crystal_pos.is_empty():
-		for i in Crystals.hits(_crystal_pos, _crystal_taken, lander.global_position):
-			_collect_crystal(i)
 	_tick_hazards(delta)
 	_tick_cargo(delta)
 	_extend_terrain_if_near_edge()
@@ -146,7 +142,6 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_carg
 	lander.pads = terrain.pads
 	lander.ridge = terrain.ridge
 	lander.can_takeoff = true
-	_spawn_crystals(terrain.pads[current_pad_id], terrain.pads[target_pad_id])
 	_zones = Hazards.generate(_seed + target_pad_id, planet_id, terrain.pads[current_pad_id],
 			terrain.pads[target_pad_id], terrain.ridge)
 	_hz_last.assign(_zones.map(func(_z: Dictionary) -> String: return "off"))
@@ -267,45 +262,7 @@ func _near(z: Dictionary) -> bool:
 	return absf(p.x - lander.global_position.x) < 700.0
 
 
-## Cristais do novo salto (quantidade da economia; posicao no arco: Crystals.place).
-func _spawn_crystals(from_pad: Dictionary, to_pad: Dictionary) -> void:
-	_clear_crystals()
-	var pk: Dictionary = EconMath.spec["contracts"].get("pickups", {})
-	_crystal_pos = Crystals.place(from_pad, to_pad, int(pk.get("per_hop", 0)))
-	for p in _crystal_pos:
-		var s := AnimatedSprite2D.new()
-		s.sprite_frames = CRYSTAL_FRAMES
-		s.position = p
-		add_child(s)
-		s.play(&"spin")
-		s.frame = randi() % 8                                   # cristais nao giram em sincronia
-		_crystal_nodes.append(s)
-		_crystal_taken.append(false)
-
-
-func _clear_crystals() -> void:
-	for s in _crystal_nodes:
-		if is_instance_valid(s):
-			s.queue_free()
-	_crystal_nodes.clear()
-	_crystal_pos.clear()
-	_crystal_taken.clear()
-	crystals_taken = 0
-
-
-## Pegou um cristal: estoura, toca a nota da vez (sobe a cada cristal) e mostra o valor subindo.
-func _collect_crystal(i: int) -> void:
-	_crystal_taken[i] = true
-	crystals_taken += 1
-	var s := _crystal_nodes[i]
-	s.play(&"pop")
-	s.animation_finished.connect(s.queue_free)
-	Sound.sfx("crystal_%d" % mini(crystals_taken, 3))
-	var value := EconMath.pickup_value(planet_id, target_distance_m, stats)
-	_float_text("+" + EconMath.fmt(value), _crystal_pos[i] + Vector2(0, -10))
-
-
-## Texto que sobe e some no mundo (ganho de cristal).
+## Texto que sobe e some no mundo (ratinho resgatado).
 func _float_text(text: String, pos: Vector2) -> void:
 	var l := Label.new()
 	l.theme = UiKit.theme_for(planet_id)
@@ -372,7 +329,6 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"hop_time_s": info["flight_time_m"],
 		"quality": quality,
 		"tier": target_tier,
-		"crystals": crystals_taken,
 		"dir": target_dir,
 		"cargo": cargo,
 		"cargo_ok": cargo_ok and not crashed,
@@ -384,7 +340,6 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"tilt": snappedf(float(info.get("tilt", 0.0)), 0.001),
 	}
 	Telemetry.record_delivery(result)
-	_clear_crystals()
 	_clear_cargo()
 	delivery_finished.emit(result)
 

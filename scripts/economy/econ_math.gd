@@ -282,14 +282,6 @@ static func combo_counts(quality: float) -> bool:
 	return not c.is_empty() and quality >= float(c["q_min"])
 
 
-## Valor de UM cristal coletado no salto: fracao do pagamento-base da entrega (sem qualidade).
-static func pickup_value(planet_id: String, distance: float, stats: Dictionary) -> float:
-	var pk: Dictionary = spec["contracts"].get("pickups", {})
-	if pk.is_empty():
-		return 0.0
-	return float(pk["value_frac"]) * contract_pay(planet_id, distance, stats, 0.0)
-
-
 ## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (mesma conta do simulador;
 ## cargo_m = cargo_mult(tipo, cumpriu)).
 static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,

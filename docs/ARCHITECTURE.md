@@ -51,11 +51,11 @@ game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta
                               # cria a próxima plataforma a partir da atual e estende o terreno;
                               # sinais delivery_finished(result) (→ Telemetry) e stranded (pousou sem gás fora do alvo)
 scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram) com tipo de plataforma (offer_tiers),
-                              # take_offer (→ taken_tier), complete_delivery(d, q, gás, cristais) via EconMath.delivery_pay;
-                              # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/cristais p/ o HUD
+                              # take_offer (→ taken_tier), complete_delivery(d, q, gás, cargo_ok) via EconMath.delivery_pay;
+                              # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/carga p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
-                              # com ganho + plataforma/combo/cristais; terrain.gd escreve o multiplicador sob plataformas difíceis
+                              # com ganho + plataforma/combo/carga; terrain.gd escreve o multiplicador sob plataformas difíceis
 game/run/offer_panel.*        # OfferPanel (tela cheia, só pinos + mini-cartão): pedidos no mundo — pino fincado no chão onde a
                               # plataforma vai nascer (ground_at = Flight.offer_ground_screen) ou na coluna da borda direita
                               # com setinha se fica além da tela; teclas 1–9/setas/clique escolhem, E encerra (2 toques)
@@ -147,7 +147,7 @@ game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, a
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry (só no build de depuração/editor, ou com --telemetry; > 5 MB vira _old):
                               # user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
-                              # human/demo + tier + crystals; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
+                              # human/demo + tier; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
                               # nunca sobrescreve)
 autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custom_user_dir_name = IncrementalLander; na 1ª vez
                               # copia saves/opções/telemetria de Godot/app_userdata/Incremental Lander, sem sobrescrever);
@@ -159,9 +159,13 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
-scripts/world/crystals.gd     # Crystals (puro): place(pad_a, pad_b, n) sobre o arco ideal de 45° (world.json crystals.arc_k);
-                              # hits(pos, taken, lander) com crystals.radius_m. Flight cria/coleta (pop, som crystal_N que sobe,
-                              # texto do ganho) e põe `crystals` no resultado; Main toca combo_N quando streak ≥ 2
+scripts/world/assists.gd      # Assists (puro, v9): arc(pad_a, pad_b, n) arco ideal de 45° (world.json assists.arc_k);
+                              # fall(pos, vel, params, ridge) queda sem motor; verdict() good/hard/miss; arrow_tier(); gas_left_at_arrival()
+game/flight/assist_view.gd    # AssistView (Node2D no Flight, atrás do lander): Setinha/colorida, Rastro/Rota, Sombra, Nivelador, Onde vou
+                              # cair — cada uma só se GameState.assist_on(id) (comprada e não desligada; nav_arrow grátis)
+game/hangar/assist_icon.gd    # AssistIcon: figurinha 48x24 de cada ajuda (placeholder _draw, Resurrect 64) nos cartões da aba AJUDAS
+                              # Hangar._add_assists: galhos da spec (upgrades 'assist'), cartões ligados por setas, LIGADA/DESLIGADA
+                              # Hud._update_need_mark: marquinha "Dá pra chegar?" na barra de gás
 scripts/world/hazards.gd      # Hazards (puro): generate(seed, planeta, pad_a, pad_b, ridge) -> zonas do salto (gust/geyser/fan/toy;
                               # world.json hazards); cycle(z, t) off/warn/on em SEGUNDOS REAIS; toy_pos; effect_at -> accel/drag/lethal.
                               # Flight: relógio _hz_t, efeito no lander (env_accel/env_drag; brinquedo -> lander.crash_now('atingido')),
@@ -169,7 +173,7 @@ scripts/world/hazards.gd      # Hazards (puro): generate(seed, planeta, pad_a, p
 game/flight/hazard_view.gd    # HazardView: desenha folhas/traços, coluna de calda + bolhas, ventilador + ar, sombra/'!'/bloco
 tests/visual/hazard_preview   # prévia de cada perigo: -- --planet=ares|kronos|titan --zone=N --phase=on|warn
 tests/integration/edge_flow   # o mapa não acaba: 18 km à direita e 10 km à esquerda sempre com chão; partida igual
-tests/integration/crystal_flow # cristais: cria 3, coleta, não repete, resultado com contagem e tipo, limpa
+tests/unit/world/test_assists.gd # arco, queda prevista/veredito, cor da setinha, gás na chegada, árvore persistente
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
 tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
 tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,

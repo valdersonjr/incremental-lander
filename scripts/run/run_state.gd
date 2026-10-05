@@ -1,7 +1,7 @@
 ## Estado de um run (logica pura, testavel): ofertas de entrega, entregas feitas, ganhos e fim do run.
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
 ## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
-## tipo de plataforma x combo x carga) + cristais coletados (EconMath.pickup_value).
+## tipo de plataforma x combo x carga).
 ## Lua (2026-10-05): cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e CARGA
 ## (economy.json contracts.cargo: caixa, bolo fragil, sorvete com prazo, queijao rebocado, ratinho a resgatar).
 ## Lado e carga usam um sorteador proprio: as distancias e plataformas de um seed nao mudam.
@@ -110,17 +110,15 @@ func take_offer(index: int) -> float:
 	return d
 
 
-## Registra uma entrega concluida (na plataforma taken_tier, com o combo atual e os cristais coletados no salto)
+## Registra uma entrega concluida (na plataforma taken_tier, com o combo atual)
 ## e devolve as recompensas {recurso: qtd}. Depois atualiza o combo: pouso bom soma, pouso ruim zera.
 ## cargo_ok = a regra da carga taken_cargo foi cumprida (falhou: paga mult x fail_mult; nunca acaba o run).
-## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, cristais, carga) para o HUD mostrar.
-func complete_delivery(distance: float, quality: float, gas_used: float, crystals: int = 0,
-		cargo_ok: bool = true) -> Dictionary:
+## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, carga) para o HUD mostrar.
+func complete_delivery(distance: float, quality: float, gas_used: float, cargo_ok: bool = true) -> Dictionary:
 	var combo := EconMath.combo_mult(streak)
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
 	var cm := EconMath.cargo_mult(taken_cargo, cargo_ok)
-	var crystal_pay := crystals * EconMath.pickup_value(planet_id, distance, stats)
-	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak, cm) + crystal_pay
+	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak, cm)
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
 	for res: String in weights:
@@ -128,7 +126,7 @@ func complete_delivery(distance: float, quality: float, gas_used: float, crystal
 		earned[res] = float(earned.get(res, 0.0)) + rewards[res]
 	var good := EconMath.combo_counts(quality)
 	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards,
-			"tier": taken_tier, "mult": mult, "combo": combo, "crystals": crystals, "crystal_pay": crystal_pay,
+			"tier": taken_tier, "mult": mult, "combo": combo,
 			"good": good, "cargo": taken_cargo, "cargo_ok": cargo_ok, "cargo_mult": cm})
 	streak = streak + 1 if good else 0
 	taken_tier = "normal"

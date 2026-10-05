@@ -1,4 +1,5 @@
-## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), MUNDOS (planetas),
+## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), AJUDAS (arvore do
+## Painel de bordo: ajudas de voo compradas uma vez, ligar/desligar), MUNDOS (planetas),
 ## PRESTIGIO (recomeco + loja da Poeira); a Expedicao (meta final) fica fixa no topo. Esc (sem botao na tela) pede o menu do
 ## jogo (menu_requested: a Main esconde o hangar e abre o PauseMenu no modo HANGAR — volumes, menu inicial, novo jogo).
 ## Q/E trocam de aba, Enter decola (ou ativa o botao com foco, se o jogador navegou com setas/Tab). Tudo que e numero
@@ -13,31 +14,45 @@ signal title_requested
 ## Esc: abrir o menu do jogo fora do hangar.
 signal menu_requested
 
-enum Tab { SHIP, WORLDS, PRESTIGE }
+enum Tab { SHIP, ASSISTS, WORLDS, PRESTIGE }
 
 const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay_mult": "×", "gear": "×",
 		"drones": "", "autopilot": "×"}
 const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
-		"gear": "gear", "refinery": "refinery", "fleet": "fleet", "autopilot": "autopilot"}
+		"gear": "gear", "fleet": "fleet", "autopilot": "autopilot"}
 const RES := {"credits": ["credits", "MoneyLabel"], "ore": ["ore", "ValueLabel"], "stardust": ["stardust", "DustLabel"]}
-const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.WORLDS, "MUNDOS", "planet"], [Tab.PRESTIGE, "PRESTÍGIO", "prestige"]]
+const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.ASSISTS, "AJUDAS", "distance"], [Tab.WORLDS, "MUNDOS", "planet"], [Tab.PRESTIGE, "PRESTÍGIO", "prestige"]]
 ## Larguras das colunas das tabelas (px da arte) — iguais em todas as abas para alinhar.
 const COL_LEVEL := 40
 const COL_EFFECT := 118
 const COL_ACTION := 120
 const COL_MAX := 30
 ## Oficina: cartoes de cada lado da nave (de cima para baixo) e onde cada um encosta no sprite 32x32 da nave.
-const WORKSHOP_SIDES := [["contracts", "tank", "refinery", "thrust"], ["fleet", "autopilot", "efficiency", "gear"]]
-const WORKSHOP_ANCHORS := {"contracts": Vector2(10, 2), "tank": Vector2(4, 17), "refinery": Vector2(9, 20),
+const WORKSHOP_SIDES := [["contracts", "tank", "thrust"], ["fleet", "autopilot", "efficiency", "gear"]]
+const WORKSHOP_ANCHORS := {"contracts": Vector2(10, 2), "tank": Vector2(4, 17),
 		"thrust": Vector2(16, 22), "fleet": Vector2(24, 3), "autopilot": Vector2(16, 9), "efficiency": Vector2(28, 17),
 		"gear": Vector2(27, 25)}
 ## Efeito de cada melhoria em figura (atlas kids): antes > depois.
 const WORKSHOP_FX := {"thrust": ["flame_s", "flame_b"], "tank": ["bar_s", "bar_b"], "efficiency": ["drop_b", "drop_s"],
-		"contracts": ["coin", "coins"], "gear": ["pad_s", "pad_b"], "refinery": ["rock", "drop_b"],
+		"contracts": ["coin", "coins"], "gear": ["pad_s", "pad_b"],
 		"fleet": ["drone", "drones"], "autopilot": ["drone", "drone_coin"]}
 const CARD_W := 176
 ## O que cada habilidade faz (tooltip do botao; a tecla vem do mapa de teclas).
 const ABILITY_TIP := {"stabilizer": "a nave volta a ficar de pé sozinha", "turbo": "motor com o dobro da força"}
+## Arvore de ajudas (aba AJUDAS): galhos na ordem da spec (upgrades com 'assist' = galho); a Setinha vem de graca
+## na frente do galho "nav". Icone de cada galho e o que cada ajuda faz (tooltip).
+const ASSIST_BRANCH_ICON := {"nav": "distance", "land": "quality", "gas": "gas"}
+const ASSIST_TIP := {
+	"nav_arrow": "uma setinha perto da nave aponta para onde pousar",
+	"nav_color": "a setinha muda de cor: azul longe, amarela no meio, verde chegando",
+	"nav_trail": "pontinhos mostram o melhor caminho logo à frente",
+	"nav_route": "pontinhos mostram o melhor caminho inteiro, de plataforma a plataforma",
+	"land_shadow": "uma sombra no chão mostra a altura da nave",
+	"land_level": "perto do chão, uma linha mostra se a nave está reta (verde) ou torta (vermelha)",
+	"land_predict": "mostra onde a nave cai se soltar o motor: X verde = pouso bom",
+	"gas_need": "uma marquinha na barra mostra quanto gás sobra ao chegar",
+}
+const ASSIST_CARD_W := 112
 const SHIP_SCALE := 4.0
 const REACH_CAP_M := 1.0e6                                     # limite da busca de Purchases.max_reach_m
 
@@ -101,6 +116,8 @@ func refresh() -> void:
 	match _tab:
 		Tab.SHIP:
 			_add_upgrades()
+		Tab.ASSISTS:
+			_add_assists()
 		Tab.WORLDS:
 			_add_worlds()
 		Tab.PRESTIGE:
@@ -253,7 +270,7 @@ func _set_tab(t: Tab) -> void:
 
 
 func _cycle_tab(step: int) -> void:
-	var order: Array[Tab] = [Tab.SHIP, Tab.WORLDS]
+	var order: Array[Tab] = [Tab.SHIP, Tab.ASSISTS, Tab.WORLDS]
 	if _prestige_unlocked():
 		order.append(Tab.PRESTIGE)
 	var i := order.find(_tab)
@@ -269,7 +286,10 @@ func _tab_has_news(t: Tab) -> bool:
 	match t:
 		Tab.SHIP:
 			return GameState.upgrade_rows().any(func(r: Dictionary) -> bool:
-				return r["affordable"] and not _is_stage(str(r["id"])))
+				return r["affordable"] and not _is_stage(str(r["id"])) and not _is_assist(str(r["id"])))
+		Tab.ASSISTS:
+			return GameState.upgrade_rows().any(func(r: Dictionary) -> bool:
+				return r["affordable"] and _is_assist(str(r["id"])))
 		Tab.WORLDS:
 			return GameState.planet_rows().any(func(p: Dictionary) -> bool:
 				return not p["unlocked"] and p["available"] and p["affordable"])
@@ -291,7 +311,7 @@ func _add_upgrades() -> void:
 ## botao de preco verde quando da para comprar. Os numeros tecnicos ficam no tooltip do cartao.
 func _add_workshop() -> void:
 	var rows := GameState.upgrade_rows().filter(func(r: Dictionary) -> bool:
-		return not _is_stage(str(r["id"])) and not _is_ability(str(r["id"])))
+		return not _is_stage(str(r["id"])) and not _is_ability(str(r["id"])) and not _is_assist(str(r["id"])))
 	var by_id := {}
 	for r: Dictionary in rows:
 		by_id[r["id"]] = r
@@ -374,7 +394,12 @@ func _add_workshop() -> void:
 
 
 func _is_ability(id: String) -> bool:
-	return bool(EconMath._find("upgrades", id).get("ability", false))
+	var u := EconMath._find("upgrades", id)
+	return bool(u.get("ability", false)) and not u.has("assist")
+
+
+func _is_assist(id: String) -> bool:
+	return EconMath._find("upgrades", id).has("assist")
 
 
 ## Habilidades (2026-10-05): botoes com a figura embaixo da nave. Sem comprar: preco (cheio e "respirando" quando
@@ -387,7 +412,7 @@ func _ability_row() -> HBoxContainer:
 	for r: Dictionary in GameState.upgrade_rows():
 		rows[r["id"]] = r
 	for u: Dictionary in EconMath.spec["upgrades"]:
-		if not u.get("ability", false):
+		if not u.get("ability", false) or u.has("assist"):
 			continue
 		var id: String = u["id"]
 		var b := Button.new()
@@ -638,6 +663,105 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 		var before := int(GameState.levels.get(id, 0))
 		_bought(GameState.buy_upgrade(id), "up:" + id, id, before))
 	return buy
+
+
+# --- aba AJUDAS (Painel de bordo, 2026-10-05) ----------------------------------------------------------------------
+
+## Arvore de ajudas de voo: um galho por linha (icone do galho + cartoes ligados por setas, da esquerda para a direita).
+## Cartao = nome + figurinha do que a ajuda desenha no voo + botao: preco (da para comprar), LIGADA/DESLIGADA (ja tem:
+## clicar alterna) ou apagado com "..." (falta a anterior). Compra unica que nao reseta no prestigio.
+func _add_assists() -> void:
+	var rows := {}
+	for r: Dictionary in GameState.upgrade_rows():
+		rows[r["id"]] = r
+	var branches := {}
+	var order: Array[String] = []
+	for u: Dictionary in EconMath.spec["upgrades"]:
+		if not u.has("assist"):
+			continue
+		var b := str(u["assist"])
+		if not branches.has(b):
+			branches[b] = [GameState.ASSIST_FREE] if b == "nav" else []
+			order.append(b)
+		branches[b].append(u)
+	_rows.add_child(_section("AJUDAS DE VOO  ·  compra uma vez, fica para sempre"))
+	for b: String in order:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override(&"separation", 2)
+		line.alignment = BoxContainer.ALIGNMENT_BEGIN
+		var ic := TextureRect.new()
+		ic.texture = UiKit.icon(ASSIST_BRANCH_ICON.get(b, "options"))
+		ic.custom_minimum_size = Vector2(14, 0)
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		line.add_child(ic)
+		var first := true
+		for item: Variant in branches[b]:
+			if not first:
+				line.add_child(_kid_rect("arrow"))
+			first = false
+			line.add_child(_make_assist_card(item, rows))
+		_rows.add_child(line)
+
+
+## item = id da ajuda gratis (String) ou o upgrade da spec (Dictionary).
+func _make_assist_card(item: Variant, rows: Dictionary) -> PanelContainer:
+	var free := item is String
+	var id: String = item if free else str(item["id"])
+	var name: String = "Setinha" if free else str(item["name"])
+	var owned := free or int(GameState.levels.get(id, 0)) >= 1
+	var on := GameState.assist_on(id)
+	var can_buy := not owned and rows.has(id)
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"SlimPanel"
+	card.custom_minimum_size = Vector2(ASSIST_CARD_W, 0)
+	card.set_meta(&"row_key", "up:" + id)
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.tooltip_text = "%s: %s" % [name, ASSIST_TIP.get(id, "")]
+	if not owned and not can_buy:
+		card.modulate = Color(0.6, 0.6, 0.68)
+		card.tooltip_text += "
+compre a ajuda anterior primeiro"
+	elif owned and not on:
+		card.modulate = Color(0.75, 0.75, 0.8)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override(&"separation", 1)
+	card.add_child(box)
+	var title := Label.new()
+	title.text = name
+	title.theme_type_variation = &"GoodLabel" if owned and on else &"DimLabel"
+	title.clip_text = true
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	var pic := AssistIcon.new(id)
+	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	box.add_child(pic)
+	var btn: Button
+	if owned:
+		btn = Button.new()
+		btn.text = "LIGADA" if on else "DESLIGADA"
+		btn.tooltip_text = "clique para %s" % ("desligar (mais desafio)" if on else "ligar")
+		btn.set_meta(&"focus_key", "assist:" + id)
+		btn.pressed.connect(func() -> void:
+			GameState.set_assist(id, not on)
+			Sound.ui("click")
+			refresh())
+	elif can_buy:
+		btn = _buy_button(rows[id], 0)
+		btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		btn.tooltip_text = "comprar: " + btn.text + _missing_text(rows[id]["cost"])
+		if rows[id]["affordable"]:
+			btn.theme_type_variation = &"PrimaryButton"
+			var tw := btn.create_tween().set_loops()
+			tw.tween_property(btn, "modulate", Color(1.25, 1.25, 1.25), 0.45).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(btn, "modulate", Color.WHITE, 0.45).set_trans(Tween.TRANS_SINE)
+	else:
+		btn = Button.new()
+		btn.text = "..."
+		btn.disabled = true
+		btn.focus_mode = Control.FOCUS_NONE
+	btn.custom_minimum_size = Vector2(0, 15)
+	box.add_child(btn)
+	return card
 
 
 # --- aba MUNDOS --------------------------------------------------------------------------------------------------

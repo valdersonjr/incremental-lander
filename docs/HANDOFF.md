@@ -4,6 +4,19 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-05)
+- **Fase 13 — Simples e com ajudas (2026-10-05)**: pedido "tirar essa porra de cristal e refinaria, não vi mta diversão"
+  + árvore de atributos que facilita a vida (setinha → cor de chegando → rota traçada…); "a ideia do jogo é ser simples".
+  - Economia **v9**: sem `contracts.pickups` e sem `refinery`; pay_base 9,5; 7 ajudas (`upgrades[].assist`), compra única,
+    persistentes no prestígio, em cadeia (`requires_upgrade`). MC 3×3: término casual/engaged/expert 4,16/3,88/3,20 h.
+  - Jogo: `Assists` (puro: arco ideal, queda prevista, veredito, cor, gás na chegada), `AssistView` no Flight, marquinha
+    de gás no HUD, aba **AJUDAS** na oficina (`Hangar._add_assists` + `AssistIcon`), ligar/desligar em
+    `GameState.assist_on/set_assist` (settings `assists_off`). Setinha grátis para todos.
+  - Removidos: `crystals.gd`, integração crystal_flow, coluna `crystals` da telemetria, cartão da Refinaria.
+    Sprites/sons de cristal seguem no disco (crystal_3 ainda toca no resgate do ratinho; crystal.png sem uso).
+  - Verificado: 98 testes + 7 integrações verdes, paridade 20 grupos; capturas da aba AJUDAS e de um voo demo com
+    todas as ajudas (seta muda de cor, rota dourada, queda prevista colorida, marquinha de gás).
+  - **Pendente**: o usuário jogar e aprovar; figurinhas finais dos cartões (hoje `_draw`); ideia do usuário de
+    **interagir com coisas do mapa por recompensa** (propostas levadas a ele, aguardando escolha — ROADMAP 13.4).
 - **Fase 12 — Lua mais divertida (2026-10-05)**: pedido "o que não existir no nosso jogo, adicione de forma divertida e
   dada a temática do mapa (só a Lua)" + "tira todos coelhos e alienígena do mapa". Feito:
   - Economia **v8** (`contracts.cargo` só na Lua + habilidades `stabilizer`/`turbo`), espelho EconMath, paridade 21 grupos.

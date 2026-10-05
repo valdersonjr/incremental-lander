@@ -28,7 +28,6 @@ P = {
     "pay_ares": contract_pay(E, planets["ares"], 3500.0, st) * (1 + C["quality_bonus"] * 0.8 ** C.get("quality_exp", 1)),
     "pay_tight_combo": delivery_pay(E, planets["kronos"], 4200.0, st, 0.7, "tight", 3),
     "pay_narrow_combo9": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 9),
-    "pickup_ares": pickup_value(E, planets["ares"], 3500.0, st),
     "pay_towed_fail": delivery_pay(E, planets["luna"], 1200.0, st, 0.8, "tight", 2, cargo_mult(E, "towed", False)),
     "cargo_rescue_ok": cargo_mult(E, "rescue", True),
     "cargo_kinds_ares": len(cargo_kinds(E, "ares")),

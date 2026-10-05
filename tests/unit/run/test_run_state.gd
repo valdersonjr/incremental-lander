@@ -100,14 +100,6 @@ func test_combo_soma_em_pouso_bom_e_zera_em_pouso_duro() -> void:
 	assert_false(run.deliveries[-1]["good"])
 
 
-func test_cristais_somam_ao_pagamento() -> void:
-	var run := RunState.create("luna", stats, 2)
-	var r := run.complete_delivery(800.0, 0.5, 20.0, 2)
-	var base := EconMath.contract_pay("luna", 800.0, stats, 0.5)
-	assert_almost(r["credits"], base + 2.0 * EconMath.pickup_value("luna", 800.0, stats))
-	assert_eq(run.deliveries[-1]["crystals"], 2)
-
-
 func test_lua_tem_lados_e_cargas_sem_mudar_as_distancias() -> void:
 	# lado e carga usam sorteador proprio: as distancias de um seed continuam as mesmas da v7
 	var run := RunState.create("luna", stats, 42)
@@ -135,11 +127,11 @@ func test_outros_mundos_sempre_a_direita_e_caixa() -> void:
 func test_carga_cumprida_paga_mais_e_falha_paga_menos() -> void:
 	var run := RunState.create("luna", stats, 1)
 	run.taken_cargo = "towed"
-	var ok: float = run.complete_delivery(800.0, 0.9, 40.0, 0, true)["credits"]
+	var ok: float = run.complete_delivery(800.0, 0.9, 40.0, true)["credits"]
 	assert_almost(ok, EconMath.contract_pay("luna", 800.0, stats, 0.9) * EconMath.cargo_mult("towed", true))
 	var run2 := RunState.create("luna", stats, 1)
 	run2.taken_cargo = "towed"
-	var bad: float = run2.complete_delivery(800.0, 0.9, 40.0, 0, false)["credits"]
+	var bad: float = run2.complete_delivery(800.0, 0.9, 40.0, false)["credits"]
 	assert_true(bad < ok, "carga estragada paga menos")
 	assert_false(run2.over, "carga estragada nao acaba o run")
 	assert_eq(run2.deliveries[-1]["cargo"], "towed")

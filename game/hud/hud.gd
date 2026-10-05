@@ -1,6 +1,6 @@
 ## HUD do voo (arte: UiKit): gas (barra ciano -> ambar -> vermelho), velocidades com cor de seguranca,
 ## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, combo;
-## resultado do pouso em aviso central (pagamento com plataforma x combo x cristais, chamado pelo Main).
+## resultado do pouso em aviso central (pagamento com plataforma x combo x carga, chamado pelo Main).
 ## Carga (Lua): linha com a figura da carga + o que importa agora (barra do sorvete derretendo; bolo deixa o
 ## V.VERT mais exigente; ratinho fica colorido quando resgatado; queijo rachado).
 class_name Hud
@@ -13,6 +13,7 @@ var run: RunState = null
 
 var _toast_left := 0.0
 var _hint_left := 0.0
+var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bordo): gas que sobra ao chegar
 
 @onready var _gas: Label = %Gas
 @onready var _gas_bar: ProgressBar = %GasBar
@@ -45,6 +46,17 @@ func _ready() -> void:
 	(%DistIcon as TextureRect).texture = UiKit.icon("distance")
 	(%MoneyIcon as TextureRect).texture = UiKit.icon("credits")
 	(%DeliveriesIcon as TextureRect).texture = UiKit.icon("expedition")
+	_need_mark = ColorRect.new()
+	_need_mark.color = Color("#2e222f")                       # contorno ink + miolo dourado (Resurrect 64)
+	_need_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var core := ColorRect.new()
+	core.color = Color("#f9c22b")
+	core.position = Vector2(1, 1)
+	core.size = Vector2(1, 8)
+	core.name = "Core"
+	_need_mark.add_child(core)
+	_gas_bar.add_child(_need_mark)
+	_need_mark.visible = false
 
 
 ## Liga o HUD a uma cena de voo e ao run atual (referencias atribuidas pelo pai).
@@ -72,6 +84,7 @@ func _process(delta: float) -> void:
 	_gas.text = EconMath.fmt(l.gas)
 	_gas_bar.value = frac * 100.0
 	_gas_bar.theme_type_variation = &"GasBar" if frac > 0.35 else (&"WarnBar" if frac > 0.15 else &"DangerBar")
+	_update_need_mark(l, tank)
 	var vy_limit: float = tol["max_vy"]
 	if flight.target_pad_id >= 0 and flight.cargo == "fragile":  # bolo: o limite que importa e o do bolo
 		vy_limit = minf(vy_limit, float(cfg["cargo"]["fragile"]["max_vy"]))
@@ -96,6 +109,22 @@ func _process(delta: float) -> void:
 	_combo_panel.visible = streak > 0
 	if streak > 0:
 		_combo.text = "COMBO %d  %s" % [streak, UiKit.mult_text(EconMath.combo_mult(streak))]
+
+
+## "Da pra chegar?": marquinha na barra no gas que deve sobrar ao chegar pelo arco ideal (conta feita na decolagem;
+## pousado, com o gas de agora). Nao chega: a marquinha fica vermelha no comeco da barra.
+func _update_need_mark(l: Lander, tank: float) -> void:
+	_need_mark.visible = flight.target_pad_id >= 0 and tank > 0.0 and GameState.assist_on("gas_need") \
+			and l.state != Lander.State.CRASHED
+	if not _need_mark.visible:
+		return
+	var start := l.gas if l.state == Lander.State.LANDED else l.gas_at_takeoff
+	var left := Assists.gas_left_at_arrival(flight.planet_id, flight.target_distance_m, flight.stats, start)
+	var w := _gas_bar.size.x
+	_need_mark.size = Vector2(3, _gas_bar.size.y + 2)
+	_need_mark.position = Vector2(roundf(clampf(left / tank, 0.0, 1.0) * (w - 3.0)), -1)
+	(_need_mark.get_node("Core") as ColorRect).size.y = _gas_bar.size.y
+	(_need_mark.get_node("Core") as ColorRect).color = Color("#f9c22b") if left >= 0.0 else Color("#e83b3b")
 
 
 func _update_cargo() -> void:
@@ -139,7 +168,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	# pouso bom: o Main chama show_delivery() depois de calcular o pagamento
 
 
-## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, combo, cristais).
+## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, combo, carga).
 ## entry = RunState.deliveries[-1]; streak = combo depois desta entrega.
 func show_delivery(entry: Dictionary, streak: int) -> void:
 	var gain := float(entry["rewards"].get("credits", 0.0))
@@ -149,8 +178,6 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))
 	if float(entry.get("combo", 1.0)) > 1.0:
 		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
-	if int(entry.get("crystals", 0)) > 0:
-		parts.append("cristais +%s" % EconMath.fmt(float(entry["crystal_pay"])))
 	var kind := str(entry.get("cargo", "box"))
 	if kind != "box":
 		var cm := float(entry.get("cargo_mult", 1.0))

@@ -268,8 +268,7 @@
       "tank": 38,
       "efficiency": 35,
       "contracts": 30,
-      "gear": 12,
-      "refinery": 8
+      "gear": 12
     }
   },
   "atmosphere": {
@@ -277,10 +276,17 @@
     "ground_drag": 0.25,
     "scale_height_m": 120.0
   },
-  "crystals": {
-    "notes": "Cristais sobre o arco ideal de 45 graus (o de menor gasto de gas): mostram o caminho eficiente; desviar para buscar custa gas. Quantidade e valor: economy.json contracts.pickups. arc_k = fracao da altura do arco (1 = no arco); radius_m = alcance da coleta (centro do lander).",
+  "assists": {
+    "notes": "Ajudas de voo (arvore do Painel de bordo; precos em economy.json upgrades com 'assist'). Setinha (gratis): seta em volta da nave apontando a plataforma (arrow_r_px do centro). Setinha colorida: cor pela fracao do salto que falta (near_frac/mid_frac). Rastro/Rota: arco ideal de 45 graus entre as plataformas (arc_k = fracao da altura; 1 = arco balistico de menor gasto); rastro so mostra trail_m a frente. Sombra: marca no chao + tracejado ate a nave. Nivelador: aparece abaixo de level_alt_m. Onde vou cair: queda sem motor, passos de predict_dt_m (s do modelo) ate predict_max_s.",
+    "arrow_r_px": 30,
+    "near_frac": 0.25,
+    "mid_frac": 0.6,
     "arc_k": 1.0,
-    "radius_m": 24.0
+    "arc_points": 40,
+    "trail_m": 220.0,
+    "level_alt_m": 160.0,
+    "predict_dt_m": 0.25,
+    "predict_max_s": 60.0
   },
   "hazards": {
     "notes": "Perigos por mundo (Fase 11.5). Ciclos (period_s/on_s/warn_s/fall_s) em SEGUNDOS REAIS (o que o jogador percebe; o modelo corre time_scale x mais rapido); forcas em m/s2 do modelo; distancias em m. Sempre avisados (warn_s antes). Custo na economia: economy.json planets[].hazard. Lua: nenhum (planeta do arco puro).",

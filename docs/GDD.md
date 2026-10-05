@@ -31,7 +31,7 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
 - **Variedade das entregas (v7, 2026-10-03)** — cada oferta é uma escolha de risco, não só de distância:
   - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
   - **Combo**: cada pouso bom seguido (q ≥ 0,55) soma +10% no pagamento, até +50%; pouso ruim zera.
-  - **Cristais** no caminho de um arco bem feito: cada um vale 5% do pagamento-base da entrega.
+  - ~~Cristais no arco~~ — removidos na v9 (2026-10-05): o usuário não viu diversão; o arco ideal virou ajuda de voo.
   - O relevo tem **cristas** entre as plataformas: um arco bom passa por cima, voar rente ao chão não compensa
     (e nos mundos com atmosfera o ar é mais denso perto do chão).
   - **Perigos por mundo** (sempre avisados antes; pedem pilotagem, não sorte): Lua nenhum (o planeta do arco puro);
@@ -96,10 +96,18 @@ deixar com história forte... a ideia era só algo passando de fundo mesmo").
 | Eficiência (bocais) | ×1,07 Δv por gás | alcance |
 | Reputação | ×1,1 pagamento | — |
 | Resistência (trem de pouso) | reduz batidas (retorno decrescente) | — |
-| Refinaria | ×1,15 eficiência | custa créditos + minério |
 | Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | compra única (Lua em diante) |
 | Turbo (habilidade) | segurar Shift: empuxo ×2 | compra única |
 | **Marcos** | a cada 25 níveis de Motor/Gasolina/Eficiência/Reputação: pagamento ×1,5 | estilo AdVenture Capitalist |
+
+## 6b. Painel de bordo — árvore de ajudas de voo (v9, 2026-10-05)
+Compras **de informação**, não de potência: mostram, não pilotam (o pouso continua na mão do jogador; o pagamento não
+muda). Compra única em créditos, **não reseta no prestígio**, cada uma pode ser desligada (aba AJUDAS da oficina).
+| Galho | Ajudas (em ordem) |
+|---|---|
+| Onde ir | **Setinha** (grátis: seta em volta da nave aponta a plataforma) → Setinha colorida (80: azul longe, amarela, verde chegando + pulsa) → Rastro (800: pontinhos do arco ideal só à frente) → Rota completa (8K: o arco inteiro) |
+| Pousar | Sombra (150: marca no chão + tracejado) → Nivelador (500: linha verde/amarela/vermelha da inclinação perto do chão) → Onde vou cair (5K: queda sem motor + X verde/amarelo/vermelho) |
+| Gás | Dá pra chegar? (2K: marquinha na barra = gás que sobra ao chegar pelo arco ideal; vermelha = não chega) |
 
 ## 7. Prestígio — Poeira Estelar
 - Recomeçar (após chegar a Ares) converte créditos ganhos em **Poeira Estelar**: `(créditos/800)^0,25`.

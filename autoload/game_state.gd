@@ -18,6 +18,8 @@ var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junt
 var records: Dictionary = {}          # recordes pessoais (pos-jogo): RECORDS -> maior valor ja feito
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
+## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
+const ASSIST_FREE := "nav_arrow"
 ## Recordes pessoais (estatistica, nao economia): id -> [nome para o jogador, icone].
 const RECORDS := {
 	"best_delivery": ["maior entrega", "credits"],
@@ -257,6 +259,21 @@ func crt_enabled() -> bool:
 
 func set_crt(on: bool) -> void:
 	settings["crt"] = on
+	apply_settings()
+
+
+## Ajuda de voo ativa no voo? (Painel de bordo: comprada — "nav_arrow" ja vem — e nao desligada pelo jogador).
+func assist_on(id: String) -> bool:
+	if bool((settings.get("assists_off", {}) as Dictionary).get(id, false)):
+		return false
+	return id == ASSIST_FREE or int(levels.get(id, 0)) >= 1
+
+
+## Liga/desliga uma ajuda ja comprada (para quem quer o desafio). Fica nas opcoes do save.
+func set_assist(id: String, on: bool) -> void:
+	var off: Dictionary = settings.get("assists_off", {})
+	off[id] = not on
+	settings["assists_off"] = off
 	apply_settings()
 
 

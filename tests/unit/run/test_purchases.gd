@@ -22,12 +22,6 @@ func test_sem_dinheiro_nao_compra() -> void:
 	assert_false(lv.has("tank"))
 
 
-func test_refinaria_so_com_ares() -> void:
-	var res := {"credits": 1e9, "ore": 1e9}
-	assert_false(Purchases.buy(res, {}, "refinery", ["luna"], {}))
-	assert_true(Purchases.buy(res, {}, "refinery", ["luna", "ares"], {}))
-
-
 func test_comprar_maximo_para_quando_acaba() -> void:
 	var res := {"credits": 500.0}
 	var lv := {}
@@ -41,7 +35,6 @@ func test_linhas_do_hangar_mostram_proximo_valor() -> void:
 	var rows := Purchases.upgrade_rows({"credits": 0.0}, {}, ["luna"], {}, 0.0)
 	var ids := rows.map(func(r: Dictionary) -> String: return r["id"])
 	assert_true("thrust" in ids and "tank" in ids)
-	assert_false("refinery" in ids, "refinaria exige Ares")
 	assert_false("fleet" in ids, "frota exige Motor de dobra")
 	for r: Dictionary in rows:
 		if r["id"] == "tank":
@@ -106,7 +99,7 @@ func test_marco_de_upgrade_para_o_jingle() -> void:
 
 func test_bloqueados_mostram_o_que_vem_e_somem_ao_liberar() -> void:
 	var ids := Purchases.locked_upgrades({}, ["luna"], {}).map(func(r: Dictionary) -> String: return r["id"])
-	assert_true("refinery" in ids)
+	assert_false("refinery" in ids, "refinaria saiu do jogo (v9)")
 	assert_true("fleet" in ids)
 	assert_false("thrust" in ids)
 	assert_false(ids.any(func(id: String) -> bool: return id.begins_with("exp")))   # Expedicao fica surpresa
@@ -116,7 +109,5 @@ func test_bloqueados_mostram_o_que_vem_e_somem_ao_liberar() -> void:
 
 func test_bloqueado_diz_o_que_falta() -> void:
 	for r: Dictionary in Purchases.locked_upgrades({}, ["luna"], {}):
-		if r["id"] == "refinery":
-			assert_eq(r["requires_planet"], "ares")
 		if r["id"] == "fleet":
 			assert_eq(r["requires_shop"], "warp_drive")

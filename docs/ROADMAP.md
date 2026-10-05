@@ -85,6 +85,14 @@
 - [x] Jingles (marco de upgrade/etapa, mundo liberado, recomeço, final) · alarme de gás baixo · ambiências dos 4 mundos ·
       músicas de título/hangar e de voo (2026-10-03; aprovado ouvindo o resumo)
 
+## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
+> Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida
+> (setinha → cor de chegando → rota traçada…). "A ideia do jogo é ser simples".
+- [x] 13.1 Economia v9: sem cristais e sem Refinaria, pay_base 9,5, 7 ajudas (compra única, persistentes, pré-requisito) (2026-10-05)
+- [x] 13.2 Ajudas no voo (AssistView + marquinha de gás no HUD) e aba AJUDAS na oficina (árvore, ligar/desligar) (2026-10-05)
+- [ ] 13.3 Aprovação do usuário jogando + figurinhas finais dos cartões (hoje desenhadas em _draw) + som de "chegando"?
+- [ ] 13.4 Interação com coisas do mapa que dão recompensa (ideia do usuário — aguarda escolha entre propostas)
+
 ## Fase 12 — Lua mais divertida ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "o que não existir no nosso jogo, adicione de forma divertida e dada a temática do mapa (só a Lua)" + "tira
 > todos coelhos e alienígena do mapa". Pesquisa: Space Taxi, Thrust/Solar Jetman, Lunar Lander Beyond, Death Stranding.
