@@ -25,7 +25,8 @@ ICON = 12
 # dourado (dinheiro), vermelho (perigo), âmbar (gás acabando) e os ícones.
 BASE_RAMP = {"low": "navy", "deep": "deep_teal", "mid": "teal", "base": "sea", "bright": "aqua", "hi": "ice"}
 WORLDS = {
-    "luna":   BASE_RAMP,
+    "luna":   {"low": "plum_dark", "deep": "plum", "mid": "purple", "base": "violet", "bright": "lavender",
+               "hi": "cream"},                                  # Lua de queijo (2026-10-04): lilás no pôr do sol
     "ares":   {"low": "deep_sage", "deep": "pine", "mid": "green", "base": "emerald", "bright": "leaf", "hi": "sprout"},
     "kronos": {"low": "plum_dark", "deep": "magenta_dark", "mid": "raspberry", "base": "hot_pink", "bright": "pink",
                "hi": "peach"},
@@ -35,8 +36,6 @@ WORLDS = {
 
 def themed(cv: Canvas, world: str) -> Canvas:
     """Troca a rampa turquesa pela do mundo, pixel a pixel (sem trocas em cadeia)."""
-    if world == "luna":
-        return cv
     remap = {resolve(BASE_RAMP[k]): resolve(v) for k, v in WORLDS[world].items()}
     out = cv.copy()
     for y in range(out.h):
@@ -48,47 +47,42 @@ def themed(cv: Canvas, world: str) -> Canvas:
 
 
 # ------------------------------------------------------------------ painel
-def panel(w: int, h: int, header: int = 0) -> Canvas:
-    """Painel escuro com grade sutil de HUD, borda turquesa (luz de cima-esquerda), cantos chanfrados com detalhe ciano.
-    header > 0: faixa de título no topo com essa altura."""
-    cv = Canvas(w, h)
-    ch = 3                                                     # chanfro
+def _rounded(w: int, h: int, r: float):
     def inside(x, y):
         if not (0 <= x < w and 0 <= y < h):
             return False
-        return not (x + y < ch or (w - 1 - x) + y < ch or x + (h - 1 - y) < ch or (w - 1 - x) + (h - 1 - y) < ch)
+        cx = r if x < r else w - 1 - r if x > w - 1 - r else x
+        cy = r if y < r else h - 1 - r if y > h - 1 - r else y
+        return (x - cx) ** 2 + (y - cy) ** 2 <= r * r + 0.6
+    return inside
+
+
+def panel(w: int, h: int, header: int = 0) -> Canvas:
+    """Painel FOFO (2026-10-04): cantos arredondados, contorno ink, aro colorido com luz (cima-esquerda claro,
+    baixo-direita escuro), fundo escuro aconchegante tingido pelo mundo (texto continua legível).
+    header > 0: faixa de título no topo com essa altura."""
+    cv = Canvas(w, h)
+    inside = _rounded(w, h, 4.5)
+
+    def depth(x, y):                                           # distância (em px) até a borda
+        for d in range(4):
+            if not all(inside(x + dx, y + dy) for dx, dy in ((d + 1, 0), (-d - 1, 0), (0, d + 1), (0, -d - 1))):
+                return d
+        return 4
     for y in range(h):
         for x in range(w):
             if not inside(x, y):
                 continue
-            c = "shadow" if (x % 5 == 2 and y % 5 == 2) else "ink"
-            cv.px(x, y, c)
-    # contorno: externo escuro; filete turquesa (claro em cima/esquerda, escuro embaixo/direita)
-    for y in range(h):
-        for x in range(w):
-            if not inside(x, y):
-                continue
-            edge = not (inside(x - 1, y) and inside(x + 1, y) and inside(x, y - 1) and inside(x, y + 1))
-            if edge:
-                lit = (y <= 3 or x <= 3) and not (y >= h - 4 or x >= w - 4)
-                cv.px(x, y, "sea" if lit else "teal")
-            elif not (inside(x - 2, y) and inside(x + 2, y) and inside(x, y - 2) and inside(x, y + 2)):
-                cv.px(x, y, "deep_teal" if not (y >= h - 3 or x >= w - 3) else "navy")
-    # detalhes ciano nos cantos de cima (colchetes de HUD)
-    for (sx, d) in ((ch + 1, 1), (w - ch - 2, -1)):
-        for k in range(3):
-            cv.px(sx + d * k, 2, "aqua")
-        cv.px(sx - d, 3, "aqua") if 0 else None
-    cv.px(2, ch + 1, "aqua"); cv.px(2, ch + 2, "aqua")
-    cv.px(w - 3, ch + 1, "aqua"); cv.px(w - 3, ch + 2, "aqua")
+            d = depth(x, y)
+            lit = (x + y) < (w - 1 - x) + (h - 1 - y)
+            c = "ink" if d == 0 else ("bright" if lit else "mid") if d == 1 else "deep" if d == 2 else "low"
+            cv.px(x, y, BASE_RAMP[c])
     if header:
         for y in range(3, header):
             for x in range(3, w - 3):
-                if inside(x, y):
-                    c = "deep_teal" if y > 3 else "sea"
-                    if y == header - 1:
-                        c = "teal"
-                    cv.px(x, y, c)
+                if inside(x, y) and depth(x, y) >= 3:
+                    c = "base" if y == 3 else "mid" if y == header - 1 else "deep"
+                    cv.px(x, y, BASE_RAMP[c])
     return cv
 
 
@@ -104,28 +98,27 @@ BTN_STYLES = {
 
 
 def button(w: int, h: int, style: str) -> Canvas:
-    s = BTN_STYLES[style]
+    """Botão pílula gordinho: contorno ink, brilho em cima, lábio escuro embaixo (relevo)."""
+    st = BTN_STYLES[style]
     cv = Canvas(w, h)
+    inside = _rounded(w, h, 3.5)
+    pressed = style == "pressed"
     for y in range(h):
         for x in range(w):
-            corner = (x in (0, w - 1)) and (y in (0, h - 1))
-            if corner:
+            if not inside(x, y):
                 continue
-            if x in (0, w - 1) or y in (0, h - 1):
+            edge = not all(inside(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            if edge:
                 c = "ink"
-            elif y == 1:
-                c = s["top"] if 1 < x < w - 2 else s["hi"]
-            elif y == h - 2:
-                c = s["low"]
-            elif x == 1:
-                c = s["hi"]
-            elif x == w - 2:
-                c = s["low"]
+            elif y >= h - 3 and not pressed:
+                c = st["low"]                                 # lábio (relevo)
+            elif y <= 2 + (1 if pressed else 0):
+                c = st["top"]
             else:
-                c = s["fill"]
+                c = st["fill"]
             cv.px(x, y, c)
     if style not in ("pressed", "disabled"):
-        cv.px(2, 2, s["top"])                                   # brilho no canto da luz
+        cv.px(3, 3, "white" if style.startswith("primary") else st["top"])
     return cv
 
 
@@ -138,9 +131,9 @@ def bar(w: int, h: int, kind: str) -> Canvas:
     cv = Canvas(w, h)
     for y in range(h):
         for x in range(w):
-            if (x in (0, w - 1)) and (y in (0, h - 1)):
+            if (x in (0, w - 1)) and (y in (0, 1, h - 2, h - 1)) or (x in (1, w - 2)) and (y in (0, h - 1)):
                 continue
-            if x in (0, w - 1) or y in (0, h - 1):
+            if x in (0, w - 1) or y in (0, h - 1) or (x in (1, w - 2) and y in (1, h - 2)):
                 c = "ink"
             elif kind == "bg":
                 c = "shadow" if y == 1 else "ink" if y == h - 2 else "navy"

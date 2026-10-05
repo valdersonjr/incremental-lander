@@ -1,4 +1,5 @@
-"""Plataforma de pouso + marcador do alvo (padrão: patterns/landing-pad.md; estilo: cena da Lua + lander).
+"""Plataforma de pouso + marcador do alvo (padrão: patterns/landing-pad.md). Estilo FOFO desde 2026-10-04
+(receita pixel-art/references/cute-scene-method.md: meia resolução + Scale2x, contorno ink, postes de pirulito).
 
 Contrato com o jogo (godot-dev):
   pad   80x28: deck de 64 px (x 8..71) com o TOPO na linha 10 = altura da plataforma no mundo
@@ -46,101 +47,84 @@ class Pad:
         self.fw = 15 if self.deck_w >= 64 else 11 if self.deck_w >= 40 else 8   # largura das fundações
 
 
+def _scale2x(c: Canvas) -> Canvas:
+    sys.path.insert(0, "art/src/bg")
+    from moon_cute import scale2x
+    return scale2x(c)
+
+
 def structure(P: Pad) -> Canvas:
-    cv = Canvas(P.pw, PH)
-    DX1 = P.dx1
-    # fundação encaixada no chão: blocos que se estreitam (luz de cima-esquerda: face esquerda clara)
-    for (x0, x1) in ((DX0 + 3, DX0 + 3 + P.fw), (DX1 - 3 - P.fw, DX1 - 3)):
-        for y in range(TOP + 6, PH):
-            inset = (y - (TOP + 6)) // 3
-            a, b = x0 + inset, x1 - inset
-            for x in range(a, b + 1):
-                t = (x - a) / max(b - a, 1)
-                c = "lilac_grey" if t < 0.2 else "slate" if t < 0.75 else "shadow"
-                cv.px(x, y, c)
-            cv.px(a, y, "steel" if y < TOP + 12 else "lilac_grey")      # aresta iluminada
-        # linha de painel feita com a rampa: sulco escuro com borda clara em cima
-        for x in range(x0 + 2, x1 - 1):
-            cv.px(x, TOP + 11, "shadow")
-            cv.px(x, TOP + 10, "lilac_grey" if cv.get(x, TOP + 10) == resolve("slate") else cv.get(x, TOP + 10))
-        cv.px(x0 + 5, TOP + 14, "ink"); cv.px(x1 - 5, TOP + 14, "ink")         # rebites/encaixes
-    # treliça entre as fundações (sombra, recuada)
-    for x in range(DX0 + P.fw + 4, DX1 - P.fw - 3):
-        cv.px(x, TOP + 6, "slate")
-        if (x - DX0) % 6 in (0, 1):
-            for y in range(TOP + 7, TOP + 10):
-                cv.px(x, y, "shadow")
-        cv.px(x, TOP + 10, "shadow")
-    # deck: topo branco (vê-se de leve de cima), faixa de destaque, borda inferior escura
-    for x in range(DX0, DX1 + 1):
-        cv.px(x, TOP, "white" if DX0 + 1 < x < DX1 - 10 else "mist")
-        cv.px(x, TOP + 1, "mist")
-        cv.px(x, TOP + 2, "steel")
-        cv.px(x, TOP + 3, P.a["stripe"])
-        cv.px(x, TOP + 4, "lilac_grey")
-        cv.px(x, TOP + 5, "slate")
-    if P.a.get("hazard"):                      # listras de perigo na face do deck (amarelo/preto em diagonal)
-        for x in range(DX0 + 1, DX1):
-            for y in (TOP + 4, TOP + 5):
-                cv.px(x, y, "gold" if ((x + y) // 2) % 2 == 0 else "ink")
-    if P.a.get("dashes"):                      # traços âmbar na face do deck (forma diferente das listras da apertada)
-        for x in range(DX0 + 2, DX1 - 1):
+    """Estilo FOFO (2026-10-04, receita cute-scene-method): desenhada em meia resolução e ampliada com Scale2x —
+    deck branco gordinho com faixa colorida do tipo, pezinhos redondos, postes de pirulito; contorno ink."""
+    w2, d0, d1 = P.pw // 2, DX0 // 2, P.dx1 // 2          # meia resolução: deck nas linhas 5..7
+    h = Canvas(w2, PH // 2)
+    a = P.a
+    for x in range(d0, d1 + 1):
+        h.px(x, 5, "white"); h.px(x, 6, a["stripe"]); h.px(x, 7, "mist")
+    fw = max(2, P.fw // 3)
+    for fx in (d0 + 1, d1 - fw):                          # pezinhos: perninha + pé redondo
+        mid = fx + fw / 2
+        for y in range(8, 14):
+            half = 1.0 if y < 11 else 2.2 if y < 13 else 1.6
+            for x in range(int(mid - half - 0.5), int(mid + half + 0.5) + 1):
+                if abs(x + 0.5 - mid) <= half + 0.01:
+                    h.px(x, y, "mist" if x + 0.5 < mid - 0.4 else "steel" if x + 0.5 < mid + 0.8 else "lilac_grey")
+    for x in range(d0 + fw + 2, d1 - fw - 1):             # sombrinha sob o deck
+        h.px(x, 8, "lilac_grey")
+    for lx in (P.lamps[0] // 2, P.lamps[1] // 2):         # postes de pirulito
+        for y in range(3, 8):
+            h.px(lx, y, "steel")
+    c = _scale2x(h)
+    full = Canvas(P.pw, PH)
+    full.stamp(c)
+    if a.get("hazard"):                                   # bengala: listras diagonais vermelho/branco
+        for x in range(DX0 + 1, P.dx1):
+            for y in (TOP + 2, TOP + 3):
+                full.px(x, y, "white" if ((x + y) // 3) % 2 else "red")
+    if a.get("dashes"):
+        for x in range(DX0 + 2, P.dx1 - 1):
             if (x - DX0 - 2) % 6 < 3:
-                cv.px(x, TOP + 4, "amber")
-                cv.px(x, TOP + 5, "rust")
-    for x in (DX0, DX1):                       # pontas chanfradas
-        cv.px(x, TOP, "clear"); cv.px(x, TOP + 5, "clear")
-        cv.px(x, TOP + 1, "steel"); cv.px(x, TOP + 4, "slate")
-    for x in range(DX0 + 16, DX1 - 14, 16):    # juntas do deck (painéis)
-        cv.px(x, TOP + 2, "lilac_grey")
-        if not P.a.get("hazard"):
-            cv.px(x, TOP + 4, "slate")
-    # postes de sinalização
-    for lx in P.lamps:
-        left = lx < P.mid_x
-        for y in range(TOP - 6, TOP + 6):
-            cv.px(lx, y, "steel" if y < TOP else "lilac_grey")
-            cv.px(lx + (1 if left else -1), y, "slate")
-        cv.px(lx, TOP + 6, "slate"); cv.px(lx + (1 if left else -1), TOP + 6, "shadow")
-        for x in range(min(lx, DX0), max(lx, DX0) + 1) if left else range(DX1, lx + 1):
-            cv.px(x, TOP + 4, "lilac_grey")    # braço que liga o poste ao deck
-    return cv
+                full.px(x, TOP + 3, "honey")
+    full.outline("ink", inside=False)
+    for x in range(DX0 + 2, P.dx1 - 1):                   # brilho no topo do deck
+        if full.get(x, TOP) not in (None, resolve("ink")):
+            full.px(x, TOP, "white")
+    return full
 
 
 def lights(P: Pad, cv: Canvas, stripe_on: set, lamp_on: bool, dim: bool = False) -> Canvas:
     a = P.a
     for i, x in enumerate(P.stripe_lights):
-        if dim:
-            c, c2 = a["dim"], a["dim"]
-        elif i in stripe_on:
-            c, c2 = a["on"]
-        else:
-            c, c2 = a["off"], a["off"]
-        cv.px(x, TOP + 3, c)
-        cv.px(x + 1, TOP + 3, c2)
-    for cx in P.lamps:
+        c = a["dim"] if dim else a["on"][0] if i in stripe_on else a["off"]
+        cv.px(x, TOP + 2, c); cv.px(x + 1, TOP + 2, c)
+    import math
+    for cx in P.lamps:                                    # bolinha do pirulito (raio 2,5) com contorno ink
         if lamp_on:
-            core, cross, outer = a["lamp"]
-            cv.px(cx, TOP - 8, core)
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                cv.px(cx + dx, TOP - 8 + dy, cross)
-            for dx, dy in ((2, 0), (-2, 0), (0, -2)):
-                cv.px(cx + dx, TOP - 8 + dy, outer)
+            ramp = [a["lamp"][0], a["lamp"][1], a["lamp"][2], a["lamp"][2]]
         else:
-            top, below = a["lamp_dim"] if dim else a["lamp_off"]
-            cv.px(cx, TOP - 8, top)
-            cv.px(cx, TOP - 7, below)
+            c0, c1 = a["lamp_dim"] if dim else a["lamp_off"]
+            ramp = [c0, c0, c1, c1]
+        cy = TOP - 9
+        for y in range(cy - 4, cy + 4):
+            for x in range(cx - 4, cx + 4):
+                d = math.hypot(x + 0.5 - (cx + 0.5), y + 0.5 - (cy + 0.5))
+                if d <= 2.6:
+                    nx, ny = (x - cx) / 2.6, (y - cy) / 2.6
+                    i = -0.6 * nx - 0.7 * ny
+                    cv.px(x, y, ramp[0] if i > 0.45 else ramp[1] if i > -0.1 else ramp[2])
+                elif d <= 3.5:
+                    cv.px(x, y, "ink")
+        cv.px(cx - 1, cy - 1, "white")
     return cv
 
 
 def deck_glow(P: Pad, cv: Canvas, f: int) -> Canvas:
-    """Alvo: topo do deck vira pista iluminada (luzes ciano de pouso que pulsam do centro para fora)."""
+    """Alvo: o topo do deck brilha em ondas do centro para fora."""
     mid = (DX0 + P.dx1) / 2
-    for x in range(DX0 + 1, P.dx1):
+    for x in range(DX0 + 2, P.dx1 - 1):
         d = abs(x - mid)
-        lit = int(d) % 8 == (f * 2) % 8 or int(d) % 8 == (f * 2 + 1) % 8
-        cv.px(x, TOP, "white" if lit else "ice")
-        cv.px(x, TOP + 1, "aqua" if lit else "mist")
+        lit = int(d) % 8 in ((f * 2) % 8, (f * 2 + 1) % 8)
+        cv.px(x, TOP + 1, P.a["on"][0] if lit else "white")
     return cv
 
 
@@ -148,11 +132,10 @@ def pad_frames(kind: str = "normal"):
     P = Pad(kind)
     idle = lights(P, structure(P), set(), False, dim=True)
     n = len(P.stripe_lights)
-    # luzes correm das pontas para o centro; lâmpadas acesas só no começo do ciclo (~25%)
     target = []
     for f in range(6):
         on = {f, n - 1 - f} if f < (n + 1) // 2 else set()
-        target.append(deck_glow(P, lights(P, structure(P), on, lamp_on=f in (0, 1)), f))
+        target.append(deck_glow(P, lights(P, structure(P), on, lamp_on=f in (0, 1, 2)), f))
     return idle, target
 
 
@@ -175,35 +158,41 @@ def beam_frames(kind: str = "normal") -> list:
                 if d > 1:
                     continue
                 edge = max(0.0, (d - 0.78) / 0.22)       # bordas mais fortes (parede do feixe)
-                lvl = amp * (1 - h) ** 1.4 * (0.26 + 0.74 * edge)
+                lvl = amp * (1 - h) ** 1.6 * (0.10 + 0.90 * edge ** 1.5)
                 if lvl * 16 > BAYER[y % 4][x % 4] + 0.5:
                     c = "ice" if lvl > 0.75 else "aqua" if lvl > 0.5 else "sea" if lvl > 0.28 else "teal"
                     cv.px(x, y, c)
         for i in range(max(3, round(9 * BW / 64))):      # partículas subindo (laço de 4 quadros)
             px = 6 + (i * 23) % (BW - 12)
             py = BH - 4 - ((i * 17 + f * 7) % (BH - 10))
-            cv.px(px, py, "white" if py > BH * 0.5 else "ice")
-            if py + 1 < BH:
-                cv.px(px, py + 1, "aqua")
+            cv.px(px, py, "white")                        # brilhinho em cruz
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                if 0 <= px + dx < BW and 0 <= py + dy < BH:
+                    cv.px(px + dx, py + dy, "ice" if py > BH * 0.5 else "aqua")
         frames.append(cv)
     return frames
 
 
 def marker_frames():
+    """Setinha gordinha com contorno (fofa), quica."""
     base = Canvas(11, 9)
     base.paint([
-        "abbbbbbbbba",
-        ".abcccccba.",
-        "..abcccba..",
-        "...abcba...",
-        "....aba....",
-        ".....a.....",
-    ], {"a": "teal", "b": "aqua", "c": "ice"}, x=0, y=0)
-    base.px(5, 1, "white"); base.px(5, 2, "white")
+        "...bbbbb...",
+        "...bcccb...",
+        "...bcccb...",
+        "bbbbcccbbbb",
+        ".bcccccccb.",
+        "..bcccccb..",
+        "...bcccb...",
+        "....bcb....",
+        ".....b.....",
+    ], {"b": "ink", "c": "aqua"}, x=0, y=0)
+    base.px(4, 1, "white"); base.px(4, 2, "ice"); base.px(3, 4, "ice"); base.px(4, 4, "white")
+    base.px(6, 5, "sea"); base.px(6, 6, "sea"); base.px(7, 4, "sea")
     frames = []
     for dy in (0, 1, 2, 1):
         f = Canvas(11, 9)
-        f.stamp(base, 0, dy)
+        f.stamp(base.crop(0, 0, 11, 9 - dy), 0, dy)
         frames.append(f)
     return frames
 
