@@ -85,6 +85,10 @@ Antes de codar, escreva (no chat, curto):
 - Técnicas: contorno/selout, dithering (onde e qual padrão) ou clusters, AA interno.
 - Para animação: lista de frames com duração (ms).
 
+> **Cenas/fundos/mundos e qualquer arte do estilo fofo: siga `references/cute-scene-method.md`** (método aprovado
+> em 2026-10-04: kit de peças desenhadas em meia resolução + cel + contorno colorido + Scale2x, composição com
+> poucos elementos grandes, validação NO JOGO e apresentação em HTML aberto no Chrome).
+
 ### Etapa 4 — Construir em passes (como no Aseprite)
 Crie `art/src/<categoria>/<nome>.py`. Construa em camadas, **salvando prévia a cada passe relevante**:
 1. **Silhueta** em uma cor (`polygon`, `ellipse`, `paint` com ASCII, `mirror_x` para simetria).

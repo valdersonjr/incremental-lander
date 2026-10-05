@@ -9,7 +9,10 @@
   `.claude/skills/pixel-art/references/patterns/cute-style.md` (rosto, contorno escuro no primeiro plano, cor chapada,
   formas redondas, fundos simples). **Lander novo com gatinho astronauta aprovado e no jogo** (`art/src/sprites/lander_cute.py`
   → `assets/sprites/lander.png`; idle pisca; mesmo contrato 32×32, pés y=24, half_width 13 — sem mudança de física).
-  **Pendente**: cenas dos 4 mundos, terreno, plataformas, perigos, UI e ícone do app ainda no estilo antigo (pontilhado).
+  **Lua refeita e aprovada no jogo** ("Lua de queijo", `art/src/bg/moon_cute.py --export`) com o método de
+  `.claude/skills/pixel-art/references/cute-scene-method.md` (kit desenhado em meia resolução + Scale2x).
+  **Pendente**: plataforma de pouso e painel do HUD (aparecem na Lua no estilo antigo), depois Silvânia, Docelândia,
+  O Quarto, perigos, UI e ícone do app.
 - **Pouso mais tolerante (2026-10-04)**: limites 7 m/s vertical, 5 m/s lateral, ~20° (eram 3 / 2 / ~11°); a telemetria agora
   grava vy/vx/tilt/motivo de cada toque (o CSV antigo vira deliveries_old3.csv sozinho). Depois de jogar: conferir no CSV
   se as batidas caíram e recalibrar (Fase 10.1) — a qualidade média sobe com limites maiores (demo 0,87 → 0,94).
@@ -107,9 +110,9 @@
 - **Travas da Regra 0**: hooks bloqueiam ações numa área sem a skill dela; pre-commit valida assets/economia.
 
 ## Próximo passo
-- **Arte fofa (2026-10-04)**: refazer na direção `cute-style` mundo a mundo, começando pela **Lua** (fundo em silhuetas
-  lisas, terreno com borda contornada, plataformas/cristais/perigos contornados e redondos); depois UI arredondada e o
-  ícone do app com o gatinho. Mostrar cada mundo lado a lado com o atual (página HTML de comparação) antes de exportar.
+- **Arte fofa (2026-10-04)**: Lua ✅. Próximo: **plataforma de pouso** (normal/estreita/apertada + feixe + marcador)
+  e **HUD** no estilo fofo; depois os outros mundos com a receita `cute-scene-method.md`. Mostrar sempre em página
+  HTML aberta no Chrome, com capturas do jogo.
 - **Lançamento**: instalar os templates de export (Editor → Gerenciar templates → Baixar 4.7.2), exportar macOS e
   Windows (`godot --headless --export-release "macOS" builds/mac/...`), testar numa máquina limpa; jogar 1–2 h e calibrar
   (Fase 10.1, telemetria em ~/Library/Application Support/IncrementalLander/telemetry/); decidir nome/logo.

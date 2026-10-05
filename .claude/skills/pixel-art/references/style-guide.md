@@ -44,6 +44,8 @@
   **contorno escuro (`ink`) no primeiro plano** (personagem, objetos, borda do terreno), **cor chapada** (2–3 tons
   por material, quase sem pontilhado), **fundos simples** em silhuetas tingidas pelo bioma, sem contorno.
 - Lander = **gatinho astronauta** (`art/src/sprites/lander_cute.py`, aprovado). Paleta continua Resurrect 64.
+- **Lua = "Lua de queijo"** (pôr do sol rosado, chão de queijo, coelhinhos, Terra dormindo) — aprovada no jogo.
+  **Receita obrigatória para cenas: `cute-scene-method.md`** (conto de fadas pastel, kit desenhado + Scale2x).
 - As cenas/terreno/UI existentes ainda estão no estilo antigo (pontilhado, facetado): refazer mundo a mundo
   nesta direção. Seções abaixo valem só onde não conflitam com esta.
 

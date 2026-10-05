@@ -122,7 +122,8 @@ compras ≤ 30 min. Relatório: `balance/reports/2026-09-29-v6-expedition/`.
 ## 10. Direção de arte e som
 - **Arte**: pixel art **fofa/cozy** (referência: Shelldiver; desde 2026-10-04) — o lander é pilotado por um **gatinho
   astronauta** numa cúpula de vidro sobre um disco branco + turquesa, propulsor de plasma ciano; personagem e
-  primeiro plano com contorno escuro, cor chapada, formas redondas (cenas ainda no estilo anterior, a refazer).
+  primeiro plano com contorno escuro, cor chapada, formas redondas. Mundos de **conto de fadas**, não realistas:
+  a Lua é a "Lua de queijo" (pôr do sol rosado, coelhinhos, Terra dormindo); demais mundos a refazer no mesmo método.
   Paleta **Resurrect 64** travada, lander 32×32, tiles/texturas 16×16, resolução
   interna **640×360** (escala inteira). Tudo via skill `pixel-art` (`references/style-guide.md`).
 - **Som**: retro-synth espacial 100% sintetizado, escala em D, loudness por categoria, via skill

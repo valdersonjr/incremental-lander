@@ -67,6 +67,10 @@ desligado** (`--no_save`, caminho `tests/visual/` ou `SaveManager.set_dir()` num
   — o `check` mostra o erro com a linha em segundos. Ex.: `var x := float(a) + dx * b` com `dx` vindo de um array
   literal não tipado → "Cannot infer the type"; use `var x: float = ...`.
 
+## Armadilha (2026-10-04): PNG trocado → captura mostra a arte ANTIGA
+- Depois de exportar assets novos (skill pixel-art), o `capture`/`run` usa o cache de importação: a folha saiu com a
+  Lua antiga. **Rodar `gdtool.py check` (faz `--import`) antes de capturar** quando PNGs mudaram.
+
 ## Armadilha (2026-10-03): tempo do MODELO × tempo REAL
 - A física corre em segundos do modelo (`time_scale` = 4,5× o tempo real). Tudo que o jogador precisa PERCEBER
   (avisos de perigo, ciclos, quedas) deve ser em segundos reais — com tempos do modelo, um aviso de 1,4 s durava

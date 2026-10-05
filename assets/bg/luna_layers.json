@@ -1,5 +1,5 @@
 {
-  "notes": "Gerado por art/src/bg/moon_scene.py (pixel-art). Posi\u00e7\u00f5es em px na tela de 640x360 da cena aprovada.",
+  "notes": "Gerado por art/src/bg/moon_cute.py (pixel-art, estilo fofo, Lua de queijo). Posi\u00e7\u00f5es em px na tela 640x360.",
   "horizon": 262,
   "planet_pos": [
     432,
@@ -8,7 +8,7 @@
   "far_y": 0,
   "mid_y": 0,
   "plain_y": 267,
-  "deep_color": "#2e222f",
+  "deep_color": "#cd683d",
   "strip_depth": 26,
   "body_texture": "res://assets/tiles/luna_body.png",
   "depth_texture": "res://assets/tiles/luna_depth.png",
@@ -46,34 +46,26 @@
   "war": {
     "muzzles": [
       [
-        87,
-        209
+        78,
+        172
       ],
       [
-        377,
-        169
-      ],
-      [
-        535,
-        229
+        576,
+        172
       ]
     ],
     "targets": [
       [
-        82,
-        216
+        64,
+        186
       ],
       [
-        238,
-        194
+        374,
+        168
       ],
       [
-        372,
-        170
-      ],
-      [
-        520,
-        233
+        562,
+        186
       ]
     ],
     "saucers": 3,
