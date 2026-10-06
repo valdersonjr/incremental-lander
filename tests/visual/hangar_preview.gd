@@ -2,6 +2,7 @@
 ## Padrao: rolado ate o fim. --top: comeco. --late: meio de jogo (frota, recordes). --tab=1|2: aba PEDIDOS/AJUDAS.
 ## --missions: parte da arvore de missoes liberada e estrelas para gastar.
 ## --assists: ja tem parte da arvore. --menu: menu do jogo (Esc), como a Main abre.
+## --intro=tipo: libera o no ★1 desse tipo pela oficina (telinha "Novo amiguinho!").
 ## --keys: simula navegacao por teclado (foco no 1o botao de compra, depois de uma compra) e tooltip de custo.
 extends Node
 
@@ -36,6 +37,10 @@ func _ready() -> void:
 			h._set_tab(int(a.get_slice("=", 1)) as Hangar.Tab)
 	await get_tree().process_frame
 	await get_tree().process_frame
+	for a in args:
+		if a.begins_with("--intro="):                            # liberar pela oficina: abre "Novo amiguinho!"
+			GameState.stars = 9
+			GameState.unlock_mission(a.get_slice("=", 1) + "1")
 	if "--keys" in args:                                       # setas ate a 1a compra + Enter (compra e mantem o foco)
 		h._keyboard_nav = true
 		var buy: Button = null

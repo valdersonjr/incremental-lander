@@ -103,7 +103,8 @@
       prêmio, estrelas); sem gás e sem botão "vamos"; `MissionText` único (cartão + oficina) (2026-10-06)
 - [x] 15.3 Cada missão no seu mapa (seed por entrega) + tela escurece e a nave desce do céu; fundo mostra outro trecho (2026-10-06)
 - [x] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia (≤1%: sem mudança) (2026-10-06)
-- [ ] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado)
+- [x] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado) (2026-10-06)
+- [ ] 15.6 Aprovação do usuário jogando (cartão, descida, relevos; tamanho da cratera do Cabo em saltos curtos)
 
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida

@@ -1,0 +1,126 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/run/mission_intro.gd" id="1_intro"]
+
+[node name="MissionIntro" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_intro")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.180392, 0.133333, 0.184314, 0.7)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Center/Panel/VBox"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+text = "Novo amiguinho!"
+horizontal_alignment = 1
+
+[node name="Who" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Face" type="TextureRect" parent="Center/Panel/VBox/Who"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Talk" type="MarginContainer" parent="Center/Panel/VBox/Who"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/margin_left = 5
+
+[node name="Balloon" type="PanelContainer" parent="Center/Panel/VBox/Who/Talk"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"Balloon"
+
+[node name="Say" type="Label" parent="Center/Panel/VBox/Who/Talk/Balloon"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"BalloonLabel"
+
+[node name="Name" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+horizontal_alignment = 1
+
+[node name="Rule" type="HBoxContainer" parent="Center/Panel/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="GoodBox" type="HBoxContainer" parent="Center/Panel/VBox/Rule"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Good" type="TextureRect" parent="Center/Panel/VBox/Rule/GoodBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoodMark" type="TextureRect" parent="Center/Panel/VBox/Rule/GoodBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="BadBox" type="HBoxContainer" parent="Center/Panel/VBox/Rule"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Bad" type="TextureRect" parent="Center/Panel/VBox/Rule/BadBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="BadMark" type="TextureRect" parent="Center/Panel/VBox/Rule/BadBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="Ok" type="Button" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 18)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"PrimaryButton"
+text = "OBA!"

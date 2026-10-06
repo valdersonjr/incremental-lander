@@ -20,6 +20,7 @@ const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay
 		"drones": "", "autopilot": "×"}
 const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
 		"gear": "gear", "fleet": "fleet", "autopilot": "autopilot"}
+const MISSION_INTRO := preload("res://game/run/mission_intro.tscn")
 const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.MISSIONS, "PEDIDOS", "quality"], [Tab.ASSISTS, "AJUDAS", "distance"]]
 ## Aba PEDIDOS: o que cada missao pede vem de MissionText.kind_tip (tooltip); rostinho = rat_<tipo> (atlas kids).
 const MISSION_CARD_W := 132
@@ -62,6 +63,7 @@ var _keyboard_nav := false
 var _flash_row := ""
 var _flash_money := false
 
+var _intro: MissionIntro = null
 @onready var _planet: Label = %Planet
 @onready var _resources: HBoxContainer = %Resources
 @onready var _ship: HBoxContainer = %Ship
@@ -75,6 +77,21 @@ var _flash_money := false
 func _ready() -> void:
 	_launch.pressed.connect(func() -> void: launch_requested.emit())
 	launch_requested.connect(func() -> void: Sound.ui("click"))
+	_intro = MISSION_INTRO.instantiate()
+	add_child(_intro)
+	_intro.closed.connect(func() -> void:
+		if not _launch.disabled:
+			_launch.grab_focus())
+	Events.mission_unlocked.connect(_on_mission_unlocked)
+
+
+## Tipo de missao novo (no ★1 liberado aqui na oficina): telinha "Novo amiguinho!" uma vez.
+func _on_mission_unlocked(node_id: String) -> void:
+	if not visible:
+		return
+	for node: Dictionary in EconMath.mission_spec().get("nodes", []):
+		if node["id"] == node_id and int(node.get("star", 1)) == 1:
+			_intro.show_kind(str(node["kind"]))
 
 
 ## Mostra o hangar atualizado, na aba NAVE (o que se compra a cada visita).

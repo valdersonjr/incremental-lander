@@ -64,6 +64,7 @@ game/run/offer_panel.*        # OfferPanel (v15): fila de chips no alto (%Board/
                               # plataforma, Shift+↑/↓ estrela, 1–9 partem, E encerra (2 toques). Teste: pad_button_center()
 scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target_lift_m, crest_scale, basin_m; mission_shape()
 scripts/ui/mission_text.gd    # MissionText: fala curta (balloon) e explicação (tip/kind_tip) de cada tipo de missão
+game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, mission_unlocked, settings_changed

@@ -22,8 +22,13 @@
   40; Dupla = maior de cada campo. Só mexe no trecho partida → 1ª entrega (o 2º trecho do táxi não muda nada).
   Economia: `tests/tools/mission_gas_probe` (piloto do demo, mesmas distâncias com/sem relevo) → diferença ≤ 1% (o arco
   já passa por cima da crista) → **sem mudança na spec**. Prévia dos perfis: `tests/tools/mission_terrain_dump`.
-  Testes: `test_relevo_das_missoes*`. **15.5** — `MissionIntro` ao `Events.mission_unlocked` de nó ★1 (ratinho 2×, balão, certo × errado
-  com as figuras de carga + check/cross).
+  Testes: `test_relevo_das_missoes*`.
+  15.5 ✅ `game/run/mission_intro.*` (`MissionIntro`): a oficina instancia e abre ao `Events.mission_unlocked` de nó ★1
+  (só com a oficina visível): "Novo amiguinho!", ratinho 2×, balão, nome, certo × errado com as figuras das cargas
+  (`MissionIntro.PICS`; Pesada/Dupla só o certo) + check/cross; fecha com OBA!/Enter/Esc/clique depois de 0,4 s.
+  Prévia: `hangar_preview -- --tab=1 --intro=soft`.
+  **Próximo: 15.6** — o usuário jogar e aprovar (cartão, descida do céu, relevos). Pendências: em saltos curtos a
+  cratera do Cabo fica rasa (limite 15% da distância); o cartão de baixo cobre parte da nave pousada na escolha.
 - **Fase 14 — Só a Lua + árvore de missões (2026-10-06)**. Pedidos: "polir ao máximo o primeiro [mundo] e ignorar os
   outros"; prestígio "era pra ter sido removido"; missões abstratas com estrelas.
   - **Etapa A ✅ (14.1)**: saíram prestígio (Poeira, loja, recomeço), Silvânia/Docelândia/Quarto (arte, ambiência,
