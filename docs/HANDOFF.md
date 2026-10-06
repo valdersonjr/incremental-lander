@@ -4,6 +4,20 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-06)
+- **Fase 15 — Escolha intuitiva + missão no seu mapa (2026-10-06)**. 15.1 ✅ figuras (pad_normal/narrow/tight,
+  dist_1..3, check/cross no atlas kids; `assets/ui/balloon.png` + `balloon_tail.png` em `art/src/ui/ui_kit.py`).
+  15.2 ✅ nova tela de escolha (`OfferPanel`: fila de chips + cartão com balão e 3 plataformas que partem;
+  `MissionText`; `RunState.pay_for_tier`; tema `Balloon`/`BalloonLabel`; `UiKit.gold_frame`). Verificado: check,
+  94 testes + integrações (controls_test clica numa plataforma), demo entregando, capturas
+  `flight_ui_preview -- --no_title [--missions --select=soft]` (`--missions` novo: libera os ratinhos).
+  **Próximo: 15.3** — `Flight.begin_mission(seed, …)` zera as plataformas e chama `set_target`; seed =
+  `hash([_run_seed, deliveries.size()])`; `main._on_offer_chosen`: fade curto + nave descendo do céu (tween, física
+  parada, sem gás; números em `data/world.json > missions.arrival`); tirar `Flight.offer_ground_screen`; ajustar
+  edge_flow/gift_flow; teste novo (mapas diferentes por missão, mesmo seed = mesmo mapa). **15.4** — `shape` em
+  `TerrainGen.generate` por tipo (`world.json > missions.<kind>.terrain`: Pesada subida, Suave mesa, Rápida baixo, Cabo
+  cratera, resgate cratera rasa, táxi degrau) + medir `gas_used` × `gas_est` no demo; >10% → `mission_dv_mult`
+  (economy-balance). **15.5** — `MissionIntro` ao `Events.mission_unlocked` de nó ★1 (ratinho 2×, balão, certo × errado
+  com as figuras de carga + check/cross).
 - **Fase 14 — Só a Lua + árvore de missões (2026-10-06)**. Pedidos: "polir ao máximo o primeiro [mundo] e ignorar os
   outros"; prestígio "era pra ter sido removido"; missões abstratas com estrelas.
   - **Etapa A ✅ (14.1)**: saíram prestígio (Poeira, loja, recomeço), Silvânia/Docelândia/Quarto (arte, ambiência,

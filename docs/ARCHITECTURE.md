@@ -56,9 +56,11 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
                               # com ganho + plataforma/combo/carga; terrain.gd escreve o multiplicador sob plataformas difíceis
-game/run/offer_panel.*        # OfferPanel (tela cheia, só pinos + mini-cartão): pedidos no mundo — pino fincado no chão onde a
-                              # plataforma vai nascer (ground_at = Flight.offer_ground_screen) ou na coluna da borda direita
-                              # com setinha se fica além da tela; teclas 1–9/setas/clique escolhem, E encerra (2 toques)
+game/run/offer_panel.*        # OfferPanel (v15): fila de chips no alto (%Board/%Chips: rostinho, prêmio, perto/médio/longe do
+                              # mineiro) + cartão embaixo (%Face/%Cargo, balão %Balloon/%Say = MissionText.balloon, %Pads = 3
+                              # botões de plataforma que partem, %Stars). Chip: hover seleciona, clique/Enter parte; ↑/↓
+                              # plataforma, Shift+↑/↓ estrela, 1–9 partem, E encerra (2 toques). Teste: pad_button_center()
+scripts/ui/mission_text.gd    # MissionText: fala curta (balloon) e explicação (tip/kind_tip) de cada tipo de missão
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, mission_unlocked, settings_changed
@@ -239,4 +241,4 @@ game/flight/lander.gd                # load_div (Pesada) divide o empuxo (e o do
 game/main.gd                         # taxi: leg 1 -> set_target(2o trecho, -dir, stage 2); estrelas por entrega; --dev_mission=
                                      # kind:estrela|double:a+b, --dev_missions=ids, --dev_stars=N
 ```
-game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose; OfferPanel.last_choice por tipo; _input cima/baixo)
+game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember; OfferPanel.last_choice por tipo; _input cima/baixo); RunState.pay_for_tier = prêmio de cada botão

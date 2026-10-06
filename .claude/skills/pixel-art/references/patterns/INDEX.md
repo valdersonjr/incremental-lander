@@ -23,6 +23,6 @@ procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e reg
 | cute-style | Direção de arte fofa/cozy (ref. Shelldiver) + lander com gatinho astronauta | direção + sprite | 32 | assets/sprites/lander.png | 2026-10-04 |
 | lander | Nave do jogador (futurista, 32x32 + plasma; Apollo = alternativa) | sprite + anim | 32 | assets/sprites/lander.png | 2026-09-30 |
 | app-icon | Ícone do jogo (nave com plasma em céu espacial, retângulo arredondado) | ui | 32 (x16 = 512) | assets/ui/icon.png, assets/ui/icon_512.png | 2026-10-03 |
-| kids-ui | Interface para crianças: pinos de pedido, rostinhos, estrelas, figuras antes → depois, cadeado e mistério | ui (atlas) | 24 | assets/ui/kids.png | 2026-10-05 |
+| kids-ui | Interface para crianças: pinos de pedido, rostinhos, estrelas, figuras antes → depois, cadeado e mistério, plataformas/distância/certo-errado do cartão, balão de fala | ui (atlas) | 24/16 | assets/ui/kids.png, assets/ui/balloon.png, assets/ui/balloon_tail.png | 2026-10-05 |
 | moon-cargo | Cargas da Lua (caixa, bolo, sorvete, queijão no cabo, ratinho perdido + versões estragadas), ícones Estabilizador/Turbo e presentes do morro (gift, gas_can; 2026-10-06: fita fora do rosto) | sprites (atlas) | 16 | assets/sprites/cargo.png | 2026-10-05 |
 | mission-mice | Ratinhos das missões (7 rostinhos 24x24 com chapéu-assinatura) + ícones peso/relógio/estrela | ui + sprites (atlas) | 24/16 | assets/ui/kids.png, assets/sprites/cargo.png | 2026-10-06 |

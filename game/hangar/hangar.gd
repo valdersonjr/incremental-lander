@@ -21,13 +21,7 @@ const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay
 const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
 		"gear": "gear", "fleet": "fleet", "autopilot": "autopilot"}
 const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.MISSIONS, "PEDIDOS", "quality"], [Tab.ASSISTS, "AJUDAS", "distance"]]
-## Aba PEDIDOS: o que cada missao pede (tooltip); o rostinho e o ratinho do tipo (atlas kids: rat_<tipo>).
-const MISSION_TIP := {"heavy": "a nave fica pesada: sobe mais devagar e gasta mais gás",
-		"soft": "pouse bem devagar (a velocidade de pouso fica mais baixa a cada estrela)",
-		"fast": "chegue antes do relógio acabar (menos tempo a cada estrela)",
-		"passenger": "estrela 1: passe devagar pertinho do ratinho perdido; 2 e 3: táxi — pouse para buscar e leve de volta",
-		"tow": "a carga vai pendurada num cabo: não deixe bater no chão",
-		"double": "duas regras juntas no mesmo pedido"}
+## Aba PEDIDOS: o que cada missao pede vem de MissionText.kind_tip (tooltip); rostinho = rat_<tipo> (atlas kids).
 const MISSION_CARD_W := 132
 ## Larguras das colunas das tabelas (px da arte) — iguais em todas as abas para alinhar.
 const COL_ACTION := 120
@@ -629,7 +623,7 @@ func _add_missions() -> void:
 		face.texture = UiKit.kid("rat_" + kind)
 		face.custom_minimum_size = Vector2(24, 24)
 		face.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-		face.tooltip_text = MISSION_TIP.get(kind, "")
+		face.tooltip_text = MissionText.kind_tip(kind)
 		face.mouse_filter = Control.MOUSE_FILTER_PASS
 		line.add_child(face)
 		var pic := TextureRect.new()
@@ -641,7 +635,7 @@ func _add_missions() -> void:
 		name.text = str(EconMath.mission_kind(kind)["name"])
 		name.custom_minimum_size = Vector2(78, 0)
 		name.clip_text = true
-		name.tooltip_text = MISSION_TIP.get(kind, "")
+		name.tooltip_text = MissionText.kind_tip(kind)
 		name.mouse_filter = Control.MOUSE_FILTER_PASS
 		line.add_child(name)
 		var first := true
@@ -665,7 +659,7 @@ func _make_mission_card(node: Dictionary) -> PanelContainer:
 	card.custom_minimum_size = Vector2(MISSION_CARD_W, 0)
 	card.set_meta(&"row_key", "mission:" + id)
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
-	card.tooltip_text = "%s %s: %s" % [EconMath.mission_kind(kind)["name"], "★".repeat(star), MISSION_TIP.get(kind, "")]
+	card.tooltip_text = "%s %s: %s" % [EconMath.mission_kind(kind)["name"], "★".repeat(star), MissionText.kind_tip(kind)]
 	if not owned and not ok:
 		card.modulate = Color(0.6, 0.6, 0.68)
 		card.tooltip_text += "\n" + _mission_need_text(node)

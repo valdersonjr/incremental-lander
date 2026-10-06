@@ -12,15 +12,26 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_offer")
 
-[node name="Pins" type="Control" parent="."]
+[node name="Board" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_top = 34.0
+offset_right = 20.0
+offset_bottom = 60.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
+theme_type_variation = &"SlimPanel"
+
+[node name="Chips" type="HBoxContainer" parent="Board"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
 
 [node name="Card" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -30,9 +41,9 @@ anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -150.0
-offset_top = -52.0
-offset_right = 150.0
+offset_left = -140.0
+offset_top = -60.0
+offset_right = 140.0
 offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 0
@@ -40,6 +51,7 @@ mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Card"]
 layout_mode = 2
+mouse_filter = 2
 theme_override_constants/separation = 0
 
 [node name="Hint" type="Label" parent="Card/VBox"]
@@ -51,83 +63,60 @@ horizontal_alignment = 1
 
 [node name="Row" type="HBoxContainer" parent="Card/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 6
+mouse_filter = 2
+theme_override_constants/separation = 4
 
-[node name="Face" type="TextureRect" parent="Card/VBox/Row"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 32)
+[node name="Who" type="VBoxContainer" parent="Card/VBox/Row"]
 layout_mode = 2
 size_flags_vertical = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Cargo" type="TextureRect" parent="Card/VBox/Row"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-size_flags_vertical = 4
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Info" type="VBoxContainer" parent="Card/VBox/Row"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
+mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="GasRow" type="HBoxContainer" parent="Card/VBox/Row/Info"]
+[node name="Face" type="TextureRect" parent="Card/VBox/Row/Who"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 24)
 layout_mode = 2
+stretch_mode = 3
+
+[node name="Cargo" type="TextureRect" parent="Card/VBox/Row/Who"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Right" type="VBoxContainer" parent="Card/VBox/Row"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="GasIcon" type="TextureRect" parent="Card/VBox/Row/Info/GasRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(14, 14)
+[node name="Talk" type="MarginContainer" parent="Card/VBox/Row/Right"]
 layout_mode = 2
-stretch_mode = 3
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_override_constants/margin_left = 5
 
-[node name="GasBar" type="ProgressBar" parent="Card/VBox/Row/Info/GasRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(70, 8)
-layout_mode = 2
-size_flags_vertical = 4
-theme_type_variation = &"GasBar"
-show_percentage = false
-
-[node name="StarRow" type="HBoxContainer" parent="Card/VBox/Row/Info"]
-layout_mode = 2
-theme_override_constants/separation = 3
-
-[node name="PadIcon" type="TextureRect" parent="Card/VBox/Row/Info/StarRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(14, 14)
-layout_mode = 2
-stretch_mode = 3
-
-[node name="Stars" type="HBoxContainer" parent="Card/VBox/Row/Info/StarRow"]
+[node name="Balloon" type="PanelContainer" parent="Card/VBox/Row/Right/Talk"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 1
+mouse_filter = 2
+theme_type_variation = &"Balloon"
 
-[node name="Coins" type="TextureRect" parent="Card/VBox/Row"]
+[node name="Say" type="Label" parent="Card/VBox/Row/Right/Talk/Balloon"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(24, 24)
 layout_mode = 2
-size_flags_vertical = 4
-stretch_mode = 3
+theme_type_variation = &"BalloonLabel"
 
-[node name="Prize" type="Label" parent="Card/VBox/Row"]
+[node name="Pads" type="HBoxContainer" parent="Card/VBox/Row/Right"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 0)
 layout_mode = 2
-size_flags_vertical = 4
-theme_type_variation = &"MoneyLabel"
-theme_override_font_sizes/font_size = 22
+mouse_filter = 2
+theme_override_constants/separation = 5
 
-[node name="Go" type="Button" parent="Card/VBox/Row"]
+[node name="Stars" type="HBoxContainer" parent="Card/VBox/Row/Right"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(48, 28)
 layout_mode = 2
-size_flags_vertical = 4
-focus_mode = 0
-theme_type_variation = &"PrimaryButton"
-icon_alignment = 1
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1

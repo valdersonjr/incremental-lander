@@ -35,6 +35,14 @@
     "rat_fast",
     "rat_passenger",
     "rat_tow",
-    "rat_double"
+    "rat_double",
+    "pad_normal",
+    "pad_narrow",
+    "pad_tight",
+    "dist_1",
+    "dist_2",
+    "dist_3",
+    "check",
+    "cross"
   ]
 }

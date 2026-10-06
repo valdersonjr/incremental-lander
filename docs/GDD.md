@@ -55,6 +55,10 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   (normal ×1 · estreita ×1,5 · apertada ×2,2) e a **dificuldade** (estrelas liberadas); falhar a ★3 paga bem menos
   (×0,3) que a ★1 (×0,6). Teclado: cima/baixo = plataforma, Shift + cima/baixo = estrela; o jogo lembra a última escolha
   de cada ratinho.
+  **Tela de escolha (v15, 2026-10-06)**: no alto, a **fila de rostinhos** (um por pedido, com o prêmio; o mineiro mostra
+  perto/médio/longe em figura; cinza = o gás não chega). Embaixo, o **cartão** do escolhido: ratinho + carga, **balão de
+  fala** com a regra em 2–3 palavras ("Devagarinho!", "Tá pesado!"…) e as **3 plataformas como botões de partir**, cada
+  uma com o prêmio — clicar já parte. Sem barra de gás e sem botão "vamos" no cartão.
   **Liberação jogando** (padrão Hades/Dead Cells): cada entrega dá **1 estrela**; **3 estrelas** liberam um nó na aba
   **PEDIDOS** da oficina (★1 de Pesada/Suave/Rápida abertas; Passageiro e Cabo pedem 2 tipos ★1; ★N pede ★N-1; Dupla
   pede ★3 em 2 tipos).

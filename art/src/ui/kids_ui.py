@@ -378,13 +378,70 @@ def mouse_double() -> Canvas:
     return k
 
 
+
+# ------------------------------------------------------------------ cartão do pedido (2026-10-06)
+# Usuário escolheu a maquete D (art/previews/offer_card/): as 3 plataformas são os botões de partir; o mineiro mostra
+# perto/médio/longe; a telinha "Novo amiguinho!" mostra certo × errado.
+def pad_tier(half: int) -> Canvas:
+    """Plataforma de pouso em miniatura (meia largura half): mesma receita de pad(); normal 10, estreita 7, apertada 4."""
+    k = _canvas()
+    k.rect(12 - half, 13, half * 2, 3, "mist"); k.hline(12 - half, 11 + half, 13, "white")
+    k.hline(12 - half, 11 + half, 15, "steel")
+    for x in (12 - half + 1, 11 + half - 1):
+        k.vline(x, 16, 18, "lilac_grey")
+    k.px(12 - half, 12, "aqua"); k.px(11 + half, 12, "aqua")
+    k.outline("ink")
+    return k
+
+
+def distance(n: int) -> Canvas:
+    """Perto/médio/longe: da plataforminha (esquerda) sai um caminho pontilhado até a bandeirinha; quanto mais longe,
+    mais à direita fica a bandeira (n = 1, 2, 3)."""
+    k = _canvas()
+    fx = 6 + n * 5                                             # mastro: 11 / 16 / 21
+    k.hline(1, 4, 17, "mist"); k.px(1, 16, "aqua"); k.px(4, 16, "aqua")
+    for x in range(7, fx - 1, 3):                              # caminho pontilhado em arco baixinho
+        k.px(x, 13 if 7 < x < fx - 3 else 14, "cream")
+    k.vline(fx, 6, 18, "steel"); k.px(fx, 5, "gold")
+    k.paint(["rrr", "rrrr", "rr"], {"r": "hot_pink"}, x=fx - 3 if fx > 19 else fx + 1, y=6)
+    k.hline(fx - 1, fx + 1, 19, "lilac_grey")
+    k.outline("ink")
+    return k
+
+
+def check() -> Canvas:
+    """Certo: visto verde grosso (traço de 3 px)."""
+    k = _canvas()
+    for i in range(5):                                         # perninha curta
+        k.rect(4 + i, 11 + i, 3, 3, "emerald")
+    for i in range(10):                                        # perna longa
+        k.rect(8 + i, 15 - i, 3, 3, "emerald")
+    for i in range(10):
+        k.px(9 + i, 15 - i, "leaf")
+    k.outline("ink")
+    return k
+
+
+def cross() -> Canvas:
+    """Errado: xis vermelho grosso (traço de 3 px)."""
+    k = _canvas()
+    for i in range(12):
+        k.rect(5 + i, 5 + i, 3, 3, "red"); k.rect(16 - i, 5 + i, 3, 3, "red")
+    for i in range(12):
+        k.px(6 + i, 5 + i, "salmon") if i < 5 else None
+        k.px(17 - i, 5 + i, "salmon") if i < 5 else None
+    k.outline("ink")
+    return k
+
+
 MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
                 "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
 
 
 NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on", "star_off", "coins", "ship",
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
-         "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE)
+         "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
+    + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross"]
 
 
 def build() -> Canvas:
@@ -392,7 +449,8 @@ def build() -> Canvas:
              badge(["mist", "steel", "steel", "lilac_grey"]), rat(), bunny(), alien(), bear(), star(True), star(False),
              coins(), ship(), flame(False), flame(True), gas_bar(False), gas_bar(True), drop(True), drop(False),
              coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()] \
-        + [make() for make in MISSION_MICE.values()]
+        + [make() for make in MISSION_MICE.values()] \
+        + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross()]
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

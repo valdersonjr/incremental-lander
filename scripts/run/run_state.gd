@@ -109,6 +109,13 @@ func offer_info(index: int, gas_left: float) -> Dictionary:
 	}
 
 
+## Pagamento tipico do pedido index se o jogador escolher a plataforma tier (os 3 botoes do cartao).
+func pay_for_tier(index: int, tier: String) -> float:
+	var d: float = offers[index]
+	var m: Dictionary = offer_mission[index]
+	return _pay(d, leg2_m(m, d), 0.7, tier, EconMath.mission_mult(m))
+
+
 ## Gas estimado de uma missao de distancia d (os 2 trechos do taxi; Pesada divide o motor; Cabo x dv_mult).
 func mission_gas(m: Dictionary, d: float) -> float:
 	var st := stats

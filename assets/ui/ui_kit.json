@@ -40,6 +40,11 @@
       "xp"
     ]
   },
+  "balloon": {
+    "size": 16,
+    "margin": 5,
+    "tail": "balloon_tail.png"
+  },
   "icons": {
     "size": 12,
     "names": [

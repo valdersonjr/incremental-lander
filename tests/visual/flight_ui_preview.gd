@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--missions] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -10,6 +10,9 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if "--sandbox" in args:                                    # sessao de sandbox (nave forte)
 		Sandbox.begin("luna", true)
+	if "--missions" in args:                                   # todos os ratinhos liberados (cartao com estrelas)
+		GameState.mission_nodes.assign(["heavy1", "soft1", "fast1", "heavy2", "soft2", "passenger1", "fast2", "tow1",
+				"soft3"])
 	var main := MAIN.instantiate()
 	add_child(main)
 	for i in 20:

@@ -297,6 +297,40 @@ def sample(world: str = "luna") -> Canvas:
     return cv
 
 
+# ------------------------------------------------------------------ balão de fala (2026-10-06)
+BALLOON = 16            # 9-slice: margens 5
+BM = 5
+
+
+def balloon(w: int, h: int) -> Canvas:
+    """Balão de fala do ratinho: creme claro, cantos bem redondos, contorno ink, luz em cima-esquerda (white) e sombra
+    embaixo-direita (peach). Texto em ink por cima. O rabinho é uma peça à parte (balloon_tail) encostada à esquerda."""
+    cv = Canvas(w, h)
+    inside = _rounded(w, h, 4.5)
+    for y in range(h):
+        for x in range(w):
+            if not inside(x, y):
+                continue
+            edge = not all(inside(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            if edge:
+                cv.px(x, y, "ink")
+            elif not inside(x + 1, y + 1) or not inside(x, y + 2):
+                cv.px(x, y, "peach")
+            elif not inside(x - 1, y - 1) or not inside(x, y - 2):
+                cv.px(x, y, "white")
+            else:
+                cv.px(x, y, "cream")
+    return cv
+
+
+def balloon_tail() -> Canvas:
+    """Rabinho do balão apontando para o ratinho (esquerda), 6x9. A coluna da direita cobre a borda esquerda do balão
+    (posicionar em x = balão - 5, por cima dele) para o rabinho sair "de dentro" do balão."""
+    cv = Canvas(6, 9)
+    cv.paint([".....#", "....#w", "...#cc", "..#ccc", "##cccc", "..##cc", "....#p", ".....#", "......"],
+             {"#": "ink", "c": "cream", "w": "white", "p": "peach"})
+    return cv
+
 def kit_sheet() -> Canvas:
     sheet = Canvas(300, 130, "navy")
     sheet.stamp(panel(PANEL, PANEL), 4, 4)
@@ -327,6 +361,8 @@ def export() -> None:
         for st in BTN_STYLES:
             themed(button(BTN_W, BTN_H, st), world).save(f"{d}/button_{st}.png", preview=False)
         themed(bar(BAR_W, BAR_H, "fill"), world).save(f"{d}/bar_fill.png", preview=False)
+    balloon(BALLOON, BALLOON).save("assets/ui/balloon.png", preview=False)          # fixo (creme em todo mundo)
+    balloon_tail().save("assets/ui/balloon_tail.png", preview=False)
     atlas = Canvas(ICON * len(ICONS), ICON)
     for i, n in enumerate(ICONS):
         atlas.stamp(icon(n), i * ICON, 0)
@@ -334,6 +370,7 @@ def export() -> None:
     meta = {"panel": {"size": PANEL, "margin": PM}, "panel_header": {"size": PANEL, "margin": PM, "header": 12},
             "button": {"size": [BTN_W, BTN_H], "margin": [6, 5], "styles": list(BTN_STYLES)},
             "bar": {"size": [BAR_W, BAR_H], "margin": 3, "kinds": list(BAR_RAMPS)},
+            "balloon": {"size": BALLOON, "margin": BM, "tail": "balloon_tail.png"},
             "icons": {"size": ICON, "names": ICONS}, "font": {"file": "font.fnt", "size": pf.ROWS},
             "worlds": {w: {"accent": hex_of(r["bright"]), "title": hex_of(r["hi"]), "base": hex_of(r["base"]),
                            "deep": hex_of(r["deep"])} for w, r in WORLDS.items()},
@@ -346,7 +383,7 @@ def export() -> None:
 
 # caminhos literais dos assets (o pre-commit procura a fonte de cada PNG pelo caminho escrito no script):
 # assets/ui/font.png assets/ui/icons.png assets/ui/bar_gas.png assets/ui/bar_bg.png assets/ui/bar_warn.png assets/ui/bar_danger.png
-# assets/ui/bar_xp.png
+# assets/ui/bar_xp.png assets/ui/balloon.png assets/ui/balloon_tail.png
 # assets/ui/luna/panel.png assets/ui/luna/panel_header.png assets/ui/luna/bar_fill.png
 # assets/ui/luna/button_normal.png assets/ui/luna/button_hover.png assets/ui/luna/button_pressed.png assets/ui/luna/button_disabled.png assets/ui/luna/button_primary.png assets/ui/luna/button_primary_hover.png
 

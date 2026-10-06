@@ -80,6 +80,9 @@ static func theme_for(world: String) -> Theme:
 	# painel fino (uma linha de texto: dica de teclas no HUD)
 	t.set_type_variation(&"SlimPanel", &"PanelContainer")
 	t.set_stylebox(&"panel", &"SlimPanel", _box(wd + "panel.png", 8, Vector4(6, 2, 6, 2), true))
+	# balao de fala do ratinho (creme em todo mundo; rabinho = balloon_tail.png, posto a esquerda pelo cartao)
+	t.set_type_variation(&"Balloon", &"PanelContainer")
+	t.set_stylebox(&"panel", &"Balloon", _box(DIR + "balloon.png", 5, Vector4(5, 2, 5, 3)))
 	# textos (sombra de 1 px escura para ler sobre qualquer cenario)
 	t.set_color(&"font_color", &"Label", color("mist"))
 	t.set_color(&"font_shadow_color", &"Label", color("ink"))
@@ -93,6 +96,8 @@ static func theme_for(world: String) -> Theme:
 	_label_var(t, &"DustLabel", color("lavender"))
 	_label_var(t, &"BadLabel", color("red"))
 	_label_var(t, &"GoodLabel", color("leaf"))
+	_label_var(t, &"BalloonLabel", color("ink"))
+	t.set_color(&"font_shadow_color", &"BalloonLabel", Color(0, 0, 0, 0))
 	# botoes (4 estados) + principal
 	var m := Vector4(6, 3, 6, 3)
 	t.set_stylebox(&"normal", &"Button", _box(wd + "button_normal.png", 6, m))
@@ -332,6 +337,11 @@ static func stat_row(icon_name: String, title: String, value: String, variation:
 
 
 ## Brilho curto (compra, ganho): o item clareia e volta ao normal.
+## Moldura dourada de 1 px por fora (escolha atual: plataforma do cartao, ratinho da fila) — mesma cor do pino escolhido.
+static func gold_frame() -> StyleBoxFlat:
+	return _focus_box(color("gold"))
+
+
 static func pulse(item: CanvasItem, strength: float = 1.7, seconds: float = 0.35) -> void:
 	item.modulate = Color(strength, strength, strength)
 	item.create_tween().tween_property(item, "modulate", Color.WHITE, seconds).set_trans(Tween.TRANS_QUAD) \

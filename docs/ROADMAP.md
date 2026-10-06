@@ -94,6 +94,17 @@
 - [x] 14.2 Etapa B: missões abstratas + estrelas + aba PEDIDOS (economia v12; táxi em 2 trechos; Dupla) (2026-10-06)
 - [x] 14.3 Etapa C: ratinhos das missões (aprovados) + ícones peso/relógio/estrela; som da estrela (opção A) e liberar = jingle unlock (2026-10-06)
 
+## Fase 15 — Escolha intuitiva + cada missão no seu mapa (2026-10-06) · skills: `pixel-art`, `godot-dev`, `economy-balance`
+> Pedido: o cartão do pedido não era intuitivo para criança (×1,5, barra de gás invertida, botão de partir feio, ninguém
+> sabe o que cada ratinho quer) → versão D das maquetes (`art/previews/offer_card/`); e "cada missão iniciar de um lugar
+> aleatório no mapa". Plano: `~/.claude/plans/planeje-essa-nova-ideia-cheeky-wolf.md` (resumo no HANDOFF).
+- [x] 15.1 Figuras: plataformas pequenas (3), perto/médio/longe, certo/errado (atlas kids) + balão de fala 9-slice (2026-10-06)
+- [x] 15.2 Tela de escolha: fila de ratinhos no alto + cartão (balão com a regra, 3 plataformas = botões de partir com o
+      prêmio, estrelas); sem gás e sem botão "vamos"; `MissionText` único (cartão + oficina) (2026-10-06)
+- [ ] 15.3 Cada missão no seu mapa (seed por entrega) + tela escurece e a nave desce do céu
+- [ ] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia
+- [ ] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado)
+
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida
 > (setinha → cor de chegando → rota traçada…). "A ideia do jogo é ser simples".

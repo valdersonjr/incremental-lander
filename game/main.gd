@@ -247,7 +247,6 @@ func _start_run() -> void:
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
-	_offers.ground_at = _flight.offer_ground_screen
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
 	_summary.continue_requested.connect(_on_continue)

@@ -74,7 +74,7 @@ func _physics_process(_delta: float) -> void:
 				else:
 					var click := InputEventMouseButton.new()
 					click.button_index = MOUSE_BUTTON_LEFT
-					click.position = panel.offer_line_center(0)
+					click.position = panel.pad_button_center("normal")   # plataforma do cartao = partir
 					click.global_position = click.position
 					click.pressed = true
 					Input.parse_input_event(click)
