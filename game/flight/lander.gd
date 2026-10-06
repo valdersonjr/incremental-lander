@@ -24,6 +24,7 @@ var thrusting := false
 var turbo_on := false                   # Turbo (habilidade) ligado neste passo
 var load_div := 1.0                     # missao Pesada: o motor rende thrust / load_div (EconMath.mission_thrust_div)
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
+var arriving := false                   # descendo do ceu ate a partida (Flight._arrive): chama acesa, sem fisica
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
 
@@ -83,7 +84,7 @@ func _physics_process(delta: float) -> void:
 			gas_at_takeoff = gas
 			took_off.emit()
 		else:
-			thrusting = false
+			thrusting = arriving
 			queue_redraw()
 			return
 	rotation += float(controls["rotate"]) * float(cfg["rotate_speed"]) * delta

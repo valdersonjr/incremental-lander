@@ -47,7 +47,9 @@ game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas �
                               # --dev_levels=id:n,... --dev_credits=N --dev_ore=N --dev_shop=id:n,...
                               # --dev_unlock=a,b --planet=id (validado). Imprime também GOAL_REACHED/PRESTIGE.
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
-game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); set_target(distância)
+game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); begin_mission(seed, d, tier,
+                              # dir, missão, stage) = mapa novo + nave descendo do céu (_arrive, Lander.arriving; fundo
+                              # deslocado por _bg_origin); set_target(distância) = alvo no mesmo mapa (2º trecho do táxi)
                               # cria a próxima plataforma a partir da atual e estende o terreno;
                               # sinais delivery_finished(result) (→ Telemetry) e stranded (pousou sem gás fora do alvo)
 scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regeneram) com tipo de plataforma (offer_tiers),
@@ -238,7 +240,8 @@ scripts/run/run_state.gd             # offer_mission[], offer_slot[] (simple0..2
 game/flight/flight.gd                # mission/failed/taxi_stage; set_target(d, tier, dir, missao, stage, falhas);
                                      # _setup_mission/_tick_mission/_judge_mission; result: mission, failed, leg (1 = busca do taxi)
 game/flight/lander.gd                # load_div (Pesada) divide o empuxo (e o do piloto do demo)
-game/main.gd                         # taxi: leg 1 -> set_target(2o trecho, -dir, stage 2); estrelas por entrega; --dev_mission=
+game/main.gd                         # _on_offer_chosen: _fade (ColorRect) escurece -> begin_mission(hash([_run_seed, entregas]))
+                                     # taxi: leg 1 -> set_target(2o trecho, -dir, stage 2); estrelas por entrega; --dev_mission=
                                      # kind:estrela|double:a+b, --dev_missions=ids, --dev_stars=N
 ```
 game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember; OfferPanel.last_choice por tipo; _input cima/baixo); RunState.pay_for_tier = prêmio de cada botão

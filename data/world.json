@@ -277,6 +277,12 @@
     "turbo_mult": 2.0
   },
   "missions": {
+    "arrival": {
+      "notes": "v15 (2026-10-06): cada missao tem o seu mapa. Entre missoes a tela escurece (fade_s, ida e volta) e a nave aparece height_px acima da plataforma de partida e desce em seconds (sem gastar gas; so decola depois de tocar).",
+      "height_px": 90.0,
+      "seconds": 1.1,
+      "fade_s": 0.25
+    },
     "notes": "Fisica das missoes (v12, 2026-10-06; pagamento/estrelas em economy.json contracts.missions). Listas = estrela 1, 2, 3. soft: pouso com vy <= vy_frac x landing.max_vy. fast: prazo em SEGUNDOS REAIS voando = (base_s + per_sqrt_m x sqrt(distancia)) x factor. tow: carga pendurada num cabo (pendulo, ref. Thrust): rope_m comprimento, mass relativa a nave (1), racha se bater no chao acima de break_speed (m/s). passenger: estrela 1 = resgate no meio do caminho (pega se o centro da nave passar a radius_m com velocidade < max_speed); estrelas 2-3 = taxi: pousa na plataforma de busca (pickup_tier) e leva de volta (2o trecho = leg2 x distancia, economy.json); pouso de busca com qualidade < board_q = passageiro enjoado (falhou). heavy: o motor rende thrust / thrust_div (economy.json).",
     "soft": {
       "vy_frac": [

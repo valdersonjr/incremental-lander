@@ -101,7 +101,7 @@
 - [x] 15.1 Figuras: plataformas pequenas (3), perto/médio/longe, certo/errado (atlas kids) + balão de fala 9-slice (2026-10-06)
 - [x] 15.2 Tela de escolha: fila de ratinhos no alto + cartão (balão com a regra, 3 plataformas = botões de partir com o
       prêmio, estrelas); sem gás e sem botão "vamos"; `MissionText` único (cartão + oficina) (2026-10-06)
-- [ ] 15.3 Cada missão no seu mapa (seed por entrega) + tela escurece e a nave desce do céu
+- [x] 15.3 Cada missão no seu mapa (seed por entrega) + tela escurece e a nave desce do céu; fundo mostra outro trecho (2026-10-06)
 - [ ] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia
 - [ ] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado)
 

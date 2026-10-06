@@ -10,10 +10,12 @@
   `MissionText`; `RunState.pay_for_tier`; tema `Balloon`/`BalloonLabel`; `UiKit.gold_frame`). Verificado: check,
   94 testes + integrações (controls_test clica numa plataforma), demo entregando, capturas
   `flight_ui_preview -- --no_title [--missions --select=soft]` (`--missions` novo: libera os ratinhos).
-  **Próximo: 15.3** — `Flight.begin_mission(seed, …)` zera as plataformas e chama `set_target`; seed =
-  `hash([_run_seed, deliveries.size()])`; `main._on_offer_chosen`: fade curto + nave descendo do céu (tween, física
-  parada, sem gás; números em `data/world.json > missions.arrival`); tirar `Flight.offer_ground_screen`; ajustar
-  edge_flow/gift_flow; teste novo (mapas diferentes por missão, mesmo seed = mesmo mapa). **15.4** — `shape` em
+  15.3 ✅ cada missão no seu mapa: `Flight.begin_mission` (mapa novo pela seed `hash([_run_seed, entregas])`, partida
+  em x=0) + `_arrive` (nave 90 px acima desce em 1,1 s com a chama, estado LANDED = sem física/gás; `Lander.arriving`;
+  piloto do demo volta a "takeoff" ao tocar) + `Main._fade` (0,25 s); `world.json > missions.arrival`; fundo deslocado
+  por mapa (`_bg_origin`); `offer_ground_screen` removido. Táxi: busca e volta no mesmo mapa. Teste novo
+  `tests/integration/mission_map_flow` (partida x=0, descida sem gás, outra seed = outro mapa, mesma seed = mesmo).
+  Demo: várias missões seguidas (simples, táxi 2 trechos, cabo, rápida) sem erros. **Próximo: 15.4** — `shape` em
   `TerrainGen.generate` por tipo (`world.json > missions.<kind>.terrain`: Pesada subida, Suave mesa, Rápida baixo, Cabo
   cratera, resgate cratera rasa, táxi degrau) + medir `gas_used` × `gas_est` no demo; >10% → `mission_dv_mult`
   (economy-balance). **15.5** — `MissionIntro` ao `Events.mission_unlocked` de nó ★1 (ratinho 2×, balão, certo × errado

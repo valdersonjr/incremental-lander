@@ -84,6 +84,8 @@ func _physics_process(_delta: float) -> void:
 				_step = 2
 				_frames = 0
 		2:
+			if not l.can_takeoff:                              # tela escura + nave descendo do céu (mapa da missão)
+				_frames = 0
 			if _frames == 5:
 				_key(KEY_W, true)
 			if _frames > 40:

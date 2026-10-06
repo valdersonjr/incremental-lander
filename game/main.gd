@@ -19,6 +19,7 @@ var _flight: Flight = null
 var _hud: Hud = null
 var _offers: OfferPanel = null
 var _summary: RunSummary = null
+var _fade: ColorRect = null                # tela escura entre missoes (cada missao tem o seu mapa)
 var _hangar: Hangar = null
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
@@ -208,13 +209,14 @@ func _abandon_run() -> void:
 
 func _clear_run() -> void:
 	_run_active = false
-	for n: Node in [_flight, _hud, _offers, _summary]:
+	for n: Node in [_flight, _hud, _offers, _summary, _fade]:
 		if n != null:
 			n.queue_free()
 	_flight = null
 	_hud = null
 	_offers = null
 	_summary = null
+	_fade = null
 
 
 func _start_run() -> void:
@@ -232,6 +234,12 @@ func _start_run() -> void:
 	_gui.add_child(_hud)
 	_offers = OFFER_SCENE.instantiate()
 	_gui.add_child(_offers)
+	_fade = ColorRect.new()
+	_fade.color = UiKit.color("ink")
+	_fade.modulate.a = 0.0
+	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_gui.add_child(_fade)
 	_summary = SUMMARY_SCENE.instantiate()
 	_gui.add_child(_summary)
 	_summary.visible = false
@@ -280,12 +288,22 @@ func _on_offer_chosen(index: int) -> void:
 	var d := _run.take_offer(index)
 	_offers.visible = false
 	var m := _run.taken_mission
+	# cada missao tem o seu mapa: a tela escurece, o mapa novo nasce e a nave desce do ceu ate a partida
+	var fade_s := float(WorldConfig.load_config()["missions"]["arrival"]["fade_s"])
+	var flight := _flight
+	var tw := _fade.create_tween()
+	tw.tween_property(_fade, "modulate:a", 1.0, fade_s)
+	await tw.finished
+	if flight != _flight or _run == null:                      # o run acabou/recomecou durante a tela escura
+		return
+	var seed_value := hash([_run_seed, _run.deliveries.size()])
 	if EconMath.mission_leg2(m) > 0.0:                         # taxi: 1o trecho ate a plataforma de busca
 		var tiers: Array = WorldConfig.load_config()["missions"]["passenger"]["pickup_tier"]
 		var pickup: String = tiers[clampi(EconMath.mission_has(m, "passenger"), 1, tiers.size()) - 1]
-		_flight.set_target(d, pickup, _run.taken_dir, m, 1)
+		_flight.begin_mission(seed_value, d, pickup, _run.taken_dir, m, 1)
 	else:
-		_flight.set_target(d, _run.taken_tier, _run.taken_dir, m)
+		_flight.begin_mission(seed_value, d, _run.taken_tier, _run.taken_dir, m)
+	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 
 func _on_end_requested() -> void:

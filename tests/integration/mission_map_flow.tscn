@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/integration/mission_map_flow.gd" id="1_map"]
+
+[node name="MissionMapFlow" type="Node"]
+script = ExtResource("1_map")

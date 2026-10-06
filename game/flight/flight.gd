@@ -1,5 +1,7 @@
-## Cena de voo: terreno + lander + camera. Encadeia entregas: set_target() cria a proxima plataforma a partir
-## da atual e estende o terreno. Devolve cada entrega por sinal; nao acessa GameState (godot-dev).
+## Cena de voo: terreno + lander + camera. Cada missao tem o seu mapa (v15): begin_mission() gera um terreno novo
+## (seed da missao) com a plataforma de partida em x=0, cria o alvo e faz a nave descer do ceu ate a partida.
+## set_target() cria a proxima plataforma a partir da atual no MESMO mapa (2o trecho do taxi) e estende o terreno.
+## Devolve cada entrega por sinal; nao acessa GameState (godot-dev).
 class_name Flight
 extends Node2D
 
@@ -51,6 +53,7 @@ var _anim_t := 0.0
 var _demo := false
 var _lift_y := 0.0                                 # camera olhando para cima perto do chao (px; sem o tremor)
 var _shake := 0.0                                  # trauma do tremor de tela (0..1; world.json > camera)
+var _bg_origin := 0.0                              # deslocamento do cenario de fundo (px): cada mapa mostra um trecho
 
 @onready var lander: Lander = %Lander
 @onready var terrain: Terrain = %Terrain
@@ -83,7 +86,7 @@ func _process(delta: float) -> void:
 	_shake = maxf(_shake - float(cam["shake_decay"]) * delta, 0.0)
 	var amp := _shake * _shake * float(cam["shake_px"]) if GameState.shake_enabled() else 0.0
 	camera.offset = Vector2(roundf(randf_range(-amp, amp)), _lift_y + roundf(randf_range(-amp, amp)))
-	backdrop.follow(camera.get_screen_center_position())
+	backdrop.follow(camera.get_screen_center_position() + Vector2(_bg_origin, 0.0))
 
 
 ## Tremor de tela (somado; 1 = batida). Desligavel nas opcoes.
@@ -101,18 +104,38 @@ func set_camera_lift(px: float) -> void:
 func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool) -> void:
 	planet_id = p_planet_id
 	stats = p_stats
-	_seed = seed_value
 	_demo = demo
-	_pad_positions_m = [0.0]
-	_pad_tiers = []
-	_extend = Vector2.ZERO
-	current_pad_id = 0
-	target_pad_id = -1
+	_reset_map(seed_value)
 	_rebuild_terrain()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
 	lander.ridge = terrain.ridge
 	lander.visible = true
 	lander.can_takeoff = false
+	_place_on_start_pad()
+
+
+## Missao nova num mapa proprio (seed_value): terreno novo com a partida em x=0, alvo como em set_target e a nave
+## descendo do ceu ate a partida (world.json > missions.arrival; sem gastar gas). O gas do lander continua o mesmo.
+func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", dir: int = 1,
+		p_mission: Dictionary = {}, stage: int = 0) -> void:
+	_reset_map(seed_value)
+	set_target(distance_m, tier, dir, p_mission, stage)
+	_place_on_start_pad()
+	_arrive()
+
+
+func _reset_map(seed_value: int) -> void:
+	_seed = seed_value
+	_bg_origin = float(posmod(seed_value, 997)) * 37.0          # trecho do fundo de cada mapa (mesma seed = mesmo)
+	_pad_positions_m = [0.0]
+	_pad_tiers = []
+	_extend = Vector2.ZERO
+	current_pad_id = 0
+	target_pad_id = -1
+
+
+## Nave parada na plataforma de partida (pads[0]) com a camera ja enquadrada.
+func _place_on_start_pad() -> void:
 	var start_pad: Dictionary = terrain.pads[0]
 	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
 	lander.global_position = Vector2(float(start_pad["x"]), float(start_pad["y"]) - feet - 0.5)
@@ -125,6 +148,28 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 	camera.reset_smoothing()
 	camera.force_update_scroll()                              # ja no 1o quadro com o enquadramento certo
 	backdrop.setup(planet_id, camera.global_position.y + camera.offset.y)
+
+
+## Chegada: a nave aparece arrival.height_px acima da partida e desce com a chama acesa (estado LANDED: sem fisica e
+## sem gas); so pode decolar quando tocar a plataforma.
+func _arrive() -> void:
+	var cfg: Dictionary = WorldConfig.load_config()["missions"]["arrival"]
+	var end_pos := lander.global_position
+	lander.can_takeoff = false
+	lander.arriving = true
+	lander.global_position = end_pos - Vector2(0.0, float(cfg["height_px"]))
+	lander.reset_physics_interpolation()
+	camera.global_position = lander.global_position
+	camera.reset_smoothing()
+	var tw := create_tween().set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tw.tween_property(lander, "global_position", end_pos, float(cfg["seconds"])) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void:
+		lander.arriving = false
+		lander.can_takeoff = true
+		if lander.autopilot != null:                       # o piloto do demo viu a descida: recomeça decolando
+			lander.autopilot.mode = "takeoff"
+		_spawn_fx(DUST_FRAMES, &"puff", Vector2(end_pos.x - 24.0, float(terrain.pads[0]["y"]) - 15.0), false))
 
 
 ## Define a proxima entrega: plataforma do tipo tier (normal/narrow/tight) a distance_m da atual, para o lado dir
@@ -174,18 +219,6 @@ func target_position_m(distance_m: float, dir: int, tier: String = "normal") -> 
 			break
 		x += float(dir) * float(routes.get("nudge_m", 60.0))
 	return x
-
-
-## Ponto do chao (coordenadas da tela) onde nasceria a plataforma de um pedido a distance_m da atual (lado dir).
-## Alem do terreno ja gerado, usa a altura da plataforma atual. Usado pelo painel de pedidos (pinos no mundo).
-func offer_ground_screen(distance_m: float, dir: int = 1) -> Vector2:
-	var pad: Dictionary = terrain.pads[current_pad_id]
-	var x := WorldConfig.m_to_px(target_position_m(distance_m, dir))
-	var y := float(pad["y"])
-	var r := terrain.ridge
-	if r.size() > 1 and x >= r[0].x and x <= r[r.size() - 1].x:
-		y = TerrainGen.height_at(r, x)
-	return get_viewport().get_canvas_transform() * Vector2(x, y)
 
 
 ## Plataforma alvo atual (ou a atual, se nao ha alvo).
