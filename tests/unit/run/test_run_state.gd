@@ -13,9 +13,13 @@ func test_ofertas_deterministicas_e_na_faixa() -> void:
 	var a := RunState.create("luna", stats, 42)
 	var b := RunState.create("luna", stats, 42)
 	assert_eq(a.offers, b.offers)
-	assert_eq(a.offers.size(), 8)
+	assert_eq(a.offers.size(), 3, "so a Simples liberada: 3 pedidos (perto, medio, longe)")
 	for d in a.offers:
 		assert_between(d, 100.0, 15000.0)
+	var lo := log(100.0)
+	var third := (log(15000.0) - lo) / 3.0
+	for i in 3:                                                # um pedido em cada faixa
+		assert_between(log(a.offers[i]), lo + third * i - 1e-9, lo + third * (i + 1) + 1e-9)
 
 
 func test_pagamento_igual_economia() -> void:
@@ -56,25 +60,38 @@ func test_sem_gas_nao_continua() -> void:
 	assert_eq(run.best_offer(0.0), -1)
 
 
-func test_cada_oferta_tem_tipo_de_plataforma() -> void:
-	var run := RunState.create("luna", stats, 11)
+func test_jogador_escolhe_plataforma_e_estrela() -> void:
+	var run := RunState.create("luna", stats, 11, {"simple": 1, "soft": 3})
 	assert_eq(run.offer_tiers.size(), run.offers.size())
 	for i in range(1, run.offers.size()):
 		assert_true(run.offers[i - 1] <= run.offers[i], "ordenadas por distancia")
-	var seen := {}
-	for s in 30:
-		var r := RunState.create("luna", stats, s)
-		for t in r.offer_tiers:
-			seen[t] = true
-	assert_true(seen.has("normal") and seen.has("narrow") and seen.has("tight"), "os tres tipos aparecem")
+	for t in run.offer_tiers:
+		assert_eq(t, "normal", "pedido novo vem com plataforma normal")
+	var i := run.offer_slot.find("soft")
+	assert_true(i >= 0, "um pedido da confeiteira")
+	assert_eq(run.stars_for(i), [1, 2, 3] as Array[int])
+	var before: float = run.offer_info(i, 1e9)["pay_best"]
+	run.set_choice(i, "tight", 3)
+	assert_eq(run.offer_tiers[i], "tight")
+	assert_eq(int(run.offer_mission[i]["star"]), 3)
+	assert_true(run.offer_info(i, 1e9)["pay_best"] > before, "mais dificil paga mais")
+	run.set_choice(i, "normal", 9)
+	assert_eq(int(run.offer_mission[i]["star"]), 3, "estrela nao liberada e ignorada")
+
+
+func test_um_pedido_por_ratinho_e_o_mesmo_ratinho_repoe() -> void:
+	var run := RunState.create("luna", stats, 4, {"simple": 1, "heavy": 1, "fast": 1})
+	assert_eq(run.offers.size(), 5, "3 da Simples + 1 da Pesada + 1 da Rapida")
+	var i := run.offer_slot.find("heavy")
+	run.take_offer(i)
+	assert_eq(run.offers.size(), 5)
+	assert_eq(run.offer_slot.count("heavy"), 1, "o ratao trouxe pedido novo")
 
 
 func test_oferta_aceita_leva_o_tipo_e_paga_o_multiplicador() -> void:
 	var run := RunState.create("luna", stats, 11)
-	var i := run.offer_tiers.find("tight")
-	if i < 0:
-		run.offer_tiers[0] = "tight"
-		i = 0
+	var i := 0
+	run.set_choice(i, "tight", 1)
 	var info := run.offer_info(i, 100.0)
 	assert_eq(info["tier"], "tight")
 	var d := run.take_offer(i)
@@ -101,7 +118,6 @@ func test_combo_soma_em_pouso_bom_e_zera_em_pouso_duro() -> void:
 
 
 func test_lua_tem_lados_e_so_missoes_liberadas() -> void:
-	# lado e missao usam sorteador proprio: as distancias de um seed continuam as mesmas
 	var run := RunState.create("luna", stats, 42)
 	assert_eq(run.offer_dirs.size(), run.offers.size())
 	assert_eq(run.offer_mission.size(), run.offers.size())
@@ -113,16 +129,10 @@ func test_lua_tem_lados_e_so_missoes_liberadas() -> void:
 			assert_eq(r.offer_mission[i]["kind"], "simple", "sem nada liberado so aparece a Simples")
 	assert_true(lados.has(-1) and lados.has(1), "Lua: pedidos para os dois lados")
 	var a := RunState.create("luna", stats, 42, {"simple": 1, "heavy": 2, "soft": 1})
-	assert_eq(a.offers, run.offers, "liberar missoes nao muda as distancias do seed")
-	var vistos := {}
-	for s in 40:
-		var r := RunState.create("luna", stats, s, {"simple": 1, "heavy": 2, "soft": 1})
-		for m: Dictionary in r.offer_mission:
-			vistos["%s%d" % [m["kind"], int(m["star"])]] = true
-			assert_true(m["kind"] in ["simple", "heavy", "soft"], "so tipos liberados")
-			assert_true(int(m["star"]) <= (2 if m["kind"] == "heavy" else 1), "estrela ate a liberada")
-	for k: String in ["simple1", "heavy1", "heavy2", "soft1"]:
-		assert_true(vistos.has(k), k + " nunca sorteada")
+	var kinds := a.offer_mission.map(func(m: Dictionary) -> String: return m["kind"])
+	assert_eq(kinds.count("heavy"), 1)
+	assert_eq(kinds.count("soft"), 1)
+	assert_eq(kinds.count("simple"), 3)
 
 
 func test_missao_cumprida_paga_mais_e_falha_paga_menos() -> void:

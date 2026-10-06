@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 12,
-    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo)."
+    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo). v12.1: um pedido por ratinho; jogador escolhe plataforma e estrela."
   },
   "physics": {
     "mode": "arcade",
@@ -460,7 +460,7 @@
       ]
     },
     "missions": {
-      "notes": "v12 (2026-10-06): missoes abstratas (regra, nao item). Oferta = {kind, star}; Dupla junta 2 regras. Pagamento: mult da estrela (falhou: mult x fail_mult; nunca acaba o run). fail_p so no modelo (chance de falhar = fail_p x (1-skill) x 2). Fisica de cada regra em world.json > missions. Estrelas: 1 por entrega concluida; unlock_cost estrelas liberam 1 no da arvore (nodes, em ordem de dificuldade; requires = todos; requires_any = {n, of}). Tipo recem-liberado aparece com peso x new_boost.weight_mult nas new_boost.runs runs seguintes.",
+      "notes": "v12 (2026-10-06): missoes abstratas (regra, nao item). Oferta = {kind, star}; Dupla junta 2 regras. Pagamento: mult da estrela (falhou: mult x fail_mult; nunca acaba o run). fail_p so no modelo (chance de falhar = fail_p x (1-skill) x 2). Fisica de cada regra em world.json > missions. Estrelas: 1 por entrega concluida; unlock_cost estrelas liberam 1 no da arvore (nodes, em ordem de dificuldade; requires = todos; requires_any = {n, of}). Tipo recem-liberado aparece com peso x new_boost.weight_mult nas new_boost.runs runs seguintes. v12.1: um pedido por ratinho (Simples: simple_offers faixas perto->longe); o jogador escolhe no cartao a plataforma e a estrela (sem sorteio de plataforma/estrela; new_boost sem efeito no sorteio). fail_mult cai com a estrela (falhar a 3 paga bem menos): a estrela dificil so compensa para quem pilota bem.",
       "planets": [
         "luna"
       ],
@@ -525,12 +525,12 @@
             },
             {
               "mult": 1.4,
-              "fail_mult": 0.5,
+              "fail_mult": 0.4,
               "fail_p": 0.45
             },
             {
               "mult": 1.7,
-              "fail_mult": 0.5,
+              "fail_mult": 0.3,
               "fail_p": 0.6
             }
           ]
@@ -547,12 +547,12 @@
             },
             {
               "mult": 1.4,
-              "fail_mult": 0.6,
+              "fail_mult": 0.45,
               "fail_p": 0.4
             },
             {
               "mult": 1.7,
-              "fail_mult": 0.6,
+              "fail_mult": 0.3,
               "fail_p": 0.55
             }
           ]
@@ -569,13 +569,13 @@
             },
             {
               "mult": 1.5,
-              "fail_mult": 0.6,
+              "fail_mult": 0.5,
               "fail_p": 0.3,
               "leg2": 0.5
             },
             {
               "mult": 1.8,
-              "fail_mult": 0.6,
+              "fail_mult": 0.35,
               "fail_p": 0.45,
               "leg2": 1.0
             }
@@ -594,13 +594,13 @@
             },
             {
               "mult": 1.7,
-              "fail_mult": 0.6,
+              "fail_mult": 0.45,
               "fail_p": 0.45,
               "dv_mult": 1.1
             },
             {
               "mult": 2.0,
-              "fail_mult": 0.6,
+              "fail_mult": 0.3,
               "fail_p": 0.55,
               "dv_mult": 1.15
             }
@@ -754,7 +754,8 @@
             ]
           }
         }
-      ]
+      ],
+      "simple_offers": 3
     }
   },
   "profiles_override": {},

@@ -630,6 +630,8 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
     pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita.
     missions = {kind: estrela} liberadas (v12; None = so Simples); boost = {kind: runs} recem-liberados."""
+    if mission_kinds(E, planet["id"]):
+        return _do_run_missions(E, planet, stats, prof, rng, expected, stream, log, missions)
     gas = stats["tank"]
     C = E["contracts"]
     has_tiers = bool(C.get("pad_tiers"))
@@ -717,6 +719,160 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         gas = min(stats["tank"], gas + gf_gas * stats["tank"])
         maxd = max(maxd, best)
         dist += best
+    t += prof.run_overhead_s
+    return RunResult(total, t, n, maxd, dist, crashed, 100 * gas / stats["tank"])
+
+
+def mission_slots(E: dict, unlocked: dict | None) -> list[str]:
+    """Espacos de pedido do run (v12.1): a Simples tem simple_offers faixas de distancia (perto -> longe) e cada outro
+    tipo liberado tem 1 pedido (um por ratinho). Entregou -> o mesmo espaco ganha um pedido novo."""
+    ms = mission_spec(E)
+    n = ms.get("simple_offers", 3)
+    out = [f"simple{i}" for i in range(n)]
+    for k in ms.get("kinds", []):
+        if k["id"] != "simple" and (unlocked or {}).get(k["id"], 0) > 0:
+            out.append(k["id"])
+    return out
+
+
+def slot_distance(E: dict, planet: dict, slot: str, u: float) -> float:
+    """Distancia de um espaco a partir de u em [0,1): Simples i = faixa i de simple_offers (em log); outros = faixa toda."""
+    lo, hi = (math.log(x) for x in planet["distance"])
+    if slot.startswith("simple"):
+        n = mission_spec(E).get("simple_offers", 3)
+        i = int(slot[6:])
+        return math.exp(lo + (hi - lo) * (i + u) / n)
+    return math.exp(lo + (hi - lo) * u)
+
+
+def _mission_choices(E: dict, planet: dict, stats: dict, prof: Profile, kind: str, unlocked: dict) -> list[dict]:
+    """Opcoes que o jogador pode escolher no cartao para um tipo: (estrela, pagamento esperado x, falha, delta-v x,
+    tempo x). Dupla: uma opcao media (partes = maior estrela que voa de cada regra)."""
+    ms = mission_spec(E)
+    out = []
+    if kind == "double":
+        dbl = ms.get("double", {})
+        parts = []
+        for pk in dbl.get("parts_from", []):
+            top = unlocked.get(pk, 0)
+            if pk == "passenger":
+                top = min(top, dbl.get("passenger_max_star", 1))
+            for s_ in range(top, 0, -1):
+                lv = mission_level(E, pk, s_)
+                hf = _heavy_factor(planet, stats, lv.get("thrust_div", 1.0))
+                if math.isfinite(hf):
+                    pf = mission_fail_p(lv, prof.skill)
+                    parts.append((lv["mult"] - 1, (1 - pf) + pf * lv.get("fail_mult", 1.0), lv.get("dv_mult", 1.0) * hf))
+                    break
+        if len(parts) >= 2:
+            em = sum(x[0] for x in parts) / len(parts)
+            ef = sum(x[1] for x in parts) / len(parts)
+            ed = sum(x[2] for x in parts) / len(parts)
+            out.append({"star": 1, "pay": min(dbl.get("max_mult", 3.0), 1 + 2 * em) * ef * ef, "dv": ed * ed, "t": 1.0})
+        return out
+    for s_ in range(1, max(1, unlocked.get(kind, 1)) + 1):
+        lv = mission_level(E, kind, s_)
+        hf = _heavy_factor(planet, stats, lv.get("thrust_div", 1.0))
+        if not math.isfinite(hf):
+            continue
+        pf = mission_fail_p(lv, prof.skill)
+        leg = lv.get("leg2", 0.0)
+        out.append({"star": s_, "pay": lv["mult"] * ((1 - pf) + pf * lv.get("fail_mult", 1.0)) * (1 + leg ** 1.1),
+                    "dv": lv.get("dv_mult", 1.0) * hf * (1 + math.sqrt(leg)), "t": 1 + math.sqrt(leg)})
+    return out
+
+
+CRASH_RISK_K = 3.0      # escolha de plataforma/estrela: (1 - chance de bater)^K (bater perde o resto do run)
+
+
+def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
+                     stream: tuple | None, log: list | None, missions: dict | None) -> RunResult:
+    """Run com missoes (v12.1): um pedido por espaco (3 da Simples + 1 por ratinho liberado); o jogador escolhe no
+    cartao o tamanho da plataforma e a estrela -> o modelo escolhe a combinacao de maior valor esperado por gas."""
+    unlocked = missions or {"simple": 1}
+    C = E["contracts"]
+    gas = stats["tank"]
+    eff = stats["efficiency"]
+    qbonus = C.get("quality_bonus", 0.5)
+    qexp = C.get("quality_exp", 1.0)
+    max_per_run = C.get("max_per_run", 10 ** 9)
+    combo = C.get("combo")
+    q_min = combo["q_min"] if combo else 2.0
+    tiers = C.get("pad_tiers") or [{"id": "normal", "mult": 1.0}]
+    gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
+    rewards_w = planet.get("rewards", {"credits": 1.0})
+    total = {k: 0.0 for k in rewards_w}
+    slots = mission_slots(E, unlocked)
+    choices = {sl: _mission_choices(E, planet, stats, prof, "simple" if sl.startswith("simple") else sl, unlocked)
+               for sl in slots}
+    us = list(stream[0]) + list(stream[1]) if stream else None
+    lo, hi = (math.log(x) for x in planet["distance"])
+    ui = 0
+
+    def next_u():
+        nonlocal ui
+        if us is not None:
+            d = us[ui % len(us)]
+            ui += 1
+            return (math.log(d) - lo) / (hi - lo)
+        return rng.random()
+
+    def info(sl, d):  # melhor (plataforma x estrela) do pedido: valor esperado por gas
+        base = contract_pay(E, planet, d, stats)
+        best = None
+        for ch in choices[sl]:
+            for tier in tiers:
+                dv = hop_dv(planet, d, stats, prof) * ch["dv"] * (1.0 + gf_dv)
+                g_need = dv / eff
+                q_mu = _q_on_tier(prof.skill, tier, prof.skill)
+                pc = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
+                # bater acaba o run: o jogador pesa tambem as entregas que perderia (~CRASH_RISK_K entregas)
+                ev = base * (1 + qbonus * q_mu ** qexp) * tier["mult"] * ch["pay"] * (1 - pc) ** CRASH_RISK_K
+                if best is None or ev / g_need > best[0]:
+                    best = (ev / g_need, g_need, tier, ch)
+        return best and (d, best[1], base, best[2], best[3])
+
+    items = {sl: info(sl, slot_distance(E, planet, sl, next_u())) for sl in slots}
+    t = 0.0
+    n = 0
+    maxd = dist = 0.0
+    crashed = False
+    streak = 0.0
+    while n < max_per_run:
+        pick, best_score = None, 0.0
+        for sl, it in items.items():
+            if it and it[1] <= gas:
+                score = (it[2] * it[3]["mult"] * it[4]["pay"]) / it[1]
+                if score > best_score:
+                    pick, best_score = sl, score
+        if pick is None:
+            break
+        d, g_need, base, tier, ch = items[pick]
+        items[pick] = info(pick, slot_distance(E, planet, pick, next_u())) if C.get("regenerate", True) else None
+        gas -= g_need
+        q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
+        q = _q_on_tier(q, tier, prof.skill)
+        cm = combo_mult(E, streak)
+        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay)
+        pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
+        t += hop_time(planet, d, stats, prof) * ch["t"]
+        if expected:
+            pay *= (1 - pc)
+            if combo:
+                streak = _p_good(prof, tier, q_min) * (streak + 1)
+        elif rng.random() < pc:
+            crashed = True
+            break
+        elif combo:
+            streak = streak + 1 if q >= q_min else 0
+        if log is not None:
+            log.append((d, tier["id"], q, cm, pick, ch["star"]))
+        for k, w in rewards_w.items():
+            total[k] += pay * w
+        n += 1
+        gas = min(stats["tank"], gas + gf_gas * stats["tank"])
+        maxd = max(maxd, d)
+        dist += d
     t += prof.run_overhead_s
     return RunResult(total, t, n, maxd, dist, crashed, 100 * gas / stats["tank"])
 

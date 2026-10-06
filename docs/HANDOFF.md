@@ -33,6 +33,9 @@
     Estrelas: 1 ⭐ por entrega concluída sem batida; 3 ⭐ liberam um nó na aba PEDIDOS (árvore: ★1 de Pesada/Suave/Rápida
     abertas; Passageiro/Cabo ★1 pedem 2 tipos ★1; ★N pede ★N-1; Dupla pede ★3 em 2 tipos). Tipo recém-liberado aparece
     mais nas 2 runs seguintes. Números são ponto de partida (simular; calibrar a física jogando).
+  - **v12.1 ✅ (2026-10-06)**: um pedido por ratinho (Simples: perto/médio/longe) e escolha de plataforma + estrela no
+    cartão do pedido (clique; cima/baixo e Shift + cima/baixo; lembra a última escolha por ratinho). **Pendente**: o
+    modelo escolhe sempre a apertada (batida otimista) — calibrar com voos reais (Fase 10.1).
   - **Etapa C ✅ (14.3)**: 7 ratinhos (rat_simple/heavy/soft/fast/passenger/tow/double no atlas kids; aprovados) no
     pino/cartão do pedido e na aba PEDIDOS; ícones weight/clock/star no atlas das cargas (HUD e pinos); som `star`
     (opção A: sino duplo D6→A6, 0,55 s depois do "entregue"); liberar missão toca o jingle `unlock`.

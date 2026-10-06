@@ -50,9 +50,14 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   | Passageiro | resgate passando devagar ×1,3 | táxi: pousa para buscar e leva de volta (2º trecho = metade) ×1,5 | táxi com busca na plataforma estreita e volta inteira ×1,8 |
   | Cabo (carga pendurada) | cabo curto/leve ×1,4 | longo ×1,7 | longo/pesado ×2,0 |
   | Dupla | duas regras juntas: 1 + soma dos extras (teto ×3) | | |
+  **Pedidos (v12.1)**: **um pedido por ratinho** — o mineiro (Simples) oferece perto, médio e longe; cada ratinho
+  liberado traz 1 pedido; entregou, o mesmo ratinho repõe. No cartão o jogador **escolhe o tamanho da plataforma**
+  (normal ×1 · estreita ×1,5 · apertada ×2,2) e a **dificuldade** (estrelas liberadas); falhar a ★3 paga bem menos
+  (×0,3) que a ★1 (×0,6). Teclado: cima/baixo = plataforma, Shift + cima/baixo = estrela; o jogo lembra a última escolha
+  de cada ratinho.
   **Liberação jogando** (padrão Hades/Dead Cells): cada entrega dá **1 estrela**; **3 estrelas** liberam um nó na aba
   **PEDIDOS** da oficina (★1 de Pesada/Suave/Rápida abertas; Passageiro e Cabo pedem 2 tipos ★1; ★N pede ★N-1; Dupla
-  pede ★3 em 2 tipos). O tipo recém-liberado aparece mais nas 2 runs seguintes.
+  pede ★3 em 2 tipos).
 - **Lua mais divertida (v8, 2026-10-05)** — *(as cargas viraram as missões da v12)* pesquisa do que falta no gênero (Space Taxi, Thrust, Lunar Lander Beyond,
   Death Stranding), aplicada só na Lua, no tema "Lua de queijo dos ratinhos":
   - **Pedidos para os dois lados**: ~45% dos pedidos nascem à esquerda (pino na coluna da borda esquerda); voltar por

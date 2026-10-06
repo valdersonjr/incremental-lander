@@ -231,10 +231,12 @@ data/economy.json contracts.missions # tipos/estrelas/mult, nodes (árvore), sta
 data/world.json missions             # física por estrela: soft.vy_frac, fast (prazo x factor), tow.levels, passenger
 scripts/economy/econ_math.gd         # mission_kinds/kind/level/mult/thrust_div/dv_mult/leg2/has, mission_node_ok,
                                      # missions_unlocked, mission_node_cost, draw_mission(planeta, liberadas, boost, stats, rng)
-scripts/run/run_state.gd             # offer_mission[], taken_mission, stars, mission_gas(m, d), leg2_m(m, d)
+scripts/run/run_state.gd             # offer_mission[], offer_slot[] (simple0..2 / tipo), set_choice(i, plataforma, estrela),
+                                     # stars_for(i), taken_mission, stars, mission_gas(m, d), leg2_m(m, d)
 game/flight/flight.gd                # mission/failed/taxi_stage; set_target(d, tier, dir, missao, stage, falhas);
                                      # _setup_mission/_tick_mission/_judge_mission; result: mission, failed, leg (1 = busca do taxi)
 game/flight/lander.gd                # load_div (Pesada) divide o empuxo (e o do piloto do demo)
 game/main.gd                         # taxi: leg 1 -> set_target(2o trecho, -dir, stage 2); estrelas por entrega; --dev_mission=
                                      # kind:estrela|double:a+b, --dev_missions=ids, --dev_stars=N
 ```
+game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose; OfferPanel.last_choice por tipo; _input cima/baixo)

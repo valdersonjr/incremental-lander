@@ -4,7 +4,7 @@ import sys, json, copy; sys.path.insert(0, ".claude/skills/economy-balance/scrip
 from econ import *
 
 E = load("data/economy.json")
-MISSIONS = json.load(open("balance/sims/v12_missions.json"))
+MISSIONS = json.load(open(sys.argv[2] if len(sys.argv) > 2 and sys.argv[2].endswith(".json") else "balance/sims/v12_missions.json"))
 
 
 def v12(E, missions=MISSIONS):

@@ -2,9 +2,10 @@
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
 ## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
 ## tipo de plataforma x combo x missao).
-## Lua: cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e MISSAO (v12, economy.json
-## contracts.missions: {kind, star, parts}; so as liberadas pelo jogador, EconMath.draw_mission). Lado e missao usam
-## um sorteador proprio: as distancias e plataformas de um seed nao mudam.
+## Lua: cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e MISSAO (economy.json contracts.missions).
+## v12.1: um pedido por ESPACO (EconMath.mission_slots: a Simples tem 3 faixas perto -> longe, cada ratinho liberado tem
+## 1); o jogador escolhe no cartao o tamanho da plataforma e a estrela (set_choice). Entregou -> o mesmo espaco ganha
+## pedido novo. Planeta sem missoes: ofertas sorteadas como antes (plataforma sorteada).
 class_name RunState
 extends RefCounted
 
@@ -15,6 +16,7 @@ var offer_tiers: Array[String] = []       # tipo de plataforma de cada oferta (m
 var streak := 0                           # pousos bons seguidos neste run (combo; EconMath.combo_mult)
 var offer_dirs: Array[int] = []          # lado de cada oferta: 1 = direita, -1 = esquerda
 var offer_mission: Array[Dictionary] = [] # missao de cada oferta ({kind, star, parts})
+var offer_slot: Array[String] = []        # espaco de cada oferta (simple0..2 ou o tipo do ratinho)
 var taken_tier := "normal"                # tipo da plataforma da entrega em andamento
 var taken_dir := 1                        # lado da entrega em andamento
 var taken_mission: Dictionary = {}        # missao da entrega em andamento
@@ -52,13 +54,34 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_
 			run._planet = p
 	var c: Dictionary = EconMath.spec["contracts"]
 	run.max_deliveries = int(c.get("max_per_run", 6))
+	if not EconMath.mission_kinds(p_planet_id).is_empty():
+		for slot in EconMath.mission_slots(run.unlocked):
+			run._add_slot_offer(slot)
+		run._sort_offers()
+		return run
 	var n := int(run._planet.get("contracts_per_run", c.get("per_run", 8)))
 	for i in n:
 		run.offers.append(run._draw_distance())
 		run.offer_tiers.append(EconMath.draw_pad_tier(run._rng))
+		run.offer_slot.append("")
 		run._draw_extra()
 	run._sort_offers()
 	return run
+
+
+## Escolha do jogador no cartao: tamanho da plataforma e estrela da missao (so as de EconMath.mission_stars).
+func set_choice(index: int, tier: String, star: int) -> void:
+	offer_tiers[index] = tier
+	var m: Dictionary = offer_mission[index]
+	if m["kind"] == "simple" or m["kind"] == "double":
+		return
+	if star in stars_for(index):
+		offer_mission[index] = {"kind": m["kind"], "star": star, "parts": [{"kind": m["kind"], "star": star}]}
+
+
+## Estrelas que o jogador pode escolher no pedido index.
+func stars_for(index: int) -> Array[int]:
+	return EconMath.mission_stars(str(offer_mission[index]["kind"]), unlocked, planet_id, stats)
 
 
 ## Dados de uma oferta para a UI/piloto: distancia, tipo de plataforma e multiplicador, missao, pagamento (perfeito e
@@ -135,14 +158,20 @@ func take_offer(index: int) -> float:
 	taken_tier = offer_tiers[index]
 	taken_dir = offer_dirs[index]
 	taken_mission = offer_mission[index]
+	var slot: String = offer_slot[index]
 	offers.remove_at(index)
 	offer_tiers.remove_at(index)
 	offer_dirs.remove_at(index)
 	offer_mission.remove_at(index)
+	offer_slot.remove_at(index)
 	if EconMath.spec["contracts"].get("regenerate", false):
-		offers.append(_draw_distance())
-		offer_tiers.append(EconMath.draw_pad_tier(_rng))
-		_draw_extra()
+		if slot != "":
+			_add_slot_offer(slot)                              # o mesmo ratinho traz pedido novo
+		else:
+			offers.append(_draw_distance())
+			offer_tiers.append(EconMath.draw_pad_tier(_rng))
+			offer_slot.append("")
+			_draw_extra()
 		_sort_offers()
 	return d
 
@@ -223,15 +252,31 @@ func _sort_offers() -> void:
 	var t: Array[String] = []
 	var dirs: Array[int] = []
 	var ms: Array[Dictionary] = []
+	var sl: Array[String] = []
 	for i: int in idx:
 		d.append(offers[i])
 		t.append(offer_tiers[i])
 		dirs.append(offer_dirs[i])
 		ms.append(offer_mission[i])
+		sl.append(offer_slot[i])
 	offers = d
 	offer_tiers = t
 	offer_dirs = dirs
 	offer_mission = ms
+	offer_slot = sl
+
+
+## Pedido novo do espaco slot: distancia da faixa do espaco, plataforma normal e a estrela 1 (o jogador escolhe no
+## cartao), lado e partes da Dupla pelo sorteador proprio.
+func _add_slot_offer(slot: String) -> void:
+	offers.append(EconMath.slot_distance(planet_id, slot, _rng.randf()))
+	offer_tiers.append("normal")
+	offer_slot.append(slot)
+	offer_dirs.append(-1 if _rng_extra.randf() < _left_chance else 1)
+	var kind := EconMath.slot_kind(slot)
+	var st := EconMath.mission_stars(kind, unlocked, planet_id, stats)
+	offer_mission.append(EconMath.mission_of(kind, st[0], unlocked, planet_id, stats, _rng_extra) if not st.is_empty()
+			else EconMath.simple_mission())
 
 
 ## Lado e missao de uma oferta nova (sorteador proprio).

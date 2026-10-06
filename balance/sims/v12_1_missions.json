@@ -1,0 +1,298 @@
+{
+  "notes": "v12 (2026-10-06): missoes abstratas (regra, nao item). Oferta = {kind, star}; Dupla junta 2 regras. Pagamento: mult da estrela (falhou: mult x fail_mult; nunca acaba o run). fail_p so no modelo (chance de falhar = fail_p x (1-skill) x 2). Fisica de cada regra em world.json > missions. Estrelas: 1 por entrega concluida; unlock_cost estrelas liberam 1 no da arvore (nodes, em ordem de dificuldade; requires = todos; requires_any = {n, of}). Tipo recem-liberado aparece com peso x new_boost.weight_mult nas new_boost.runs runs seguintes. v12.1: um pedido por ratinho (Simples: simple_offers faixas perto->longe); o jogador escolhe no cartao a plataforma e a estrela (sem sorteio de plataforma/estrela; new_boost sem efeito no sorteio). fail_mult cai com a estrela (falhar a 3 paga bem menos): a estrela dificil so compensa para quem pilota bem.",
+  "planets": [
+    "luna"
+  ],
+  "stars": {
+    "per_delivery": 1,
+    "unlock_cost": 3
+  },
+  "new_boost": {
+    "runs": 2,
+    "weight_mult": 3.0
+  },
+  "double": {
+    "max_mult": 3.0,
+    "parts_from": [
+      "heavy",
+      "soft",
+      "fast",
+      "tow",
+      "passenger"
+    ],
+    "passenger_max_star": 1
+  },
+  "kinds": [
+    {
+      "id": "simple",
+      "name": "Simples",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.0
+        }
+      ]
+    },
+    {
+      "id": "heavy",
+      "name": "Pesada",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.2,
+          "thrust_div": 1.3
+        },
+        {
+          "mult": 1.45,
+          "thrust_div": 1.6
+        },
+        {
+          "mult": 1.8,
+          "thrust_div": 2.0
+        }
+      ]
+    },
+    {
+      "id": "soft",
+      "name": "Pouso suave",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.2,
+          "fail_mult": 0.5,
+          "fail_p": 0.3
+        },
+        {
+          "mult": 1.4,
+          "fail_mult": 0.4,
+          "fail_p": 0.45
+        },
+        {
+          "mult": 1.7,
+          "fail_mult": 0.3,
+          "fail_p": 0.6
+        }
+      ]
+    },
+    {
+      "id": "fast",
+      "name": "Rápida",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.2,
+          "fail_mult": 0.6,
+          "fail_p": 0.25
+        },
+        {
+          "mult": 1.4,
+          "fail_mult": 0.45,
+          "fail_p": 0.4
+        },
+        {
+          "mult": 1.7,
+          "fail_mult": 0.3,
+          "fail_p": 0.55
+        }
+      ]
+    },
+    {
+      "id": "passenger",
+      "name": "Passageiro",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.3,
+          "fail_mult": 0.715,
+          "fail_p": 0.4
+        },
+        {
+          "mult": 1.5,
+          "fail_mult": 0.5,
+          "fail_p": 0.3,
+          "leg2": 0.5
+        },
+        {
+          "mult": 1.8,
+          "fail_mult": 0.35,
+          "fail_p": 0.45,
+          "leg2": 1.0
+        }
+      ]
+    },
+    {
+      "id": "tow",
+      "name": "Cabo",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.4,
+          "fail_mult": 0.6,
+          "fail_p": 0.35,
+          "dv_mult": 1.08
+        },
+        {
+          "mult": 1.7,
+          "fail_mult": 0.45,
+          "fail_p": 0.45,
+          "dv_mult": 1.1
+        },
+        {
+          "mult": 2.0,
+          "fail_mult": 0.3,
+          "fail_p": 0.55,
+          "dv_mult": 1.15
+        }
+      ]
+    },
+    {
+      "id": "double",
+      "name": "Dupla",
+      "weight": 1.0,
+      "levels": [
+        {
+          "mult": 1.0
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "id": "heavy1",
+      "kind": "heavy",
+      "star": 1
+    },
+    {
+      "id": "soft1",
+      "kind": "soft",
+      "star": 1
+    },
+    {
+      "id": "fast1",
+      "kind": "fast",
+      "star": 1
+    },
+    {
+      "id": "heavy2",
+      "kind": "heavy",
+      "star": 2,
+      "requires": [
+        "heavy1"
+      ]
+    },
+    {
+      "id": "soft2",
+      "kind": "soft",
+      "star": 2,
+      "requires": [
+        "soft1"
+      ]
+    },
+    {
+      "id": "passenger1",
+      "kind": "passenger",
+      "star": 1,
+      "requires_any": {
+        "n": 2,
+        "of": [
+          "heavy1",
+          "soft1",
+          "fast1"
+        ]
+      }
+    },
+    {
+      "id": "fast2",
+      "kind": "fast",
+      "star": 2,
+      "requires": [
+        "fast1"
+      ]
+    },
+    {
+      "id": "passenger2",
+      "kind": "passenger",
+      "star": 2,
+      "requires": [
+        "passenger1"
+      ]
+    },
+    {
+      "id": "tow1",
+      "kind": "tow",
+      "star": 1,
+      "requires_any": {
+        "n": 2,
+        "of": [
+          "heavy1",
+          "soft1",
+          "fast1"
+        ]
+      }
+    },
+    {
+      "id": "heavy3",
+      "kind": "heavy",
+      "star": 3,
+      "requires": [
+        "heavy2"
+      ]
+    },
+    {
+      "id": "soft3",
+      "kind": "soft",
+      "star": 3,
+      "requires": [
+        "soft2"
+      ]
+    },
+    {
+      "id": "fast3",
+      "kind": "fast",
+      "star": 3,
+      "requires": [
+        "fast2"
+      ]
+    },
+    {
+      "id": "tow2",
+      "kind": "tow",
+      "star": 2,
+      "requires": [
+        "tow1"
+      ]
+    },
+    {
+      "id": "passenger3",
+      "kind": "passenger",
+      "star": 3,
+      "requires": [
+        "passenger2"
+      ]
+    },
+    {
+      "id": "tow3",
+      "kind": "tow",
+      "star": 3,
+      "requires": [
+        "tow2"
+      ]
+    },
+    {
+      "id": "double1",
+      "kind": "double",
+      "star": 1,
+      "requires_any": {
+        "n": 2,
+        "of": [
+          "heavy3",
+          "soft3",
+          "fast3",
+          "passenger3",
+          "tow3"
+        ]
+      }
+    }
+  ],
+  "simple_offers": 3
+}

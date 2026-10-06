@@ -38,8 +38,10 @@ const MISSION_TIP := {"simple": "entrega simples", "heavy": "pesada: a nave sobe
 		"soft": "pouso suave: pouse bem devagar!", "fast": "rápida: chegue antes do relógio acabar!",
 		"tow": "cabo: não deixe a carga bater no chão!", "passenger": "passageiro: passe devagar pertinho dele!",
 		"taxi": "táxi: pouse para buscar o ratinho e leve de volta"}
-## Estrelas de dificuldade do pouso por tipo de plataforma.
-const STARS := {"normal": 1, "narrow": 2, "tight": 3}
+## Tamanhos de plataforma escolhiveis no cartao (v12.1), do mais facil ao mais dificil.
+const TIERS := ["normal", "narrow", "tight"]
+## Ultima escolha do jogador por tipo de missao ({kind: [plataforma, estrela]}): pedidos novos ja vem assim.
+static var last_choice: Dictionary = {}
 
 ## Onde fica na tela o chao de um pedido: Callable(distance_m: float, dir: int) -> Vector2 (Flight.offer_ground_screen).
 ## Sem ele, todos os pinos vao para a coluna da borda.
@@ -57,6 +59,8 @@ var _edge_left: Array[bool] = []      # pino na borda esquerda (pedido a esquerd
 var _sel := -1
 var _gas_left := 0.0
 var _planet := "luna"
+var _run: RunState = null
+var _diff_row: HBoxContainer = null
 
 @onready var _layer: Control = %Pins
 @onready var _hint: Label = %Hint
@@ -74,6 +78,11 @@ func _ready() -> void:
 	(%GasIcon as TextureRect).texture = UiKit.kid("drop_s")       # sem palavras: gota = gas, plataforma = pouso
 	(%PadIcon as TextureRect).texture = UiKit.kid("pad_s")
 	_go.icon = UiKit.kid("ship")
+	_diff_row = HBoxContainer.new()                             # dificuldade (estrela) da missao, ao lado da plataforma
+	_diff_row.add_theme_constant_override(&"separation", 2)
+	_stars.get_parent().add_child(_diff_row)                   # mesma linha da plataforma (cartao baixo: nao cobre a nave)
+	(%Card as Control).offset_left = -185.0
+	(%Card as Control).offset_right = 185.0
 	_go.pressed.connect(func() -> void:
 		if _sel >= 0:
 			offer_chosen.emit(_sel))
@@ -89,8 +98,12 @@ func show_offers(run: RunState, gas_left: float) -> void:
 	_infos.clear()
 	_gas_left = gas_left
 	_planet = run.planet_id
+	_run = run
 	_count = run.offers.size()
-	for i in _count:
+	for i in _count:                                           # pedido novo ja vem com a ultima escolha do tipo
+		var lc: Array = last_choice.get(str(run.offer_mission[i]["kind"]), [])
+		if not lc.is_empty():
+			run.set_choice(i, str(lc[0]), int(lc[1]))
 		_infos.append(run.offer_info(i, gas_left))
 		_add_pin(i)
 	for i in _count:                                           # setas andam na ordem dos pedidos (perto -> longe)
@@ -98,9 +111,9 @@ func show_offers(run: RunState, gas_left: float) -> void:
 		var prev := _pins[maxi(i - 1, 0)].get_path()
 		var next := _pins[mini(i + 1, _count - 1)].get_path()
 		p.focus_neighbor_left = prev
-		p.focus_neighbor_top = prev
+		p.focus_neighbor_top = p.get_path()                    # cima/baixo escolhem a plataforma (_input)
 		p.focus_neighbor_right = next
-		p.focus_neighbor_bottom = next
+		p.focus_neighbor_bottom = p.get_path()
 		p.focus_previous = prev
 		p.focus_next = next
 	hint_flash = 0.0
@@ -311,22 +324,86 @@ func _select(i: int) -> void:
 	var r: float = info["gas_est"] / maxf(_gas_left, 0.001)
 	_gas_bar.value = minf(r, 1.0) * 100.0
 	_gas_bar.theme_type_variation = &"GasBar" if r <= 0.55 else (&"WarnBar" if r <= 1.0 else &"DangerBar")
-	for c in _stars.get_children():
-		c.queue_free()
-	var n: int = STARS.get(info["tier"], 1)
-	if not (info["mission"]["parts"] as Array).is_empty():     # missao: as estrelas sao as dela
-		n = int(info["mission"]["star"]) if info["mission"]["kind"] != "double" else 3
-	for s in 3:
-		var tr := TextureRect.new()
-		tr.texture = UiKit.kid("star_on" if s < n else "star_off")
-		tr.custom_minimum_size = Vector2(14, 14)
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		_stars.add_child(tr)
+	_fill_choices(i)
 	_prize.text = "+" + EconMath.fmt(info["pay_typical"])
 	_prize.theme_type_variation = &"MoneyLabel" if ok else &"BadLabel"
 	_go.tooltip_text = _tooltip(info)
 	_layer.queue_redraw()
+
+
+## Seletores do cartao: tamanho da plataforma (x1 / x1,5 / x2,2) e dificuldade da missao (estrelas liberadas).
+## Clique, ou setas cima/baixo (plataforma) e Shift + cima/baixo (estrela).
+func _fill_choices(i: int) -> void:
+	for c in _stars.get_children():
+		c.queue_free()
+	for c in _diff_row.get_children():
+		c.queue_free()
+	var info := _infos[i]
+	for t: String in TIERS:
+		var b := _choice_button(UiKit.mult_text(float(EconMath.pad_tier(t)["mult"])), t == info["tier"])
+		b.tooltip_text = "plataforma %s: paga %s (cima/baixo troca)" % [EconMath.pad_tier(t)["name"],
+				UiKit.mult_text(float(EconMath.pad_tier(t)["mult"]))]
+		b.pressed.connect(_choose.bind(i, t, int(info["mission"]["star"])))
+		_stars.add_child(b)
+	var stars: Array[int] = _run.stars_for(i) if _run != null else []
+	_diff_row.visible = stars.size() > 1 or (stars.size() == 1 and info["mission"]["kind"] != "simple")
+	var star_icon := TextureRect.new()
+	star_icon.texture = UiKit.kid("star_on")
+	star_icon.custom_minimum_size = Vector2(14, 14)
+	star_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	star_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_diff_row.add_child(star_icon)
+	for st: int in stars:
+		var b := _choice_button("%d" % st, st == int(info["mission"]["star"]))
+		var lv := EconMath.mission_level(str(info["mission"]["kind"]), st)
+		b.tooltip_text = "dificuldade %d: paga %s (Shift + cima/baixo troca)" % [st, UiKit.mult_text(float(lv["mult"]))]
+		b.pressed.connect(_choose.bind(i, str(info["tier"]), st))
+		_diff_row.add_child(b)
+
+
+func _choice_button(text: String, on: bool) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.focus_mode = Control.FOCUS_NONE                          # setas continuam andando entre os pinos
+	b.custom_minimum_size = Vector2(26, 12)
+	if on:
+		b.theme_type_variation = &"PrimaryButton"
+	return b
+
+
+## Aplica a escolha (plataforma, estrela) no pedido i, guarda como ultima do tipo e atualiza pino + cartao.
+func _choose(i: int, tier: String, star: int) -> void:
+	if _run == null or i < 0 or i >= _count:
+		return
+	_run.set_choice(i, tier, star)
+	last_choice[str(_run.offer_mission[i]["kind"])] = [tier, int(_run.offer_mission[i]["star"])]
+	_infos[i] = _run.offer_info(i, _gas_left)
+	_prizes[i].text = "+" + EconMath.fmt(_infos[i]["pay_typical"])
+	(_pins[i].get_node("Bg") as TextureRect).texture = UiKit.kid("pin_sel")
+	Sound.ui("click")
+	var keep := _sel
+	_sel = -1
+	_select(keep)
+
+
+## Cima/baixo: plataforma; Shift + cima/baixo: estrela (antes do foco dos pinos e do aviso de pilotar).
+func _input(event: InputEvent) -> void:
+	if not visible or _sel < 0 or not (event is InputEventKey) or not event.pressed:
+		return
+	var k: int = (event as InputEventKey).keycode
+	if k != KEY_UP and k != KEY_DOWN:
+		return
+	get_viewport().set_input_as_handled()
+	var step := 1 if k == KEY_UP else -1
+	var info := _infos[_sel]
+	if (event as InputEventKey).shift_pressed:
+		var stars: Array[int] = _run.stars_for(_sel)
+		var j := stars.find(int(info["mission"]["star"]))
+		if stars.size() > 1:
+			_choose(_sel, str(info["tier"]), stars[clampi(j + step, 0, stars.size() - 1)])
+	else:
+		var t := TIERS.find(str(info["tier"]))
+		_choose(_sel, TIERS[clampi(t + step, 0, TIERS.size() - 1)], int(info["mission"]["star"]))
 
 
 func _unhandled_input(event: InputEvent) -> void:

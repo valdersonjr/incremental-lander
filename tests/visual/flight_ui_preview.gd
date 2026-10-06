@@ -20,6 +20,13 @@ func _ready() -> void:
 	if "--delivered" in args:                                  # aviso de entrega com plataforma e combo
 		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "combo": 1.2,
 				"good": true}, 3)
+	for a in args:                                             # --select=kind: cartao do pedido desse ratinho
+		if a.begins_with("--select="):
+			var offers := main.find_child("OfferPanel", true, false) as OfferPanel
+			var i := offers._run.offer_slot.find(a.get_slice("=", 1))
+			if i >= 0:
+				offers._select(i)
+				offers._choose(i, "narrow", offers._run.stars_for(i).back())
 	if "--pause" in args:
 		(main.find_child("PauseMenu", true, false) as PauseMenu).open()
 	if "--hangar" in args:

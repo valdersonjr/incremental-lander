@@ -395,6 +395,63 @@ static func draw_mission(planet_id: String, unlocked: Dictionary, boost: Diction
 	return {"kind": kid, "star": star, "parts": [{"kind": kid, "star": star}]}
 
 
+## Espacos de pedido do run (v12.1): a Simples tem simple_offers faixas de distancia (perto -> longe) e cada outro tipo
+## liberado tem 1 pedido (um por ratinho). Entregou -> o mesmo espaco ganha um pedido novo.
+static func mission_slots(unlocked: Dictionary) -> Array[String]:
+	var ms := mission_spec()
+	var out: Array[String] = []
+	for i in int(ms.get("simple_offers", 3)):
+		out.append("simple%d" % i)
+	for k: Dictionary in ms.get("kinds", []):
+		if k["id"] != "simple" and int(unlocked.get(k["id"], 0)) > 0:
+			out.append(k["id"])
+	return out
+
+
+## Distancia de um espaco a partir de u em [0,1): Simples i = faixa i (em log); outros = faixa toda do planeta.
+static func slot_distance(planet_id: String, slot: String, u: float) -> float:
+	var r: Array = _find("planets", planet_id)["distance"]
+	var lo := log(float(r[0]))
+	var hi := log(float(r[1]))
+	if slot.begins_with("simple"):
+		var n := float(mission_spec().get("simple_offers", 3))
+		return exp(lo + (hi - lo) * (float(slot.substr(6).to_int()) + u) / n)
+	return exp(lo + (hi - lo) * u)
+
+
+## Tipo de missao de um espaco ("simple0" -> "simple").
+static func slot_kind(slot: String) -> String:
+	return "simple" if slot.begins_with("simple") else slot
+
+
+## Estrelas que o jogador pode escolher para o tipo (liberadas e em que a nave decola; Simples/Dupla: so a 1).
+static func mission_stars(kind_id: String, unlocked: Dictionary, planet_id: String, stats: Dictionary) -> Array[int]:
+	var out: Array[int] = []
+	if kind_id == "simple" or kind_id == "double":
+		out.append(1)
+		return out
+	for s in range(1, int(unlocked.get(kind_id, 0)) + 1):
+		if _flies(planet_id, stats, kind_id, s):
+			out.append(s)
+	return out
+
+
+## Missao de um tipo na estrela escolhida (Dupla: sorteia 2 regras diferentes de double.parts_from).
+static func mission_of(kind_id: String, star: int, unlocked: Dictionary, planet_id: String, stats: Dictionary,
+		rng: RandomNumberGenerator) -> Dictionary:
+	if kind_id == "simple":
+		return simple_mission()
+	if kind_id == "double":
+		var opts := _double_parts(planet_id, unlocked, stats)
+		if opts.size() < 2:
+			return simple_mission()
+		var a: Dictionary = opts[rng.randi_range(0, opts.size() - 1)]
+		var rest := opts.filter(func(o: Dictionary) -> bool: return o["kind"] != a["kind"])
+		var b: Dictionary = rest[rng.randi_range(0, rest.size() - 1)]
+		return {"kind": "double", "star": 1, "parts": [a, b]}
+	return {"kind": kind_id, "star": star, "parts": [{"kind": kind_id, "star": star}]}
+
+
 ## Partes possiveis de uma Dupla: [{kind, star}] (uma por regra, a maior estrela que voa; Passageiro ate passenger_max_star).
 static func _double_parts(planet_id: String, unlocked: Dictionary, stats: Dictionary) -> Array:
 	var dbl: Dictionary = mission_spec().get("double", {})
