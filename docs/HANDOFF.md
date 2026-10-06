@@ -11,7 +11,16 @@
     1 drone); save **v2** com migração (descarta os campos antigos); hangar = NAVE + AJUDAS + faixa de RECORDES no topo;
     sandbox só na Lua. Verificado: 86 testes + integrações, paridade 18 grupos, demo sem erros, capturas do hangar
     (início e fim de jogo). O simulador `econ.py` segue genérico (planetas/prestígio) para quando os mundos voltarem.
-  - **Próximo — Etapa B (14.2)**: missões abstratas (spec `contracts.missions` v12 substitui `contracts.cargo`):
+  - **Etapa B ✅ (14.2)**: economia v12, `EconMath.mission_*`/`draw_mission`, `RunState` (offer_mission, estrelas, táxi
+    `leg2_m`), `Flight` (regras por estrela, táxi em 2 trechos via `set_target(..., stage)`, Pesada = `Lander.load_div`),
+    HUD (relógio/peso/passo do táxi), pedidos (figura da missão + estrelas dela), aba **PEDIDOS**, resumo "+N estrelas",
+    save com `stars/mission_nodes/missions_new`. Verificado: 93 testes + integrações (fluxo estrela → liberar → destaque
+    → jingle em release_fixes), paridade 24, demo com táxi/cabo/pesada/rápida/dupla sem erros, capturas da aba e do HUD.
+    **Corrigido**: SaveManager ligava no executor de testes (lia o save real; um teste com sinal de save podia
+    gravar por cima) → desligado para tudo de `res://tests/`; executor não trava mais com script que não compila.
+    **Calibrar jogando**: o piloto do demo falha Rápida ★1 em saltos de ~9 km (prazo 1× = o antigo do sorvete) e o
+    Cabo ★3 sempre racha; resgate ★1 o demo nunca pega (já era assim).
+  - Tabela da v12 (detalhes no GDD):
     | Tipo | ★1 | ★2 | ★3 | Falhou |
     |---|---|---|---|---|
     | Simples (sempre) | ×1 | — | — | — |
@@ -24,7 +33,7 @@
     Estrelas: 1 ⭐ por entrega concluída sem batida; 3 ⭐ liberam um nó na aba PEDIDOS (árvore: ★1 de Pesada/Suave/Rápida
     abertas; Passageiro/Cabo ★1 pedem 2 tipos ★1; ★N pede ★N-1; Dupla pede ★3 em 2 tipos). Tipo recém-liberado aparece
     mais nas 2 runs seguintes. Números são ponto de partida (simular; calibrar a física jogando).
-  - **Depois — Etapa C (14.3)**: 6 ratinhos (Simples mineiro amarelo de capacete · Pesada ratão laranja de cinto · Suave
+  - **Próximo — Etapa C (14.3)**: 6 ratinhos (Simples mineiro amarelo de capacete · Pesada ratão laranja de cinto · Suave
     confeiteira rosa · Rápida sorveteiro azul de boné · Passageiro de boné e bandeirinha · Cabo ratinha lilás com
     corda), 2–3 itens da Lua por tipo, ícones peso/relógio/estrela; sons de "ganhou estrela"/"liberou" (do goal.wav).
 - **Presentes no alto do morro (2026-10-06, ROADMAP 13.4)**: usuário escolheu "interagir com coisas do mapa". Metade dos

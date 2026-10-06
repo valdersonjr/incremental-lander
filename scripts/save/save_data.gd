@@ -19,6 +19,9 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"levels": state["levels"].duplicate(),
 		"current_planet": state["current_planet"],
 		"income_history": state["income_history"].duplicate(true),
+		"stars": int(state.get("stars", 0)),
+		"mission_nodes": state.get("mission_nodes", []).duplicate(),
+		"missions_new": state.get("missions_new", {}).duplicate(),
 		"runs_done": state["runs_done"],
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
@@ -46,6 +49,9 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"levels": _filter_numbers(d.get("levels", {}), up_ids, "upgrade", warnings, true),
 		"current_planet": "luna",
 		"income_history": [],
+		"stars": maxi(0, int(_num(d.get("stars", 0)))),
+		"mission_nodes": [],
+		"missions_new": {},
 		"runs_done": maxi(0, int(_num(d.get("runs_done", 0)))),
 		"play_seconds": maxf(0.0, _num(d.get("play_seconds", 0.0))),
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
@@ -54,6 +60,15 @@ static func deserialize(raw: Variant) -> Dictionary:
 	for rid: String in res_ids:
 		if not st["resources"].has(rid):
 			st["resources"][rid] = 0.0
+	var node_ids: Array = EconMath.mission_spec().get("nodes", []).map(func(n: Dictionary) -> String: return n["id"])
+	var nodes: Variant = d.get("mission_nodes", [])
+	for n: Variant in (nodes if nodes is Array else []):
+		if str(n) in node_ids and not str(n) in st["mission_nodes"]:
+			st["mission_nodes"].append(str(n))
+		elif not str(n) in node_ids:
+			warnings.append("missao '%s' nao existe mais na spec: ignorada" % n)
+	var kind_ids: Array = EconMath.mission_spec().get("kinds", []).map(func(k: Dictionary) -> String: return k["id"])
+	st["missions_new"] = _filter_numbers(d.get("missions_new", {}), kind_ids, "missao nova", warnings, true)
 	var hist: Variant = d.get("income_history", [])
 	for h: Variant in (hist if hist is Array else []):
 		if h is Dictionary and h.get("earned") is Dictionary:

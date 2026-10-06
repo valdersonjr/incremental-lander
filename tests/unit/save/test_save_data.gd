@@ -99,3 +99,15 @@ func test_save_v1_com_prestigio_migra() -> void:
 	assert_eq(st["runs_done"], 7)
 	assert_false(st.has("prestige_points"))
 	assert_eq(SaveData.serialize(st)["save_version"], 2)
+
+
+func test_estrelas_e_missoes_ida_e_volta() -> void:
+	var st := _state()
+	st["stars"] = 4
+	st["mission_nodes"] = ["heavy1", "soft1", "no_inventado"]
+	st["missions_new"] = {"soft": 2}
+	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
+	assert_true(back["ok"])
+	assert_eq(back["state"]["stars"], 4)
+	assert_eq(back["state"]["mission_nodes"], ["heavy1", "soft1"])
+	assert_eq(back["state"]["missions_new"]["soft"], 2)

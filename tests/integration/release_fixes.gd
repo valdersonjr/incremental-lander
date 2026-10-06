@@ -90,6 +90,25 @@ func _process(_d: float) -> void:
 		28:
 			_check("tecla_1_nao_vaza", _main._flight.target_pad_id < 0)
 		31:
+			# missoes (v12): estrelas liberam no da arvore, tipo novo ganha destaque, jingle de liberar
+			var stars0 := GameState.stars
+			var nodes0: Array = GameState.mission_nodes.duplicate()
+			GameState.stars = 0
+			GameState.mission_nodes = []
+			_check("sem_estrela_nao_libera", not GameState.unlock_mission("heavy1"))
+			GameState.add_stars(3)
+			_check("pode_liberar", GameState.can_unlock_mission())
+			_check("libera_com_3_estrelas", GameState.unlock_mission("heavy1") and GameState.stars == 0
+					and int(GameState.missions_unlocked().get("heavy", 0)) == 1)
+			_check("tipo_novo_em_destaque", int(GameState.missions_new.get("heavy", 0)) > 0)
+			_check("jingle_ao_liberar_missao", int(Sound.played.get("unlock", 0)) > 0)
+			GameState.add_stars(3)
+			_check("arvore_pede_2_tipos", not GameState.unlock_mission("passenger1"))
+			for i in 3:
+				GameState.tick_missions_new()
+			_check("destaque_some", not GameState.missions_new.has("heavy"))
+			GameState.stars = stars0
+			GameState.mission_nodes = nodes0
 			# recordes: a primeira marca nao e "novo recorde"; superar depois e
 			GameState.records = {}
 			_check("primeira_marca_nao_anuncia", not GameState.note_record("best_combo", 2.0))

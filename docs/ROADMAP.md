@@ -91,7 +91,7 @@
 > estrelas ganhas jogando (1 ⭐ por entrega, 3 ⭐ liberam). Plano: `docs/HANDOFF.md`.
 - [x] 14.1 Etapa A: sai prestígio, Silvânia/Docelândia/Quarto, Expedição, minério, perigos e o final; Frota/Piloto por
       créditos (economia v11); save v2 com migração; hangar NAVE + AJUDAS com faixa de recordes (2026-10-06)
-- [ ] 14.2 Etapa B: missões abstratas + estrelas + aba PEDIDOS (economia v12)
+- [x] 14.2 Etapa B: missões abstratas + estrelas + aba PEDIDOS (economia v12; táxi em 2 trechos; Dupla) (2026-10-06)
 - [ ] 14.3 Etapa C: 6 ratinhos (pixel-art) e sons de estrela/liberação (sound-design), aprovados pelo usuário
 
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`

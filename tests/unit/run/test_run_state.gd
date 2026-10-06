@@ -80,7 +80,7 @@ func test_oferta_aceita_leva_o_tipo_e_paga_o_multiplicador() -> void:
 	var d := run.take_offer(i)
 	assert_eq(run.taken_tier, "tight")
 	assert_eq(run.offer_tiers.size(), run.offers.size(), "regenerou com tipo")
-	var cm := EconMath.cargo_mult(run.taken_cargo, true)          # Lua: a carga tambem multiplica (v8)
+	var cm := EconMath.mission_mult(run.taken_mission)             # a missao tambem multiplica (v12)
 	var r := run.complete_delivery(d, 0.9, 30.0)
 	assert_almost(r["credits"], EconMath.contract_pay("luna", d, stats, 0.9) * float(EconMath.pad_tier("tight")["mult"])
 			* cm)
@@ -100,42 +100,73 @@ func test_combo_soma_em_pouso_bom_e_zera_em_pouso_duro() -> void:
 	assert_false(run.deliveries[-1]["good"])
 
 
-func test_lua_tem_lados_e_cargas_sem_mudar_as_distancias() -> void:
-	# lado e carga usam sorteador proprio: as distancias de um seed continuam as mesmas da v7
+func test_lua_tem_lados_e_so_missoes_liberadas() -> void:
+	# lado e missao usam sorteador proprio: as distancias de um seed continuam as mesmas
 	var run := RunState.create("luna", stats, 42)
 	assert_eq(run.offer_dirs.size(), run.offers.size())
-	assert_eq(run.offer_cargo.size(), run.offers.size())
+	assert_eq(run.offer_mission.size(), run.offers.size())
 	var lados := {}
-	var cargas := {}
 	for s in 30:
 		var r := RunState.create("luna", stats, s)
 		for i in r.offers.size():
 			lados[r.offer_dirs[i]] = true
-			cargas[r.offer_cargo[i]] = true
+			assert_eq(r.offer_mission[i]["kind"], "simple", "sem nada liberado so aparece a Simples")
 	assert_true(lados.has(-1) and lados.has(1), "Lua: pedidos para os dois lados")
-	for k: Dictionary in EconMath.cargo_kinds("luna"):
-		assert_true(cargas.has(k["id"]), "carga %s nunca sorteada" % k["id"])
+	var a := RunState.create("luna", stats, 42, {"simple": 1, "heavy": 2, "soft": 1})
+	assert_eq(a.offers, run.offers, "liberar missoes nao muda as distancias do seed")
+	var vistos := {}
+	for s in 40:
+		var r := RunState.create("luna", stats, s, {"simple": 1, "heavy": 2, "soft": 1})
+		for m: Dictionary in r.offer_mission:
+			vistos["%s%d" % [m["kind"], int(m["star"])]] = true
+			assert_true(m["kind"] in ["simple", "heavy", "soft"], "so tipos liberados")
+			assert_true(int(m["star"]) <= (2 if m["kind"] == "heavy" else 1), "estrela ate a liberada")
+	for k: String in ["simple1", "heavy1", "heavy2", "soft1"]:
+		assert_true(vistos.has(k), k + " nunca sorteada")
 
 
-func test_carga_cumprida_paga_mais_e_falha_paga_menos() -> void:
+func test_missao_cumprida_paga_mais_e_falha_paga_menos() -> void:
+	var tow := {"kind": "tow", "star": 2, "parts": [{"kind": "tow", "star": 2}]}
 	var run := RunState.create("luna", stats, 1)
-	run.taken_cargo = "towed"
-	var ok: float = run.complete_delivery(800.0, 0.9, 40.0, true)["credits"]
-	assert_almost(ok, EconMath.contract_pay("luna", 800.0, stats, 0.9) * EconMath.cargo_mult("towed", true))
+	run.taken_mission = tow
+	var ok: float = run.complete_delivery(800.0, 0.9, 40.0)["credits"]
+	assert_almost(ok, EconMath.contract_pay("luna", 800.0, stats, 0.9) * EconMath.mission_mult(tow))
 	var run2 := RunState.create("luna", stats, 1)
-	run2.taken_cargo = "towed"
-	var bad: float = run2.complete_delivery(800.0, 0.9, 40.0, false)["credits"]
-	assert_true(bad < ok, "carga estragada paga menos")
-	assert_false(run2.over, "carga estragada nao acaba o run")
-	assert_eq(run2.deliveries[-1]["cargo"], "towed")
-	assert_eq(run2.taken_cargo, "box", "proxima entrega comeca sem carga especial")
+	run2.taken_mission = tow
+	var bad: float = run2.complete_delivery(800.0, 0.9, 40.0, ["tow"])["credits"]
+	assert_true(bad < ok, "regra falhou paga menos")
+	assert_false(run2.over, "regra falhou nao acaba o run")
+	assert_eq(run2.deliveries[-1]["mission"]["kind"], "tow")
+	assert_eq(run2.taken_mission["kind"], "simple", "proxima entrega comeca Simples")
+	assert_eq(run2.stars, 1, "1 estrela por entrega")
 
 
-func test_take_offer_leva_lado_e_carga() -> void:
-	var run := RunState.create("luna", stats, 11)
+func test_taxi_paga_os_dois_trechos_e_gasta_mais() -> void:
+	var taxi := {"kind": "passenger", "star": 2, "parts": [{"kind": "passenger", "star": 2}]}
+	var run := RunState.create("luna", stats, 1)
+	run.taken_mission = taxi
+	var leg2 := EconMath.mission_leg2(taxi)
+	assert_true(leg2 > 0.0)
+	var pay: float = run.complete_delivery(800.0, 0.9, 40.0)["credits"]
+	var mm := EconMath.mission_mult(taxi)
+	assert_almost(pay, (EconMath.contract_pay("luna", 800.0, stats, 0.9) + EconMath.contract_pay("luna", 800.0 * leg2,
+			stats, 0.9)) * mm, 1e-6)
+	assert_almost(run.leg2_m(taxi, 120.0), 100.0, 1e-6, "2o trecho nunca menor que a entrega mais curta (100 m)")
+	assert_true(run.mission_gas(taxi, 800.0) > run.mission_gas(EconMath.simple_mission(), 800.0))
+
+
+func test_pesada_gasta_mais_gas() -> void:
+	var run := RunState.create("luna", stats, 1)
+	var h3 := {"kind": "heavy", "star": 3, "parts": [{"kind": "heavy", "star": 3}]}
+	assert_true(run.mission_gas(h3, 1000.0) > run.mission_gas(EconMath.simple_mission(), 1000.0))
+
+
+func test_take_offer_leva_lado_e_missao() -> void:
+	var run := RunState.create("luna", stats, 11, {"simple": 1, "fast": 1})
 	var dir := run.offer_dirs[2]
-	var cargo := run.offer_cargo[2]
+	var m := run.offer_mission[2]
 	run.take_offer(2)
 	assert_eq(run.taken_dir, dir)
-	assert_eq(run.taken_cargo, cargo)
+	assert_eq(run.taken_mission, m)
 	assert_eq(run.offer_dirs.size(), run.offers.size())
+	assert_eq(run.offer_mission.size(), run.offers.size())

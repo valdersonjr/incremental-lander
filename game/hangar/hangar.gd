@@ -1,5 +1,6 @@
 ## Hangar entre runs (arte: UiKit, cor de destaque do mundo atual). Abas: NAVE (upgrades, padrao), AJUDAS (arvore do
-## Painel de bordo: ajudas de voo compradas uma vez, ligar/desligar); os recordes pessoais ficam numa faixa no topo. Esc (sem botao na tela) pede o menu do
+## Painel de bordo: ajudas de voo compradas uma vez, ligar/desligar), PEDIDOS (arvore de missoes liberadas com estrelas
+## ganhas nas entregas); os recordes pessoais ficam numa faixa no topo. Esc (sem botao na tela) pede o menu do
 ## jogo (menu_requested: a Main esconde o hangar e abre o PauseMenu no modo HANGAR — volumes, menu inicial, novo jogo).
 ## Q/E trocam de aba, Enter decola (ou ativa o botao com foco, se o jogador navegou com setas/Tab). Tudo que e numero
 ## vem de GameState/EconMath. As linhas sao refeitas a cada refresh(): botoes levam meta "focus_key" para o foco do
@@ -13,13 +14,24 @@ signal title_requested
 ## Esc: abrir o menu do jogo fora do hangar.
 signal menu_requested
 
-enum Tab { SHIP, ASSISTS }
+enum Tab { SHIP, MISSIONS, ASSISTS }
 
 const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay_mult": "×", "gear": "×",
 		"drones": "", "autopilot": "×"}
 const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
 		"gear": "gear", "fleet": "fleet", "autopilot": "autopilot"}
-const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.ASSISTS, "AJUDAS", "distance"]]
+const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.MISSIONS, "PEDIDOS", "quality"], [Tab.ASSISTS, "AJUDAS", "distance"]]
+## Aba PEDIDOS: o que cada missao pede (tooltip) e a cor do ratinho de cada tipo (placeholder ate a arte da Etapa C:
+## rostinho do ratinho tingido).
+const MISSION_TIP := {"heavy": "a nave fica pesada: sobe mais devagar e gasta mais gás",
+		"soft": "pouse bem devagar (a velocidade de pouso fica mais baixa a cada estrela)",
+		"fast": "chegue antes do relógio acabar (menos tempo a cada estrela)",
+		"passenger": "estrela 1: passe devagar pertinho do ratinho perdido; 2 e 3: táxi — pouse para buscar e leve de volta",
+		"tow": "a carga vai pendurada num cabo: não deixe bater no chão",
+		"double": "duas regras juntas no mesmo pedido"}
+const MISSION_TINT := {"heavy": Color("#f68f37"), "soft": Color("#f5a097"), "fast": Color("#4d9be6"),
+		"passenger": Color("#f9e65e"), "tow": Color("#a884f3"), "double": Color("#1ebc73")}
+const MISSION_CARD_W := 132
 ## Larguras das colunas das tabelas (px da arte) — iguais em todas as abas para alinhar.
 const COL_ACTION := 120
 const COL_MAX := 30
@@ -102,6 +114,8 @@ func refresh() -> void:
 	match _tab:
 		Tab.SHIP:
 			_add_upgrades()
+		Tab.MISSIONS:
+			_add_missions()
 		Tab.ASSISTS:
 			_add_assists()
 	_after_rebuild(focus_key)
@@ -213,7 +227,7 @@ func _set_tab(t: Tab) -> void:
 
 
 func _cycle_tab(step: int) -> void:
-	var order: Array[Tab] = [Tab.SHIP, Tab.ASSISTS]
+	var order: Array[Tab] = [Tab.SHIP, Tab.MISSIONS, Tab.ASSISTS]
 	var i := order.find(_tab)
 	_set_tab(order[posmod((0 if i < 0 else i) + step, order.size())])
 
@@ -226,6 +240,8 @@ func _tab_has_news(t: Tab) -> bool:
 		Tab.ASSISTS:
 			return GameState.upgrade_rows().any(func(r: Dictionary) -> bool:
 				return r["affordable"] and _is_assist(str(r["id"])))
+		Tab.MISSIONS:
+			return GameState.can_unlock_mission()
 	return false
 
 
@@ -583,6 +599,158 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 		var before := int(GameState.levels.get(id, 0))
 		_bought(GameState.buy_upgrade(id), "up:" + id, id, before))
 	return buy
+
+
+# --- aba PEDIDOS (arvore de missoes, v12 2026-10-06) ---------------------------------------------------------------
+
+## Uma linha por tipo de missao: rostinho do ratinho (cor do tipo) + nome + cartoes das estrelas ligados por setas.
+## Cartao = estrelas + multiplicador do pagamento + botao: "3 ★" (da para liberar), LIBERADA, ou apagado com cadeado
+## (falta a estrela anterior / os tipos exigidos; o tooltip diz). Estrelas ganhas: 1 por entrega.
+func _add_missions() -> void:
+	var nodes: Array = EconMath.mission_spec().get("nodes", [])
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override(&"separation", 4)
+	head.add_child(_section("PEDIDOS  ·  cada entrega dá 1"))
+	head.add_child(_kid_small("star_on"))
+	var have := Label.new()
+	have.text = "você tem %d" % GameState.stars
+	have.theme_type_variation = &"MoneyLabel"
+	head.add_child(have)
+	head.add_child(_kid_small("star_on"))
+	_rows.add_child(head)
+	var by_kind := {}
+	var order: Array[String] = []
+	for n: Dictionary in nodes:
+		if not by_kind.has(n["kind"]):
+			by_kind[n["kind"]] = []
+			order.append(n["kind"])
+		by_kind[n["kind"]].append(n)
+	for kind: String in order:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override(&"separation", 2)
+		var face := TextureRect.new()
+		face.texture = UiKit.kid("rat")
+		face.modulate = MISSION_TINT.get(kind, Color.WHITE)
+		face.custom_minimum_size = Vector2(24, 24)
+		face.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		face.tooltip_text = MISSION_TIP.get(kind, "")
+		face.mouse_filter = Control.MOUSE_FILTER_PASS
+		line.add_child(face)
+		var pic := TextureRect.new()
+		pic.texture = CargoArt.icon(kind)
+		pic.custom_minimum_size = Vector2(16, 24)
+		pic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		line.add_child(pic)
+		var name := Label.new()
+		name.text = str(EconMath.mission_kind(kind)["name"])
+		name.custom_minimum_size = Vector2(78, 0)
+		name.clip_text = true
+		name.tooltip_text = MISSION_TIP.get(kind, "")
+		name.mouse_filter = Control.MOUSE_FILTER_PASS
+		line.add_child(name)
+		var first := true
+		for n: Dictionary in by_kind[kind]:
+			if not first:
+				line.add_child(_kid_rect("arrow"))
+			first = false
+			line.add_child(_make_mission_card(n))
+		_rows.add_child(line)
+
+
+func _make_mission_card(node: Dictionary) -> PanelContainer:
+	var id: String = node["id"]
+	var kind: String = node["kind"]
+	var star := int(node["star"])
+	var owned := GameState.mission_nodes.has(id)
+	var ok := EconMath.mission_node_ok(node, GameState.mission_nodes)
+	var cost := EconMath.mission_node_cost(node)
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"SlimPanel"
+	card.custom_minimum_size = Vector2(MISSION_CARD_W, 0)
+	card.set_meta(&"row_key", "mission:" + id)
+	card.mouse_filter = Control.MOUSE_FILTER_PASS
+	card.tooltip_text = "%s %s: %s" % [EconMath.mission_kind(kind)["name"], "★".repeat(star), MISSION_TIP.get(kind, "")]
+	if not owned and not ok:
+		card.modulate = Color(0.6, 0.6, 0.68)
+		card.tooltip_text += "\n" + _mission_need_text(node)
+	var top := HBoxContainer.new()                             # uma linha so: estrelas, multiplicador e botao
+	top.add_theme_constant_override(&"separation", 0)
+	top.alignment = BoxContainer.ALIGNMENT_CENTER
+	card.add_child(top)
+	for s in (1 if kind == "double" else 3):
+		top.add_child(_kid_small("star_on" if s < star or kind == "double" else "star_off"))
+	var mult := Label.new()
+	var lv := EconMath.mission_level(kind, star)
+	mult.text = " " + (UiKit.mult_text(float(lv["mult"])) if kind != "double" else "×2+")
+	mult.theme_type_variation = &"MoneyLabel"
+	mult.custom_minimum_size = Vector2(28, 0)
+	top.add_child(mult)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(40, 15)
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn.set_meta(&"focus_key", "mission:" + id)
+	if owned:
+		btn.text = "TEM"
+		btn.tooltip_text = "liberada: aparece nos pedidos"
+		btn.disabled = true
+		btn.add_theme_color_override(&"font_disabled_color", UiKit.color("leaf"))
+	elif ok:
+		btn.text = "%d" % cost
+		btn.icon = UiKit.kid("star_on")
+		btn.add_theme_constant_override(&"icon_max_width", 12)
+		btn.disabled = GameState.stars < cost
+		btn.tooltip_text = "liberar com %d estrelas" % cost + ("" if GameState.stars >= cost
+				else "\nfaltam %d" % (cost - GameState.stars))
+		if not btn.disabled:
+			btn.theme_type_variation = &"PrimaryButton"
+			var tw := btn.create_tween().set_loops()
+			tw.tween_property(btn, "modulate", Color(1.25, 1.25, 1.25), 0.45).set_trans(Tween.TRANS_SINE)
+			tw.tween_property(btn, "modulate", Color.WHITE, 0.45).set_trans(Tween.TRANS_SINE)
+		btn.pressed.connect(func() -> void:
+			var done := GameState.unlock_mission(id)
+			Sound.ui("buy" if done else "denied")
+			if done:
+				_flash_row = "mission:" + id
+			refresh())
+	else:
+		btn.icon = UiKit.kid("lock")
+		btn.add_theme_constant_override(&"icon_max_width", 12)
+		btn.disabled = true
+		btn.focus_mode = Control.FOCUS_NONE
+	top.add_child(btn)
+	return card
+
+
+## O que falta para liberar um no (para o tooltip do cartao apagado).
+func _mission_need_text(node: Dictionary) -> String:
+	var names: Array[String] = []
+	for r: String in node.get("requires", []):
+		if not GameState.mission_nodes.has(r):
+			names.append(_node_title(r))
+	var ra: Dictionary = node.get("requires_any", {})
+	if not ra.is_empty():
+		var opts: Array[String] = []
+		for r: String in ra["of"]:
+			opts.append(_node_title(r))
+		return "libere %d destas: %s" % [int(ra["n"]), ", ".join(opts)]
+	return "libere antes: " + ", ".join(names)
+
+
+func _node_title(node_id: String) -> String:
+	for n: Dictionary in EconMath.mission_spec().get("nodes", []):
+		if n["id"] == node_id:
+			return "%s %s" % [EconMath.mission_kind(n["kind"])["name"], "★".repeat(int(n["star"]))]
+	return node_id
+
+
+func _kid_small(name: String) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.texture = UiKit.kid(name)
+	tr.custom_minimum_size = Vector2(12, 12)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return tr
 
 
 # --- aba AJUDAS (Painel de bordo, 2026-10-05) ----------------------------------------------------------------------

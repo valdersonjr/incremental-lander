@@ -1,10 +1,10 @@
 ## Estado de um run (logica pura, testavel): ofertas de entrega, entregas feitas, ganhos e fim do run.
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
 ## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
-## tipo de plataforma x combo x carga).
-## Lua (2026-10-05): cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e CARGA
-## (economy.json contracts.cargo: caixa, bolo fragil, sorvete com prazo, queijao rebocado, ratinho a resgatar).
-## Lado e carga usam um sorteador proprio: as distancias e plataformas de um seed nao mudam.
+## tipo de plataforma x combo x missao).
+## Lua: cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e MISSAO (v12, economy.json
+## contracts.missions: {kind, star, parts}; so as liberadas pelo jogador, EconMath.draw_mission). Lado e missao usam
+## um sorteador proprio: as distancias e plataformas de um seed nao mudam.
 class_name RunState
 extends RefCounted
 
@@ -14,10 +14,13 @@ var offers: Array[float] = []             # distancias (m do modelo) das ofertas
 var offer_tiers: Array[String] = []       # tipo de plataforma de cada oferta (mesma ordem): normal/narrow/tight
 var streak := 0                           # pousos bons seguidos neste run (combo; EconMath.combo_mult)
 var offer_dirs: Array[int] = []          # lado de cada oferta: 1 = direita, -1 = esquerda
-var offer_cargo: Array[String] = []       # carga de cada oferta (EconMath.cargo_kind)
+var offer_mission: Array[Dictionary] = [] # missao de cada oferta ({kind, star, parts})
 var taken_tier := "normal"                # tipo da plataforma da entrega em andamento
 var taken_dir := 1                        # lado da entrega em andamento
-var taken_cargo := "box"                  # carga da entrega em andamento
+var taken_mission: Dictionary = {}        # missao da entrega em andamento
+var stars := 0                            # estrelas ganhas neste run (contracts.missions.stars.per_delivery)
+var unlocked: Dictionary = {"simple": 1}  # missoes liberadas pelo jogador ({kind: estrela})
+var boost: Dictionary = {}                # missoes recem-liberadas ({kind: runs}) aparecem mais
 var deliveries: Array[Dictionary] = []
 var earned: Dictionary = {}               # recurso -> quantidade ganha neste run
 var over := false
@@ -25,16 +28,22 @@ var end_reason := ""
 var max_deliveries := 6
 
 var _rng := RandomNumberGenerator.new()
-var _rng_extra := RandomNumberGenerator.new()   # lado + carga (sequencia propria)
+var _rng_extra := RandomNumberGenerator.new()   # lado + missao (sequencia propria)
 var _left_chance := 0.0
 var _planet: Dictionary = {}
 
 
-## Cria um run no planeta com os stats da nave. Mesmo seed => mesmas ofertas.
-static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int) -> RunState:
+## Cria um run no planeta com os stats da nave. Mesmo seed => mesmas ofertas. p_unlocked = missoes liberadas
+## ({kind: estrela}; vazio = so Simples), p_boost = recem-liberadas ({kind: runs}).
+static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_unlocked: Dictionary = {},
+		p_boost: Dictionary = {}) -> RunState:
 	var run := RunState.new()
 	run.planet_id = p_planet_id
 	run.stats = p_stats
+	run.taken_mission = EconMath.simple_mission()
+	if not p_unlocked.is_empty():
+		run.unlocked = p_unlocked
+	run.boost = p_boost
 	run._rng.seed = seed_value
 	run._rng_extra.seed = seed_value * 7919 + 17
 	run._left_chance = float(WorldConfig.load_config().get("routes", {}).get(p_planet_id, {}).get("left_chance", 0.0))
@@ -52,28 +61,56 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int) ->
 	return run
 
 
-## Dados de uma oferta para a UI/piloto: distancia, tipo de plataforma e multiplicador, pagamento (perfeito e
-## tipico, ja com o combo atual), gas estimado, alcancavel.
+## Dados de uma oferta para a UI/piloto: distancia, tipo de plataforma e multiplicador, missao, pagamento (perfeito e
+## tipico, ja com o combo atual; taxi soma os 2 trechos), gas estimado (Pesada: motor mais fraco; Cabo: dv_mult;
+## taxi: os 2 trechos), alcancavel.
 func offer_info(index: int, gas_left: float) -> Dictionary:
 	var d: float = offers[index]
 	var tier: String = offer_tiers[index]
-	var cargo: String = offer_cargo[index]
-	var ck := EconMath.cargo_kind(cargo)
-	var gas_est := EconMath.estimated_hop_dv(planet_id, d, stats) * float(ck.get("dv_mult", 1.0)) \
-			/ float(stats["efficiency"])
-	var cm := EconMath.cargo_mult(cargo, true)
+	var m: Dictionary = offer_mission[index]
+	var mm := EconMath.mission_mult(m)
+	var d2 := leg2_m(m, d)
+	var gas_est := mission_gas(m, d)
 	return {
 		"distance": d,
+		"distance2": d2,
 		"tier": tier,
 		"dir": offer_dirs[index],
-		"cargo": cargo,
-		"cargo_mult": cm,
+		"mission": m,
+		"mission_mult": mm,
 		"mult": float(EconMath.pad_tier(tier)["mult"]),
-		"pay_best": EconMath.delivery_pay(planet_id, d, stats, 1.0, tier, streak, cm),
-		"pay_typical": EconMath.delivery_pay(planet_id, d, stats, 0.7, tier, streak, cm),
+		"pay_best": _pay(d, d2, 1.0, tier, mm),
+		"pay_typical": _pay(d, d2, 0.7, tier, mm),
 		"gas_est": gas_est,
 		"reachable": gas_est <= gas_left,
 	}
+
+
+## Gas estimado de uma missao de distancia d (os 2 trechos do taxi; Pesada divide o motor; Cabo x dv_mult).
+func mission_gas(m: Dictionary, d: float) -> float:
+	var st := stats
+	var div := EconMath.mission_thrust_div(m)
+	if div != 1.0:
+		st = stats.duplicate()
+		st["thrust"] = float(stats["thrust"]) / div
+	var dv := EconMath.estimated_hop_dv(planet_id, d, st)
+	var d2 := leg2_m(m, d)
+	if d2 > 0.0:
+		dv += EconMath.estimated_hop_dv(planet_id, d2, st)
+	return dv * EconMath.mission_dv_mult(m) / float(stats["efficiency"])
+
+
+## Distancia do 2o trecho do taxi (0 = sem): leg2 x d, nunca menor que a entrega mais curta do mundo.
+func leg2_m(m: Dictionary, d: float) -> float:
+	var f := EconMath.mission_leg2(m)
+	return maxf(d * f, float(_planet["distance"][0])) if f > 0.0 else 0.0
+
+
+func _pay(d: float, d2: float, quality: float, tier: String, mm: float) -> float:
+	var pay := EconMath.delivery_pay(planet_id, d, stats, quality, tier, streak, mm)
+	if d2 > 0.0:
+		pay += EconMath.delivery_pay(planet_id, d2, stats, quality, tier, streak, mm)
+	return pay
 
 
 ## Indice da melhor oferta alcancavel (pagamento por gas estimado, com folga), ou -1. Usado pelo --demo.
@@ -92,16 +129,16 @@ func best_offer(gas_left: float, margin: float = 2.2) -> int:
 
 
 ## Aceita uma oferta: remove da lista e (se a spec manda) sorteia uma nova. Retorna a distancia;
-## o tipo da plataforma, o lado e a carga ficam em taken_tier/taken_dir/taken_cargo.
+## o tipo da plataforma, o lado e a missao ficam em taken_tier/taken_dir/taken_mission.
 func take_offer(index: int) -> float:
 	var d: float = offers[index]
 	taken_tier = offer_tiers[index]
 	taken_dir = offer_dirs[index]
-	taken_cargo = offer_cargo[index]
+	taken_mission = offer_mission[index]
 	offers.remove_at(index)
 	offer_tiers.remove_at(index)
 	offer_dirs.remove_at(index)
-	offer_cargo.remove_at(index)
+	offer_mission.remove_at(index)
 	if EconMath.spec["contracts"].get("regenerate", false):
 		offers.append(_draw_distance())
 		offer_tiers.append(EconMath.draw_pad_tier(_rng))
@@ -113,14 +150,15 @@ func take_offer(index: int) -> float:
 ## Registra uma entrega concluida (na plataforma taken_tier, com o combo atual)
 ## e devolve as recompensas {recurso: qtd}. Depois atualiza o combo: pouso bom soma, pouso ruim zera.
 ## gift_pay = creditos do presente pego no alto do morro (EconMath.gift_value; v10), somados ao pagamento.
-## cargo_ok = a regra da carga taken_cargo foi cumprida (falhou: paga mult x fail_mult; nunca acaba o run).
-## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, carga) para o HUD mostrar.
-func complete_delivery(distance: float, quality: float, gas_used: float, cargo_ok: bool = true,
+## failed = kinds das regras da missao taken_mission que falharam (paga mult x fail_mult; nunca acaba o run).
+## Taxi: distance = 1o trecho; o 2o (leg2 x distance) tambem paga. Ganha estrelas (stars.per_delivery).
+## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, missao) para o HUD mostrar.
+func complete_delivery(distance: float, quality: float, gas_used: float, failed: Array = [],
 		gift_pay: float = 0.0) -> Dictionary:
 	var combo := EconMath.combo_mult(streak)
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
-	var cm := EconMath.cargo_mult(taken_cargo, cargo_ok)
-	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak, cm) + gift_pay
+	var mm := EconMath.mission_mult(taken_mission, failed)
+	var pay := _pay(distance, leg2_m(taken_mission, distance), quality, taken_tier, mm) + gift_pay
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
 	for res: String in weights:
@@ -129,11 +167,13 @@ func complete_delivery(distance: float, quality: float, gas_used: float, cargo_o
 	var good := EconMath.combo_counts(quality)
 	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards,
 			"tier": taken_tier, "mult": mult, "combo": combo,
-			"good": good, "cargo": taken_cargo, "cargo_ok": cargo_ok, "cargo_mult": cm, "gift_pay": gift_pay})
+			"good": good, "mission": taken_mission, "failed": failed.duplicate(), "mission_mult": mm,
+			"gift_pay": gift_pay})
 	streak = streak + 1 if good else 0
+	stars += int(EconMath.mission_spec().get("stars", {}).get("per_delivery", 1))
 	taken_tier = "normal"
 	taken_dir = 1
-	taken_cargo = "box"
+	taken_mission = EconMath.simple_mission()
 	if deliveries.size() >= max_deliveries:
 		finish("limite_de_entregas")
 	return rewards
@@ -170,33 +210,34 @@ func summary() -> Dictionary:
 		"deliveries": deliveries.size(),
 		"avg_quality": q_total / maxf(1.0, deliveries.size()),
 		"earned": earned,
+		"stars": stars,
 		"reason": end_reason,
 	}
 
 
-## Ordena as ofertas por distancia levando tipo de plataforma, lado e carga juntos.
+## Ordena as ofertas por distancia levando tipo de plataforma, lado e missao juntos.
 func _sort_offers() -> void:
 	var idx := range(offers.size())
 	idx.sort_custom(func(a: int, b: int) -> bool: return offers[a] < offers[b])
 	var d: Array[float] = []
 	var t: Array[String] = []
 	var dirs: Array[int] = []
-	var cg: Array[String] = []
+	var ms: Array[Dictionary] = []
 	for i: int in idx:
 		d.append(offers[i])
 		t.append(offer_tiers[i])
 		dirs.append(offer_dirs[i])
-		cg.append(offer_cargo[i])
+		ms.append(offer_mission[i])
 	offers = d
 	offer_tiers = t
 	offer_dirs = dirs
-	offer_cargo = cg
+	offer_mission = ms
 
 
-## Lado e carga de uma oferta nova (sorteador proprio).
+## Lado e missao de uma oferta nova (sorteador proprio).
 func _draw_extra() -> void:
 	offer_dirs.append(-1 if _rng_extra.randf() < _left_chance else 1)
-	offer_cargo.append(EconMath.draw_cargo(planet_id, _rng_extra))
+	offer_mission.append(EconMath.draw_mission(planet_id, unlocked, boost, stats, _rng_extra))
 
 
 func _draw_distance() -> float:

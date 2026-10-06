@@ -5,8 +5,10 @@ extends RefCounted
 
 const SHEET := "res://assets/sprites/cargo.png"
 const META := "res://assets/sprites/cargo.json"
-## Figura de cada carga na oferta/HUD (a mesma do mundo, parada).
-const ICON := {"box": "box", "fragile": "cake", "urgent": "icecream", "towed": "wheel", "rescue": "mouse_wait0"}
+## Figura de cada tipo de missao na oferta/HUD (placeholder com as cargas antigas ate os ratinhos da Etapa C:
+## Pesada ainda usa a caixa).
+const ICON := {"simple": "box", "heavy": "box", "soft": "cake", "fast": "icecream", "tow": "wheel",
+		"passenger": "mouse_wait0", "double": "gift"}
 
 static var _meta: Dictionary = {}
 static var _cache: Dictionary = {}
@@ -34,8 +36,8 @@ static func tex(name: String) -> AtlasTexture:
 	return at
 
 
-## Figura da carga kind (falhou = versao estragada: bolo amassado, sorvete derretido, queijo rachado;
-## o ratinho nao resgatado continua esperando).
+## Figura do tipo de missao kind (falhou = versao estragada: bolo amassado, sorvete derretido, carga rachada;
+## o passageiro que ficou continua esperando).
 static func icon(kind: String, failed: bool = false) -> AtlasTexture:
 	var base: String = ICON.get(kind, "box")
 	if failed:

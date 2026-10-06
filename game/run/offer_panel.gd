@@ -2,8 +2,9 @@
 ## rostinho de quem pediu: se o lugar da entrega cabe na tela, o pino fica fincado no chao onde a plataforma vai
 ## nascer (a crianca ve para onde vai voar); se fica alem da tela, vai para a coluna da borda do lado dele (direita ou,
 ## na Lua, esquerda) com uma setinha (mais em cima = mais perto). Pino cinza = o gas nao chega (continua escolhivel).
-## Na Lua o pino mostra a CARGA (queijao, bolo, sorvete, ratinho perdido, caixa). Um mini-cartao embaixo mostra o
-## pedido selecionado com figuras: carga, quanto do gas gasta, estrelas de dificuldade do pouso e o premio.
+## Na Lua o pino mostra a MISSAO (Simples, Pesada, Pouso suave, Rapida, Passageiro, Cabo, Dupla). Um mini-cartao embaixo
+## mostra o pedido selecionado com figuras: missao, quanto do gas gasta, estrelas de dificuldade (da missao; Simples =
+## as da plataforma) e o premio.
 ## Teclas 1..9 (ou teclado numerico) escolhem direto; setas andam entre os pinos e Enter escolhe; clique no pino ou
 ## em VAMOS! escolhe. E encerra o run (2 toques). Se o jogador tenta pilotar antes de escolher, os pinos pulam.
 class_name OfferPanel
@@ -31,10 +32,11 @@ const WORLD_MIN_X := EDGE_LEFT + PIN + EDGE_LABEL + 8.0
 ## Rostinhos dos clientes (atlas kids) por mundo; o pedido sorteia um pelo hash da distancia.
 ## Lua (2026-10-05): so ratinhos (usuario: "tira todos coelhos e alienigena").
 const CUSTOMERS := {"luna": ["rat"]}
-## Dica de cada carga (tooltip; a figura ja diz o principal).
-const CARGO_TIP := {"box": "caixa de queijo", "fragile": "bolo: pouse bem devagar!",
-		"urgent": "sorvete: chegue antes de derreter!", "towed": "queijão no cabo: não deixe bater no chão!",
-		"rescue": "ratinho perdido: passe devagar pertinho dele!"}
+## Dica de cada regra (tooltip; a figura ja diz o principal).
+const MISSION_TIP := {"simple": "entrega simples", "heavy": "pesada: a nave sobe mais devagar e gasta mais gás",
+		"soft": "pouso suave: pouse bem devagar!", "fast": "rápida: chegue antes do relógio acabar!",
+		"tow": "cabo: não deixe a carga bater no chão!", "passenger": "passageiro: passe devagar pertinho dele!",
+		"taxi": "táxi: pouse para buscar o ratinho e leve de volta"}
 ## Estrelas de dificuldade do pouso por tipo de plataforma.
 const STARS := {"normal": 1, "narrow": 2, "tight": 3}
 
@@ -209,8 +211,8 @@ func _add_pin(i: int) -> void:
 		tr.name = part.capitalize()
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tr.texture = UiKit.kid(_customer(info) if part == "face" else ("pin" if ok else "pin_off"))
-		if part == "face" and _has_cargo():                    # Lua: o pino mostra a carga (16x16 no meio do pino)
-			tr.texture = CargoArt.icon(str(info.get("cargo", "box")))
+		if part == "face" and _has_missions():                 # Lua: o pino mostra a missao (16x16 no meio do pino)
+			tr.texture = CargoArt.icon(str(info["mission"]["kind"]))
 			tr.position = Vector2(4, 3)
 		if part == "face" and not ok:
 			tr.modulate = Color(0.7, 0.7, 0.75)
@@ -228,8 +230,8 @@ func _add_pin(i: int) -> void:
 	_prizes.append(prize)
 
 
-func _has_cargo() -> bool:
-	return not EconMath.cargo_kinds(_planet).is_empty()
+func _has_missions() -> bool:
+	return not EconMath.mission_kinds(_planet).is_empty()
 
 
 func _customer(info: Dictionary) -> String:
@@ -243,11 +245,20 @@ func _tooltip(info: Dictionary) -> String:
 	if info["tier"] != "normal":
 		t += "\nplataforma %s: paga %s, mas é mais difícil de pousar" % [EconMath.pad_tier(info["tier"])["name"],
 				UiKit.mult_text(info["mult"])]
-	if _has_cargo():
-		t += "\n" + CARGO_TIP.get(str(info.get("cargo", "box")), "")
+	if _has_missions():
+		t += "\n" + _mission_tip(info["mission"])
 	if not info["reachable"]:
 		t += "\narriscado: precisa de mais gás do que resta"
 	return t
+
+
+## Dica da missao (Dupla: as duas regras; taxi tem frase propria).
+func _mission_tip(m: Dictionary) -> String:
+	var tips: Array[String] = []
+	for p: Dictionary in m.get("parts", []):
+		var k: String = p["kind"]
+		tips.append(MISSION_TIP["taxi"] if k == "passenger" and EconMath.mission_leg2(m) > 0.0 else MISSION_TIP.get(k, ""))
+	return MISSION_TIP["simple"] if tips.is_empty() else "\n".join(tips)
 
 
 ## Etiqueta escura atras de cada premio (legivel sobre o ceu e o chao). Pino no mundo: haste tracejada ate o chao e
@@ -293,15 +304,17 @@ func _select(i: int) -> void:
 	(_pins[i].get_node("Bg") as TextureRect).texture = UiKit.kid("pin_sel")
 	UiKit.pulse(_pins[i], 1.4, 0.2)
 	_face.texture = UiKit.kid(_customer(info))
-	_cargo.visible = _has_cargo()
+	_cargo.visible = _has_missions()
 	if _cargo.visible:
-		_cargo.texture = CargoArt.icon(str(info.get("cargo", "box")))
+		_cargo.texture = CargoArt.icon(str(info["mission"]["kind"]))
 	var r: float = info["gas_est"] / maxf(_gas_left, 0.001)
 	_gas_bar.value = minf(r, 1.0) * 100.0
 	_gas_bar.theme_type_variation = &"GasBar" if r <= 0.55 else (&"WarnBar" if r <= 1.0 else &"DangerBar")
 	for c in _stars.get_children():
 		c.queue_free()
 	var n: int = STARS.get(info["tier"], 1)
+	if not (info["mission"]["parts"] as Array).is_empty():     # missao: as estrelas sao as dela
+		n = int(info["mission"]["star"]) if info["mission"]["kind"] != "double" else 3
 	for s in 3:
 		var tr := TextureRect.new()
 		tr.texture = UiKit.kid("star_on" if s < n else "star_off")

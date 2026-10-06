@@ -4,7 +4,7 @@
 ## com o tamanho do combo). Variacoes + pitch/volume aleatorios vem dos AudioStreamRandomizer (.tres).
 ## Trilha: Sound.music("title"|"flight"|"") no bus Music e Sound.ambience(planeta|"") no bus Ambience, com crossfade
 ## (loops; tocar o que ja toca nao reinicia). Jingles: Sound.jingle("milestone"|"unlock"|"goal") no bus SFX,
-## um por vez (o novo corta o anterior) e a musica abaixa enquanto toca. O propulsor e o alarme de gas moram no Lander.
+## um por vez (o novo corta o anterior) e a musica abaixa enquanto toca. Liberar missao toca "unlock" pelo Events. O propulsor e o alarme de gas moram no Lander.
 extends Node
 
 const STREAMS := {
@@ -59,6 +59,7 @@ func _ready() -> void:
 	if bus >= 0:
 		_duck_fx = AudioEffectAmplify.new()
 		AudioServer.add_bus_effect(bus, _duck_fx)
+	Events.mission_unlocked.connect(func(_n: String) -> void: jingle("unlock"))   # missao nova liberada
 
 
 func _new_player(bus: StringName) -> AudioStreamPlayer:

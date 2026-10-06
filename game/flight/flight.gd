@@ -27,12 +27,15 @@ const EXTEND_NEAR := 800.0                         # nave a menos disso (px) da 
 const EXTEND_STEP := 2400.0
 var target_tier := "normal"
 var target_dir := 1                                # lado do alvo: 1 direita, -1 esquerda
-## Carga da entrega atual (economy.json contracts.cargo; regras em world.json cargo) e se a regra segue cumprida.
-var cargo := "box"
-var cargo_ok := true
-var urgent_left := 0.0                             # sorvete: segundos reais que faltam (conta so voando)
+## Missao da entrega atual (economy.json contracts.missions; fisica em world.json missions): {kind, star, parts}.
+## failed = kinds das regras que falharam (a entrega paga menos; o run continua).
+var mission: Dictionary = {"kind": "simple", "star": 1, "parts": []}
+var failed: Array[String] = []
+## Taxi (Passageiro 2-3): 1 = indo buscar o passageiro (pousar NAO e entrega), 2 = levando; 0 = sem taxi.
+var taxi_stage := 0
+var urgent_left := 0.0                             # Rapida: segundos reais que faltam (conta so voando)
 var urgent_limit := 0.0
-var rescued := false                               # ratinho resgatado neste salto
+var rescued := false                               # Passageiro 1: passageiro resgatado neste salto
 ## Presente do salto (v10): "" sem presente, "gas" (galao) ou "gift" (creditos com a entrega). Gifts.place/touches.
 var gift_kind := ""
 var gift_taken := false
@@ -66,7 +69,7 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
-	_tick_cargo(delta)
+	_tick_mission(delta)
 	_tick_gift()
 	_extend_terrain_if_near_edge()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
@@ -125,13 +128,17 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 
 
 ## Define a proxima entrega: plataforma do tipo tier (normal/narrow/tight) a distance_m da atual, para o lado dir
-## (1 direita, -1 esquerda), levando a carga p_cargo. Pagamento usa distance_m; se a plataforma cairia em cima de
-## outra, ela anda um pouco no mesmo sentido (target_position_m).
-func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_cargo: String = "box") -> void:
+## (1 direita, -1 esquerda), com a missao p_mission. Pagamento usa distance_m; se a plataforma cairia em cima de
+## outra, ela anda um pouco no mesmo sentido (target_position_m). Taxi: stage 1 = plataforma de busca (pousar so
+## embarca o passageiro), stage 2 = trecho de volta (failed_before = falhas do 1o trecho, ex.: passageiro enjoado).
+func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_mission: Dictionary = {},
+		stage: int = 0, failed_before: Array[String] = []) -> void:
 	target_distance_m = distance_m
 	target_tier = tier
 	target_dir = 1 if dir >= 0 else -1
-	cargo = p_cargo
+	mission = p_mission if not p_mission.is_empty() else EconMath.simple_mission()
+	taxi_stage = stage
+	failed = failed_before.duplicate()
 	_pad_positions_m.append(target_position_m(distance_m, target_dir, tier))
 	_pad_tiers.append(tier)
 	target_pad_id = _pad_positions_m.size() - 1
@@ -139,7 +146,7 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_carg
 	lander.pads = terrain.pads
 	lander.ridge = terrain.ridge
 	lander.can_takeoff = true
-	_setup_cargo()
+	_setup_mission()
 	_setup_gift()
 	if _demo:
 		var ap := Autopilot.new()
@@ -249,7 +256,7 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 	shake(float(WorldConfig.load_config()["camera"]["land_shake"]) * clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	current_pad_id = int(pad["id"])
 	if current_pad_id == target_pad_id:
-		_judge_cargo(info)
+		_judge_mission(info, quality)
 		Sound.sfx("delivered")
 		lander.can_takeoff = false
 		target_pad_id = -1
@@ -293,8 +300,10 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"quality": quality,
 		"tier": target_tier,
 		"dir": target_dir,
-		"cargo": cargo,
-		"cargo_ok": cargo_ok and not crashed,
+		"mission": mission,
+		"failed": failed.duplicate(),
+		"mission_ok": failed.is_empty() and not crashed,
+		"leg": taxi_stage,
 		"gift": gift_kind if gift_taken else "",
 		"gift_pay": EconMath.gift_value(planet_id, target_distance_m, stats, gift_kind)
 				if gift_taken and not crashed else 0.0,
@@ -306,16 +315,18 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"tilt": snappedf(float(info.get("tilt", 0.0)), 0.001),
 	}
 	Telemetry.record_delivery(result)
-	_clear_cargo()
+	_clear_mission()
 	_clear_gift()
 	delivery_finished.emit(result)
 
 
 # ---------------------------------------------------------------- presentes no alto do morro (v10, 2026-10-06)
-## Sorteia (sorteador proprio) e poe o presente do salto no alto do morro; salto de resgate nao tem (o ratinho ocupa).
+## Sorteia (sorteador proprio) e poe o presente do salto no alto do morro; salto de resgate nao tem (o passageiro
+## ocupa o meio do caminho).
 func _setup_gift() -> void:
 	_clear_gift()
-	var kind := "" if cargo == "rescue" else EconMath.draw_gift(planet_id, Gifts.rng_for(_seed, target_pad_id))
+	var rescue := _rescue_star() > 0
+	var kind := "" if rescue else EconMath.draw_gift(planet_id, Gifts.rng_for(_seed, target_pad_id))
 	if kind != "":
 		_spawn_gift(kind)
 
@@ -365,42 +376,60 @@ func _tick_gift() -> void:
 	tw.tween_callback(_gift_sprite.hide)
 
 
-# ---------------------------------------------------------------- cargas (Lua, 2026-10-05)
+# ---------------------------------------------------------------- missoes (v12, 2026-10-06)
 
-## Prepara a carga do salto: queijao no cabo ao lado da nave, ratinho no meio do caminho, prazo do sorvete.
-func _setup_cargo() -> void:
-	_clear_cargo()
-	cargo_ok = true
+## Estrela do resgate (Passageiro 1, sozinho ou na Dupla); 0 se o salto nao tem resgate.
+func _rescue_star() -> int:
+	var st := EconMath.mission_has(mission, "passenger")
+	return st if st > 0 and EconMath.mission_leg2(mission) <= 0.0 else 0
+
+
+## Prepara as regras do salto: carga no cabo ao lado da nave, passageiro no meio do caminho (resgate) ou esperando na
+## plataforma de busca (taxi), relogio da Rapida, motor mais fraco da Pesada.
+func _setup_mission() -> void:
+	_clear_mission()
 	rescued = false
-	var ccfg: Dictionary = WorldConfig.load_config()["cargo"]
+	urgent_left = 0.0
+	urgent_limit = 0.0
+	var mcfg: Dictionary = WorldConfig.load_config()["missions"]
 	var a: Dictionary = terrain.pads[current_pad_id]
 	var b: Dictionary = terrain.pads[target_pad_id]
-	match cargo:
-		"towed":
-			_tow = CargoTow.create(_rope_anchor(), terrain.ridge, target_dir)
-			_rope = Line2D.new()
-			_rope.width = 1.0
-			_rope.default_color = Color("#9e4539")              # corda (Resurrect 64)
-			add_child(_rope)
-			move_child(_rope, lander.get_index())              # atras da nave
-			_tow_sprite = Sprite2D.new()
-			_tow_sprite.texture = CargoArt.tex("wheel")
-			add_child(_tow_sprite)
-			_sync_tow_view()
-		"rescue":
-			var x := lerpf(float(a["x"]), float(b["x"]), float(ccfg["rescue"]["at"]))
-			_rescue_pos = Vector2(roundf(x), roundf(TerrainGen.height_at(terrain.ridge, x)))
-			_rescue_sprite = Sprite2D.new()
-			_rescue_sprite.texture = CargoArt.tex("mouse_wait0")
-			_rescue_sprite.position = _rescue_pos + Vector2(0, -8)
-			add_child(_rescue_sprite)
-		"urgent":
-			var u: Dictionary = ccfg["urgent"]
-			urgent_limit = float(u["base_s"]) + float(u["per_sqrt_m"]) * sqrt(target_distance_m)
-			urgent_left = urgent_limit
+	lander.load_div = EconMath.mission_thrust_div(mission)
+	var tow := EconMath.mission_has(mission, "tow")
+	if tow > 0:
+		_tow = CargoTow.create(_rope_anchor(), terrain.ridge, target_dir, tow)
+		_rope = Line2D.new()
+		_rope.width = 1.0
+		_rope.default_color = Color("#9e4539")                  # corda (Resurrect 64)
+		add_child(_rope)
+		move_child(_rope, lander.get_index())                  # atras da nave
+		_tow_sprite = Sprite2D.new()
+		_tow_sprite.texture = CargoArt.tex("wheel")
+		add_child(_tow_sprite)
+		_sync_tow_view()
+	if _rescue_star() > 0:
+		var x := lerpf(float(a["x"]), float(b["x"]), float(mcfg["passenger"]["at"]))
+		_rescue_pos = Vector2(roundf(x), roundf(TerrainGen.height_at(terrain.ridge, x)))
+		_rescue_sprite = Sprite2D.new()
+		_rescue_sprite.texture = CargoArt.tex("mouse_wait0")
+		_rescue_sprite.position = _rescue_pos + Vector2(0, -8)
+		add_child(_rescue_sprite)
+	elif taxi_stage == 1:                                        # passageiro acenando na plataforma de busca
+		_rescue_pos = Vector2(float(b["x"]) + float(b["half_width"]) * 0.6, float(b["y"]))
+		_rescue_sprite = Sprite2D.new()
+		_rescue_sprite.texture = CargoArt.tex("mouse_wait0")
+		_rescue_sprite.position = _rescue_pos + Vector2(0, -8)
+		add_child(_rescue_sprite)
+	var fast := EconMath.mission_has(mission, "fast")
+	if fast > 0 and taxi_stage != 1:
+		var f: Dictionary = mcfg["fast"]
+		var factor: Array = f["factor"]
+		urgent_limit = (float(f["base_s"]) + float(f["per_sqrt_m"]) * sqrt(target_distance_m)) \
+				* float(factor[clampi(fast, 1, factor.size()) - 1])
+		urgent_left = urgent_limit
 
 
-func _clear_cargo() -> void:
+func _clear_mission() -> void:
 	for n: Node in [_tow_sprite, _rope, _rescue_sprite]:
 		if n != null and is_instance_valid(n):
 			n.queue_free()
@@ -408,6 +437,7 @@ func _clear_cargo() -> void:
 	_tow_sprite = null
 	_rope = null
 	_rescue_sprite = null
+	lander.load_div = 1.0
 
 
 ## Ponto do cabo na nave: entre os pes (gira com a nave).
@@ -416,8 +446,8 @@ func _rope_anchor() -> Vector2:
 	return lander.global_position + Vector2(0, feet).rotated(lander.rotation)
 
 
-## Um passo das cargas: pendulo do queijao (puxa a nave), resgate do ratinho, relogio do sorvete (so voando).
-func _tick_cargo(delta: float) -> void:
+## Um passo das regras: pendulo da carga no cabo (puxa a nave), resgate do passageiro, relogio da Rapida (so voando).
+func _tick_mission(delta: float) -> void:
 	if target_pad_id < 0:
 		return
 	var cfg: Dictionary = WorldConfig.load_config()
@@ -428,21 +458,21 @@ func _tick_cargo(delta: float) -> void:
 				float(lander.params.get("gravity", 1.62)), terrain.ridge, flying)
 		if flying:
 			lander.vel_m += dv
-		if _tow.damaged and cargo_ok:
-			_cargo_failed("wheel_cracked", _tow.pos)
+		if _tow.damaged and not failed.has("tow"):
+			_mission_failed("tow", "wheel_cracked", _tow.pos)
 		_sync_tow_view()
 	if _rescue_sprite != null and not rescued:
 		_rescue_sprite.texture = CargoArt.tex("mouse_wait%d" % (int(_anim_t * 3.0) % 2))   # acena
-		var rc: Dictionary = cfg["cargo"]["rescue"]
+		var rc: Dictionary = cfg["missions"]["passenger"]
 		var center := _rescue_pos + Vector2(0, -8)
-		if lander.state == Lander.State.FLYING \
+		if _rescue_star() > 0 and lander.state == Lander.State.FLYING \
 				and lander.global_position.distance_to(center) <= WorldConfig.m_to_px(float(rc["radius_m"])) \
 				and lander.vel_m.length() <= float(rc["max_speed"]):
 			_rescue()
-	if cargo == "urgent" and lander.state == Lander.State.FLYING and urgent_left > 0.0:
+	if urgent_limit > 0.0 and lander.state == Lander.State.FLYING and urgent_left > 0.0:
 		urgent_left = maxf(urgent_left - delta, 0.0)
-		if urgent_left <= 0.0 and cargo_ok:
-			_cargo_failed("icecream_melted", lander.global_position + Vector2(0, -16))
+		if urgent_left <= 0.0 and not failed.has("fast"):
+			_mission_failed("fast", "icecream_melted", lander.global_position + Vector2(0, -16))
 
 
 func _sync_tow_view() -> void:
@@ -453,7 +483,7 @@ func _sync_tow_view() -> void:
 	_rope.points = PackedVector2Array([_rope_anchor(), _tow.pos])
 
 
-## Ratinho pulou na nave: vai ate ela, nota alegre e um coracaozinho subindo.
+## Passageiro pulou na nave: vai ate ela, nota alegre e um coracaozinho subindo.
 func _rescue() -> void:
 	rescued = true
 	_rescue_sprite.texture = CargoArt.tex("mouse_safe")
@@ -464,30 +494,43 @@ func _rescue() -> void:
 	_float_text("+♥", _rescue_pos + Vector2(0, -20))
 
 
-## A regra da carga falhou (o run continua; a entrega paga menos): figura estragada subindo e sumindo.
-func _cargo_failed(pic: String, pos: Vector2) -> void:
-	cargo_ok = false
+## Uma regra falhou (o run continua; a entrega paga menos): figura estragada subindo e sumindo.
+func _mission_failed(kind: String, pic: String, pos: Vector2) -> void:
+	if not failed.has(kind):
+		failed.append(kind)
 	if _tow_sprite != null and pic == "wheel_cracked":
 		_tow_sprite.texture = CargoArt.tex(pic)
-	var s := Sprite2D.new()
-	s.texture = CargoArt.tex(pic)
-	s.position = pos + Vector2(0, -14)
-	add_child(s)
-	var tw := s.create_tween()
-	tw.tween_property(s, "position:y", s.position.y - 16.0, 0.8)
-	tw.parallel().tween_property(s, "modulate:a", 0.0, 0.8).set_delay(0.4)
-	tw.tween_callback(s.queue_free)
+	if pic != "":
+		var s := Sprite2D.new()
+		s.texture = CargoArt.tex(pic)
+		s.position = pos + Vector2(0, -14)
+		add_child(s)
+		var tw := s.create_tween()
+		tw.tween_property(s, "position:y", s.position.y - 16.0, 0.8)
+		tw.parallel().tween_property(s, "modulate:a", 0.0, 0.8).set_delay(0.4)
+		tw.tween_callback(s.queue_free)
 	Sound.sfx("denied")
 	shake(0.15)
 
 
-## Pousou no alvo: confere a regra da carga (bolo: pouso suave; ratinho: resgatado). Sorvete e queijao ja foram
-## julgados durante o voo.
-func _judge_cargo(info: Dictionary) -> void:
-	match cargo:
-		"fragile":
-			if float(info.get("vy", 0.0)) > float(WorldConfig.load_config()["cargo"]["fragile"]["max_vy"]):
-				_cargo_failed("cake_squashed", lander.global_position)
-		"rescue":
-			if not rescued:
-				cargo_ok = false
+## Pousou no alvo: confere as regras do pouso (Suave: vy abaixo do limite da estrela; resgate: passageiro a bordo;
+## taxi na busca: pouso ruim enjoa o passageiro). Rapida e Cabo ja foram julgadas durante o voo.
+func _judge_mission(info: Dictionary, quality: float) -> void:
+	var mcfg: Dictionary = WorldConfig.load_config()["missions"]
+	var soft := EconMath.mission_has(mission, "soft")
+	if soft > 0 and taxi_stage != 1 and float(info.get("vy", 0.0)) > soft_vy_limit(soft):
+		_mission_failed("soft", "cake_squashed", lander.global_position)
+	if _rescue_star() > 0 and not rescued and not failed.has("passenger"):
+		failed.append("passenger")
+	if taxi_stage == 1:
+		if quality < float(mcfg["passenger"]["board_q"]):
+			_mission_failed("passenger", "", lander.global_position)
+		elif _rescue_sprite != null:
+			_rescue()
+
+
+## Limite de velocidade vertical (m/s do modelo) do Pouso suave na estrela star.
+static func soft_vy_limit(star: int) -> float:
+	var cfg: Dictionary = WorldConfig.load_config()
+	var fr: Array = cfg["missions"]["soft"]["vy_frac"]
+	return float(cfg["landing"]["max_vy"]) * float(fr[clampi(star, 1, fr.size()) - 1])

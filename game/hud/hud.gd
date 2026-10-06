@@ -36,9 +36,9 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _cargo_bar: ProgressBar = %CargoBar
 @onready var _cargo_text: Label = %CargoText
 
-## Texto curto de cada carga no HUD (a figura vem antes; frase de crianca).
-const CARGO_HUD := {"fragile": "devagar!", "urgent": "", "towed": "não bata!", "rescue": "pegue o ratinho!"}
-const CARGO_FAIL := {"fragile": "amassou!", "urgent": "derreteu!", "towed": "rachou!", "rescue": "ficou para trás"}
+## Texto curto de cada regra no HUD (a figura vem antes; frase de crianca).
+const MISSION_HUD := {"heavy": "pesada!", "soft": "devagar!", "fast": "", "tow": "não bata!", "passenger": "pegue o ratinho!"}
+const MISSION_FAIL := {"soft": "amassou!", "fast": "derreteu!", "tow": "rachou!", "passenger": "ficou para trás"}
 
 
 func _ready() -> void:
@@ -86,10 +86,11 @@ func _process(delta: float) -> void:
 	_gas_bar.theme_type_variation = &"GasBar" if frac > 0.35 else (&"WarnBar" if frac > 0.15 else &"DangerBar")
 	_update_need_mark(l, tank)
 	var vy_limit: float = tol["max_vy"]
-	if flight.target_pad_id >= 0 and flight.cargo == "fragile":  # bolo: o limite que importa e o do bolo
-		vy_limit = minf(vy_limit, float(cfg["cargo"]["fragile"]["max_vy"]))
+	var soft := EconMath.mission_has(flight.mission, "soft")
+	if flight.target_pad_id >= 0 and soft > 0 and flight.taxi_stage != 1:   # Pouso suave: o limite e o da estrela
+		vy_limit = minf(vy_limit, Flight.soft_vy_limit(soft))
 	_set_speed(_vy, l.vel_m.y, vy_limit)
-	_update_cargo()
+	_update_mission()
 	_set_speed(_vx, absf(l.vel_m.x), tol["max_vx"])
 	var ground := TerrainGen.height_at(flight.terrain.ridge, l.global_position.x)
 	_alt.text = "%d m" % int(WorldConfig.px_to_m(ground - l.global_position.y))
@@ -127,31 +128,53 @@ func _update_need_mark(l: Lander, tank: float) -> void:
 	(_need_mark.get_node("Core") as ColorRect).color = Color("#f9c22b") if left >= 0.0 else Color("#e83b3b")
 
 
-func _update_cargo() -> void:
-	var kind := flight.cargo
-	var show := flight.target_pad_id >= 0 and kind != "box"
+## Linha da missao: figura da regra + barra (relogio da Rapida ou peso da Pesada) + frase curta. Taxi: passo 1/2.
+## Dupla: figura da 1a regra e as duas frases.
+func _update_mission() -> void:
+	var m: Dictionary = flight.mission
+	var parts: Array = m.get("parts", [])
+	var show := flight.target_pad_id >= 0 and not parts.is_empty()
 	_cargo_row.visible = show
 	if not show:
 		return
-	var ok := flight.cargo_ok
-	var pic := CargoArt.icon(kind, not ok)
-	if kind == "rescue" and flight.rescued:
-		pic = CargoArt.tex("mouse_safe")
-	_cargo_icon.texture = pic
-	_cargo_bar.visible = kind == "urgent" and ok
-	if _cargo_bar.visible:
+	var kind: String = parts[0]["kind"]
+	var failed: Array = flight.failed
+	_cargo_icon.texture = CargoArt.icon(kind, failed.has(kind))
+	var heavy := EconMath.mission_has(m, "heavy")
+	if flight.urgent_limit > 0.0 and not failed.has("fast"):
 		var frac := flight.urgent_left / maxf(flight.urgent_limit, 0.001)
+		_cargo_bar.visible = true
 		_cargo_bar.value = frac * 100.0
 		_cargo_bar.theme_type_variation = &"GasBar" if frac > 0.5 else (&"WarnBar" if frac > 0.2 else &"DangerBar")
-	if not ok:
-		_cargo_text.text = CARGO_FAIL.get(kind, "")
-		_cargo_text.theme_type_variation = &"BadLabel"
-	elif kind == "rescue" and flight.rescued:
-		_cargo_text.text = "a bordo!"
-		_cargo_text.theme_type_variation = &"GoodLabel"
+	elif heavy > 0:                                            # peso: barra cheia na estrela 3
+		_cargo_bar.visible = true
+		_cargo_bar.value = 100.0 * heavy / 3.0
+		_cargo_bar.theme_type_variation = &"WarnBar"
 	else:
-		_cargo_text.text = CARGO_HUD.get(kind, "")
-		_cargo_text.theme_type_variation = &"MoneyLabel"
+		_cargo_bar.visible = false
+	var texts: Array[String] = []
+	var bad := false
+	for p: Dictionary in parts:
+		var k: String = p["kind"]
+		if failed.has(k):
+			texts.append("enjoou" if k == "passenger" and flight.taxi_stage > 0 else MISSION_FAIL.get(k, ""))
+			bad = true
+		elif k == "passenger" and flight.taxi_stage == 1:
+			texts.append("1: busque o ratinho")
+		elif k == "passenger" and flight.taxi_stage == 2:
+			texts.append("2: leve de volta")
+		elif k == "passenger" and flight.rescued:
+			texts.append("a bordo!")
+			_cargo_icon.texture = CargoArt.tex("mouse_safe")
+		elif MISSION_HUD.get(k, "") != "":
+			texts.append(MISSION_HUD[k])
+	_cargo_text.text = "  ".join(texts)
+	_cargo_text.theme_type_variation = &"BadLabel" if bad else &"MoneyLabel"
+
+
+## Taxi: avisa o passo novo (o passageiro embarcou: agora leve de volta).
+func taxi_step(step: int) -> void:
+	_show_toast("A BORDO!", "agora leve de volta" if step == 2 else "", &"GoodLabel")
 
 
 func _set_speed(label: Label, value: float, limit: float) -> void:
@@ -180,11 +203,13 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
 	if float(entry.get("gift_pay", 0.0)) > 0.0:
 		parts.append("presente +%s" % EconMath.fmt(float(entry["gift_pay"])))
-	var kind := str(entry.get("cargo", "box"))
-	if kind != "box":
-		var cm := float(entry.get("cargo_mult", 1.0))
-		parts.append(("%s %s" % [EconMath.cargo_kind(kind)["name"], UiKit.mult_text(cm)]) if bool(entry.get("cargo_ok", true))
-				else "%s %s" % [CARGO_FAIL.get(kind, ""), UiKit.mult_text(cm)])
+	var m: Dictionary = entry.get("mission", {})
+	if not (m.get("parts", []) as Array).is_empty():
+		var mm := float(entry.get("mission_mult", 1.0))
+		var failed: Array = entry.get("failed", [])
+		var name := str(EconMath.mission_kind(str(m["kind"]))["name"])
+		parts.append(("%s %s" % [name, UiKit.mult_text(mm)]) if failed.is_empty()
+				else "%s %s" % [MISSION_FAIL.get(str(failed[0]), "falhou"), UiKit.mult_text(mm)])
 	if not bool(entry.get("good", true)):
 		parts.append("pouso duro: combo zerou")
 	elif streak >= 2:

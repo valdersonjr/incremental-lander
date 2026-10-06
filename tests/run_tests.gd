@@ -8,7 +8,7 @@ func _init() -> void:
 	var failed := 0
 	for path in _find_tests("res://tests/unit"):
 		var script: GDScript = load(path)
-		if script == null:
+		if script == null or not script.can_instantiate():     # nao compilou: falha e segue (new() travaria o executor)
 			print("FALHOU ao carregar ", path)
 			failed += 1
 			continue

@@ -355,58 +355,170 @@ def combo_mult(E: dict, streak: float) -> float:
 
 
 def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
-                 streak: float = 0, cargo_m: float = 1.0) -> float:
+                 streak: float = 0, mission_m: float = 1.0) -> float:
     """Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (o jogo usa a mesma
-    conta; cargo_m = cargo_mult(kind, ok))."""
+    conta; mission_m = mission_mult(missao, falhas))."""
     C = E["contracts"]
     q = min(1.0, max(0.0, q))
     return contract_pay(E, planet, d, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
-        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak) * cargo_m
+        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak) * mission_m
 
 
-# Cargas (v8, so nos planetas de contracts.cargo.planets). Espelho GDScript: EconMath.cargo_kinds / cargo_kind /
-# cargo_mult / draw_cargo. Cada carga tem uma regra no voo (fragil: pouso suave; urgente: prazo; rebocada: nao
-# bater o queijo; resgate: pegar o ratinho). Cumpriu -> mult; falhou -> mult x fail_mult. Nunca acaba o run.
-_BOX = {"id": "box", "name": "caixa", "mult": 1.0, "weight": 1.0, "fail_mult": 1.0, "fail_p": 0.0, "dv_mult": 1.0}
+# Missoes (v12, so nos planetas de contracts.missions.planets). Espelho GDScript: EconMath.mission_*.
+# A missao e uma REGRA (Simples, Pesada, Pouso suave, Rapida, Passageiro, Cabo, Dupla) com estrelas 1..3; oferta =
+# {"kind", "star", "parts": [{"kind", "star"}...]} (Simples: parts vazio; Dupla: 2 partes). Cumpriu -> mult da
+# estrela; falhou -> x fail_mult (nunca acaba o run). Liberacao: estrelas (1 por entrega) compram nos da arvore.
+_SIMPLE = {"id": "simple", "name": "Simples", "weight": 1.0, "levels": [{"mult": 1.0}]}
 
 
-def cargo_kinds(E: dict, planet_id: str) -> list[dict]:
-    cg = E["contracts"].get("cargo")
-    if not cg or planet_id not in cg.get("planets", []):
+def mission_spec(E: dict) -> dict:
+    return E["contracts"].get("missions") or {}
+
+
+def mission_kinds(E: dict, planet_id: str) -> list[dict]:
+    ms = mission_spec(E)
+    if not ms or planet_id not in ms.get("planets", []):
         return []
-    return cg["kinds"]
+    return ms["kinds"]
 
 
-def cargo_kind(E: dict, kind_id: str) -> dict:
-    for k in (E["contracts"].get("cargo") or {}).get("kinds", []):
+def mission_kind(E: dict, kind_id: str) -> dict:
+    for k in mission_spec(E).get("kinds", []):
         if k["id"] == kind_id:
             return k
-    return _BOX
+    return _SIMPLE
 
 
-def cargo_mult(E: dict, kind_id: str, ok: bool = True) -> float:
-    k = cargo_kind(E, kind_id)
-    return k.get("mult", 1.0) * (1.0 if ok else k.get("fail_mult", 1.0))
+def mission_level(E: dict, kind_id: str, star: int) -> dict:
+    lv = mission_kind(E, kind_id)["levels"]
+    return lv[max(0, min(int(star), len(lv)) - 1)]
 
 
-def cargo_fail_p(kind: dict, skill: float) -> float:
-    """Chance de falhar a regra da carga: fail_p x (1 - skill) x 2 (mesmo idioma do q_drop; expert quase nunca)."""
-    return min(1.0, max(0.0, kind.get("fail_p", 0.0) * (1 - min(skill, 1.0)) * 2))
+def mission_mult(E: dict, mission: dict, failed: tuple | list | set = ()) -> float:
+    """Multiplicador de pagamento. failed = kinds das partes cuja regra falhou."""
+    parts = mission.get("parts", [])
+    if not parts:
+        return 1.0
+    fail = 1.0
+    for p in parts:
+        if p["kind"] in failed:
+            fail *= mission_level(E, p["kind"], p["star"]).get("fail_mult", 1.0)
+    if mission["kind"] == "double":
+        mx = mission_spec(E).get("double", {}).get("max_mult", 3.0)
+        m = min(mx, 1.0 + sum(mission_level(E, p["kind"], p["star"])["mult"] - 1.0 for p in parts))
+    else:
+        m = mission_level(E, parts[0]["kind"], parts[0]["star"])["mult"]
+    return m * fail
 
 
-def cargo_expect(E: dict, planet: dict, prof: Profile) -> tuple[float, float]:
-    """(multiplicador medio de pagamento, multiplicador medio de delta-v) das cargas do planeta para o perfil.
-    O modelo nao escolhe carga (aproximacao pela media ponderada dos sorteios)."""
-    kinds = cargo_kinds(E, planet["id"])
-    if not kinds:
-        return 1.0, 1.0
-    tw = sum(k["weight"] for k in kinds)
-    pay = dv = 0.0
+def mission_thrust_div(E: dict, mission: dict) -> float:
+    """Pesada: o motor rende thrust / thrust_div (a nave fica mais pesada)."""
+    d = 1.0
+    for p in mission.get("parts", []):
+        d *= mission_level(E, p["kind"], p["star"]).get("thrust_div", 1.0)
+    return d
+
+
+def mission_dv_mult(E: dict, mission: dict) -> float:
+    """Cabo: o pendulo custa um pouco mais de delta-v."""
+    m = 1.0
+    for p in mission.get("parts", []):
+        m *= mission_level(E, p["kind"], p["star"]).get("dv_mult", 1.0)
+    return m
+
+
+def mission_leg2(E: dict, mission: dict) -> float:
+    """Taxi (Passageiro 2-3): o 2o trecho tem leg2 x a distancia da oferta (0 = sem 2o trecho)."""
+    if mission.get("kind") != "passenger":
+        return 0.0
+    return mission_level(E, "passenger", mission["parts"][0]["star"]).get("leg2", 0.0)
+
+
+def mission_fail_p(level: dict, skill: float) -> float:
+    """Chance de falhar a regra: fail_p x (1 - skill) x 2 (mesmo idioma do q_drop; expert quase nunca)."""
+    return min(1.0, max(0.0, level.get("fail_p", 0.0) * (1 - min(skill, 1.0)) * 2))
+
+
+def node_ok(E: dict, node: dict, owned: set) -> bool:
+    """O no da arvore pode ser liberado? (requires = todos; requires_any = {n, of})."""
+    if node["id"] in owned:
+        return False
+    if any(r not in owned for r in node.get("requires", [])):
+        return False
+    ra = node.get("requires_any")
+    return not ra or sum(1 for r in ra["of"] if r in owned) >= ra["n"]
+
+
+def missions_unlocked(E: dict, owned: set) -> dict[str, int]:
+    """{kind: maior estrela liberada}; a Simples sempre vem."""
+    out = {"simple": 1}
+    for n in mission_spec(E).get("nodes", []):
+        if n["id"] in owned:
+            out[n["kind"]] = max(out.get(n["kind"], 0), n["star"])
+    return out
+
+
+def _heavy_factor(planet: dict, stats: dict, div: float) -> float:
+    """Quanto o delta-v sobe com o motor dividido (perda gravitacional maior); inf se nao decola."""
+    g, a = planet["gravity"], stats["thrust"]
+    if a / div <= g * 1.05:
+        return math.inf
+    return (1 + 0.707 * g / (a / div)) / (1 + 0.707 * g / a)
+
+
+def mission_expect(E: dict, planet: dict, prof: Profile, stats: dict, unlocked: dict | None,
+                   boost: dict | None = None) -> tuple[float, float, float]:
+    """(pagamento medio, delta-v medio, tempo medio) das missoes liberadas, como multiplicadores do salto base.
+    O modelo nao escolhe missao (media ponderada dos sorteios; estrela uniforme entre as liberadas).
+    Taxi: paga os 2 trechos (1 + leg2^1.1) e gasta/demora 1 + sqrt(leg2). Dupla: 2 partes medias."""
+    kinds = mission_kinds(E, planet["id"])
+    if not kinds or not unlocked:
+        return 1.0, 1.0, 1.0
+
+    def single(kid, star):
+        lv = mission_level(E, kid, star)
+        pf = mission_fail_p(lv, prof.skill)
+        pay = lv["mult"] * ((1 - pf) + pf * lv.get("fail_mult", 1.0))
+        dv = lv.get("dv_mult", 1.0) * _heavy_factor(planet, stats, lv.get("thrust_div", 1.0))
+        leg = lv.get("leg2", 0.0)
+        return pay * (1 + leg ** 1.1), dv * (1 + math.sqrt(leg)), 1 + math.sqrt(leg), lv, pf
+
+    ms = mission_spec(E)
+    rows = []
     for k in kinds:
-        pf = cargo_fail_p(k, prof.skill)
-        pay += k["weight"] * k.get("mult", 1.0) * ((1 - pf) + pf * k.get("fail_mult", 1.0))
-        dv += k["weight"] * k.get("dv_mult", 1.0)
-    return pay / tw, dv / tw
+        top = unlocked.get(k["id"], 0)
+        if top <= 0:
+            continue
+        w = k.get("weight", 1.0) * ((boost or {}).get(k["id"], 0) > 0 and ms.get("new_boost", {}).get("weight_mult", 1.0) or 1.0)
+        if k["id"] == "double":
+            dbl = ms.get("double", {})
+            parts = []
+            for pk in dbl.get("parts_from", []):
+                top_p = unlocked.get(pk, 0)
+                if pk == "passenger":
+                    top_p = min(top_p, dbl.get("passenger_max_star", 1))
+                for s in range(1, top_p + 1):
+                    _, dv, _, lv, pf = single(pk, s)
+                    if math.isfinite(dv):
+                        parts.append((lv["mult"] - 1, (1 - pf) + pf * lv.get("fail_mult", 1.0), dv))
+            if len(parts) < 2:
+                continue
+            em = sum(x[0] for x in parts) / len(parts)
+            ef = sum(x[1] for x in parts) / len(parts)
+            ed = sum(x[2] for x in parts) / len(parts)
+            rows.append((w, min(dbl.get("max_mult", 3.0), 1 + 2 * em) * ef * ef, ed * ed, 1.0))
+            continue
+        per = []
+        for s in range(1, top + 1):
+            pay, dv, tm, _, _ = single(k["id"], s)
+            if math.isfinite(dv):
+                per.append((pay, dv, tm))
+        if per:
+            n = len(per)
+            rows.append((w, sum(x[0] for x in per) / n, sum(x[1] for x in per) / n, sum(x[2] for x in per) / n))
+    tw = sum(r[0] for r in rows) or 1.0
+    return (sum(r[0] * r[1] for r in rows) / tw, sum(r[0] * r[2] for r in rows) / tw,
+            sum(r[0] * r[3] for r in rows) / tw)
 
 
 # --- Presentes no alto do morro (v10): encostar devagar pega gas ou creditos ---
@@ -509,13 +621,15 @@ def _offer_stream(E: dict, planet: dict, seed: int, extra: int = 256) -> tuple[l
 
 
 def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random, expected: bool = False,
-           stream: tuple | None = None, log: list | None = None) -> RunResult:
+           stream: tuple | None = None, log: list | None = None, missions: dict | None = None,
+           boost: dict | None = None) -> RunResult:
     """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
     pega a de maior pagamento esperado por gas (plataforma dificil paga mais, mas derruba a qualidade e
     aumenta a batida de quem pilota pior). Combo: pousos bons seguidos (q >= combo.q_min) multiplicam o
     pagamento.
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
-    pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita."""
+    pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita.
+    missions = {kind: estrela} liberadas (v12; None = so Simples); boost = {kind: runs} recem-liberados."""
     gas = stats["tank"]
     C = E["contracts"]
     has_tiers = bool(C.get("pad_tiers"))
@@ -545,7 +659,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     combo = C.get("combo")
     q_min = combo["q_min"] if combo else 2.0
     streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
-    cg_pay, cg_dv = cargo_expect(E, planet, prof)
+    cg_pay, cg_dv, cg_t = mission_expect(E, planet, prof, stats, missions, boost)
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     cg_dv *= 1.0 + gf_dv                      # buscar o presente custa um pouco de gas
 
@@ -585,7 +699,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         cm = combo_mult(E, streak)
         pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
-        t += hop_time(planet, best, stats, prof)
+        t += hop_time(planet, best, stats, prof) * cg_t
         if expected:
             pay *= (1 - pc)
             if combo:
@@ -610,25 +724,28 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
 _INCOME_CACHE: dict = {}
 
 
-def expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int = 4, seed: int = 999) -> dict:
+def expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int = 4, seed: int = 999,
+                    missions: dict | None = None) -> dict:
     """Renda media por segundo (por recurso) usando runs 'esperados' com ofertas fixas por seed.
-    Memoizado por (spec, planeta, stats, perfil) - o simulador reavalia os mesmos estados muitas vezes."""
+    Memoizado por (spec, planeta, stats, perfil, missoes) - o simulador reavalia os mesmos estados muitas vezes."""
     key = (id(E), planet["id"], tuple(sorted((k, round(v, 9)) for k, v in stats.items())),
-           tuple(sorted(vars(prof).items())), samples, seed)
+           tuple(sorted(vars(prof).items())), samples, seed, tuple(sorted((missions or {}).items())))
     if key in _INCOME_CACHE:
         return _INCOME_CACHE[key]
-    out = _expected_income(E, planet, stats, prof, samples, seed)
+    out = _expected_income(E, planet, stats, prof, samples, seed, missions)
     if len(_INCOME_CACHE) > 200000:
         _INCOME_CACHE.clear()
     _INCOME_CACHE[key] = out
     return out
 
 
-def _expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int, seed: int) -> dict:
+def _expected_income(E: dict, planet: dict, stats: dict, prof: Profile, samples: int, seed: int,
+                     missions: dict | None = None) -> dict:
     tot: dict[str, float] = {}
     tt = 0.0
     for i in range(samples):
-        r = do_run(E, planet, stats, prof, None, expected=True, stream=_offer_stream(E, planet, seed + i))
+        r = do_run(E, planet, stats, prof, None, expected=True, stream=_offer_stream(E, planet, seed + i),
+                   missions=missions)
         for k, v in r.rewards.items():
             tot[k] = tot.get(k, 0.0) + v
         tt += r.time_s
@@ -708,6 +825,13 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     t = 0.0
     runs = 0
     last_buy_t = 0.0
+    # missoes (v12): estrelas ganhas por entrega compram nos da arvore em ordem (jogador simulado libera assim
+    # que pode); mu = {kind: estrela} liberadas, boost = {kind: runs com peso extra}
+    MS = mission_spec(E)
+    stars = 0
+    owned: set = set()
+    mu = missions_unlocked(E, owned) if MS else None
+    boost: dict = {}
 
     def stats_now():
         return ship_stats(E, levels, ppoints, shop)
@@ -716,12 +840,25 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         return [(it, shop[it["id"]]) for it in shop_items(E) if it["effect"]["type"] == kind and shop[it["id"]] > 0]
 
     def best_planet(stats):
-        return max(unlocked, key=lambda pid: _value(E, expected_income(E, planets[pid], stats, prof)))
+        return max(unlocked, key=lambda pid: _value(E, expected_income(E, planets[pid], stats, prof, missions=mu)))
 
     while t < hours * 3600 and runs < max_runs:
         stats = stats_now()
-        r = do_run(E, planets[current], stats, prof, rng)
+        r = do_run(E, planets[current], stats, prof, rng, missions=mu, boost=boost)
         runs += 1
+        if MS:
+            boost = {k: v - 1 for k, v in boost.items() if v > 1}
+            stars += r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
+            cost = MS.get("stars", {}).get("unlock_cost", 3)
+            for node in MS.get("nodes", []):
+                if stars < node.get("cost", cost):
+                    break
+                if node_ok(E, node, owned):
+                    stars -= node.get("cost", cost)
+                    owned.add(node["id"])
+                    boost[node["kind"]] = MS.get("new_boost", {}).get("runs", 0)
+                    res.events.append({"t": t, "type": "mission", "id": node["id"], "gap_s": 0.0})
+            mu = missions_unlocked(E, owned)
         t += r.time_s
         for k, v in r.rewards.items():
             money[k] += v
@@ -730,7 +867,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         fleet_val = 0.0
         fm = fleet_mult(stats) - 1.0
         if fm > 0:  # frota rendeu durante o run: fm x renda media esperada do piloto
-            for k, v in expected_income(E, planets[current], stats, prof).items():
+            for k, v in expected_income(E, planets[current], stats, prof, missions=mu).items():
                 gained = v * fm * r.time_s
                 money[k] += gained
                 lifetime[k] += gained
@@ -742,7 +879,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         # ---- compras
         while True:
             stats = stats_now()
-            base_inc = _value(E, expected_income(E, planets[current], stats, prof)) * fleet_mult(stats)
+            base_inc = _value(E, expected_income(E, planets[current], stats, prof, missions=mu)) * fleet_mult(stats)
             opts = []
             for u in E["upgrades"]:
                 lv = levels[u["id"]]
@@ -758,7 +895,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                     lv2 = dict(levels)
                     lv2[u["id"]] += k
                     s2 = ship_stats(E, lv2, ppoints, shop)
-                    inc = max(_value(E, expected_income(E, planets[pid], s2, prof)) for pid in unlocked) * fleet_mult(s2)
+                    inc = max(_value(E, expected_income(E, planets[pid], s2, prof, missions=mu)) for pid in unlocked) * fleet_mult(s2)
                     ck = _value(E, {r: bulk_cost(spec, lv, k) for r, spec in u["cost"].items()})
                     best_ratio = max(best_ratio, (inc - base_inc) / (ck + 1e-9))
                 score = best_ratio * _value(E, cost)
@@ -776,7 +913,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                     continue
                 if p.get("requires_shop") and shop.get(p["requires_shop"], 0) == 0:
                     continue
-                inc = _value(E, expected_income(E, p, stats, prof)) * fleet_mult(stats)
+                inc = _value(E, expected_income(E, p, stats, prof, missions=mu)) * fleet_mult(stats)
                 # planetas tem valor de progressao alem da renda (sao o objetivo): bonus de prioridade
                 opts.append(("planet", p["id"], dict(p["unlock"]), max(inc - base_inc, 0) + base_inc * 0.5))
             if not opts:
@@ -837,7 +974,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                 avail = (not gpl.get("requires") or gpl["requires"] in unlocked) and \
                         (not gpl.get("requires_shop") or shop.get(gpl["requires_shop"], 0) > 0) and first_ok
                 if avail:
-                    inc_now = _value(E, expected_income(E, planets[current], stats_now(), prof)) * fleet_mult(stats_now())
+                    inc_now = _value(E, expected_income(E, planets[current], stats_now(), prof, missions=mu)) * fleet_mult(stats_now())
                     need = dict(gpl.get("unlock", {}))
                     for u in todo:
                         for k, v in _upgrade_cost(u, levels[u["id"]]).items():
@@ -888,6 +1025,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             if goal.get("stop", True):
                 break
     res.final = {"t_h": t / 3600, "runs": runs, "levels": levels, "unlocked": sorted(unlocked), "shop": shop,
+                 "missions": sorted(owned) if MS else [], "stars": stars if MS else 0,
                  "money": money, "lifetime": lifetime, "prestige_points": ppoints, "stats": stats_now()}
     return res
 

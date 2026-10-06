@@ -7,6 +7,9 @@ var levels: Dictionary = {}
 var current_planet := "luna"          # so a Lua por enquanto (os outros mundos voltam depois)
 var runs_done := 0
 var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (base da renda da frota)
+var stars := 0                        # estrelas de missao para gastar (1 por entrega; contracts.missions.stars)
+var mission_nodes: Array = []         # nos da arvore de missoes ja liberados (ids)
+var missions_new: Dictionary = {}     # tipo recem-liberado -> runs em que ainda aparece mais (new_boost)
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
 var records: Dictionary = {}          # recordes pessoais (pos-jogo): RECORDS -> maior valor ja feito
@@ -44,6 +47,9 @@ func reset() -> void:
 	levels.clear()
 	current_planet = "luna"
 	income_history = []
+	stars = 0
+	mission_nodes = []
+	missions_new = {}
 	runs_done = 0
 	play_seconds = 0.0
 	records = {}
@@ -102,6 +108,53 @@ func locked_upgrades() -> Array[Dictionary]:
 	return Purchases.locked_upgrades(levels)
 
 
+## Missoes liberadas ({kind: maior estrela}; a Simples sempre).
+func missions_unlocked() -> Dictionary:
+	return EconMath.missions_unlocked(mission_nodes)
+
+
+## Soma estrelas ganhas (entregas do run).
+func add_stars(n: int) -> void:
+	if n == 0:
+		return
+	stars += n
+	Events.stars_changed.emit(stars)
+
+
+## Libera um no da arvore de missoes com estrelas. Retorna true se liberou.
+func unlock_mission(node_id: String) -> bool:
+	for node: Dictionary in EconMath.mission_spec().get("nodes", []):
+		if node["id"] != node_id:
+			continue
+		var cost := EconMath.mission_node_cost(node)
+		if stars < cost or not EconMath.mission_node_ok(node, mission_nodes):
+			return false
+		stars -= cost
+		mission_nodes.append(node_id)
+		missions_new[node["kind"]] = int(EconMath.mission_spec().get("new_boost", {}).get("runs", 0))
+		Events.stars_changed.emit(stars)
+		Events.mission_unlocked.emit(node_id)
+		return true
+	return false
+
+
+## Da para liberar algum no agora? (aviso na aba PEDIDOS e no resumo do run)
+func can_unlock_mission() -> bool:
+	for node: Dictionary in EconMath.mission_spec().get("nodes", []):
+		if stars >= EconMath.mission_node_cost(node) and EconMath.mission_node_ok(node, mission_nodes):
+			return true
+	return false
+
+
+## Fim de um run: os tipos recem-liberados perdem 1 run de destaque.
+func tick_missions_new() -> void:
+	var out := {}
+	for k: String in missions_new:
+		if int(missions_new[k]) > 1:
+			out[k] = int(missions_new[k]) - 1
+	missions_new = out
+
+
 ## Fecha a contabilidade de um run: registra a renda (para a frota) e paga a frota pelo tempo do run.
 ## seconds = duracao do run em segundos do modelo. Retorna o que a frota rendeu.
 func settle_run(earned: Dictionary, seconds: float) -> Dictionary:
@@ -126,7 +179,8 @@ func note_record(key: String, value: float) -> bool:
 ## Estado para o save (SaveData.serialize).
 func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "current_planet": current_planet,
-			"income_history": income_history, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
+			"income_history": income_history, "stars": stars, "mission_nodes": mission_nodes,
+			"missions_new": missions_new, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -135,6 +189,9 @@ func apply_save_state(st: Dictionary) -> void:
 	levels = st["levels"]
 	current_planet = st["current_planet"]
 	income_history = st["income_history"]
+	stars = int(st.get("stars", 0))
+	mission_nodes = st.get("mission_nodes", [])
+	missions_new = st.get("missions_new", {})
 	runs_done = st["runs_done"]
 	play_seconds = st["play_seconds"]
 	settings = st["settings"]

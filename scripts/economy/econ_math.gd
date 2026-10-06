@@ -193,14 +193,13 @@ static func combo_counts(quality: float) -> bool:
 
 
 ## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (mesma conta do simulador;
-## cargo_m = cargo_mult(tipo, cumpriu)).
+## mission_m = mission_mult(missao, falhas)).
 static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,
-		tier_id: String = "normal", streak: int = 0, cargo_m: float = 1.0) -> float:
+		tier_id: String = "normal", streak: int = 0, mission_m: float = 1.0) -> float:
 	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) * combo_mult(streak) \
-			* cargo_m
+			* mission_m
 
 
-## Cargas do planeta (contracts.cargo, v8): [] se o planeta nao tem cargas especiais (so caixa).
 ## Presentes no alto do morro (v10): tipos do planeta (contracts.gifts.kinds); [] se o planeta nao tem.
 static func gift_kinds(planet_id: String) -> Array:
 	var g: Dictionary = spec["contracts"].get("gifts", {})
@@ -242,41 +241,191 @@ static func draw_gift(planet_id: String, rng: RandomNumberGenerator) -> String:
 	return str(kinds[-1]["id"])
 
 
-static func cargo_kinds(planet_id: String) -> Array:
-	var cg: Dictionary = spec["contracts"].get("cargo", {})
-	if cg.is_empty() or not (cg.get("planets", []) as Array).has(planet_id):
+# ---------------------------------------------------------------- missoes (v12)
+## Missao = REGRA com estrelas 1..3 (contracts.missions): {"kind", "star", "parts": [{"kind", "star"}...]}.
+## Simples: parts vazio. Dupla: 2 partes. Cumpriu -> mult da estrela; falhou -> x fail_mult (nunca acaba o run).
+## Liberacao: estrelas (1 por entrega) compram nos da arvore (nodes). Espelho de econ.py (mission_*).
+static func mission_spec() -> Dictionary:
+	return spec["contracts"].get("missions", {})
+
+
+## Tipos de missao do planeta ([] se o planeta nao tem missoes: so Simples).
+static func mission_kinds(planet_id: String) -> Array:
+	var ms := mission_spec()
+	if ms.is_empty() or not (ms.get("planets", []) as Array).has(planet_id):
 		return []
-	return cg["kinds"]
+	return ms["kinds"]
 
 
-## Tipo de carga {id, name, mult, weight, fail_mult, fail_p, dv_mult}; desconhecido -> caixa x1.
-static func cargo_kind(kind_id: String) -> Dictionary:
-	for k: Dictionary in spec["contracts"].get("cargo", {}).get("kinds", []):
+static func mission_kind(kind_id: String) -> Dictionary:
+	for k: Dictionary in mission_spec().get("kinds", []):
 		if k["id"] == kind_id:
 			return k
-	return {"id": "box", "name": "caixa", "mult": 1.0, "weight": 1.0, "fail_mult": 1.0, "fail_p": 0.0, "dv_mult": 1.0}
+	return {"id": "simple", "name": "Simples", "weight": 1.0, "levels": [{"mult": 1.0}]}
 
 
-## Multiplicador de pagamento da carga: cumpriu a regra (ok) -> mult; falhou -> mult x fail_mult.
-static func cargo_mult(kind_id: String, ok: bool = true) -> float:
-	var k := cargo_kind(kind_id)
-	return float(k.get("mult", 1.0)) * (1.0 if ok else float(k.get("fail_mult", 1.0)))
+## Parametros da estrela (mult, fail_mult, thrust_div, dv_mult, leg2...).
+static func mission_level(kind_id: String, star: int) -> Dictionary:
+	var lv: Array = mission_kind(kind_id)["levels"]
+	return lv[clampi(star, 1, lv.size()) - 1]
 
 
-## Sorteia a carga de uma oferta pelos pesos (planeta sem cargas -> "box").
-static func draw_cargo(planet_id: String, rng: RandomNumberGenerator) -> String:
-	var kinds := cargo_kinds(planet_id)
+## Missao Simples (sem regra).
+static func simple_mission() -> Dictionary:
+	return {"kind": "simple", "star": 1, "parts": []}
+
+
+## Multiplicador de pagamento. failed = kinds das partes cuja regra falhou.
+static func mission_mult(mission: Dictionary, failed: Array = []) -> float:
+	var parts: Array = mission.get("parts", [])
+	if parts.is_empty():
+		return 1.0
+	var fail := 1.0
+	for p: Dictionary in parts:
+		if failed.has(p["kind"]):
+			fail *= float(mission_level(p["kind"], int(p["star"])).get("fail_mult", 1.0))
+	var m := 1.0
+	if mission["kind"] == "double":
+		var mx := float(mission_spec().get("double", {}).get("max_mult", 3.0))
+		for p: Dictionary in parts:
+			m += float(mission_level(p["kind"], int(p["star"]))["mult"]) - 1.0
+		m = minf(mx, m)
+	else:
+		m = float(mission_level(parts[0]["kind"], int(parts[0]["star"]))["mult"])
+	return m * fail
+
+
+## Pesada: o motor rende thrust / thrust_div.
+static func mission_thrust_div(mission: Dictionary) -> float:
+	var d := 1.0
+	for p: Dictionary in mission.get("parts", []):
+		d *= float(mission_level(p["kind"], int(p["star"])).get("thrust_div", 1.0))
+	return d
+
+
+## Cabo: o pendulo custa um pouco mais de delta-v.
+static func mission_dv_mult(mission: Dictionary) -> float:
+	var m := 1.0
+	for p: Dictionary in mission.get("parts", []):
+		m *= float(mission_level(p["kind"], int(p["star"])).get("dv_mult", 1.0))
+	return m
+
+
+## Taxi (Passageiro 2-3): o 2o trecho tem leg2 x a distancia da oferta (0 = sem 2o trecho).
+static func mission_leg2(mission: Dictionary) -> float:
+	if mission.get("kind", "") != "passenger":
+		return 0.0
+	return float(mission_level("passenger", int(mission["parts"][0]["star"])).get("leg2", 0.0))
+
+
+## A missao tem a regra kind (sozinha ou numa Dupla)? Devolve a estrela (0 = nao tem).
+static func mission_has(mission: Dictionary, kind_id: String) -> int:
+	for p: Dictionary in mission.get("parts", []):
+		if p["kind"] == kind_id:
+			return int(p["star"])
+	return 0
+
+
+## O no da arvore pode ser liberado? (requires = todos; requires_any = {n, of}). owned = ids ja liberados.
+static func mission_node_ok(node: Dictionary, owned: Array) -> bool:
+	if owned.has(node["id"]):
+		return false
+	for r: String in node.get("requires", []):
+		if not owned.has(r):
+			return false
+	var ra: Dictionary = node.get("requires_any", {})
+	if ra.is_empty():
+		return true
+	var n := 0
+	for r: String in ra["of"]:
+		if owned.has(r):
+			n += 1
+	return n >= int(ra["n"])
+
+
+## {kind: maior estrela liberada}; a Simples sempre vem.
+static func missions_unlocked(owned: Array) -> Dictionary:
+	var out := {"simple": 1}
+	for n: Dictionary in mission_spec().get("nodes", []):
+		if owned.has(n["id"]):
+			out[n["kind"]] = maxi(int(out.get(n["kind"], 0)), int(n["star"]))
+	return out
+
+
+## Estrelas para liberar um no (no.cost ou stars.unlock_cost).
+static func mission_node_cost(node: Dictionary) -> int:
+	return int(node.get("cost", mission_spec().get("stars", {}).get("unlock_cost", 3)))
+
+
+## Sorteia a missao de uma oferta entre as liberadas (unlocked = {kind: estrela}); boost = {kind: runs} recem-liberados
+## pesam x new_boost.weight_mult. Estrela uniforme entre 1 e a liberada. Pesada que nao decola com estes stats fica
+## de fora (stats/planet_id). Dupla: 2 regras diferentes de double.parts_from (Passageiro so ate a estrela 1).
+static func draw_mission(planet_id: String, unlocked: Dictionary, boost: Dictionary, stats: Dictionary,
+		rng: RandomNumberGenerator) -> Dictionary:
+	var kinds := mission_kinds(planet_id)
 	if kinds.is_empty():
-		return "box"
+		return simple_mission()
+	var ms := mission_spec()
+	var bm := float(ms.get("new_boost", {}).get("weight_mult", 1.0))
+	var pool: Array[Dictionary] = []
+	var weights: Array[float] = []
+	for k: Dictionary in kinds:
+		var top := int(unlocked.get(k["id"], 0))
+		if top <= 0 or (k["id"] == "double" and _double_parts(planet_id, unlocked, stats).size() < 2):
+			continue
+		pool.append(k)
+		weights.append(float(k.get("weight", 1.0)) * (bm if int(boost.get(k["id"], 0)) > 0 else 1.0))
+	var kind: Dictionary = pool[_pick(weights, rng)]
+	var kid: String = kind["id"]
+	if kid == "simple":
+		return simple_mission()
+	if kid == "double":
+		var opts := _double_parts(planet_id, unlocked, stats)
+		var a: Dictionary = opts[rng.randi_range(0, opts.size() - 1)]
+		var rest := opts.filter(func(o: Dictionary) -> bool: return o["kind"] != a["kind"])
+		var b: Dictionary = rest[rng.randi_range(0, rest.size() - 1)]
+		return {"kind": "double", "star": 1, "parts": [a, b]}
+	var stars: Array[int] = []
+	for s in range(1, int(unlocked[kid]) + 1):
+		if _flies(planet_id, stats, kid, s):
+			stars.append(s)
+	if stars.is_empty():
+		return simple_mission()
+	var star: int = stars[rng.randi_range(0, stars.size() - 1)]
+	return {"kind": kid, "star": star, "parts": [{"kind": kid, "star": star}]}
+
+
+## Partes possiveis de uma Dupla: [{kind, star}] (uma por regra, a maior estrela que voa; Passageiro ate passenger_max_star).
+static func _double_parts(planet_id: String, unlocked: Dictionary, stats: Dictionary) -> Array:
+	var dbl: Dictionary = mission_spec().get("double", {})
+	var out := []
+	for kid: String in dbl.get("parts_from", []):
+		var top := int(unlocked.get(kid, 0))
+		if kid == "passenger":
+			top = mini(top, int(dbl.get("passenger_max_star", 1)))
+		for s in range(top, 0, -1):
+			if _flies(planet_id, stats, kid, s):
+				out.append({"kind": kid, "star": s})
+				break
+	return out
+
+
+## A nave decola com a regra (Pesada divide o motor)?
+static func _flies(planet_id: String, stats: Dictionary, kind_id: String, star: int) -> bool:
+	var div := float(mission_level(kind_id, star).get("thrust_div", 1.0))
+	return float(stats["thrust"]) / div > float(_find("planets", planet_id)["gravity"]) * 1.05
+
+
+static func _pick(weights: Array[float], rng: RandomNumberGenerator) -> int:
 	var total := 0.0
-	for k: Dictionary in kinds:
-		total += float(k["weight"])
+	for w in weights:
+		total += w
 	var r := rng.randf() * total
-	for k: Dictionary in kinds:
-		r -= float(k["weight"])
+	for i in weights.size():
+		r -= weights[i]
 		if r <= 0.0:
-			return k["id"]
-	return kinds[kinds.size() - 1]["id"]
+			return i
+	return weights.size() - 1
 
 
 ## Estimativa de delta-v de um salto (a mesma do simulador, sem desperdicio do piloto).

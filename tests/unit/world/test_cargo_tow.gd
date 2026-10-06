@@ -35,7 +35,7 @@ func test_bater_forte_racha_e_devagar_nao() -> void:
 		t.step(Vector2(0, -20 - t.rope_px * 0.5), Vector2.ZERO, 0.05, 1.62, ridge, false)
 	assert_false(t.damaged, "pousar o queijo devagar nao racha")
 	t.pos = Vector2(0, -40)
-	t.vel = Vector2(0, float(WorldConfig.load_config()["cargo"]["towed"]["break_speed"]) + 3.0)
+	t.vel = Vector2(0, float(WorldConfig.load_config()["missions"]["tow"]["break_speed"]) + 3.0)
 	for i in 200:                                                  # cabo frouxo (ancora logo acima): cai livre
 		t.step(Vector2(0, -30), Vector2.ZERO, 0.05, 1.62, ridge, false)
 	assert_true(t.damaged, "bater rapido racha o queijo")

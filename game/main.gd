@@ -28,6 +28,9 @@ var _run_time := 0.0
 var _run_active := false
 ## Recordes batidos neste run (aparecem no resumo depois do final do jogo).
 var _run_records: Array[String] = []
+## Taxi (Passageiro 2-3): distancia do 1o trecho e presente pego nele (pagos ao fim do 2o trecho).
+var _taxi_first_m := 0.0
+var _taxi_gift_pay := 0.0
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -220,7 +223,8 @@ func _start_run() -> void:
 	_title.visible = false
 	_clear_run()
 	var stats := GameState.ship_stats()
-	_run = RunState.create(GameState.current_planet, stats, _run_seed)
+	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
+			GameState.missions_new)
 	_force_offer_extras()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
@@ -276,7 +280,13 @@ func _on_offer_chosen(index: int) -> void:
 	Sound.ui("click")
 	var d := _run.take_offer(index)
 	_offers.visible = false
-	_flight.set_target(d, _run.taken_tier, _run.taken_dir, _run.taken_cargo)
+	var m := _run.taken_mission
+	if EconMath.mission_leg2(m) > 0.0:                         # taxi: 1o trecho ate a plataforma de busca
+		var tiers: Array = WorldConfig.load_config()["missions"]["passenger"]["pickup_tier"]
+		var pickup: String = tiers[clampi(EconMath.mission_has(m, "passenger"), 1, tiers.size()) - 1]
+		_flight.set_target(d, pickup, _run.taken_dir, m, 1)
+	else:
+		_flight.set_target(d, _run.taken_tier, _run.taken_dir, m)
 
 
 func _on_end_requested() -> void:
@@ -290,8 +300,24 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		_run.crash(str(result["reason"]))
 		_end_run()
 		return
-	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"],
-			bool(result.get("cargo_ok", true)), float(result.get("gift_pay", 0.0)))
+	if int(result.get("leg", 0)) == 1:                         # taxi: passageiro a bordo, agora o trecho de volta
+		var d1 := float(result["distance"])
+		_taxi_gift_pay = float(result.get("gift_pay", 0.0))
+		_taxi_first_m = d1
+		var f: Array[String] = []
+		f.assign(result.get("failed", []))
+		_flight.set_target(_run.leg2_m(_run.taken_mission, d1), _run.taken_tier, -_run.taken_dir,
+				_run.taken_mission, 2, f)
+		_hud.taxi_step(2)
+		return
+	var dist := float(result["distance"])
+	var gift := float(result.get("gift_pay", 0.0))
+	if int(result.get("leg", 0)) == 2:                         # taxi: paga os 2 trechos pela distancia do 1o
+		dist = _taxi_first_m
+		gift += _taxi_gift_pay
+	var stars_before := _run.stars
+	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift)
+	GameState.add_stars(_run.stars - stars_before)
 	GameState.add_rewards(rewards)
 	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
 	_note_record("longest_hop", float(result["distance"]))
@@ -314,10 +340,12 @@ func _end_run() -> void:
 	_run_active = false
 	var model_s := _run_time * float(WorldConfig.load_config()["time_scale"])
 	var fleet := GameState.settle_run(_run.earned, model_s)
+	GameState.tick_missions_new()
 	_note_record("best_run", float(_run.earned.get("credits", 0.0)) + float(fleet.get("credits", 0.0)))
 	var s := _run.summary()
 	s["fleet"] = fleet
 	s["records"] = _run_records.duplicate()
+	s["can_unlock"] = GameState.can_unlock_mission()
 	_summary.show_summary(s)
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
@@ -370,18 +398,37 @@ func _apply_dev_args() -> void:
 			GameState.levels[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
 	if _args.has("dev_credits"):
 		GameState.resources["credits"] = float(_args["dev_credits"])
+	if _args.has("dev_missions"):
+		GameState.mission_nodes.assign(str(_args["dev_missions"]).split(","))
+	if _args.has("dev_stars"):
+		GameState.stars = int(_args["dev_stars"])
 
 
-## Dev (verificacao/capturas): --dev_cargo=towed|fragile|urgent|rescue|box e --dev_dir=-1|1 forcam a carga e o
-## lado de TODOS os pedidos do run (os que regeneram tambem nao mudam: so os iniciais sao forcados).
+## Dev (verificacao/capturas): --dev_mission=kind:estrela (ex.: tow:2, passenger:3, double:heavy+soft) e
+## --dev_dir=-1|1 forcam a missao e o lado de TODOS os pedidos do run (os que regeneram nao: so os iniciais).
+## --dev_missions=heavy1,soft1,... libera nos da arvore; --dev_stars=N da estrelas.
 func _force_offer_extras() -> void:
 	if not OS.is_debug_build():
 		return
 	for i in _run.offers.size():
-		if _args.has("dev_cargo"):
-			_run.offer_cargo[i] = str(_args["dev_cargo"])
+		if _args.has("dev_mission"):
+			_run.offer_mission[i] = _dev_mission(str(_args["dev_mission"]))
 		if _args.has("dev_dir"):
 			_run.offer_dirs[i] = int(_args["dev_dir"])
+
+
+func _dev_mission(txt: String) -> Dictionary:
+	var kind := txt.get_slice(":", 0)
+	var rest := txt.get_slice(":", 1)
+	if kind == "simple":
+		return EconMath.simple_mission()
+	if kind == "double":
+		var parts := []
+		for k: String in rest.split("+"):
+			parts.append({"kind": k, "star": 1})
+		return {"kind": "double", "star": 1, "parts": parts}
+	var star := maxi(1, int(rest))
+	return {"kind": kind, "star": star, "parts": [{"kind": kind, "star": star}]}
 
 
 ## Linha de verificacao (gdtool run/capture leem o stdout); fora no build publico.

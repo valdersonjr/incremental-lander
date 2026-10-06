@@ -1,8 +1,9 @@
-## Queijao rebocado (carga "towed", Lua, 2026-10-05) — logica pura, testavel.
+## Carga no cabo (missao "Cabo", v12; antes o queijao rebocado) — logica pura, testavel.
 ## Padrao Thrust/Solar Jetman: a carga e um ponto com massa preso por um cabo (restricao de comprimento MAXIMO:
 ## frouxo quando perto, esticado puxa os dois). Cada passo: gravidade -> move -> chao (quica, rola; bater forte
 ## racha o queijo) -> cabo (corrige a posicao da carga e troca impulso com a nave na direcao do cabo).
-## Posicoes em px do mundo, velocidades em m/s do modelo (como o Lander). Config: world.json cargo.towed.
+## Posicoes em px do mundo, velocidades em m/s do modelo (como o Lander). Config: world.json missions.tow (+ levels por
+## estrela: cabo e massa).
 class_name CargoTow
 extends RefCounted
 
@@ -16,13 +17,16 @@ var mass := 0.6                      # relativa a nave (1)
 var _cfg: Dictionary = {}
 
 
-## Carga apoiada no chao, atras da nave (lado oposto ao destino), com o cabo frouxo.
-static func create(anchor: Vector2, ridge: PackedVector2Array, dir: int) -> CargoTow:
+## Carga apoiada no chao, atras da nave (lado oposto ao destino), com o cabo frouxo. star = estrela da missao Cabo
+## (cabo e massa de missions.tow.levels).
+static func create(anchor: Vector2, ridge: PackedVector2Array, dir: int, star: int = 2) -> CargoTow:
 	var t := CargoTow.new()
-	t._cfg = WorldConfig.load_config()["cargo"]["towed"]
-	t.rope_px = WorldConfig.m_to_px(float(t._cfg["rope_m"]))
+	t._cfg = WorldConfig.load_config()["missions"]["tow"]
+	var lv: Array = t._cfg["levels"]
+	var level: Dictionary = lv[clampi(star, 1, lv.size()) - 1]
+	t.rope_px = WorldConfig.m_to_px(float(level["rope_m"]))
 	t.radius_px = WorldConfig.m_to_px(float(t._cfg["radius_m"]))
-	t.mass = float(t._cfg["mass"])
+	t.mass = float(level["mass"])
 	var x := anchor.x - float(dir) * (t.rope_px * 0.7)
 	t.pos = Vector2(x, TerrainGen.height_at(ridge, x) - t.radius_px)
 	return t

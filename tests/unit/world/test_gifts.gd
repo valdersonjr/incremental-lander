@@ -48,7 +48,7 @@ func test_presente_soma_ao_pagamento_da_entrega() -> void:
 	var plain := RunState.create("luna", st, 2)
 	var extra := EconMath.gift_value("luna", 800.0, st, "gift")
 	assert_true(extra > 0.0)
-	var a: float = run.complete_delivery(800.0, 0.9, 40.0, true, extra)["credits"]
-	var b: float = plain.complete_delivery(800.0, 0.9, 40.0, true)["credits"]
+	var a: float = run.complete_delivery(800.0, 0.9, 40.0, [], extra)["credits"]
+	var b: float = plain.complete_delivery(800.0, 0.9, 40.0)["credits"]
 	assert_almost(a, b + extra, 1e-6)
 	assert_almost(run.deliveries[-1]["gift_pay"], extra)

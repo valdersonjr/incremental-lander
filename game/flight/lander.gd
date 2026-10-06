@@ -22,6 +22,7 @@ var env_drag := 0.0
 var autopilot: Autopilot = null
 var thrusting := false
 var turbo_on := false                   # Turbo (habilidade) ligado neste passo
+var load_div := 1.0                     # missao Pesada: o motor rende thrust / load_div (EconMath.mission_thrust_div)
 var can_takeoff := true                 # falso enquanto nao ha entrega escolhida
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
@@ -91,9 +92,10 @@ func _physics_process(delta: float) -> void:
 	params["extra_accel"] = env_accel
 	turbo_on = bool(controls.get("turbo", false)) and controls["thrust"]
 	var p := params
-	if turbo_on:                                              # Turbo: empuxo x turbo_mult (mesmo gas por delta-v)
+	if turbo_on or load_div != 1.0:                           # Turbo: empuxo x turbo_mult; carga pesada: / load_div
 		p = params.duplicate()
-		p["thrust"] = float(params["thrust"]) * float(cfg["abilities"]["turbo_mult"])
+		p["thrust"] = float(params["thrust"]) / load_div \
+				* (float(cfg["abilities"]["turbo_mult"]) if turbo_on else 1.0)
 	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, p, dt_m)
 	vel_m = r["velocity"]
 	gas = r["gas"]
@@ -182,7 +184,11 @@ func info() -> Dictionary:
 
 func _read_controls() -> Dictionary:
 	if autopilot != null:
-		return autopilot.control(global_position, vel_m, rotation, params)
+		var ap_params := params
+		if load_div != 1.0:                                   # o piloto do demo pilota com o motor que a carga deixa
+			ap_params = params.duplicate()
+			ap_params["thrust"] = float(params["thrust"]) / load_div
+		return autopilot.control(global_position, vel_m, rotation, ap_params)
 	var rot := Input.get_axis(&"rotate_left", &"rotate_right")
 	if params.get("stabilizer", false) and Input.is_action_pressed(&"stabilize"):
 		rot = stabilize_input(rotation, float(WorldConfig.load_config()["abilities"]["stabilize_gain"]))

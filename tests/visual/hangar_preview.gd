@@ -1,5 +1,6 @@
 ## Previa visual do hangar. gdtool.py capture res://tests/visual/hangar_preview.tscn [-- --top]
-## Padrao: rolado ate o fim. --top: comeco. --late: meio de jogo (frota, recordes). --tab=1: aba AJUDAS.
+## Padrao: rolado ate o fim. --top: comeco. --late: meio de jogo (frota, recordes). --tab=1|2: aba PEDIDOS/AJUDAS.
+## --missions: parte da arvore de missoes liberada e estrelas para gastar.
 ## --assists: ja tem parte da arvore. --menu: menu do jogo (Esc), como a Main abre.
 ## --keys: simula navegacao por teclado (foco no 1o botao de compra, depois de uma compra) e tooltip de custo.
 extends Node
@@ -18,6 +19,9 @@ func _ready() -> void:
 		GameState.levels = {"thrust": 42, "tank": 38, "efficiency": 35, "contracts": 30, "gear": 12,
 				"fleet": 5, "autopilot": 3}
 		GameState.records = {"best_delivery": 9.1e4, "longest_hop": 1.2e4, "best_combo": 5.0, "best_run": 4.4e5}
+	if "--missions" in args:                                   # arvore pela metade: liberadas, compraveis, bloqueadas
+		GameState.mission_nodes = ["heavy1", "soft1", "heavy2", "fast1", "passenger1"]
+		GameState.stars = 4
 	if "--assists" in args:                                    # arvore pela metade: comprada, desligada, compravel, bloqueada
 		GameState.levels.merge({"nav_color": 1, "nav_trail": 1, "land_shadow": 1})
 		GameState.set_assist("land_shadow", false)

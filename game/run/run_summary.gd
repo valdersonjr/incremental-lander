@@ -37,7 +37,17 @@ func show_summary(summary: Dictionary) -> void:
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
 				float(fleet[res])), &"MoneyLabel"))
-	for key: String in summary.get("records", []):             # pos-jogo: recorde batido neste run
+	if int(summary.get("stars", 0)) > 0:                       # estrelas de missao (gastas na aba PEDIDOS)
+		var row := UiKit.stat_row("", "estrelas", "+%d" % int(summary["stars"]), &"MoneyLabel")
+		(row.get_child(0) as TextureRect).texture = UiKit.kid("star_on")
+		(row.get_child(0) as TextureRect).expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_rows.add_child(row)
+	if bool(summary.get("can_unlock", false)):
+		var hint := UiKit.stat_row("", "missão nova para liberar em PEDIDOS!", "!", &"GoodLabel")
+		(hint.get_child(0) as TextureRect).texture = UiKit.kid("star_on")
+		(hint.get_child(0) as TextureRect).expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_rows.add_child(hint)
+	for key: String in summary.get("records", []):             # recorde batido neste run
 		var info: Array = GameState.RECORDS.get(key, [key, ""])
 		_rows.add_child(UiKit.stat_row(str(info[1]), "NOVO RECORDE: " + str(info[0]), "!", &"GoodLabel"))
 	visible = true
@@ -58,5 +68,5 @@ func _reason_text(reason: String) -> String:
 	if reason.begins_with("batida"):
 		return "a nave bateu: " + UiKit.crash_text(reason.get_slice(":", 1))
 	return {"limite_de_entregas": "limite de entregas", "sem_gas": "acabou o gás", "encerrado": "run encerrado",
-			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave ou troque de mundo"}.get(
+			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave"}.get(
 			reason, reason)

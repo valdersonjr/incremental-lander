@@ -2,7 +2,7 @@
 ## backup .bak, autosave nos eventos, salva ao fechar. VARIOS JOGOS SALVOS (SLOTS espacos): o jogo 1 e o
 ## user://save.json de sempre (saves antigos continuam valendo, sem migracao); o jogo N>1 e user://save_N.json.
 ## Opcoes (volumes) e o ultimo jogo usado sao globais, em user://settings.json — trocar de jogo nao muda o volume.
-## Desligado em --demo, --dev_* e --no_save e nas previas de tests/visual/ (verificacao nunca carrega nem sobrescreve
+## Desligado em --demo, --dev_* e --no_save e em tudo de tests/ (verificacao nunca carrega nem sobrescreve
 ## o progresso do jogador — uma previa que simula compra dispararia o autosave sobre o save real).
 extends Node
 
@@ -31,13 +31,16 @@ func _ready() -> void:
 		if a == "--demo" or a == "--no_save" or a.begins_with("--dev_"):
 			enabled = false
 	for a in OS.get_cmdline_args():
-		if a.begins_with("res://tests/visual/"):
+		# qualquer coisa de tests/ (previas, executor de testes unitarios, paridade) nunca le nem grava o save real;
+		# as integracoes que testam o save ligam de novo com uma pasta propria (set_dir)
+		if a.begins_with("res://tests/"):
 			enabled = false
 	if enabled:
 		_migrate_old_user_dir()
 		_load_prefs_and_slot()
 	Events.run_finished.connect(func(_s: Dictionary) -> void: request_save())
 	Events.upgrade_bought.connect(func(_i: String, _l: int) -> void: request_save())
+	Events.mission_unlocked.connect(func(_n: String) -> void: request_save())
 
 
 func _notification(what: int) -> void:

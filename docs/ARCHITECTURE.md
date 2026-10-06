@@ -61,10 +61,12 @@ game/run/offer_panel.*        # OfferPanel (tela cheia, só pinos + mini-cartão
                               # com setinha se fica além da tela; teclas 1–9/setas/clique escolhem, E encerra (2 toques)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, settings_changed
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, mission_unlocked, settings_changed
 autoload/game_state.gd        # GameState: recursos, níveis, current_planet (sempre "luna"), income_history, recordes,
                               # settle_run() (paga a frota ao fim do run); ship_stats(), buy_upgrade(), buy_upgrade_max(),
-                              # upgrade_rows(), locked_upgrades() (via Purchases/EconMath); opções (volumes, teclas, ajudas)
+                              # upgrade_rows(), locked_upgrades() (via Purchases/EconMath); opções (volumes, teclas, ajudas);
+                              # missões (v12): stars, mission_nodes, missions_new, missions_unlocked(), add_stars(),
+                              # unlock_mission(id), can_unlock_mission(), tick_missions_new() (fim do run)
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
                               # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
@@ -85,7 +87,8 @@ game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS
                               # open(Mode.HANGAR): "MENU" (Hangar.menu_requested → Main esconde o hangar); sinais
                               # title_requested, new_game_requested (Main: SaveManager.new_game → hangar), closed → hangar.
 game/hangar/hangar.*          # Hangar em ABAS (Q/E): NAVE (oficina: nave no meio + cartões; Piloto automático com cadeado
-                              # até comprar Frota) | AJUDAS (árvore do Painel de bordo). Cabeçalho: créditos + faixa de RECORDES
+                              # até comprar Frota) | PEDIDOS (_add_missions: linha por tipo, cartões ★1-★3 com preço em
+                              # estrelas / TEM / cadeado) | AJUDAS (árvore do Painel de bordo). Cabeçalho: créditos + faixa de RECORDES
                               # (%Records; some sem recorde). Esc = menu do jogo (PauseMenu). Aba com algo comprável fica dourada.
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info);
                               # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
@@ -165,7 +168,7 @@ game/hangar/assist_icon.gd    # AssistIcon: figurinha 48x24 de cada ajuda (place
 tests/integration/edge_flow   # o mapa não acaba: 18 km à direita e 10 km à esquerda sempre com chão; partida igual
 tests/unit/world/test_assists.gd # arco, queda prevista/veredito, cor da setinha, gás na chegada, árvore persistente
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
-tests/unit/run/               # test_run_state, test_purchases, test_fleet
+tests/unit/run/               # test_run_state, test_purchases, test_fleet, test_missions (árvore, sorteio, Dupla)
 tests/visual/                 # cenas de prévia visual (hangar_preview --late/--tab=1/--assists/--keys,
                               # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
@@ -221,3 +224,17 @@ python3 $G capture res://game/main.tscn --frames 240 --every 40 -- --demo   # fo
 ```
 Configurações do projeto já aplicadas: 640×360 escala inteira, Nearest, snap de pixel, interpolação de física
 2D, aviso de declaração sem tipo, buses de áudio.
+
+## Missões (v12, 2026-10-06)
+```
+data/economy.json contracts.missions # tipos/estrelas/mult, nodes (árvore), stars, new_boost, double
+data/world.json missions             # física por estrela: soft.vy_frac, fast (prazo x factor), tow.levels, passenger
+scripts/economy/econ_math.gd         # mission_kinds/kind/level/mult/thrust_div/dv_mult/leg2/has, mission_node_ok,
+                                     # missions_unlocked, mission_node_cost, draw_mission(planeta, liberadas, boost, stats, rng)
+scripts/run/run_state.gd             # offer_mission[], taken_mission, stars, mission_gas(m, d), leg2_m(m, d)
+game/flight/flight.gd                # mission/failed/taxi_stage; set_target(d, tier, dir, missao, stage, falhas);
+                                     # _setup_mission/_tick_mission/_judge_mission; result: mission, failed, leg (1 = busca do taxi)
+game/flight/lander.gd                # load_div (Pesada) divide o empuxo (e o do piloto do demo)
+game/main.gd                         # taxi: leg 1 -> set_target(2o trecho, -dir, stage 2); estrelas por entrega; --dev_mission=
+                                     # kind:estrela|double:a+b, --dev_missions=ids, --dev_stars=N
+```

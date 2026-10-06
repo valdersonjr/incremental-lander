@@ -271,32 +271,59 @@
     "nudge_m": 60.0,
     "clear_m": 40.0
   },
-  "cargo": {
-    "notes": "Regras das cargas (2026-10-05, so na Lua; pagamento/pesos em economy.json contracts.cargo). fragile: pouso com vy <= max_vy (m/s do modelo). urgent: prazo em SEGUNDOS REAIS desde a decolagem = base_s + per_sqrt_m x sqrt(distancia). towed: queijao pendurado num cabo (pendulo, ref. Thrust): rope_m comprimento, mass relativa a nave (1), quebra se bater no chao acima de break_speed (m/s), radius_m raio. rescue: ratinho no meio do caminho; pega se o centro da nave passar a radius_m dele com velocidade < max_speed (m/s).",
-    "fragile": {
-      "max_vy": 3.0
-    },
-    "urgent": {
-      "base_s": 10.0,
-      "per_sqrt_m": 0.35
-    },
-    "towed": {
-      "rope_m": 26.0,
-      "mass": 0.6,
-      "break_speed": 6.0,
-      "radius_m": 6.0,
-      "bounce": 0.25,
-      "friction": 0.7
-    },
-    "rescue": {
-      "radius_m": 20.0,
-      "max_speed": 4.5,
-      "at": 0.5
-    }
-  },
   "abilities": {
     "notes": "Habilidades compradas na oficina (economy.json upgrades com ability). stabilizer: segurando a tecla, a nave volta a ficar de pe (gira com stabilize_gain x inclinacao, ate a velocidade normal de giro). turbo: segurando, empuxo x turbo_mult (o gas por delta-v e o mesmo: gasta mais rapido).",
     "stabilize_gain": 4.0,
     "turbo_mult": 2.0
+  },
+  "missions": {
+    "notes": "Fisica das missoes (v12, 2026-10-06; pagamento/estrelas em economy.json contracts.missions). Listas = estrela 1, 2, 3. soft: pouso com vy <= vy_frac x landing.max_vy. fast: prazo em SEGUNDOS REAIS voando = (base_s + per_sqrt_m x sqrt(distancia)) x factor. tow: carga pendurada num cabo (pendulo, ref. Thrust): rope_m comprimento, mass relativa a nave (1), racha se bater no chao acima de break_speed (m/s). passenger: estrela 1 = resgate no meio do caminho (pega se o centro da nave passar a radius_m com velocidade < max_speed); estrelas 2-3 = taxi: pousa na plataforma de busca (pickup_tier) e leva de volta (2o trecho = leg2 x distancia, economy.json); pouso de busca com qualidade < board_q = passageiro enjoado (falhou). heavy: o motor rende thrust / thrust_div (economy.json).",
+    "soft": {
+      "vy_frac": [
+        0.7,
+        0.5,
+        0.35
+      ]
+    },
+    "fast": {
+      "base_s": 10.0,
+      "per_sqrt_m": 0.35,
+      "factor": [
+        1.0,
+        0.8,
+        0.65
+      ]
+    },
+    "tow": {
+      "break_speed": 6.0,
+      "radius_m": 6.0,
+      "bounce": 0.25,
+      "friction": 0.7,
+      "levels": [
+        {
+          "rope_m": 18.0,
+          "mass": 0.45
+        },
+        {
+          "rope_m": 30.0,
+          "mass": 0.6
+        },
+        {
+          "rope_m": 30.0,
+          "mass": 0.9
+        }
+      ]
+    },
+    "passenger": {
+      "radius_m": 20.0,
+      "max_speed": 4.5,
+      "at": 0.5,
+      "pickup_tier": [
+        "normal",
+        "normal",
+        "narrow"
+      ],
+      "board_q": 0.55
+    }
   }
 }
