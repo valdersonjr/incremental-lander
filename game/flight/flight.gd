@@ -144,6 +144,10 @@ func _place_on_start_pad() -> void:
 	lander.global_position = Vector2(float(start_pad["x"]), float(start_pad["y"]) - feet - 0.5)
 	lander.reset_physics_interpolation()
 	camera.global_position = lander.global_position
+	# a Flight nova entra enquanto a anterior (fundo do menu) ainda nao saiu da arvore: com a interpolacao de fisica,
+	# a Camera2D so liga o proprio processamento se ja for a atual -> sem make_current a tela ficava parada
+	# (ate um Esc pausar/despausar) no 1o voo de um jogo novo
+	camera.make_current()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	_lift_y = -float(cam["ground_lift_px"])
 	_shake = 0.0
