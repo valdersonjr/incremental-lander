@@ -60,16 +60,14 @@ func test_gas_na_chegada_cai_com_a_distancia() -> void:
 	assert_true(near < float(st["tank"]))
 
 
-func test_ajudas_sao_arvore_compra_unica_e_sobrevivem_ao_prestigio() -> void:
+func test_ajudas_sao_arvore_de_compra_unica() -> void:
 	for id: String in IDS:
 		var u := EconMath._find("upgrades", id)
 		assert_true(u.has("assist"), id + " e ajuda")
 		assert_eq(int(u["max_level"]), 1, id + " compra unica")
 	var res := {"credits": 1e9}
 	var lv := {}
-	assert_false(Purchases.buy(res, lv, "nav_trail", ["luna"], {}), "rastro exige a setinha colorida")
-	assert_true(Purchases.buy(res, lv, "nav_color", ["luna"], {}))
-	assert_true(Purchases.buy(res, lv, "nav_trail", ["luna"], {}))
-	var keep: Array = EconMath.prestige_reset_state({})["keep_upgrades"]
-	for id: String in IDS:
-		assert_true(id in keep, id + " fica depois do prestigio")
+	assert_false(Purchases.buy(res, lv, "nav_trail"), "rastro exige a setinha colorida")
+	assert_true(Purchases.buy(res, lv, "nav_color"))
+	assert_true(Purchases.buy(res, lv, "nav_trail"))
+

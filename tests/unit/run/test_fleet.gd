@@ -20,8 +20,7 @@ func test_sem_drones_frota_nao_paga() -> void:
 
 
 func test_pagamento_igual_formula_da_spec() -> void:
-	var st := EconMath.ship_stats({"fleet": 3, "autopilot": 2}, 0.0, {"warp_drive": 1})
-	var h := [{"earned": {"credits": 1000.0, "ore": 10.0}, "seconds": 10.0}]
+	var st := EconMath.ship_stats({"fleet": 3, "autopilot": 2})
+	var h := [{"earned": {"credits": 1000.0}, "seconds": 10.0}]
 	var p := Fleet.payout(st, h, 50.0)
 	assert_almost(p["credits"], EconMath.fleet_income_per_s(100.0, st) * 50.0)
-	assert_almost(p["ore"], EconMath.fleet_income_per_s(1.0, st) * 50.0)

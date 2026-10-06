@@ -12,32 +12,28 @@ if not line:
     print(gd.stdout[-2000:], gd.stderr[-2000:]); sys.exit("ERRO: Godot nao imprimiu ECON_JSON")
 G = json.loads(line[len("ECON_JSON="):])
 
-levels = {"thrust": 30, "tank": 26, "efficiency": 12, "contracts": 50, "gear": 5, "fleet": 3, "autopilot": 4,
-          "exp1_station": 1, "exp2_cryo": 1}
-shop = {"premium": 3, "capital": 1}
-st = ship_stats(E, levels, 37.0, shop)
+levels = {"thrust": 30, "tank": 26, "efficiency": 12, "contracts": 50, "gear": 5, "fleet": 3, "autopilot": 4}
+st = ship_stats(E, levels)
 u = {x["id"]: x for x in E["upgrades"]}
 planets = {p["id"]: p for p in E["planets"]}
 C = E["contracts"]
 P = {
     "cost_tank_10": {k: cost_at(s, 10) for k, s in u["tank"]["cost"].items()},
-    "cost_exp3": {k: cost_at(s, 0) for k, s in u["exp3_shield"]["cost"].items()},
-    "shop_pilot_2": cost_at(next(i for i in shop_items(E) if i["id"] == "pilot_file")["cost"], 2),
+    "cost_fleet_2": {k: cost_at(s, 2) for k, s in u["fleet"]["cost"].items()},
     "stats": st,
-    "prestige_1e9": prestige_gain(E["prestige"], 1e9),
-    "pay_ares": contract_pay(E, planets["ares"], 3500.0, st) * (1 + C["quality_bonus"] * 0.8 ** C.get("quality_exp", 1)),
-    "pay_tight_combo": delivery_pay(E, planets["kronos"], 4200.0, st, 0.7, "tight", 3),
+    "pay_luna": contract_pay(E, planets["luna"], 3500.0, st) * (1 + C["quality_bonus"] * 0.8 ** C.get("quality_exp", 1)),
+    "pay_tight_combo": delivery_pay(E, planets["luna"], 4200.0, st, 0.7, "tight", 3),
     "pay_narrow_combo9": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 9),
     "pay_towed_fail": delivery_pay(E, planets["luna"], 1200.0, st, 0.8, "tight", 2, cargo_mult(E, "towed", False)),
     "cargo_rescue_ok": cargo_mult(E, "rescue", True),
-    "gift_pay_kronos": gift_value(E, planets["kronos"], 4200.0, st, next(k for k in gift_kinds(E, "kronos") if k["id"] == "gift")),
+    "gift_pay_luna": gift_value(E, planets["luna"], 4200.0, st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gift")),
     "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
-    "cargo_kinds_ares": len(cargo_kinds(E, "ares")),
-    "dv_kronos": hop_dv(planets["kronos"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),
+    "cargo_kinds_luna": len(cargo_kinds(E, "luna")),
+    "dv_luna": hop_dv(planets["luna"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),
     "fleet": 1e6 * st["drones"] * st["autopilot"],
     "bulk_tank": bulk_cost(u["tank"]["cost"]["credits"], 5, 10),
     "maxaff_tank": max_affordable(u["tank"]["cost"]["credits"], 5, 1e5),
-    "avail_exp2_yes": True, "avail_exp2_no": False, "titan_no": False, "titan_yes": True,
+    "avail_autopilot_yes": True, "avail_autopilot_no": False,
     "fmt": [fmt(999), fmt(1234), fmt(5.6e6), fmt(1.5e15), fmt(1e6), fmt(1e9), fmt(1e15), fmt(1e40), fmt(123456789, "sci")],
 }
 
@@ -56,7 +52,6 @@ def cmp(key, a, b):
             fails.append(f"{key}: godot={a!r} python={b!r}")
 for k, v in P.items():
     cmp(k, G.get(k), v)
-print("reset_state (godot):", G["reset"])
 if fails:
     print("DIVERGENCIAS:"); [print("  -", f) for f in fails]; sys.exit(1)
 print(f"OK: {len(P)} grupos de valores identicos entre GDScript e Python")

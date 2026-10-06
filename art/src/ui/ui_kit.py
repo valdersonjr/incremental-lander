@@ -27,10 +27,7 @@ BASE_RAMP = {"low": "navy", "deep": "deep_teal", "mid": "teal", "base": "sea", "
 WORLDS = {
     "luna":   {"low": "plum_dark", "deep": "plum", "mid": "purple", "base": "violet", "bright": "lavender",
                "hi": "cream"},                                  # Lua de queijo (2026-10-04): lilás no pôr do sol
-    "ares":   {"low": "deep_sage", "deep": "pine", "mid": "green", "base": "emerald", "bright": "leaf", "hi": "sprout"},
-    "kronos": {"low": "plum_dark", "deep": "magenta_dark", "mid": "raspberry", "base": "hot_pink", "bright": "pink",
-               "hi": "peach"},
-    "titan":  {"low": "umber", "deep": "rust", "mid": "terracotta", "base": "copper", "bright": "honey", "hi": "cream"},
+    # 2026-10-06: só a Lua por enquanto (Silvânia/Docelândia/Quarto saíram; ver o git para as rampas antigas)
 }
 
 
@@ -247,10 +244,7 @@ ICONS = ["credits", "ore", "stardust", "gas", "thrust", "tank", "efficiency", "r
 def world_scene(world: str) -> Canvas:
     sys.path.insert(0, "art/src/bg"); sys.path.insert(0, "art/src/terrain"); sys.path.insert(0, "art/src/fx")
     import moon_scene as ms
-    if world == "luna":
-        return ms.ingame_preview(ms.load_layers(), with_lander=True)
-    mod = __import__({"ares": "forest_scene", "kronos": "candy_scene", "titan": "room_scene"}[world])
-    return mod.compose(mod.layers())
+    return ms.ingame_preview(ms.load_layers(), with_lander=True)
 
 
 def sample(world: str = "luna") -> Canvas:
@@ -313,7 +307,7 @@ def kit_sheet() -> Canvas:
         sheet.stamp(bar(BAR_W, BAR_H, k), 64 + i * 16, 26)
     for i, n in enumerate(ICONS):
         sheet.stamp(icon(n), 4 + (i % 9) * 16, 40 + (i // 9) * 16)
-    pf.draw_text(sheet, 4, 76, "Silvânia · Docelândia · Expedição", "mist")
+    pf.draw_text(sheet, 4, 76, "Lua de queijo · Oficina · Ajudas", "mist")
     pf.draw_text(sheet, 4, 90, "HANGAR  5.00K cr  [COMPRAR]  MAX", "aqua")
     pf.draw_text(sheet, 4, 106, "TITULO", "white", scale=2)
     return sheet
@@ -355,12 +349,6 @@ def export() -> None:
 # assets/ui/bar_xp.png
 # assets/ui/luna/panel.png assets/ui/luna/panel_header.png assets/ui/luna/bar_fill.png
 # assets/ui/luna/button_normal.png assets/ui/luna/button_hover.png assets/ui/luna/button_pressed.png assets/ui/luna/button_disabled.png assets/ui/luna/button_primary.png assets/ui/luna/button_primary_hover.png
-# assets/ui/ares/panel.png assets/ui/ares/panel_header.png assets/ui/ares/bar_fill.png
-# assets/ui/ares/button_normal.png assets/ui/ares/button_hover.png assets/ui/ares/button_pressed.png assets/ui/ares/button_disabled.png assets/ui/ares/button_primary.png assets/ui/ares/button_primary_hover.png
-# assets/ui/kronos/panel.png assets/ui/kronos/panel_header.png assets/ui/kronos/bar_fill.png
-# assets/ui/kronos/button_normal.png assets/ui/kronos/button_hover.png assets/ui/kronos/button_pressed.png assets/ui/kronos/button_disabled.png assets/ui/kronos/button_primary.png assets/ui/kronos/button_primary_hover.png
-# assets/ui/titan/panel.png assets/ui/titan/panel_header.png assets/ui/titan/bar_fill.png
-# assets/ui/titan/button_normal.png assets/ui/titan/button_hover.png assets/ui/titan/button_pressed.png assets/ui/titan/button_disabled.png assets/ui/titan/button_primary.png assets/ui/titan/button_primary_hover.png
 
 if __name__ == "__main__":
     kit_sheet().preview("art/previews/ui_kit_sheet.png", scale=3, grid=False, show_1x=False)

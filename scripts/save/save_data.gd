@@ -3,9 +3,9 @@
 class_name SaveData
 extends RefCounted
 
-const SAVE_VERSION := 1
-## Migracoes: versao -> Callable que recebe o dict e devolve a versao seguinte.
-const MIGRATIONS := {}
+const SAVE_VERSION := 2
+## Migracoes (_migrate): versao -> funcao que recebe o dict e devolve a versao seguinte.
+## v1 -> v2 (2026-10-06): sai prestigio, loja, outros mundos e Expedicao (so a Lua por enquanto).
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
 const RECORD_IDS := ["best_delivery", "longest_hop", "best_combo", "best_run"]
 
@@ -17,14 +17,8 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"spec_version": EconMath.spec.get("meta", {}).get("version", 0),
 		"resources": state["resources"].duplicate(),
 		"levels": state["levels"].duplicate(),
-		"shop": state["shop"].duplicate(),
-		"prestige_points": state["prestige_points"],
-		"prestige_pending": state["prestige_pending"],
-		"unlocked": state["unlocked"].duplicate(),
 		"current_planet": state["current_planet"],
-		"cycle_earned": state["cycle_earned"].duplicate(),
 		"income_history": state["income_history"].duplicate(true),
-		"reached_goal": state["reached_goal"],
 		"runs_done": state["runs_done"],
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
@@ -40,26 +34,18 @@ static func deserialize(raw: Variant) -> Dictionary:
 		return {"ok": false, "state": {}, "warnings": ["save nao e um objeto JSON"]}
 	var d: Dictionary = raw
 	var v := int(_num(d.get("save_version", 0)))
-	while v < SAVE_VERSION and MIGRATIONS.has(v):
-		d = MIGRATIONS[v].call(d)
+	while v < SAVE_VERSION and v >= 1:
+		d = _migrate(v, d)
 		v += 1
 	if v != SAVE_VERSION:
 		return {"ok": false, "state": {}, "warnings": ["versao de save desconhecida: %d" % v]}
 	var res_ids: Array = EconMath.spec["resources"].map(func(r: Dictionary) -> String: return r["id"])
 	var up_ids: Array = EconMath.spec["upgrades"].map(func(u: Dictionary) -> String: return u["id"])
-	var shop_ids: Array = EconMath.shop_items().map(func(i: Dictionary) -> String: return i["id"])
-	var planet_ids: Array = EconMath.spec["planets"].map(func(p: Dictionary) -> String: return p["id"])
 	var st := {
 		"resources": _filter_numbers(d.get("resources", {}), res_ids, "recurso", warnings, false),
 		"levels": _filter_numbers(d.get("levels", {}), up_ids, "upgrade", warnings, true),
-		"shop": _filter_numbers(d.get("shop", {}), shop_ids, "item da loja", warnings, true),
-		"prestige_points": maxf(0.0, _num(d.get("prestige_points", 0.0))),
-		"prestige_pending": _flag(d.get("prestige_pending", false)),
-		"unlocked": [],
 		"current_planet": "luna",
-		"cycle_earned": _filter_numbers(d.get("cycle_earned", {}), res_ids, "recurso", warnings, false),
 		"income_history": [],
-		"reached_goal": _flag(d.get("reached_goal", false)),
 		"runs_done": maxi(0, int(_num(d.get("runs_done", 0)))),
 		"play_seconds": maxf(0.0, _num(d.get("play_seconds", 0.0))),
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
@@ -68,14 +54,6 @@ static func deserialize(raw: Variant) -> Dictionary:
 	for rid: String in res_ids:
 		if not st["resources"].has(rid):
 			st["resources"][rid] = 0.0
-	var unl: Variant = d.get("unlocked", ["luna"])
-	for p: Variant in (unl if unl is Array else ["luna"]):
-		if str(p) in planet_ids and not str(p) in st["unlocked"]:
-			st["unlocked"].append(str(p))
-	if not "luna" in st["unlocked"]:
-		st["unlocked"].insert(0, "luna")
-	var cur := str(d.get("current_planet", "luna"))
-	st["current_planet"] = cur if cur in st["unlocked"] else "luna"
 	var hist: Variant = d.get("income_history", [])
 	for h: Variant in (hist if hist is Array else []):
 		if h is Dictionary and h.get("earned") is Dictionary:
@@ -91,9 +69,25 @@ static func summary(state: Dictionary) -> Dictionary:
 		"runs": int(state.get("runs_done", 0)),
 		"credits": float(state.get("resources", {}).get("credits", 0.0)),
 		"play_seconds": float(state.get("play_seconds", 0.0)),
-		"prestige_points": float(state.get("prestige_points", 0.0)),
-		"reached_goal": bool(state.get("reached_goal", false)),
 	}
+
+
+## v1 -> v2: descarta o que era de prestigio/mundos (Poeira, loja, planetas, Expedicao, minerio). Os niveis e
+## recursos que nao existem mais na spec ja caem no filtro de deserialize; a renda guardada da frota so com creditos.
+static func _migrate(from_version: int, d: Dictionary) -> Dictionary:
+	match from_version:
+		1:
+			return _from_v1(d)
+	return d
+
+
+static func _from_v1(d: Dictionary) -> Dictionary:
+	var out := d.duplicate(true)
+	for k: String in ["shop", "prestige_points", "prestige_pending", "unlocked", "cycle_earned", "reached_goal"]:
+		out.erase(k)
+	out["current_planet"] = "luna"
+	out["save_version"] = 2
+	return out
 
 
 static func _filter_numbers(src: Variant, allowed: Array, kind: String, warnings: Array[String],
@@ -118,10 +112,3 @@ static func _num(v: Variant) -> float:
 	elif v is String and (v as String).is_valid_float():
 		x = (v as String).to_float()
 	return 0.0 if is_nan(x) or is_inf(x) else x
-
-
-## Booleano de um valor de fora: bool, ou numero diferente de 0; o resto = falso.
-static func _flag(v: Variant) -> bool:
-	if v is bool:
-		return v
-	return _num(v) != 0.0

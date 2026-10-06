@@ -16,9 +16,3 @@ func test_custo_cresce_com_nivel() -> void:
 	var c0: float = EconMath.upgrade_cost("tank", 0)["credits"]
 	var c10: float = EconMath.upgrade_cost("tank", 10)["credits"]
 	assert_true(c10 > c0 * 3.0, "custo nivel 10 deveria ser bem maior que o nivel 0")
-
-
-func test_titan_exige_expedicao_completa() -> void:
-	var unlocked := ["luna", "ares", "kronos"]
-	assert_false(EconMath.planet_available("titan", unlocked, {"warp_drive": 1}, {}))
-	assert_true(EconMath.planet_available("titan", unlocked, {"warp_drive": 1}, {"exp8_aurora": 1}))

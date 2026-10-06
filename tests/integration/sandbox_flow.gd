@@ -54,13 +54,11 @@ func _process(_d: float) -> void:
 	var menu: PauseMenu = _main._pause
 	match _f:
 		10:
-			title.sandbox_requested.emit("kronos", true)
+			title.sandbox_requested.emit("luna", true)
 		20:
 			_check("hangar", hangar.visible and Sandbox.active())
-			_check("mundo", GameState.current_planet == "kronos")
-			_check("mundos_liberados", ["luna", "ares", "kronos"].all(func(p: String) -> bool:
-				return p in GameState.unlocked_planets))
-			_check("recursos", GameState.amount("credits") >= 1e14 and GameState.amount("stardust") >= 1000.0)
+			_check("mundo", GameState.current_planet == "luna")
+			_check("recursos", GameState.amount("credits") >= 1e14)
 			_check("nave_forte", int(GameState.levels.get("thrust", 0)) == 42)
 			_check("sem_telemetria", not Telemetry.enabled)
 			_check("compra", GameState.buy_upgrade("tank"))
@@ -78,9 +76,9 @@ func _process(_d: float) -> void:
 					and GameState.current_planet == "luna")
 			_check("telemetria_volta", Telemetry.enabled)
 			_check("disco_ainda_intacto", is_equal_approx(_disk_credits(), 123.0))
-			title.sandbox_requested.emit("titan", false)
+			title.sandbox_requested.emit("luna", false)
 		60:
-			_check("quarto_sem_final", GameState.current_planet == "titan" and not _main._ending.visible and hangar.visible)
+			_check("nave_basica", int(GameState.levels.get("thrust", 0)) == 0 and hangar.visible)
 			_main._show_title()
 		70:
 			_check("saiu_de_novo", not Sandbox.active() and GameState.runs_done == 5)

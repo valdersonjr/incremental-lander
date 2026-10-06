@@ -4,6 +4,29 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-06)
+- **Fase 14 — Só a Lua + árvore de missões (2026-10-06)**. Pedidos: "polir ao máximo o primeiro [mundo] e ignorar os
+  outros"; prestígio "era pra ter sido removido"; missões abstratas com estrelas.
+  - **Etapa A ✅ (14.1)**: saíram prestígio (Poeira, loja, recomeço), Silvânia/Docelândia/Quarto (arte, ambiência,
+    perigos, terreno, temas de UI), Expedição, minério e a tela final. Economia **v11** (Frota 8M, Piloto 16M pede
+    1 drone); save **v2** com migração (descarta os campos antigos); hangar = NAVE + AJUDAS + faixa de RECORDES no topo;
+    sandbox só na Lua. Verificado: 86 testes + integrações, paridade 18 grupos, demo sem erros, capturas do hangar
+    (início e fim de jogo). O simulador `econ.py` segue genérico (planetas/prestígio) para quando os mundos voltarem.
+  - **Próximo — Etapa B (14.2)**: missões abstratas (spec `contracts.missions` v12 substitui `contracts.cargo`):
+    | Tipo | ★1 | ★2 | ★3 | Falhou |
+    |---|---|---|---|---|
+    | Simples (sempre) | ×1 | — | — | — |
+    | Pesada (motor ÷) | ÷1,3 ×1,2 | ÷1,6 ×1,45 | ÷2,0 ×1,8 | (física) |
+    | Pouso suave (V.VERT ≤ % do limite) | 70% ×1,2 | 50% ×1,4 | 35% ×1,7 | ×0,5 |
+    | Rápida (relógio × tempo ideal) | 2× ×1,2 | 1,6× ×1,4 | 1,3× ×1,7 | ×0,6 |
+    | Passageiro | resgate passando ×1,3 | táxi: pousar p/ buscar + deixar ×1,5 (2 trechos) | táxi parada longe/estreita ×1,8 | ×0,6 / 1º trecho |
+    | Cabo | curto/leve ×1,4 | longo ×1,7 | longo/pesado ×2,0 | ×0,6 |
+    | Dupla | 2 regras, mult somado (teto ×3) | | | a da regra que falhou |
+    Estrelas: 1 ⭐ por entrega concluída sem batida; 3 ⭐ liberam um nó na aba PEDIDOS (árvore: ★1 de Pesada/Suave/Rápida
+    abertas; Passageiro/Cabo ★1 pedem 2 tipos ★1; ★N pede ★N-1; Dupla pede ★3 em 2 tipos). Tipo recém-liberado aparece
+    mais nas 2 runs seguintes. Números são ponto de partida (simular; calibrar a física jogando).
+  - **Depois — Etapa C (14.3)**: 6 ratinhos (Simples mineiro amarelo de capacete · Pesada ratão laranja de cinto · Suave
+    confeiteira rosa · Rápida sorveteiro azul de boné · Passageiro de boné e bandeirinha · Cabo ratinha lilás com
+    corda), 2–3 itens da Lua por tipo, ícones peso/relógio/estrela; sons de "ganhou estrela"/"liberou" (do goal.wav).
 - **Presentes no alto do morro (2026-10-06, ROADMAP 13.4)**: usuário escolheu "interagir com coisas do mapa". Metade dos
   saltos tem galão de gás ou presentinho no ponto mais alto do relevo entre as plataformas; encostar devagar pega.
   Economia v10 (`contracts.gifts`), `Gifts` + Flight, arte nova no atlas de cargas (`gift`, `gas_can`, aprovação pendente),

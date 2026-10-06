@@ -73,24 +73,6 @@
       "title": "#fdcbb0",
       "base": "#a884f3",
       "deep": "#6b3e75"
-    },
-    "ares": {
-      "accent": "#91db69",
-      "title": "#cddf6c",
-      "base": "#1ebc73",
-      "deep": "#165a4c"
-    },
-    "kronos": {
-      "accent": "#ed8099",
-      "title": "#fca790",
-      "base": "#f04f78",
-      "deep": "#831c5d"
-    },
-    "titan": {
-      "accent": "#fbb954",
-      "title": "#fdcbb0",
-      "base": "#e6904e",
-      "deep": "#9e4539"
     }
   },
   "colors": {

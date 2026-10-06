@@ -7,7 +7,6 @@ func _init() -> void:
 	var cases := {
 		"luna_868": ["luna", [868.0], ["normal"]],
 		"luna_tiers": ["luna", [700.0, 1500.0, 2600.0], ["narrow", "tight", "normal"]],
-		"kronos_3000": ["kronos", [3000.0], ["tight"]],
 	}
 	for k: String in cases:
 		var c: Array = cases[k]

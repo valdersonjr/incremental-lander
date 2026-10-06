@@ -85,6 +85,15 @@
 - [x] Jingles (marco de upgrade/etapa, mundo liberado, recomeço, final) · alarme de gás baixo · ambiências dos 4 mundos ·
       músicas de título/hangar e de voo (2026-10-03; aprovado ouvindo o resumo)
 
+## Fase 14 — Só a Lua + árvore de missões (2026-10-06) · skills: todas
+> Pedido: "polir ao máximo o primeiro [mundo] e ignorar os outros"; tirar o prestígio; missões abstratas (pesada, pouso
+> suave, rápida, passageiro, cabo) com ★1–★3, recompensa pela dificuldade, ratinho próprio por tipo, liberadas por
+> estrelas ganhas jogando (1 ⭐ por entrega, 3 ⭐ liberam). Plano: `docs/HANDOFF.md`.
+- [x] 14.1 Etapa A: sai prestígio, Silvânia/Docelândia/Quarto, Expedição, minério, perigos e o final; Frota/Piloto por
+      créditos (economia v11); save v2 com migração; hangar NAVE + AJUDAS com faixa de recordes (2026-10-06)
+- [ ] 14.2 Etapa B: missões abstratas + estrelas + aba PEDIDOS (economia v12)
+- [ ] 14.3 Etapa C: 6 ratinhos (pixel-art) e sons de estrela/liberação (sound-design), aprovados pelo usuário
+
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida
 > (setinha → cor de chegando → rota traçada…). "A ideia do jogo é ser simples".

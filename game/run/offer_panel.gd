@@ -30,8 +30,7 @@ const WORLD_MAX_X := EDGE_RIGHT - PIN - EDGE_LABEL - 8.0
 const WORLD_MIN_X := EDGE_LEFT + PIN + EDGE_LABEL + 8.0
 ## Rostinhos dos clientes (atlas kids) por mundo; o pedido sorteia um pelo hash da distancia.
 ## Lua (2026-10-05): so ratinhos (usuario: "tira todos coelhos e alienigena").
-const CUSTOMERS := {"luna": ["rat"], "ares": ["bear", "bunny", "rat", "alien"],
-		"kronos": ["bunny", "bear", "alien", "rat"], "titan": ["bear", "alien", "bunny", "rat"]}
+const CUSTOMERS := {"luna": ["rat"]}
 ## Dica de cada carga (tooltip; a figura ja diz o principal).
 const CARGO_TIP := {"box": "caixa de queijo", "fragile": "bolo: pouse bem devagar!",
 		"urgent": "sorvete: chegue antes de derreter!", "towed": "queijão no cabo: não deixe bater no chão!",

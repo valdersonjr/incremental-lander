@@ -117,13 +117,6 @@ func test_lua_tem_lados_e_cargas_sem_mudar_as_distancias() -> void:
 		assert_true(cargas.has(k["id"]), "carga %s nunca sorteada" % k["id"])
 
 
-func test_outros_mundos_sempre_a_direita_e_caixa() -> void:
-	var run := RunState.create("ares", stats, 4)
-	for i in run.offers.size():
-		assert_eq(run.offer_dirs[i], 1)
-		assert_eq(run.offer_cargo[i], "box")
-
-
 func test_carga_cumprida_paga_mais_e_falha_paga_menos() -> void:
 	var run := RunState.create("luna", stats, 1)
 	run.taken_cargo = "towed"

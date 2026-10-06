@@ -13,10 +13,9 @@ static func can_afford(resources: Dictionary, cost: Dictionary) -> bool:
 
 
 ## Compra 1 nivel. Muta resources/levels. Retorna true se comprou.
-static func buy(resources: Dictionary, levels: Dictionary, upgrade_id: String, unlocked: Array,
-		shop: Dictionary) -> bool:
+static func buy(resources: Dictionary, levels: Dictionary, upgrade_id: String) -> bool:
 	var lv := int(levels.get(upgrade_id, 0))
-	if not EconMath.upgrade_available(upgrade_id, lv, unlocked, shop, levels):
+	if not EconMath.upgrade_available(upgrade_id, lv, levels):
 		return false
 	var cost := EconMath.upgrade_cost(upgrade_id, lv)
 	if not can_afford(resources, cost):
@@ -28,44 +27,42 @@ static func buy(resources: Dictionary, levels: Dictionary, upgrade_id: String, u
 
 
 ## Compra o maximo de niveis possivel (ate `limit`). Retorna quantos comprou.
-static func buy_max(resources: Dictionary, levels: Dictionary, upgrade_id: String, unlocked: Array,
-		shop: Dictionary, limit: int = 1000) -> int:
+static func buy_max(resources: Dictionary, levels: Dictionary, upgrade_id: String, limit: int = 1000) -> int:
 	var n := 0
-	while n < limit and buy(resources, levels, upgrade_id, unlocked, shop):
+	while n < limit and buy(resources, levels, upgrade_id):
 		n += 1
 	return n
 
 
-## Melhorias que ainda vao liberar (mostradas apagadas, com cadeado, para o jogador saber o que vem pela frente).
-## Ficam de fora as etapas da Expedicao (surpresa da fase final) e o que ja chegou ao nivel maximo.
-## Cada item: {id, name, requires_planet, requires_shop} ("" quando nao exige).
-static func locked_upgrades(levels: Dictionary, unlocked: Array, shop: Dictionary) -> Array[Dictionary]:
+## Melhorias que ainda vao liberar (mostradas apagadas, com cadeado, para o jogador saber o que vem pela frente):
+## as da oficina que pedem outra melhoria antes (ex.: Piloto automatico pede 1 drone). As ajudas de voo tem aba
+## propria. Cada item: {id, name, requires: id da melhoria exigida}.
+static func locked_upgrades(levels: Dictionary) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for u: Dictionary in EconMath.spec["upgrades"]:
 		var id: String = u["id"]
 		var lv := int(levels.get(id, 0))
-		if u.get("progress", false) or u.has("requires_upgrade") or lv >= int(u.get("max_level", 1000000000)):
+		if u.has("assist") or lv >= int(u.get("max_level", 1000000000)):
 			continue
-		if EconMath.upgrade_available(id, lv, unlocked, shop, levels):
+		if EconMath.upgrade_available(id, lv, levels):
 			continue
-		out.append({"id": id, "name": u.get("name", id), "requires_planet": str(u.get("requires_planet", "")),
-				"requires_shop": str(u.get("requires_shop", ""))})
+		var req: Dictionary = u.get("requires_upgrade", {})
+		out.append({"id": id, "name": u.get("name", id), "requires": str(req.keys()[0]) if not req.is_empty() else ""})
 	return out
 
 
 ## Linhas para a UI do hangar: upgrades disponiveis com nivel, custo, stat atual -> proximo e proximo marco.
-static func upgrade_rows(resources: Dictionary, levels: Dictionary, unlocked: Array, shop: Dictionary,
-		prestige_points: float) -> Array[Dictionary]:
+static func upgrade_rows(resources: Dictionary, levels: Dictionary) -> Array[Dictionary]:
 	var rows: Array[Dictionary] = []
-	var now := EconMath.ship_stats(levels, prestige_points, shop)
+	var now := EconMath.ship_stats(levels)
 	for u: Dictionary in EconMath.spec["upgrades"]:
 		var id: String = u["id"]
 		var lv := int(levels.get(id, 0))
-		if not EconMath.upgrade_available(id, lv, unlocked, shop, levels):
+		if not EconMath.upgrade_available(id, lv, levels):
 			continue
 		var nxt_levels := levels.duplicate()
 		nxt_levels[id] = lv + 1
-		var nxt := EconMath.ship_stats(nxt_levels, prestige_points, shop)
+		var nxt := EconMath.ship_stats(nxt_levels)
 		var stat: String = u["effect"]["stat"]
 		var cost := EconMath.upgrade_cost(id, lv)
 		var milestone := {}
@@ -80,14 +77,12 @@ static func upgrade_rows(resources: Dictionary, levels: Dictionary, unlocked: Ar
 	return rows
 
 
-## A compra de before -> after niveis passou um marco (milestones da spec, a cada N niveis) ou e uma etapa da
-## Expedicao (progress)? Usado para o jingle de marco no hangar.
+## A compra de before -> after niveis passou um marco (milestones da spec, a cada N niveis)?
+## Usado para o jingle de marco no hangar.
 static func milestone_crossed(upgrade_id: String, before: int, after: int) -> bool:
 	if after <= before:
 		return false
 	var u := EconMath._find("upgrades", upgrade_id)
-	if u.get("progress", false):
-		return true
 	for m: Dictionary in u.get("milestones", []):
 		var every := int(m["every"])
 		if every > 0 and after / every > before / every:
@@ -123,43 +118,3 @@ static func can_launch(planet_id: String, stats: Dictionary) -> bool:
 		return false
 	var d_min := float(EconMath._find("planets", planet_id)["distance"][0])
 	return EconMath.estimated_hop_dv(planet_id, d_min, stats) / float(stats["efficiency"]) <= float(stats["tank"])
-
-
-## Melhor mundo liberado onde a nave decola (o ultimo na ordem da spec); "luna" se nenhum.
-static func best_launchable(unlocked: Array, stats: Dictionary) -> String:
-	var best := "luna"
-	for p: Dictionary in EconMath.spec["planets"]:
-		if p["id"] in unlocked and can_launch(p["id"], stats):
-			best = p["id"]
-	return best
-
-
-## Libera um planeta (custo e requisitos da spec). Muta resources/unlocked. Retorna true se liberou.
-static func unlock_planet(resources: Dictionary, unlocked: Array, planet_id: String, shop: Dictionary,
-		levels: Dictionary) -> bool:
-	if planet_id in unlocked or not EconMath.planet_available(planet_id, unlocked, shop, levels):
-		return false
-	var cost: Dictionary = EconMath._find("planets", planet_id).get("unlock", {})
-	if not can_afford(resources, cost):
-		return false
-	for res: String in cost:
-		resources[res] = float(resources.get(res, 0.0)) - float(cost[res])
-	unlocked.append(planet_id)
-	return true
-
-
-## Linhas de planetas para o hangar: liberado?, disponivel para liberar?, custo, pode voar com a nave atual.
-static func planet_rows(resources: Dictionary, unlocked: Array, shop: Dictionary, levels: Dictionary,
-		stats: Dictionary) -> Array[Dictionary]:
-	var rows: Array[Dictionary] = []
-	for p: Dictionary in EconMath.spec["planets"]:
-		var id: String = p["id"]
-		var cost: Dictionary = p.get("unlock", {})
-		rows.append({
-			"id": id, "name": p.get("name", id), "unlocked": id in unlocked,
-			"available": EconMath.planet_available(id, unlocked, shop, levels),
-			"cost": cost, "affordable": can_afford(resources, cost), "can_fly": can_fly(id, stats),
-			"can_launch": can_launch(id, stats),
-			"gravity": float(p["gravity"]), "pay_mult": float(p.get("pay_mult", 1.0)),
-		})
-	return rows

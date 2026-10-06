@@ -9,8 +9,6 @@
 ##   --pad_wait=s                     segundos parado na plataforma antes de decolar (padrao 0.3)
 ##   --no_hud                         esconde HUD/ofertas (plano limpo)     --zoom=2  camera mais perto
 ##   --arc_k=0.7                      arco mais baixo/alto que o dos cristais (so o piloto; os cristais ficam onde estao)
-##   --sync_hazards=lead_s            ao decolar, acerta a fase dos perigos para a nave passar por eles ligados
-##                                    (brinquedo cruza a altura da nave lead_s depois dela: >0 por pouco, 0 acerta)
 ##   --no_summary                     esconde o resumo do fim do run (take de batida)
 ##   --title                          menu inicial sobre o mundo de --world=id
 ##   --hangar=id1,id2,...             hangar comprando esses upgrades em sequencia (--tab=worlds no fim)
@@ -140,13 +138,10 @@ func _process(_delta: float) -> void:
 		if flying != _was_flying:                              # marcas de tempo para escolher o corte do take
 			print("TAKE_EVENT %s t=%.2f" % ["decolou" if flying else str(Lander.State.keys()[flight.lander.state]).to_lower(),
 					Engine.get_process_frames() / 60.0])
-		if flying and _args.has("sync_hazards"):
-			_sync_hazards(flight, not _was_flying)
 		_was_flying = flying
 		if _args.has("debug") and Engine.get_process_frames() % 15 == 0:
-			print("DBG t=%.2f x=%.0f y=%.0f st=%d zones=%s" % [flight._hz_t, flight.lander.global_position.x,
-					flight.lander.global_position.y, flight.lander.state,
-					str(flight._zones.map(func(z: Dictionary) -> String: return "%s:%s x=%.0f toy=%s" % [z["type"], Hazards.cycle(z, flight._hz_t), float(z.get("x", (z.get("rect", Rect2()) as Rect2).get_center().x)), str(Hazards.toy_pos(z, flight._hz_t)) if z["type"] == "toy" else ""]))])
+			print("DBG x=%.0f y=%.0f st=%d" % [flight.lander.global_position.x, flight.lander.global_position.y,
+					flight.lander.state])
 	var offers: OfferPanel = _main._offers
 	if offers != null and is_instance_valid(offers) and offers.visible and not _choosing and _hop_i < _hops.size() \
 			and not _args.has("hangar"):
@@ -183,38 +178,6 @@ func _choose_next() -> void:
 	flight.lander.autopilot = ap
 	flight.lander.can_takeoff = true
 	_choosing = false
-
-
-## Acerta a fase de cada perigo com ciclo para quando a nave chegar nele (estimativa pelo arco: vx constante).
-## first=false: so o brinquedo, e so enquanto ainda nao esta caindo (a chegada fica mais precisa com a nave em cruzeiro).
-func _sync_hazards(flight: Flight, first: bool) -> void:
-	var cfg: Dictionary = WorldConfig.load_config()
-	var a: Dictionary = flight.terrain.pads[flight.current_pad_id]
-	var b: Dictionary = flight.target_pad()
-	var d := float(b["x"]) - float(a["x"])
-	var g := float(flight.lander.params["gravity"])
-	var vx_px_s := sqrt(g * absf(d) / float(cfg["px_per_m"]) / 2.0) * float(cfg["px_per_m"]) * float(cfg["time_scale"])
-	var lead := float(_args["sync_hazards"])
-	for z: Dictionary in flight._zones:
-		if not z.has("period_s"):
-			continue
-		if not first and (z["type"] != "toy" or Hazards.cycle(z, flight._hz_t) == "on"):
-			continue
-		var zx: float = float(z["x"]) if z.has("x") else (z["rect"] as Rect2).get_center().x
-		var dx := zx - flight.lander.global_position.x
-		if dx * signf(d) < 0.0:
-			continue                                           # ja passou
-		var v_now := absf(flight.lander.vel_m.x) * float(cfg["px_per_m"]) * float(cfg["time_scale"])
-		var ta := flight._hz_t + (absf(dx) / v_now if v_now > vx_px_s * 0.8 else absf(dx) / vx_px_s + 0.5)
-		var p_want: float
-		if z["type"] == "toy":
-			var u := (zx - float(a["x"])) / d
-			var arc_y := lerpf(float(a["y"]), float(b["y"]), u) - absf(d) * u * (1.0 - u)
-			p_want = float(z["warn_s"]) + (arc_y - float(z["top"])) / float(z["speed"])
-			ta += lead
-		else:
-			p_want = 0.4                                       # acabou de ligar quando a nave chega
-		z["phase"] = fposmod(p_want - ta, float(z["period_s"]))
 
 
 ## Hangar: abre com creditos de sobra e compra os upgrades da lista em sequencia (foco + clique, como o jogador).

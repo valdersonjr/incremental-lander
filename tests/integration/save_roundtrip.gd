@@ -10,9 +10,6 @@ func _ready() -> void:
 	GameState.reset()
 	GameState.resources["credits"] = 12345.0
 	GameState.levels["tank"] = 7
-	GameState.unlocked_planets = ["luna", "ares"]
-	GameState.current_planet = "ares"
-	GameState.prestige_points = 21.0
 	GameState.set_volume("Music", 0.5)
 	if not SaveManager.save_game():
 		fails.append("save_game falhou")
@@ -23,7 +20,7 @@ func _ready() -> void:
 		fails.append("creditos: %s" % GameState.amount("credits"))
 	if int(GameState.levels.get("tank", 0)) != 7:
 		fails.append("tank: %s" % GameState.levels.get("tank"))
-	if GameState.current_planet != "ares":
+	if GameState.current_planet != "luna":
 		fails.append("planeta: %s" % GameState.current_planet)
 	if not is_equal_approx(GameState.volume("Music"), 0.5):
 		fails.append("volume: %s" % GameState.volume("Music"))

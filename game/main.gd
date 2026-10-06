@@ -8,7 +8,6 @@ const HUD_SCENE := preload("res://game/hud/hud.tscn")
 const OFFER_SCENE := preload("res://game/run/offer_panel.tscn")
 const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
-const ENDING_SCENE := preload("res://game/ending/ending.tscn")
 const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
 const PAUSE_SCENE := preload("res://game/pause/pause_menu.tscn")
 
@@ -21,7 +20,6 @@ var _hud: Hud = null
 var _offers: OfferPanel = null
 var _summary: RunSummary = null
 var _hangar: Hangar = null
-var _ending: Ending = null
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
 ## Segundos reais do run em andamento, sem pausa (o relogio para com o jogo pausado ou a janela sem foco): a frota
@@ -49,11 +47,6 @@ func _ready() -> void:
 	_gui.add_child(_hangar)
 	_hangar.visible = false
 	_hangar.launch_requested.connect(_on_launch_requested)
-	_ending = ENDING_SCENE.instantiate()
-	_gui.add_child(_ending)
-	_ending.visible = false
-	_ending.closed.connect(_open_hangar)
-	Events.goal_reached.connect(_on_goal_reached)
 	_hangar.title_requested.connect(_show_title)
 	_title = TITLE_SCENE.instantiate()
 	_gui.add_child(_title)
@@ -91,7 +84,7 @@ func _ready() -> void:
 		SaveManager.new_game()
 		_back_to_hangar())
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
-	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_") or k == "planet"):
+	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_")):
 		_start_run()
 	else:
 		_show_title()
@@ -114,8 +107,7 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible and not _pause.visible \
-			and not _ending.visible:
+	if event.is_action_pressed(&"restart") and not _hangar.visible and not _title.visible and not _pause.visible:
 		# no meio de um salto, R pede confirmacao (a entrega em voo se perderia por um toque sem querer)
 		var flying := _flight != null and _flight.lander.state == Lander.State.FLYING and _run != null and not _run.over
 		if flying and _restart_armed <= 0.0 and not _demo:
@@ -140,7 +132,7 @@ func _notification(what: int) -> void:
 ## Pausa so no voo (HUD na tela, sem resumo/hangar/menu/final por cima) e nunca no demo (verificacao automatica).
 func _can_pause() -> bool:
 	return not _demo and _hud != null and is_instance_valid(_hud) and _hud.visible and not _summary.visible \
-			and not _hangar.visible and not _title.visible and not _ending.visible and not _pause.visible
+			and not _hangar.visible and not _title.visible and not _pause.visible
 
 
 ## Volta do menu do jogo ao hangar, na mesma aba (refresh atualiza o tema e o foco).
@@ -168,7 +160,6 @@ func _show_title() -> void:
 	_abandon_run()                                             # run em andamento fecha a conta no jogo em uso
 	Sandbox.end()
 	_hangar.visible = false
-	_ending.visible = false
 	_build_title_world()
 	_gui.move_child(_title, -1)
 	_title.open()
@@ -241,11 +232,10 @@ func _start_run() -> void:
 	_gui.add_child(_summary)
 	_summary.visible = false
 	_gui.move_child(_hangar, -1)  # hangar sempre por cima
-	_gui.move_child(_ending, -1)
 	_gui.move_child(_title, -1)
 	_gui.move_child(_pause, -1)
 	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
-	for c: Control in [_hud, _offers, _summary, _ending, _pause]:
+	for c: Control in [_hud, _offers, _summary, _pause]:
 		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	Sound.music("flight")
@@ -327,7 +317,7 @@ func _end_run() -> void:
 	_note_record("best_run", float(_run.earned.get("credits", 0.0)) + float(fleet.get("credits", 0.0)))
 	var s := _run.summary()
 	s["fleet"] = fleet
-	s["records"] = _run_records.duplicate() if GameState.reached_goal else []
+	s["records"] = _run_records.duplicate()
 	_summary.show_summary(s)
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
@@ -348,41 +338,13 @@ func _on_continue() -> void:
 		_on_launch_requested()
 
 
-func _on_goal_reached(_planet_id: String) -> void:
-	_hangar.visible = false
-	_ending.show_ending()
-	_log("GOAL_REACHED ", JSON.stringify({"runs": GameState.runs_done, "points": GameState.prestige_points}))
-
-
 func _on_launch_requested() -> void:
 	_run_seed += 1
 	_start_run()
 
 
-## Demo: libera planetas quando pode e compra o upgrade acessivel mais barato (verificacao da progressao).
+## Demo: compra o upgrade acessivel mais barato (verificacao da progressao).
 func _demo_shop() -> void:
-	# prestigio pela regra "dobrar" (a mesma do jogador simulado da economy-balance) + loja por prioridade
-	var st := GameState.prestige_state()
-	if Prestige.can_prestige(st) and Prestige.gain(st) >= GameState.prestige_points:
-		var g := GameState.begin_prestige()
-		var items := EconMath.shop_items().duplicate()
-		items.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("priority", 99)) < int(b.get("priority", 99)))
-		for it: Dictionary in items:
-			while GameState.buy_shop_item(it["id"]):
-				pass
-			if int(GameState.shop.get(it["id"], 0)) < int(it.get("max_level", 1)):
-				break  # guarda Poeira para o proximo item da fila
-		GameState.finish_prestige()
-		print("PRESTIGE ", JSON.stringify({"gain": g, "points": GameState.prestige_points, "shop": GameState.shop}))
-	# etapas da Expedicao primeiro (progressao, como o jogador simulado)
-	for r: Dictionary in GameState.upgrade_rows():
-		for u: Dictionary in EconMath.spec["upgrades"]:
-			if u["id"] == r["id"] and u.get("progress", false) and r["affordable"]:
-				GameState.buy_upgrade(r["id"])
-	# liberar o proximo planeta e ir para o melhor planeta em que a nave consegue voar
-	for p: Dictionary in GameState.planet_rows():
-		if not p["unlocked"] and p["available"] and p["affordable"]:
-			GameState.unlock_planet(p["id"])
 	while true:
 		var best := ""
 		var best_cost := INF
@@ -393,17 +355,13 @@ func _demo_shop() -> void:
 				best_cost = c
 		if best == "" or not GameState.buy_upgrade(best):
 			break
-	for p: Dictionary in GameState.planet_rows():
-		if p["unlocked"] and p["can_launch"]:
-			GameState.current_planet = p["id"]
 	_hangar.refresh()
 	print("HANGAR ", JSON.stringify({"planet": GameState.current_planet, "credits": GameState.amount("credits"), "levels": GameState.levels,
 			"stats": GameState.ship_stats()}))
 
 
-## Argumentos so de desenvolvimento/verificacao: --dev_levels=thrust:10,tank:5  --dev_credits=N  --dev_ore=N
-## --dev_shop=warp_drive:1,star_charts:1
-## --dev_unlock=ares,kronos  --planet=id. Nao existem no jogo normal (sem args).
+## Argumentos so de desenvolvimento/verificacao: --dev_levels=thrust:10,tank:5  --dev_credits=N.
+## Nao existem no jogo normal (sem args).
 func _apply_dev_args() -> void:
 	if not OS.is_debug_build():                                # build publico: sem atalhos de desenvolvedor
 		return
@@ -412,23 +370,6 @@ func _apply_dev_args() -> void:
 			GameState.levels[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
 	if _args.has("dev_credits"):
 		GameState.resources["credits"] = float(_args["dev_credits"])
-	if _args.has("dev_ore"):
-		GameState.resources["ore"] = float(_args["dev_ore"])
-	if _args.has("dev_shop"):
-		for pair in str(_args["dev_shop"]).split(","):
-			GameState.shop[pair.get_slice(":", 0)] = int(pair.get_slice(":", 1))
-	if _args.has("dev_unlock"):
-		for pid in str(_args["dev_unlock"]).split(","):
-			if not pid in GameState.unlocked_planets:
-				GameState.unlocked_planets.append(pid)
-	if _args.has("planet"):
-		var pid := str(_args["planet"])
-		if EconMath.spec["planets"].any(func(p: Dictionary) -> bool: return p["id"] == pid):
-			GameState.current_planet = pid
-		else:
-			push_warning("--planet=%s nao existe na spec; usando luna" % pid)
-		if not GameState.current_planet in GameState.unlocked_planets:
-			GameState.unlocked_planets.append(GameState.current_planet)
 
 
 ## Dev (verificacao/capturas): --dev_cargo=towed|fragile|urgent|rescue|box e --dev_dir=-1|1 forcam a carga e o

@@ -38,9 +38,6 @@ func _ready() -> void:
 		_load_prefs_and_slot()
 	Events.run_finished.connect(func(_s: Dictionary) -> void: request_save())
 	Events.upgrade_bought.connect(func(_i: String, _l: int) -> void: request_save())
-	Events.planet_unlocked.connect(func(_p: String) -> void: request_save())
-	Events.prestiged.connect(func(_g: float, _t: float) -> void: request_save())
-	Events.goal_reached.connect(func(_p: String) -> void: request_save())
 
 
 func _notification(what: int) -> void:
@@ -137,7 +134,7 @@ func load_game() -> bool:
 
 
 ## Resumo de um jogo salvo para a tela de selecao (so leitura; nao mexe no jogo em uso).
-## {exists, ok, slot, current, planet, runs, credits, play_seconds, prestige_points, reached_goal}
+## {exists, ok, slot, current, planet, runs, credits, play_seconds}
 func slot_summary(n: int) -> Dictionary:
 	var r := _read_slot(n)
 	var out := SaveData.summary(r["state"]) if r["ok"] else {}

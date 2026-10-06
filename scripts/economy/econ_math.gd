@@ -79,24 +79,6 @@ static func effect_value(e: Dictionary, level: int) -> float:
 	return 0.0
 
 
-static func prestige_gain(earned: float) -> float:
-	var p: Dictionary = spec.get("prestige", {})
-	if p.is_empty():
-		return 0.0
-	var x := maxf(0.0, earned / p["scale"])
-	var v := 0.0
-	match p.get("formula", "sqrt"):
-		"sqrt":
-			v = sqrt(x)
-		"cbrt":
-			v = pow(x, 1.0 / 3.0)
-		"pow":
-			v = pow(x, p["exponent"])
-		"log10":
-			v = log(x) / log(10.0) if x >= 1.0 else 0.0
-	return floor(v * p.get("mult", 1.0))
-
-
 # ---------------------------------------------------------------- upgrades / stats
 ## Custo do proximo nivel de um upgrade: { "credits": 123.0, "ore": 4.0 }
 static func upgrade_cost(upgrade_id: String, level: int) -> Dictionary:
@@ -107,31 +89,14 @@ static func upgrade_cost(upgrade_id: String, level: int) -> Dictionary:
 	return out
 
 
-static func shop_items() -> Array:
-	return spec.get("prestige", {}).get("shop", [])
-
-
-## Custo (em poeira estelar) do proximo nivel de um item da loja de prestigio.
-static func shop_cost(item_id: String, level: int) -> float:
-	for it in shop_items():
-		if it["id"] == item_id:
-			return cost_at(it["cost"], level)
-	push_error("item da loja '%s' nao encontrado" % item_id)
-	return INF
-
-
-## Stats finais: base -> + (add/hyper) -> x (mult/milestone) -> x prestigio.
-## levels = {id_upgrade: nivel}; shop = {id_item_loja: nivel} (itens com effect.type == "stat").
-static func ship_stats(levels: Dictionary, prestige_points: float = 0.0, shop: Dictionary = {}) -> Dictionary:
+## Stats finais: base -> + (add/hyper) -> x (mult/milestone). levels = {id_upgrade: nivel}.
+static func ship_stats(levels: Dictionary) -> Dictionary:
 	var s: Dictionary = spec["ship"]["base"].duplicate()
 	var adds := {}
 	var mults := {}
 	var sources := []
 	for u in spec["upgrades"]:
 		sources.append([u, int(levels.get(u["id"], 0))])
-	for it in shop_items():
-		if it["effect"]["type"] == "stat":
-			sources.append([it, int(shop.get(it["id"], 0))])
 	for pair in sources:
 		var u: Dictionary = pair[0]
 		var lv: int = pair[1]
@@ -153,59 +118,10 @@ static func ship_stats(levels: Dictionary, prestige_points: float = 0.0, shop: D
 		s[k] += adds[k]
 	for k in mults:
 		s[k] *= mults[k]
-	var p: Dictionary = spec.get("prestige", {})
-	if not p.is_empty() and prestige_points > 0.0:
-		for b in p["bonuses"]:
-			s[b["stat"]] *= 1.0 + b["per_point"] * prestige_points
 	return s
 
 
-## Estado inicial apos um prestigio, conforme a loja: { "levels": {...}, "resources": {...}, "keep": [...] }.
-## O jogo aplica isso ao resetar (mesma logica do simulador em econ.py/simulate).
-static func prestige_reset_state(shop: Dictionary) -> Dictionary:
-	var p: Dictionary = spec.get("prestige", {})
-	var keep: Array = p.get("keep", []).duplicate()
-	var levels := {}
-	var resources := {}
-	for r in spec["resources"]:
-		resources[r["id"]] = float(r.get("start", 0.0))
-	for it in shop_items():
-		var lv: int = shop.get(it["id"], 0)
-		if lv == 0:
-			continue
-		var e: Dictionary = it["effect"]
-		match e["type"]:
-			"keep":
-				keep.append(e["what"])
-			"start_resources":
-				for k in e["amounts"]:
-					resources[k] += e["amounts"][k] * lv
-			"start_levels":
-				for k in e["levels"]:
-					levels[k] = maxi(int(levels.get(k, 0)), int(e["levels"][k] * lv))
-	# upgrades 'persistent' (etapas do megaprojeto) nao resetam: o jogo deve manter o nivel atual deles
-	var keep_upgrades := []
-	for u in spec["upgrades"]:
-		if u.get("persistent", false):
-			keep_upgrades.append(u["id"])
-	return {"levels": levels, "resources": resources, "keep": keep, "keep_upgrades": keep_upgrades}
-
-
-## Planeta pode ser desbloqueado? (requisito de planeta anterior e de item da loja)
-static func planet_available(planet_id: String, unlocked: Array, shop: Dictionary,
-		levels: Dictionary = {}) -> bool:
-	var pl := _find("planets", planet_id)
-	if not requires_ok(pl, levels):
-		return false
-	if pl.has("requires") and not (pl["requires"] in unlocked):
-		return false
-	if pl.has("requires_shop") and int(shop.get(pl["requires_shop"], 0)) == 0:
-		return false
-	return true
-
-
-## Upgrade disponivel? (nivel maximo, planeta exigido, item da loja exigido)
-## requires_upgrade = {id: nivel_minimo} (ex.: etapa 3 do megaprojeto exige a etapa 2)
+## requires_upgrade = {id: nivel_minimo} (ex.: Rota exige o Rastro)
 static func requires_ok(x: Dictionary, levels: Dictionary) -> bool:
 	var req: Dictionary = x.get("requires_upgrade", {})
 	for k in req:
@@ -214,18 +130,12 @@ static func requires_ok(x: Dictionary, levels: Dictionary) -> bool:
 	return true
 
 
-static func upgrade_available(upgrade_id: String, level: int, unlocked: Array, shop: Dictionary,
-		levels: Dictionary = {}) -> bool:
+## Upgrade disponivel? (nivel maximo e upgrades exigidos)
+static func upgrade_available(upgrade_id: String, level: int, levels: Dictionary = {}) -> bool:
 	var u := _find("upgrades", upgrade_id)
 	if level >= int(u.get("max_level", 1000000000)):
 		return false
-	if not requires_ok(u, levels):
-		return false
-	if u.has("requires_shop") and int(shop.get(u["requires_shop"], 0)) == 0:
-		return false
-	if u.has("requires_planet") and not (u["requires_planet"] in unlocked):
-		return false
-	return true
+	return requires_ok(u, levels)
 
 
 ## Renda da frota por segundo: cada drone repete as rotas do jogador com eficiencia `autopilot`.

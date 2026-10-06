@@ -1,11 +1,10 @@
 ## Sons do jogo (arte sonora da skill sound-design: audio/src/** -> assets/audio/**).
 ## One-shots: Sound.ui("click"|"buy"|"denied") no bus UI; Sound.sfx("landing"|"crash"|"delivered"|"crystal_1..3"|
-## "combo_2..5"|"gust"|"geyser"|"toy_fall") no bus SFX (cristal: sobe um grau por cristal do mesmo salto; combo: sobe
+## "combo_2..5") no bus SFX (cristal: sobe um grau por cristal do mesmo salto; combo: sobe
 ## com o tamanho do combo). Variacoes + pitch/volume aleatorios vem dos AudioStreamRandomizer (.tres).
 ## Trilha: Sound.music("title"|"flight"|"") no bus Music e Sound.ambience(planeta|"") no bus Ambience, com crossfade
-## (loops; tocar o que ja toca nao reinicia). Jingles: Sound.jingle("milestone"|"unlock"|"prestige"|"goal") no bus SFX,
-## um por vez (o novo corta o anterior) e a musica abaixa enquanto toca. Liberar mundo / recomecar / final tocam
-## sozinhos pelo Events. O propulsor e o alarme de gas moram no Lander.
+## (loops; tocar o que ja toca nao reinicia). Jingles: Sound.jingle("milestone"|"unlock"|"goal") no bus SFX,
+## um por vez (o novo corta o anterior) e a musica abaixa enquanto toca. O propulsor e o alarme de gas moram no Lander.
 extends Node
 
 const STREAMS := {
@@ -22,12 +21,8 @@ const STREAMS := {
 	"combo_3": "res://assets/audio/sfx/combo_3.wav",
 	"combo_4": "res://assets/audio/sfx/combo_4.wav",
 	"combo_5": "res://assets/audio/sfx/combo_5.wav",
-	"gust": "res://assets/audio/sfx/gust.wav",
-	"geyser": "res://assets/audio/sfx/geyser.wav",
-	"toy_fall": "res://assets/audio/sfx/toy_fall.wav",
 	"milestone": "res://assets/audio/sfx/milestone.wav",
 	"unlock": "res://assets/audio/sfx/unlock.wav",
-	"prestige": "res://assets/audio/sfx/prestige.wav",
 	"goal": "res://assets/audio/sfx/goal.wav",
 }
 const MUSIC := {"title": "res://assets/audio/music/title.wav", "flight": "res://assets/audio/music/flight.wav"}
@@ -64,9 +59,6 @@ func _ready() -> void:
 	if bus >= 0:
 		_duck_fx = AudioEffectAmplify.new()
 		AudioServer.add_bus_effect(bus, _duck_fx)
-	Events.planet_unlocked.connect(func(_p: String) -> void: jingle("unlock"))
-	Events.prestiged.connect(func(_g: float, _t: float) -> void: jingle("prestige"))
-	Events.goal_reached.connect(func(_p: String) -> void: jingle("goal"))   # depois do "unlock": o final corta ele
 
 
 func _new_player(bus: StringName) -> AudioStreamPlayer:

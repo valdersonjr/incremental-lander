@@ -20,7 +20,7 @@ balance/                      # .gdignore — sims/ (experimentos), reports/, te
 .claude/skills/               # pixel-art, sound-design, economy-balance, godot-dev (padrões + ferramentas)
 ```
 
-## Jogo (Fases 1–7 — voo, run, hangar, planetas, prestígio, frota, Expedição, final, save/opções)
+## Jogo (Fases 1–7 — voo, run, hangar, frota, save/opções; só a Lua desde 2026-10-06)
 ```
 data/world.json               # escala (px_per_m=1), time_scale=4,5, rotate_speed=4, drag_scale, tolerâncias de pouso,
                               # relevo + cores provisórias (sky/fill/surface) por planeta, teclas (inclui end_run/confirm), demo;
@@ -61,20 +61,18 @@ game/run/offer_panel.*        # OfferPanel (tela cheia, só pinos + mini-cartão
                               # com setinha se fica além da tela; teclas 1–9/setas/clique escolhem, E encerra (2 toques)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, planet_unlocked, prestiged, goal_reached
-autoload/game_state.gd        # GameState: recursos, níveis, loja, prestígio (cycle_earned, prestige_pending,
-                              # begin_prestige/finish_prestige, buy_shop_item), planetas liberados, income_history,
-                              # settle_run() (paga a frota ao fim do run), check_goal()/reached_goal; ship_stats(),
-                              # buy_upgrade(), buy_upgrade_max(), upgrade_rows() (via Purchases/EconMath)
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, settings_changed
+autoload/game_state.gd        # GameState: recursos, níveis, current_planet (sempre "luna"), income_history, recordes,
+                              # settle_run() (paga a frota ao fim do run); ship_stats(), buy_upgrade(), buy_upgrade_max(),
+                              # upgrade_rows(), locked_upgrades() (via Purchases/EconMath); opções (volumes, teclas, ajudas)
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
-scripts/economy/prestige.gd   # Prestige (puro): gain, can_prestige, collect → (loja) → reset, shop_rows, buy_shop
-scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (o que vem pela frente), max_reach_m,
-                              # can_fly (motor vence a gravidade), unlock_planet, planet_rows
+scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
+                              # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Continuar · Jogos salvos ·
                               # Opções · Sair. Sinais play_requested (Continuar → hangar; sem progresso → run),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
-                              # Main pula o menu com --demo, --dev_*, --planet, --no_title. Hangar.title_requested volta ao menu.
+                              # Main pula o menu com --demo, --dev_*, --no_title. Hangar.title_requested volta ao menu.
 scripts/save/sandbox.gd       # Sandbox (estático): begin(planeta, forte) guarda o jogo (save + cópia em memória), liga
                               # SaveManager.sandbox (só grava opções) e desliga a telemetria; estado de teste de
                               # data/world.json > sandbox; top_up() a cada hangar (Main._open_hangar); end() devolve o jogo
@@ -86,12 +84,9 @@ game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS
                               # tem "Menu inicial" (despausa; o run acaba, entregas já pagas) mas não "Novo jogo".
                               # open(Mode.HANGAR): "MENU" (Hangar.menu_requested → Main esconde o hangar); sinais
                               # title_requested, new_game_requested (Main: SaveManager.new_game → hangar), closed → hangar.
-game/ending/ending.*          # Ending (Control modal como o resumo): "VOCÊ CHEGOU AO QUARTO!" + resumo; Continuar jogando
-                              # (Events.goal_reached)
-game/hangar/hangar.*          # Hangar em ABAS (Q/E): cabeçalho (recursos, stats, EXPEDIÇÃO fixa: barra + próxima etapa + botão) +
-                              # NAVE (upgrades em tabela, padrão ao abrir) | MUNDOS (voar/liberar; "VOCÊ ESTÁ AQUI") | PRESTÍGIO
-                              # (recomeçar com confirmação + LOJA DA POEIRA). Esc/"Menu" = menu do jogo (PauseMenu). Aba com algo
-                              # comprável fica dourada com "!". Modo 'recomeço em andamento' = só loja + CONCLUIR; DECOLAR
+game/hangar/hangar.*          # Hangar em ABAS (Q/E): NAVE (oficina: nave no meio + cartões; Piloto automático com cadeado
+                              # até comprar Frota) | AJUDAS (árvore do Painel de bordo). Cabeçalho: créditos + faixa de RECORDES
+                              # (%Records; some sem recorde). Esc = menu do jogo (PauseMenu). Aba com algo comprável fica dourada.
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info);
                               # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
 assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
@@ -122,21 +117,17 @@ assets/sprites/landing_pad*, target_beam*, target_marker* # plataforma + feixe +
 assets/sprites/explosion*, landing_dust* # FX de batida e pouso ← art/src/fx/explosion.py (Flight._spawn_fx)
 tests/visual/crash_preview.*  # prévia da batida (e da poeira com -- --dust) para gdtool capture
 art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/src/terrain/ = versões reprovadas
-art/src/bg/forest_scene.py    # mundo 2 Silvânia (floresta, id ares) · candy_scene.py = mundo 3 Docelândia (doces, id kronos)
-art/src/bg/room_scene.py      # mundo 4 O Quarto (quarto bagunçado, id titan; wall_mode)
-art/src/bg/planet_scenes.py   # recolorações reprovadas como conceito (referência; não gera mais assets do jogo)
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
 autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); music("title"|"flight"|"") e ambience(mundo|"")
                               # com crossfade de 1,2 s (a mesma faixa não reinicia; um tween por par); jingle("milestone"|
-                              # "unlock"|"prestige"|"goal") um por vez, música abaixa -9 dB (AudioEffectAmplify no bus Music);
-                              # unlock/prestige/goal tocam sozinhos pelo Events. Main: título/hangar = "title", voo = "flight",
+                              # "unlock"|"goal") um por vez, música abaixa -9 dB (AudioEffectAmplify no bus Music). Main: título/hangar = "title", voo = "flight",
                               # ambiência = mundo atual. Propulsor e alarme de gás (<15% em voo, baixa após 3 s) no Lander
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
-audio/src/ambience/world_ambience.py # ambiência dos 4 mundos -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
+audio/src/ambience/world_ambience.py # ambiência da Lua -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
 audio/src/music/soundtrack.py # música title (D maior 84 BPM) e flight (D lídio 100 BPM) -> assets/audio/music/
-audio/src/sfx/progress_sfx.py # gas_alarm (loop) + jingles milestone/unlock/prestige/goal -> assets/audio/sfx/
+audio/src/sfx/progress_sfx.py # gas_alarm (loop) + jingles milestone/unlock/goal -> assets/audio/sfx/
 art/src/ui/app_icon.py        # ícone do jogo -> assets/ui/icon.png (32) + icon_512.png (project.godot config/icon, presets)
 export_presets.cfg            # macOS (universal, .zip), Windows (x86_64, pck embutido), Linux; exclui tests/ trailer/ docs/
                               # balance/ art/ audio/; inclui *.json de data/ e assets/. Saída em builds/ (ignorado no git)
@@ -157,7 +148,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
-scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos), ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
 scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
                               # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift
@@ -171,21 +162,14 @@ game/flight/assist_view.gd    # AssistView (Node2D no Flight, atrás do lander):
 game/hangar/assist_icon.gd    # AssistIcon: figurinha 48x24 de cada ajuda (placeholder _draw, Resurrect 64) nos cartões da aba AJUDAS
                               # Hangar._add_assists: galhos da spec (upgrades 'assist'), cartões ligados por setas, LIGADA/DESLIGADA
                               # Hud._update_need_mark: marquinha "Dá pra chegar?" na barra de gás
-scripts/world/hazards.gd      # Hazards (puro): generate(seed, planeta, pad_a, pad_b, ridge) -> zonas do salto (gust/geyser/fan/toy;
-                              # world.json hazards); cycle(z, t) off/warn/on em SEGUNDOS REAIS; toy_pos; effect_at -> accel/drag/lethal.
-                              # Flight: relógio _hz_t, efeito no lander (env_accel/env_drag; brinquedo -> lander.crash_now('atingido')),
-                              # som ao ligar perto (gust/geyser/toy_fall). LanderPhysics.step soma params.extra_accel
-game/flight/hazard_view.gd    # HazardView: desenha folhas/traços, coluna de calda + bolhas, ventilador + ar, sombra/'!'/bloco
-tests/visual/hazard_preview   # prévia de cada perigo: -- --planet=ares|kronos|titan --zone=N --phase=on|warn
 tests/integration/edge_flow   # o mapa não acaba: 18 km à direita e 10 km à esquerda sempre com chão; partida igual
 tests/unit/world/test_assists.gd # arco, queda prevista/veredito, cor da setinha, gás na chegada, árvore persistente
 tests/tools/dump_terrain.gd   # imprime o contorno do terreno em JSON (TERRAIN_JSON=) para plotar fora do Godot
-tests/unit/run/               # test_run_state, test_purchases, test_prestige, test_fleet
-tests/visual/                 # cenas de prévia visual (ending_preview, hangar_preview --late/--tab=N/--pending/--keys,
+tests/unit/run/               # test_run_state, test_purchases, test_fleet
+tests/visual/                 # cenas de prévia visual (hangar_preview --late/--tab=1/--assists/--keys,
                               # summary_preview --crash, title_preview --progress/--options/--confirm) para gdtool capture
 tests/unit/save/              # test_save_data
-tests/integration/release_fixes # correções da auditoria de lançamento: recomeço volta a mundo que decola, DECOLAR desligado
-                              # em mundo impossível, R no final, hangar esconde ofertas, E 2x, Espaço fora do ui_accept, relógio
+tests/integration/release_fixes # correções da auditoria de lançamento: DECOLAR na Lua, hangar esconde ofertas, E 2x, Espaço fora do ui_accept, relógio
                               # do run parado na pausa, save ilegível guardado + aviso, recordes, música/ambiência/alarme/jingle
 tests/integration/            # save_roundtrip.tscn (salva/carrega/backup + jogos salvos numa pasta própria), slots_flow.tscn
                               # (Main + menu: novo jogo no espaço 2, trocar de jogo) — rodados por gdtool test
@@ -194,7 +178,6 @@ Placeholders desenhados com `_draw()`/Polygon2D em cores da Resurrect 64 — exc
 
 ## Pastas ainda não criadas (padrão godot-dev)
 ```
-game/hangar/, game/prestige/ ...                      # Fases 3–6
 assets/ (skills pixel-art / sound-design)             # Fases 8–9
 ```
 

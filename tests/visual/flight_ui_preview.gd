@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--planet=id --dev_levels=thrust:20] (mundo pesado pede motor, senao o run acaba). O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -8,8 +8,8 @@ const MAIN := preload("res://game/main.tscn")
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	if "--sandbox" in args:                                    # sessao de sandbox (Docelandia, nave forte)
-		Sandbox.begin("kronos", true)
+	if "--sandbox" in args:                                    # sessao de sandbox (nave forte)
+		Sandbox.begin("luna", true)
 	var main := MAIN.instantiate()
 	add_child(main)
 	for i in 20:

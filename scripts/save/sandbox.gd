@@ -14,7 +14,7 @@ static func active() -> bool:
 	return SaveManager.sandbox
 
 
-## Entra no sandbox no mundo planet_id; strong = nave com upgrades altos (voa em todos os mundos), senao nave basica.
+## Entra no sandbox no mundo planet_id; strong = nave com upgrades altos, senao nave basica.
 static func begin(planet_id: String, strong: bool) -> void:
 	SaveManager.save_game()                                    # o progresso verdadeiro fica guardado antes
 	_real = GameState.save_state().duplicate(true)
@@ -25,10 +25,6 @@ static func begin(planet_id: String, strong: bool) -> void:
 	var settings: Dictionary = GameState.settings.duplicate()
 	GameState.reset()
 	GameState.settings = settings
-	GameState.unlocked_planets.assign(cfg["unlocked"])
-	if not planet_id in GameState.unlocked_planets:            # comecar no mundo final: ja liberado, sem tela de final
-		GameState.unlocked_planets.append(planet_id)
-		GameState.reached_goal = true
 	GameState.current_planet = planet_id
 	GameState.runs_done = 1
 	if strong:
@@ -38,7 +34,7 @@ static func begin(planet_id: String, strong: bool) -> void:
 	top_up()
 
 
-## Repoe os recursos de teste (chamado a cada visita ao hangar; o recomeco zera e a proxima visita repoe).
+## Repoe os recursos de teste (chamado a cada visita ao hangar).
 static func top_up() -> void:
 	var res: Dictionary = WorldConfig.load_config()["sandbox"]["resources"]
 	for id: String in res:

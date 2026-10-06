@@ -3,8 +3,7 @@
                 está abaixo de 15% em voo e baixa o volume depois de alguns segundos (alarme que não irrita).
   milestone   — marco de upgrade / etapa da Expedição: arpejo rápido subindo na pentatônica + sino final (1,2 s).
   unlock      — mundo liberado: fanfarra curta (arpejo de D maior + acorde + sino com eco) (2,4 s).
-  prestige    — recomeço (Poeira Estelar): cascata de sinos em D lídio subindo + brilho que se abre (2,8 s).
-  goal        — final (chegou ao Quarto): fanfarra maior em duas frases, acorde final longo (~3,8 s).
+  goal        — fanfarra de conquista (era o final do Quarto; guardada para a próxima meta) em duas frases, acorde final longo (~3,8 s).
 Rodar da raiz: python3 audio/src/sfx/progress_sfx.py [--export] [--reel]
 """
 import sys
@@ -54,18 +53,6 @@ def unlock() -> np.ndarray:
     return fade(lowpass(delay(x, time=0.22, feedback=0.3, mix_=0.25, pingpong=False), 7000), 0.002, 0.25)
 
 
-def prestige() -> np.ndarray:
-    # D lídio (G#: o "brilho" do lídio) — som de algo maior começando
-    notes = ["D5", "E5", "F#5", "G#5", "A5", "C#6", "D6", "E6"]
-    parts = [(_bell(note(n), 1.3, 1.8) * 0.8, i * 0.11, -3 - i * 0.3) for i, n in enumerate(notes)]
-    swell_d = 2.4
-    pad = sum(unison(saw, note(n), swell_d, voices=3, detune_cents=12) for n in ("D4", "A4", "E5"))
-    pad = svf(pad, sweep(400, 3500, swell_d), q=0.9, mode="lp") * env([(0, 0), (1.2, 1), (swell_d, 0)], swell_d)
-    parts.append((pad * 0.3, 0.1, -4))
-    x = mix(parts)
-    return fade(lowpass(delay(x, time=0.19, feedback=0.35, mix_=0.25, pingpong=False), 8000), 0.002, 0.3)
-
-
 def goal() -> np.ndarray:
     parts = []
     phrase1 = [("D5", 0.12), ("F#5", 0.12), ("A5", 0.24), ("F#5", 0.12), ("A5", 0.36)]
@@ -84,17 +71,17 @@ def goal() -> np.ndarray:
     return fade(lowpass(delay(x, time=0.24, feedback=0.3, mix_=0.22, pingpong=False), 7500), 0.002, 0.3)
 
 
-JINGLES = {"milestone": milestone, "unlock": unlock, "prestige": prestige, "goal": goal}
+JINGLES = {"milestone": milestone, "unlock": unlock, "goal": goal}
 
 if __name__ == "__main__":
     out = "assets/audio/sfx/" if "--export" in sys.argv else "audio/previews/"
     # caminhos literais (o pre-commit liga cada asset ao script-fonte):
     # assets/audio/sfx/gas_alarm.wav assets/audio/sfx/milestone.wav assets/audio/sfx/unlock.wav
-    # assets/audio/sfx/prestige.wav assets/audio/sfx/goal.wav
+    # assets/audio/sfx/goal.wav
     save_wav(f"{out}gas_alarm.wav", gas_alarm(), "loop", loop=True)
     for name, make in JINGLES.items():
         save_wav(f"{out}{name}.wav", make(), "jingle")
     if "--reel" in sys.argv:
         alarm = np.tile(gas_alarm(), 4)
-        seq = concat(alarm, milestone(), unlock(), prestige(), goal(), gap=0.6)
+        seq = concat(alarm, milestone(), unlock(), goal(), gap=0.6)
         save_wav("audio/previews/progress_reel.wav", seq, "jingle", do_normalize=False)

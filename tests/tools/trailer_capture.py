@@ -141,30 +141,16 @@ def main() -> int:
 
 
 # --- roteiro de takes ---------------------------------------------------------------------------------------------
-# (args, gravado s, corte inicial s, duracao s). Nave forte (STRONG) para todos os mundos; seeds escolhidas na exploracao.
-LUA, ARES, DOCE, QUARTO = "--planet=luna", "--planet=ares", "--planet=kronos", "--planet=titan"
+# (args, gravado s, corte inicial s, duracao s). Nave forte (STRONG); seeds escolhidas na exploracao.
+LUA = "--planet=luna"   # 2026-10-06: so a Lua (takes dos outros mundos estao no git)
 CLEAN = "--no_hud"
 take("t01_abertura_lua_guerra", f"{LUA} --seed=7 {STRONG} {CLEAN} --pad_wait=1.6 --hops=800:normal", 10, 0.4, 8.5)
 take("t02_titulo_lua", "--world=luna", 6, 0.6, 5)
-take("t03_silvania_voo", f"{ARES} --seed=11 {STRONG} {CLEAN} --hops=900:narrow --sync_hazards=0", 10, 0.2, 9.5)
-take("t04_docelandia_voo", f"{DOCE} --seed=7 {STRONG} {CLEAN} --hops=1000:normal --sync_hazards=0 --arc_k=0.9", 10, 0.2, 9)
-take("t05_quarto_voo", f"{QUARTO} --seed=9 {STRONG} {CLEAN} --hops=900:normal --sync_hazards=0.2", 8.5, 0.2, 7.5)
 take("t06_escolha_entrega", f"{LUA} --seed=21 {STRONG} --offer_wait=2.2 --hops=700:tight", 8, 0.3, 6.5)
 take("t07_cristais_no_arco", f"{LUA} --seed=7 {STRONG} --hops=1000:narrow", 9.5, 1.0, 8)
 take("t08_pouso_estreita_lua", f"{LUA} --seed=7 {STRONG} --hops=1000:narrow", 15, 8.8, 6)
-take("t09_combo_sequencia", f"{ARES} --seed=5 {STRONG} --hops=600:normal,650:narrow,700:tight", 27.5, 18.3, 9)
-take("t10_rajada_silvania", f"{ARES} --seed=7 {STRONG} --hops=900:normal --sync_hazards=0", 9.5, 0.4, 8.5)
-take("t11_geiser_docelandia", f"{DOCE} --seed=13 {STRONG} --hops=1100:narrow --sync_hazards=0 --arc_k=0.8", 9.5, 0.3, 8.5)
-take("t12_brinquedo_por_um_triz", f"{QUARTO} --seed=7 {STRONG} --hops=1000:normal --sync_hazards=0.2", 8, 0.35, 7)
-take("t13_hangar_upgrades", f"{ARES} --seed=3 --dev_levels=thrust:14,tank:12,efficiency:10,contracts:6,gear:4 "
-     "--dev_credits=5000000000 --dev_unlock=ares,kronos --hangar=thrust,tank,efficiency,thrust,contracts,tank,gear --tab=worlds",
-     8, 1.0, 6.5)
 take("t14_batida_explosao", f"{LUA} --seed=7 {STRONG} {CLEAN} --no_summary --pilot=crash --hops=600:tight", 9, 3.0, 5.5)
-take("t15_brinquedo_acerta", f"{QUARTO} --seed=7 {STRONG} --no_summary --hops=1000:normal --sync_hazards=-0.05", 4.5, 0.35, 4)
-take("t16_quarto_apertada_combo", f"{QUARTO} --seed=9 {STRONG} --hops=900:normal,1300:tight --sync_hazards=0.2", 16.5, 6.4, 9.5)
-take("t17_docelandia_numeros", f"{DOCE} --seed=4 {STRONG} --hops=800:narrow,900:tight", 17.5, 7.6, 9.5)
 take("t18_pouso_calmo_lua", f"{LUA} --seed=12 {STRONG} {CLEAN} --hops=500:normal", 12, 4.0, 7.5)
-take("t19_titulo_docelandia", "--world=kronos", 6, 0.6, 5)
 
 
 if __name__ == "__main__":

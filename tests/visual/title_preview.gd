@@ -42,8 +42,6 @@ func _fake_saves() -> void:
 	var st := GameState.save_state().duplicate(true)
 	for n: int in [1, 3]:
 		if n == 3:
-			st["current_planet"] = "kronos"
-			st["unlocked"] = ["luna", "ares", "kronos"]
 			st["runs_done"] = 112
 			st["resources"]["credits"] = 3.7e9
 			st["play_seconds"] = 4.0 * 3600.0 + 125.0

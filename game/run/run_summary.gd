@@ -27,8 +27,8 @@ func show_summary(summary: Dictionary) -> void:
 		c.queue_free()
 	_rows.add_child(UiKit.stat_row("expedition", "entregas", "%d" % int(summary["deliveries"])))
 	_rows.add_child(UiKit.stat_row("quality", "qualidade média", "%d%%" % int(float(summary["avg_quality"]) * 100.0)))
-	var icons := {"credits": "credits", "ore": "ore"}
-	var names := {"credits": "créditos", "ore": "minério"}
+	var icons := {"credits": "credits"}
+	var names := {"credits": "créditos"}
 	var earned: Dictionary = summary["earned"]
 	for res: String in earned:
 		_rows.add_child(UiKit.stat_row(icons.get(res, "credits"), names.get(res, res), "+" + EconMath.fmt(

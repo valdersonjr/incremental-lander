@@ -946,7 +946,9 @@ def pacing_report(E: dict, res: SimResult) -> dict:
             w.append(f"planeta '{pid}' desbloqueado em {got}h (alvo {lo}-{hi}h)")
     # duracao total
     lo, hi = T.get("finish_h", [0, math.inf])
-    if res.finished_at_h is None:
+    if not T.get("goal"):
+        pass  # sem objetivo final (jogo sem fim por enquanto): mede so o ritmo
+    elif res.finished_at_h is None:
         w.append(f"objetivo final nao atingido em {rep['hours_simulated']}h (alvo {lo}-{hi}h)")
     elif not (lo <= res.finished_at_h <= hi):
         w.append(f"objetivo final em {res.finished_at_h:.1f}h (alvo {lo}-{hi}h)")

@@ -51,23 +51,10 @@ func _process(_d: float) -> void:
 			space.keycode = KEY_SPACE
 			_check("espaco_fora_do_ui_accept", not InputMap.event_is_action(space, &"ui_accept"))
 			_check("espaco_e_propulsor", InputMap.event_is_action(space, &"thrust"))
-			# recomeco com os mundos mantidos e a nave fraca: volta para a Lua
 			GameState.reset()
-			GameState.unlocked_planets.assign(["luna", "ares", "kronos"])
-			GameState.current_planet = "kronos"
-			GameState.shop = {"star_charts": 1}
-			GameState.prestige_pending = true
-			GameState.finish_prestige()
-			_check("recomeco_volta_a_mundo_que_decola", GameState.current_planet == "luna"
-					and "kronos" in GameState.unlocked_planets)
-			# hangar num mundo em que a nave nao decola: DECOLAR desligado
-			GameState.current_planet = "kronos"
 			_main._title.visible = false
 			_main._open_hangar()
 		8:
-			_check("hangar_nao_decola_mundo_impossivel", hangar._launch.disabled)
-			GameState.current_planet = "luna"
-			hangar.refresh()
 			_check("hangar_decola_na_lua", not hangar._launch.disabled)
 			hangar.launch_requested.emit()
 		12:
@@ -87,8 +74,6 @@ func _process(_d: float) -> void:
 			_check("alarme_de_gas_toca", l._alarm.playing)
 			l.state = Lander.State.LANDED
 			l.gas = float(l.params["tank"])
-			Events.planet_unlocked.emit("ares")
-			_check("jingle_ao_liberar_mundo", int(Sound.played.get("unlock", 0)) > 0)
 			# relogio do run para com o jogo pausado
 			_t0 = _main._run_time
 			get_tree().paused = true
@@ -104,15 +89,7 @@ func _process(_d: float) -> void:
 			_key(KEY_1)
 		28:
 			_check("tecla_1_nao_vaza", _main._flight.target_pad_id < 0)
-			# R com a tela final aberta nao comeca um run
-			hangar.visible = false
-			_main._ending.show_ending()
-			var before: Node = _main._flight
-			_key(KEY_R)
-			set_meta(&"flight_before", before)
 		31:
-			_check("R_no_final_ignorado", _main._flight == get_meta(&"flight_before"))
-			_main._ending.visible = false
 			# recordes: a primeira marca nao e "novo recorde"; superar depois e
 			GameState.records = {}
 			_check("primeira_marca_nao_anuncia", not GameState.note_record("best_combo", 2.0))

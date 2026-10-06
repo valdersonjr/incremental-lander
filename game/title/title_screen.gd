@@ -282,7 +282,8 @@ func _fill_sandbox(focus_key: String = "sb:start") -> void:
 	var worlds := []
 	for p: Dictionary in EconMath.spec["planets"]:
 		worlds.append([str(p["id"]), _planet_name(str(p["id"]))])
-	_sandbox.add_child(_choice_row("Mundo", worlds, _sb_planet, func(v: String) -> void: _sb_planet = v))
+	if worlds.size() > 1:                                       # so a Lua por enquanto: sem escolha de mundo
+		_sandbox.add_child(_choice_row("Mundo", worlds, _sb_planet, func(v: String) -> void: _sb_planet = v))
 	_sandbox.add_child(_choice_row("Nave", [["base", "Básica"], ["strong", "Forte"]], "strong" if _sb_strong else "base",
 			func(v: String) -> void: _sb_strong = v == "strong"))
 	var start := Button.new()

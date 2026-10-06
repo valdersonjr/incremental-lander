@@ -11,7 +11,7 @@ func test_mesmo_seed_mesmo_terreno() -> void:
 
 
 func test_plataformas_planas() -> void:
-	var t := TerrainGen.generate(3, "ares", [500.0, 1200.0] as Array[float])
+	var t := TerrainGen.generate(3, "luna", [500.0, 1200.0] as Array[float])
 	assert_eq(t["pads"].size(), 3, "partida + 2 entregas")
 	for p: Dictionary in t["pads"]:
 		for dx in [-0.9, -0.5, 0.0, 0.5, 0.9]:
@@ -128,7 +128,7 @@ func test_estender_o_mapa_nao_muda_o_que_existia() -> void:
 func test_altura_por_busca_binaria_igual_a_linear() -> void:
 	var d: Array[float] = [900.0, 2500.0]
 	var t: Array[String] = ["narrow", "tight"]
-	var ridge: PackedVector2Array = TerrainGen.generate(5, "kronos", d, t, Vector2(2400, 4800))["ridge"]
+	var ridge: PackedVector2Array = TerrainGen.generate(5, "luna", d, t, Vector2(2400, 4800))["ridge"]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
 	for i in 300:

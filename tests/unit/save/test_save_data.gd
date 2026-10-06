@@ -7,11 +7,8 @@ func before_each() -> void:
 
 
 func _state() -> Dictionary:
-	return {"resources": {"credits": 123.5, "ore": 2.0, "stardust": 7.0}, "levels": {"tank": 3, "exp1_station": 1},
-			"shop": {"capital": 1}, "prestige_points": 40.0, "prestige_pending": false,
-			"unlocked": ["luna", "ares"], "current_planet": "ares", "cycle_earned": {"credits": 99.0},
-			"income_history": [{"earned": {"credits": 10.0}, "seconds": 5.0}], "reached_goal": false,
-			"runs_done": 4, "play_seconds": 321.0, "settings": {"vol_Music": 0.5}}
+	return {"resources": {"credits": 123.5}, "levels": {"tank": 3, "fleet": 1}, "current_planet": "luna",
+			"income_history": [{"earned": {"credits": 10.0}, "seconds": 5.0}], "runs_done": 4, "play_seconds": 321.0, "settings": {"vol_Music": 0.5}}
 
 
 func test_ida_e_volta_pelo_json() -> void:
@@ -21,20 +18,16 @@ func test_ida_e_volta_pelo_json() -> void:
 	var st: Dictionary = back["state"]
 	assert_almost(st["resources"]["credits"], 123.5)
 	assert_eq(st["levels"]["tank"], 3)
-	assert_eq(st["unlocked"], ["luna", "ares"])
-	assert_eq(st["current_planet"], "ares")
-	assert_almost(st["prestige_points"], 40.0)
+	assert_eq(st["current_planet"], "luna")
 	assert_eq(st["runs_done"], 4)
 
 
 func test_ids_removidos_da_spec_sao_ignorados() -> void:
 	var saved := SaveData.serialize(_state())
 	saved["levels"]["upgrade_que_nao_existe"] = 9
-	saved["unlocked"].append("planeta_fantasma")
 	var back := SaveData.deserialize(saved)
 	assert_true(back["ok"])
 	assert_false(back["state"]["levels"].has("upgrade_que_nao_existe"))
-	assert_false("planeta_fantasma" in back["state"]["unlocked"])
 	assert_true(back["warnings"].size() >= 1)
 
 
@@ -46,38 +39,30 @@ func test_dados_invalidos() -> void:
 	neg["current_planet"] = "kronos"
 	var st: Dictionary = SaveData.deserialize(neg)["state"]
 	assert_almost(st["resources"]["credits"], 0.0, 1e-9, "negativo vira 0")
-	assert_eq(st["current_planet"], "luna", "planeta nao liberado volta para a Lua")
+	assert_eq(st["current_planet"], "luna", "so a Lua existe")
 
 
 func test_resumo_para_a_tela_de_jogos_salvos() -> void:
 	var back := SaveData.deserialize(SaveData.serialize(_state()))
 	var s := SaveData.summary(back["state"])
-	assert_eq(s["planet"], "ares")
+	assert_eq(s["planet"], "luna")
 	assert_eq(s["runs"], 4)
 	assert_almost(s["credits"], 123.5)
 	assert_almost(s["play_seconds"], 321.0)
-	assert_almost(s["prestige_points"], 40.0)
-	assert_false(s["reached_goal"])
 
 
 func test_valores_de_tipo_errado_viram_zero_sem_erro() -> void:
 	var raw := SaveData.serialize(_state())
 	raw["resources"]["credits"] = {"x": 1}
 	raw["levels"]["tank"] = [3]
-	raw["prestige_points"] = "abc"
 	raw["runs_done"] = {"a": 1}
-	raw["reached_goal"] = [true]
-	raw["unlocked"] = "luna"
 	raw["income_history"] = {"earned": 1}
 	var back := SaveData.deserialize(raw)
 	assert_true(back["ok"])
 	var st: Dictionary = back["state"]
 	assert_almost(st["resources"]["credits"], 0.0)
 	assert_eq(st["levels"]["tank"], 0)
-	assert_almost(st["prestige_points"], 0.0)
 	assert_eq(st["runs_done"], 0)
-	assert_false(st["reached_goal"])
-	assert_eq(st["unlocked"], ["luna"])
 	assert_eq(st["income_history"], [])
 
 
@@ -94,3 +79,23 @@ func test_recordes_ida_e_volta() -> void:
 	assert_almost(back["state"]["records"]["best_delivery"], 1500.0)
 	assert_almost(back["state"]["records"]["best_combo"], 4.0)
 	assert_false(back["state"]["records"].has("inventado"))
+
+
+## Save v1 (com prestigio e outros mundos) abre na v2: niveis e creditos ficam, o resto sai sem erro.
+func test_save_v1_com_prestigio_migra() -> void:
+	var v1 := {"save_version": 1, "resources": {"credits": 500.0, "ore": 9.0, "stardust": 3.0},
+			"levels": {"tank": 4, "exp1_station": 1}, "shop": {"capital": 1}, "prestige_points": 12.0,
+			"prestige_pending": true, "unlocked": ["luna", "ares"], "current_planet": "ares",
+			"cycle_earned": {"credits": 99.0}, "reached_goal": true, "runs_done": 7, "play_seconds": 60.0,
+			"income_history": [{"earned": {"credits": 10.0, "ore": 1.0}, "seconds": 5.0}], "settings": {}}
+	var back := SaveData.deserialize(v1)
+	assert_true(back["ok"])
+	var st: Dictionary = back["state"]
+	assert_almost(st["resources"]["credits"], 500.0)
+	assert_false(st["resources"].has("ore"))
+	assert_eq(st["levels"]["tank"], 4)
+	assert_false(st["levels"].has("exp1_station"))
+	assert_eq(st["current_planet"], "luna")
+	assert_eq(st["runs_done"], 7)
+	assert_false(st.has("prestige_points"))
+	assert_eq(SaveData.serialize(st)["save_version"], 2)

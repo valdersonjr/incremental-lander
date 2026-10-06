@@ -10,12 +10,6 @@ signal run_started(planet_id: String)
 signal run_finished(summary: Dictionary)
 @warning_ignore("unused_signal")
 signal upgrade_bought(upgrade_id: String, level: int)
-@warning_ignore("unused_signal")
-signal planet_unlocked(planet_id: String)
-@warning_ignore("unused_signal")
-signal prestiged(gain: float, total_points: float)
-@warning_ignore("unused_signal")
-signal goal_reached(planet_id: String)
 ## Opcoes mudaram (volumes, filtro CRT): quem mostra algo das opcoes se atualiza.
 @warning_ignore("unused_signal")
 signal settings_changed
