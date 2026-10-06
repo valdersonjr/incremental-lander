@@ -30,6 +30,8 @@ P = {
     "pay_narrow_combo9": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 9),
     "pay_towed_fail": delivery_pay(E, planets["luna"], 1200.0, st, 0.8, "tight", 2, cargo_mult(E, "towed", False)),
     "cargo_rescue_ok": cargo_mult(E, "rescue", True),
+    "gift_pay_kronos": gift_value(E, planets["kronos"], 4200.0, st, next(k for k in gift_kinds(E, "kronos") if k["id"] == "gift")),
+    "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
     "cargo_kinds_ares": len(cargo_kinds(E, "ares")),
     "dv_kronos": hop_dv(planets["kronos"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),
     "fleet": 1e6 * st["drones"] * st["autopilot"],

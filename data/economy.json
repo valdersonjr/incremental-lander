@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 9,
-    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica)."
+    "version": 10,
+    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos."
   },
   "physics": {
     "mode": "arcade",
@@ -792,6 +792,24 @@
           "weight": 0.16,
           "fail_mult": 0.715,
           "fail_p": 0.4
+        }
+      ]
+    },
+    "gifts": {
+      "chance": 0.5,
+      "dv_extra": 0.08,
+      "kinds": [
+        {
+          "id": "gas",
+          "name": "galão de gás",
+          "weight": 0.5,
+          "gas_frac": 0.3
+        },
+        {
+          "id": "gift",
+          "name": "presente",
+          "weight": 0.5,
+          "pay_frac": 0.3
         }
       ]
     }

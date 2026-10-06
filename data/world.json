@@ -276,6 +276,12 @@
     "ground_drag": 0.25,
     "scale_height_m": 120.0
   },
+  "gifts": {
+    "notes": "Presentes no alto do morro (v10; chance/tipos/valores em economy.json contracts.gifts). Fica no ponto mais alto do relevo entre span[0] e span[1] do salto; pega se o centro da nave passar a radius_m dele com velocidade <= max_speed (m/s do modelo), como o resgate do ratinho. Nao aparece em salto de resgate (o ratinho ja ocupa o meio).",
+    "span": [0.2, 0.8],
+    "radius_m": 18.0,
+    "max_speed": 6.0
+  },
   "assists": {
     "notes": "Ajudas de voo (arvore do Painel de bordo; precos em economy.json upgrades com 'assist'). Setinha (gratis): seta em volta da nave apontando a plataforma (arrow_r_px do centro). Setinha colorida: cor pela fracao do salto que falta (near_frac/mid_frac). Rastro/Rota: arco ideal de 45 graus entre as plataformas (arc_k = fracao da altura; 1 = arco balistico de menor gasto); rastro so mostra trail_m a frente. Sombra: marca no chao + tracejado ate a nave. Nivelador: aparece abaixo de level_alt_m. Onde vou cair: queda sem motor, passos de predict_dt_m (s do modelo) ate predict_max_s.",
     "arrow_r_px": 30,

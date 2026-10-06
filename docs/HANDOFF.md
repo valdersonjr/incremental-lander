@@ -3,7 +3,12 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-05)
+## Estado atual (2026-10-06)
+- **Presentes no alto do morro (2026-10-06, ROADMAP 13.4)**: usuário escolheu "interagir com coisas do mapa". Metade dos
+  saltos tem galão de gás ou presentinho no ponto mais alto do relevo entre as plataformas; encostar devagar pega.
+  Economia v10 (`contracts.gifts`), `Gifts` + Flight, arte nova no atlas de cargas (`gift`, `gas_can`, aprovação pendente),
+  som reaproveitado (crystal_3). Verificado: 103 testes + 8 integrações, paridade 22, prévia `tests/visual/gift_preview`.
+  **Pendente**: usuário jogar (raio 18 m / 6 m/s está bom? presente aparece demais/de menos?); som próprio de "pegou".
 - **Fase 13 — Simples e com ajudas (2026-10-05)**: pedido "tirar essa porra de cristal e refinaria, não vi mta diversão"
   + árvore de atributos que facilita a vida (setinha → cor de chegando → rota traçada…); "a ideia do jogo é ser simples".
   - Economia **v9**: sem `contracts.pickups` e sem `refinery`; pay_base 9,5; 7 ajudas (`upgrades[].assist`), compra única,

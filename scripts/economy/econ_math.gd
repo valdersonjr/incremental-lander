@@ -291,6 +291,47 @@ static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, 
 
 
 ## Cargas do planeta (contracts.cargo, v8): [] se o planeta nao tem cargas especiais (so caixa).
+## Presentes no alto do morro (v10): tipos do planeta (contracts.gifts.kinds); [] se o planeta nao tem.
+static func gift_kinds(planet_id: String) -> Array:
+	var g: Dictionary = spec["contracts"].get("gifts", {})
+	if g.is_empty() or (g.has("planets") and not (planet_id in g["planets"])):
+		return []
+	return g["kinds"]
+
+
+static func gift_kind(kind_id: String) -> Dictionary:
+	for k: Dictionary in spec["contracts"].get("gifts", {}).get("kinds", []):
+		if k["id"] == kind_id:
+			return k
+	return {}
+
+
+## Creditos de um presente pego no salto de distancia d: pay_frac x pagamento-base da entrega.
+static func gift_value(planet_id: String, distance: float, stats: Dictionary, kind_id: String) -> float:
+	return float(gift_kind(kind_id).get("pay_frac", 0.0)) * contract_pay(planet_id, distance, stats, 0.0)
+
+
+## Gas devolvido por um presente: gas_frac x tanque (quem chama nao deixa passar do tanque cheio).
+static func gift_gas(stats: Dictionary, kind_id: String) -> float:
+	return float(gift_kind(kind_id).get("gas_frac", 0.0)) * float(stats["tank"])
+
+
+## Sorteia o presente do salto: "" (sem presente; chance da spec) ou o id do tipo (pelos pesos).
+static func draw_gift(planet_id: String, rng: RandomNumberGenerator) -> String:
+	var kinds := gift_kinds(planet_id)
+	if kinds.is_empty() or rng.randf() >= float(spec["contracts"]["gifts"]["chance"]):
+		return ""
+	var tw := 0.0
+	for k: Dictionary in kinds:
+		tw += float(k["weight"])
+	var r := rng.randf() * tw
+	for k: Dictionary in kinds:
+		r -= float(k["weight"])
+		if r <= 0.0:
+			return str(k["id"])
+	return str(kinds[-1]["id"])
+
+
 static func cargo_kinds(planet_id: String) -> Array:
 	var cg: Dictionary = spec["contracts"].get("cargo", {})
 	if cg.is_empty() or not (cg.get("planets", []) as Array).has(planet_id):

@@ -178,6 +178,8 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))
 	if float(entry.get("combo", 1.0)) > 1.0:
 		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
+	if float(entry.get("gift_pay", 0.0)) > 0.0:
+		parts.append("presente +%s" % EconMath.fmt(float(entry["gift_pay"])))
 	var kind := str(entry.get("cargo", "box"))
 	if kind != "box":
 		var cm := float(entry.get("cargo_mult", 1.0))

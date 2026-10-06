@@ -20,6 +20,8 @@ func _init() -> void:
 		"pay_narrow_combo9": EconMath.delivery_pay("luna", 900.0, st, 0.95, "narrow", 9),
 		"pay_towed_fail": EconMath.delivery_pay("luna", 1200.0, st, 0.8, "tight", 2, EconMath.cargo_mult("towed", false)),
 		"cargo_rescue_ok": EconMath.cargo_mult("rescue", true),
+		"gift_pay_kronos": EconMath.gift_value("kronos", 4200.0, st, "gift"),
+		"gift_gas": EconMath.gift_gas(st, "gas"),
 		"cargo_kinds_ares": EconMath.cargo_kinds("ares").size(),
 		"fleet": EconMath.fleet_income_per_s(1e6, st),
 		"bulk_tank": EconMath.bulk_cost(EconMath._find("upgrades", "tank")["cost"]["credits"], 5, 10),

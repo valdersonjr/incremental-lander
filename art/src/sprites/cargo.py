@@ -19,7 +19,7 @@ from pixelart import *
 
 S = 16
 NAMES = ["box", "cake", "cake_squashed", "icecream", "icecream_melted", "wheel", "wheel_cracked",
-         "mouse_wait0", "mouse_wait1", "mouse_safe", "stabilizer", "turbo"]
+         "mouse_wait0", "mouse_wait1", "mouse_safe", "stabilizer", "turbo", "gift", "gas_can"]
 
 
 def face(cv: Canvas, x: int, y: int, sad: bool = False) -> None:
@@ -173,9 +173,45 @@ def turbo() -> Canvas:
     return cv
 
 
+def gift() -> Canvas:
+    """Presente do alto do morro (v10, 2026-10-06): caixinha pink com fita e laço dourados e rostinho.
+    Pés (fundo da caixa) na linha y = 15, como o ratinho: o jogo assenta no chão."""
+    cv = Canvas(S, S)
+    cv.rect(3, 8, 10, 7, "hot_pink")                                   # caixa
+    cv.rect(2, 6, 12, 3, "pink")                                       # tampa (mais larga)
+    cv.hline(2, 13, 8, "rose")                                         # sombra sob a tampa
+    cv.vline(12, 9, 14, "raspberry"); cv.hline(3, 12, 14, "raspberry")  # lado da sombra (luz de cima-esquerda)
+    cv.vline(7, 6, 8, "gold"); cv.vline(8, 6, 8, "amber")              # fita só na tampa: o rosto fica livre
+    cv.hline(3, 12, 13, "gold"); cv.px(12, 13, "amber")                # faixa embaixo
+    cv.px(7, 6, "lemon")
+    cv.paint(["aa..aa",                                                # laço: duas voltas + nó
+              "aab.aa",
+              ".abba.",
+              "..cc.."], {"a": "gold", "b": "lemon", "c": "amber"}, x=5, y=2)
+    cv.outline("ink")
+    face(cv, 6, 9)
+    return cv
+
+
+def gas_can() -> Canvas:
+    """Galão de gás do alto do morro (v10): vermelho, alça vazada em cima, bico de metal e rostinho.
+    Pés na linha y = 15."""
+    cv = Canvas(S, S)
+    cv.rect(3, 6, 9, 9, "red")                                         # corpo
+    cv.vline(3, 6, 14, "salmon"); cv.hline(3, 11, 6, "salmon")         # luz (cima-esquerda)
+    cv.vline(11, 7, 14, "crimson"); cv.hline(4, 11, 14, "crimson")     # sombra
+    cv.rect(4, 3, 5, 3, "red"); cv.rect(5, 4, 3, 1, "clear")           # alça com furo
+    cv.hline(4, 8, 3, "salmon")
+    cv.line(11, 5, 13, 3, "steel"); cv.px(12, 5, "lilac_grey")         # bico
+    cv.px(13, 2, "mist")
+    cv.outline("ink")
+    face(cv, 5, 9)
+    return cv
+
+
 def build() -> list:
     return [box(), cake(), cake(True), icecream(), icecream(True), wheel(), wheel(True),
-            mouse(0), mouse(1), mouse(safe=True), stabilizer(), turbo()]
+            mouse(0), mouse(1), mouse(safe=True), stabilizer(), turbo(), gift(), gas_can()]
 
 
 if __name__ == "__main__":

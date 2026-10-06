@@ -409,6 +409,41 @@ def cargo_expect(E: dict, planet: dict, prof: Profile) -> tuple[float, float]:
     return pay / tw, dv / tw
 
 
+# --- Presentes no alto do morro (v10): encostar devagar pega gas ou creditos ---
+# Espelho GDScript: EconMath.gift_kinds / gift_value / gift_gas. Spec sem contracts.gifts = v9 intacta.
+
+def gift_kinds(E: dict, planet_id: str) -> list:
+    """Tipos de presente do planeta (contracts.gifts.kinds); [] se o planeta nao tem presentes."""
+    G = E["contracts"].get("gifts")
+    if not G or planet_id not in G.get("planets", [planet_id]):
+        return []
+    return G["kinds"]
+
+
+def gift_value(E: dict, planet: dict, d: float, stats: dict, kind: dict) -> float:
+    """Creditos de um presente pego no salto de distancia d: pay_frac x pagamento-base da entrega."""
+    return kind.get("pay_frac", 0.0) * contract_pay(E, planet, d, stats)
+
+
+def gift_gas(stats: dict, kind: dict) -> float:
+    """Gas devolvido por um presente: gas_frac x tanque (o jogo nao passa do tanque cheio)."""
+    return kind.get("gas_frac", 0.0) * stats["tank"]
+
+
+def gift_expect(E: dict, planet: dict, prof: Profile) -> tuple[float, float, float]:
+    """(fracao media do pagamento-base, fracao media do tanque, delta-v extra relativo) por salto, para o perfil.
+    Pega o presente com chance = skill (encostar devagar no alto do morro); tentar custa dv_extra do salto."""
+    kinds = gift_kinds(E, planet["id"])
+    if not kinds:
+        return 0.0, 0.0, 0.0
+    G = E["contracts"]["gifts"]
+    tw = sum(k["weight"] for k in kinds)
+    pick = G["chance"] * min(1.0, prof.skill)
+    pay = sum(k["weight"] * k.get("pay_frac", 0.0) for k in kinds) / tw
+    gas = sum(k["weight"] * k.get("gas_frac", 0.0) for k in kinds) / tw
+    return pick * pay, pick * gas, G["chance"] * G.get("dv_extra", 0.0)
+
+
 def _draw_tier(E: dict, rng: random.Random) -> str:
     tiers = E["contracts"].get("pad_tiers")
     if not tiers:
@@ -511,6 +546,8 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     q_min = combo["q_min"] if combo else 2.0
     streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
     cg_pay, cg_dv = cargo_expect(E, planet, prof)
+    gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
+    cg_dv *= 1.0 + gf_dv                      # buscar o presente custa um pouco de gas
 
     def info(d, tid):  # custo, pagamento e chances de uma oferta nao mudam durante o run: calcula uma vez so
         tier = pad_tier(E, tid)
@@ -546,7 +583,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         cm = combo_mult(E, streak)
-        pay = base * (1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay
+        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof)
         if expected:
@@ -563,6 +600,7 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         for k, w in rewards_w.items():
             total[k] += pay * w
         n += 1
+        gas = min(stats["tank"], gas + gf_gas * stats["tank"])
         maxd = max(maxd, best)
         dist += best
     t += prof.run_overhead_s

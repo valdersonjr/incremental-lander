@@ -91,7 +91,7 @@
 - [x] 13.1 Economia v9: sem cristais e sem Refinaria, pay_base 9,5, 7 ajudas (compra única, persistentes, pré-requisito) (2026-10-05)
 - [x] 13.2 Ajudas no voo (AssistView + marquinha de gás no HUD) e aba AJUDAS na oficina (árvore, ligar/desligar) (2026-10-05)
 - [ ] 13.3 Aprovação do usuário jogando + figurinhas finais dos cartões (hoje desenhadas em _draw) + som de "chegando"?
-- [ ] 13.4 Interação com coisas do mapa que dão recompensa (ideia do usuário — aguarda escolha entre propostas)
+- [x] 13.4 Presentes no alto do morro (galão de gás / presentinho; encostar devagar) — economia v10, arte, testes (2026-10-06)
 
 ## Fase 12 — Lua mais divertida ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "o que não existir no nosso jogo, adicione de forma divertida e dada a temática do mapa (só a Lua)" + "tira

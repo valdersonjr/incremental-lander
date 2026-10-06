@@ -39,6 +39,12 @@ var cargo_ok := true
 var urgent_left := 0.0                             # sorvete: segundos reais que faltam (conta so voando)
 var urgent_limit := 0.0
 var rescued := false                               # ratinho resgatado neste salto
+## Presente do salto (v10): "" sem presente, "gas" (galao) ou "gift" (creditos com a entrega). Gifts.place/touches.
+var gift_kind := ""
+var gift_taken := false
+var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
+var _gift_sprite: Sprite2D = null
+var _gift_bob: Tween = null
 var _tow: CargoTow = null
 var _tow_sprite: Sprite2D = null
 var _rope: Line2D = null
@@ -71,6 +77,7 @@ func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
 	_tick_hazards(delta)
 	_tick_cargo(delta)
+	_tick_gift()
 	_extend_terrain_if_near_edge()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
@@ -147,6 +154,7 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_carg
 	_hz_last.assign(_zones.map(func(_z: Dictionary) -> String: return "off"))
 	_hazard_view.zones = _zones
 	_setup_cargo()
+	_setup_gift()
 	if _demo:
 		var ap := Autopilot.new()
 		ap.target = terrain.pads[target_pad_id]
@@ -332,6 +340,9 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"dir": target_dir,
 		"cargo": cargo,
 		"cargo_ok": cargo_ok and not crashed,
+		"gift": gift_kind if gift_taken else "",
+		"gift_pay": EconMath.gift_value(planet_id, target_distance_m, stats, gift_kind)
+				if gift_taken and not crashed else 0.0,
 		"crashed": crashed,
 		"reason": reason,
 		# velocidade e inclinacao no toque (m/s e rad do modelo): calibram as tolerancias de pouso (world.json > landing)
@@ -341,7 +352,62 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 	}
 	Telemetry.record_delivery(result)
 	_clear_cargo()
+	_clear_gift()
 	delivery_finished.emit(result)
+
+
+# ---------------------------------------------------------------- presentes no alto do morro (v10, 2026-10-06)
+## Sorteia (sorteador proprio) e poe o presente do salto no alto do morro; salto de resgate nao tem (o ratinho ocupa).
+func _setup_gift() -> void:
+	_clear_gift()
+	var kind := "" if cargo == "rescue" else EconMath.draw_gift(planet_id, Gifts.rng_for(_seed, target_pad_id))
+	if kind != "":
+		_spawn_gift(kind)
+
+
+## Poe o presente kind ("gas" | "gift") no alto do morro do salto atual (tambem usado pelos testes).
+func _spawn_gift(kind: String) -> void:
+	_clear_gift()
+	gift_kind = kind
+	_gift_pos = Gifts.place(terrain.pads[current_pad_id], terrain.pads[target_pad_id], terrain.ridge)
+	_gift_sprite = Sprite2D.new()
+	_gift_sprite.texture = CargoArt.tex("gas_can" if gift_kind == "gas" else "gift")
+	_gift_sprite.position = _gift_pos + Vector2(0, -8)
+	add_child(_gift_sprite)
+	move_child(_gift_sprite, lander.get_index())
+	_gift_bob = _gift_sprite.create_tween().set_loops()         # pulinho chamando o olho
+	_gift_bob.tween_property(_gift_sprite, "position:y", _gift_pos.y - 11.0, 0.35).set_trans(Tween.TRANS_SINE)
+	_gift_bob.tween_property(_gift_sprite, "position:y", _gift_pos.y - 8.0, 0.35).set_trans(Tween.TRANS_SINE)
+	_gift_bob.tween_interval(0.6)
+
+
+func _clear_gift() -> void:
+	if _gift_sprite != null and is_instance_valid(_gift_sprite):
+		_gift_sprite.queue_free()
+	_gift_sprite = null
+	gift_kind = ""
+	gift_taken = false
+
+
+## Encostou devagar no presente: galao enche o tanque na hora; presente vira creditos pagos com a entrega.
+func _tick_gift() -> void:
+	if gift_kind == "" or gift_taken or lander.state != Lander.State.FLYING:
+		return
+	if not Gifts.touches(lander.global_position, lander.vel_m, _gift_pos):
+		return
+	gift_taken = true
+	if gift_kind == "gas":
+		var add := EconMath.gift_gas(stats, "gas")
+		lander.gas = minf(float(lander.params["tank"]), lander.gas + add)
+		_float_text("+" + EconMath.fmt(add) + " gás", _gift_pos + Vector2(0, -24))
+	else:
+		_float_text("+" + EconMath.fmt(EconMath.gift_value(planet_id, target_distance_m, stats, "gift")),
+				_gift_pos + Vector2(0, -24))
+	Sound.sfx("crystal_3")
+	_gift_bob.kill()
+	var tw := _gift_sprite.create_tween()
+	tw.tween_property(_gift_sprite, "global_position", lander.global_position, 0.2)
+	tw.tween_callback(_gift_sprite.hide)
 
 
 # ---------------------------------------------------------------- cargas (Lua, 2026-10-05)

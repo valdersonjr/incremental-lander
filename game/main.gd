@@ -301,7 +301,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		_end_run()
 		return
 	var rewards := _run.complete_delivery(result["distance"], result["quality"], result["gas_used"],
-			bool(result.get("cargo_ok", true)))
+			bool(result.get("cargo_ok", true)), float(result.get("gift_pay", 0.0)))
 	GameState.add_rewards(rewards)
 	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
 	_note_record("longest_hop", float(result["distance"]))

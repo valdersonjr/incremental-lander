@@ -112,13 +112,15 @@ func take_offer(index: int) -> float:
 
 ## Registra uma entrega concluida (na plataforma taken_tier, com o combo atual)
 ## e devolve as recompensas {recurso: qtd}. Depois atualiza o combo: pouso bom soma, pouso ruim zera.
+## gift_pay = creditos do presente pego no alto do morro (EconMath.gift_value; v10), somados ao pagamento.
 ## cargo_ok = a regra da carga taken_cargo foi cumprida (falhou: paga mult x fail_mult; nunca acaba o run).
 ## Detalhes da conta ficam em deliveries[-1] (base, mult, combo, carga) para o HUD mostrar.
-func complete_delivery(distance: float, quality: float, gas_used: float, cargo_ok: bool = true) -> Dictionary:
+func complete_delivery(distance: float, quality: float, gas_used: float, cargo_ok: bool = true,
+		gift_pay: float = 0.0) -> Dictionary:
 	var combo := EconMath.combo_mult(streak)
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
 	var cm := EconMath.cargo_mult(taken_cargo, cargo_ok)
-	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak, cm)
+	var pay := EconMath.delivery_pay(planet_id, distance, stats, quality, taken_tier, streak, cm) + gift_pay
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
 	for res: String in weights:
@@ -127,7 +129,7 @@ func complete_delivery(distance: float, quality: float, gas_used: float, cargo_o
 	var good := EconMath.combo_counts(quality)
 	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards,
 			"tier": taken_tier, "mult": mult, "combo": combo,
-			"good": good, "cargo": taken_cargo, "cargo_ok": cargo_ok, "cargo_mult": cm})
+			"good": good, "cargo": taken_cargo, "cargo_ok": cargo_ok, "cargo_mult": cm, "gift_pay": gift_pay})
 	streak = streak + 1 if good else 0
 	taken_tier = "normal"
 	taken_dir = 1

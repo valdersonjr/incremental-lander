@@ -159,6 +159,11 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # new_game(); set_dir() p/ testes
 scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações, ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
+scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
+                              # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift
+                              # (EconMath.draw_gift; não em resgate) / _spawn_gift(kind) / _tick_gift (galão: gás na hora; presente:
+                              # gift_pay no resultado → RunState.complete_delivery(..., gift_pay)); telemetria coluna gift
+tests/integration/gift_flow   # galão enche o tanque 1x, rápido não pega, presente vai no resultado; tests/visual/gift_preview
 scripts/world/assists.gd      # Assists (puro, v9): arc(pad_a, pad_b, n) arco ideal de 45° (world.json assists.arc_k);
                               # fall(pos, vel, params, ridge) queda sem motor; verdict() good/hard/miss; arrow_tier(); gas_left_at_arrival()
 game/flight/assist_view.gd    # AssistView (Node2D no Flight, atrás do lander): Setinha/colorida, Rastro/Rota, Sombra, Nivelador, Onde vou
