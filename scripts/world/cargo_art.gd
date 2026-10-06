@@ -5,10 +5,9 @@ extends RefCounted
 
 const SHEET := "res://assets/sprites/cargo.png"
 const META := "res://assets/sprites/cargo.json"
-## Figura de cada tipo de missao na oferta/HUD (placeholder com as cargas antigas ate os ratinhos da Etapa C:
-## Pesada ainda usa a caixa).
-const ICON := {"simple": "box", "heavy": "box", "soft": "cake", "fast": "icecream", "tow": "wheel",
-		"passenger": "mouse_wait0", "double": "gift"}
+## Figura da regra de cada tipo de missao na oferta/HUD (Pesada = peso, Rapida = relogio, Dupla = estrela).
+const ICON := {"simple": "box", "heavy": "weight", "soft": "cake", "fast": "clock", "tow": "wheel",
+		"passenger": "mouse_wait0", "double": "star"}
 
 static var _meta: Dictionary = {}
 static var _cache: Dictionary = {}

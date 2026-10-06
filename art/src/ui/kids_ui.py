@@ -270,16 +270,129 @@ def mystery() -> Canvas:
     return k
 
 
+# ------------------------------------------------------------------ ratinhos das missões (v12, 2026-10-06)
+# Um ratinho por tipo de missão (usuário: "características e cores distintas uns dos outros para ficar visual cada
+# missão"). Padrão (patterns/mission-mice.md): rosto chibi igual ao rat() + UM elemento-assinatura que muda a silhueta
+# (chapéu) + 2–3 cores dominantes por ratinho + forma que diz a regra (Pesada = largo/quadrado; Suave = chapéu alto
+# e redondo; Rápida = boné inclinado para a frente com risquinhos de velocidade).
+
+def mouse_face(fur: list, inner: str = "pink", ear_y: float = 8.0, head_y: float = 14.0, wide: float = 7.0,
+               brows: bool = False, ears: tuple = (6, 17)) -> Canvas:
+    """Rosto base de frente: orelhonas, cabeça com volume (fur = [brilho, luz, base, sombra]), olhos 2x2 com
+    brilho, bochecha, focinho e bigode. Sem contorno (o acessório entra antes do outline)."""
+    k = Canvas(CELL, CELL)
+    for ex in ears:
+        mc.disc(k, ex, ear_y, 4.0, fur[1]); mc.disc(k, ex, ear_y + 0.4, 2.2, inner)
+    mc.sphere(k, 11.5, head_y, wide, 6.0, fur)
+    ey = int(head_y) - 1
+    for x in (8, 14):
+        k.rect(x, ey, 2, 2, "ink"); k.px(x, ey, "white")
+        if brows:                                               # sobrancelha grossa (cara de forte, mas sorrindo)
+            k.hline(x - 1, x + 1, ey - 2, "ink")
+    k.px(11, ey + 3, "pink"); k.px(12, ey + 3, "pink")          # focinho
+    k.px(6, ey + 3, "pink"); k.px(17, ey + 3, "pink")           # bochechas
+    k.line(2, ey + 2, 5, ey + 3, "lilac_grey"); k.line(18, ey + 3, 21, ey + 2, "lilac_grey")
+    return k
+
+
+def mouse_simple() -> Canvas:
+    """Simples — mineiro: ratinho branco com capacete amarelo e lanterna (o da mina da Lua)."""
+    k = mouse_face(FUR)
+    k.rect(6, 6, 12, 3, "gold"); k.rect(7, 4, 10, 2, "gold"); k.hline(8, 15, 3, "lemon")
+    k.hline(5, 18, 8, "amber")                                  # aba
+    k.rect(10, 4, 4, 3, "white"); k.rect(11, 5, 2, 1, "lemon")  # lanterna
+    k.outline("ink")
+    return k
+
+
+def mouse_heavy() -> Canvas:
+    """Pesada — ratão forte: pelo caramelo, cabeça larga, faixa vermelha na testa (v1 com sobrancelha grossa
+    parecia bravo: tirada)."""
+    k = mouse_face(["honey", "copper", "terracotta", "rust"], inner="salmon", wide=8.4, ears=(5, 18), ear_y=7.5)
+    k.rect(4, 9, 16, 2, "red"); k.hline(5, 18, 9, "coral")      # faixa
+    k.rect(19, 10, 2, 3, "red"); k.px(20, 13, "crimson")        # pontas da faixa caindo do lado
+    k.outline("ink")
+    return k
+
+
+def mouse_soft() -> Canvas:
+    """Pouso suave — confeiteira: pelo rosado, chapéu de chef alto e fofo (cogumelo de nuvem)."""
+    k = mouse_face(["cream", "peach", "salmon", "rose"], inner="hot_pink", head_y=15.0, ear_y=9.5)
+    mc.sphere(k, 11.5, 4.5, 6.0, 4.0, ["white", "white", "mist", "steel"])   # copa do chapéu
+    k.rect(7, 7, 10, 3, "white"); k.hline(7, 16, 9, "mist")     # faixa do chapéu
+    k.px(15, 8, "hot_pink")                                     # coraçãozinho bordado
+    k.outline("ink")
+    return k
+
+
+def mouse_fast() -> Canvas:
+    """Rápida — sorveteiro: pelo cinza-azulado, boné listrado azul e branco virado para a frente + risquinhos."""
+    k = mouse_face(["white", "mist", "steel", "lilac_grey"], inner="pink")
+    for x in range(6, 18):                                      # copa listrada
+        for y in range(5, 9):
+            k.px(x, y, "sky" if (x // 2) % 2 == 0 else "white")
+    k.hline(8, 15, 4, "sky")
+    k.hline(14, 21, 9, "blue"); k.hline(16, 22, 8, "blue")     # aba para a frente (assimetria = velocidade)
+    for y in (12, 15):                                          # risquinhos de velocidade atrás
+        k.hline(0, 2, y, "pale_sky")
+    k.outline("ink")
+    return k
+
+
+def mouse_passenger() -> Canvas:
+    """Passageiro — taxista: pelo cinza, quepe amarelo com faixa quadriculada (táxi) e bandeirinha."""
+    k = mouse_face(["mist", "steel", "lilac_grey", "slate"], inner="pink")
+    k.rect(6, 4, 12, 3, "gold"); k.hline(7, 16, 3, "lemon")
+    for x in range(6, 18):                                      # faixa quadriculada
+        k.px(x, 7, "ink" if x % 2 == 0 else "white")
+        k.px(x, 8, "white" if x % 2 == 0 else "ink")
+    k.hline(5, 18, 9, "amber")                                  # aba
+    k.vline(20, 1, 9, "rosewood")                               # haste da bandeirinha
+    k.rect(21, 1, 3, 3, "red"); k.px(21, 4, "red")
+    k.outline("ink")
+    return k
+
+
+def mouse_tow() -> Canvas:
+    """Cabo — ratinha lilás: pelo lavanda, laço grande numa orelha e uma cordinha com gancho pendurada (v1: corda
+    enrolada parecia moeda)."""
+    k = mouse_face(["white", "lavender", "violet", "purple"], inner="hot_pink")
+    k.rect(14, 2, 3, 3, "hot_pink"); k.rect(19, 2, 3, 3, "hot_pink")   # laço (asas)
+    k.rect(17, 3, 2, 2, "raspberry"); k.px(15, 2, "pink"); k.px(20, 2, "pink")
+    k.vline(20, 5, 16, "copper")                                # cordinha descendo do laço
+    k.px(20, 8, "rust"); k.px(20, 12, "rust")                   # gomos da corda
+    k.rect(19, 17, 3, 1, "steel"); k.px(19, 18, "steel"); k.px(19, 19, "steel"); k.px(20, 20, "steel")
+    k.px(21, 19, "steel")                                       # gancho
+    k.outline("ink")
+    return k
+
+
+def mouse_double() -> Canvas:
+    """Dupla — campeão: pelo chocolate, coroinha dourada com pedra verde (duas regras = desafio de campeão)."""
+    k = mouse_face(["copper", "rust", "wine", "maroon"], inner="salmon")
+    k.rect(7, 5, 10, 3, "gold"); k.hline(7, 16, 7, "amber")
+    for x in (7, 11, 16):                                       # pontas da coroa
+        k.rect(x, 3, 1, 2, "gold"); k.px(x, 2, "lemon")
+    k.px(11, 6, "emerald"); k.px(12, 6, "emerald")              # pedra
+    k.outline("ink")
+    return k
+
+
+MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
+                "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
+
+
 NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on", "star_off", "coins", "ship",
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
-         "drones", "drone_coin", "arrow", "lock", "mystery"]
+         "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE)
 
 
 def build() -> Canvas:
     parts = [badge(["white", "white", "cream", "peach"]), badge(["white", "lemon", "lemon", "gold"], rim="hot_pink"),
              badge(["mist", "steel", "steel", "lilac_grey"]), rat(), bunny(), alien(), bear(), star(True), star(False),
              coins(), ship(), flame(False), flame(True), gas_bar(False), gas_bar(True), drop(True), drop(False),
-             coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()]
+             coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()] \
+        + [make() for make in MISSION_MICE.values()]
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

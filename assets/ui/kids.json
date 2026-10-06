@@ -28,6 +28,13 @@
     "drone_coin",
     "arrow",
     "lock",
-    "mystery"
+    "mystery",
+    "rat_simple",
+    "rat_heavy",
+    "rat_soft",
+    "rat_fast",
+    "rat_passenger",
+    "rat_tow",
+    "rat_double"
   ]
 }

@@ -14,7 +14,10 @@
     "stabilizer",
     "turbo",
     "gift",
-    "gas_can"
+    "gas_can",
+    "weight",
+    "clock",
+    "star"
   ],
   "notes": "Gerado por art/src/sprites/cargo.py (pixel-art). C\u00e9lulas 16x16 numa linha."
 }

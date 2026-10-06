@@ -1,6 +1,6 @@
 ## Sons do jogo (arte sonora da skill sound-design: audio/src/** -> assets/audio/**).
 ## One-shots: Sound.ui("click"|"buy"|"denied") no bus UI; Sound.sfx("landing"|"crash"|"delivered"|"crystal_1..3"|
-## "combo_2..5") no bus SFX (cristal: sobe um grau por cristal do mesmo salto; combo: sobe
+## "combo_2..5"|"star") no bus SFX (cristal: sobe um grau por cristal do mesmo salto; combo: sobe
 ## com o tamanho do combo). Variacoes + pitch/volume aleatorios vem dos AudioStreamRandomizer (.tres).
 ## Trilha: Sound.music("title"|"flight"|"") no bus Music e Sound.ambience(planeta|"") no bus Ambience, com crossfade
 ## (loops; tocar o que ja toca nao reinicia). Jingles: Sound.jingle("milestone"|"unlock"|"goal") no bus SFX,
@@ -21,6 +21,7 @@ const STREAMS := {
 	"combo_3": "res://assets/audio/sfx/combo_3.wav",
 	"combo_4": "res://assets/audio/sfx/combo_4.wav",
 	"combo_5": "res://assets/audio/sfx/combo_5.wav",
+	"star": "res://assets/audio/sfx/star.wav",
 	"milestone": "res://assets/audio/sfx/milestone.wav",
 	"unlock": "res://assets/audio/sfx/unlock.wav",
 	"goal": "res://assets/audio/sfx/goal.wav",

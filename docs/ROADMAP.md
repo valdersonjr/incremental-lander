@@ -92,7 +92,7 @@
 - [x] 14.1 Etapa A: sai prestígio, Silvânia/Docelândia/Quarto, Expedição, minério, perigos e o final; Frota/Piloto por
       créditos (economia v11); save v2 com migração; hangar NAVE + AJUDAS com faixa de recordes (2026-10-06)
 - [x] 14.2 Etapa B: missões abstratas + estrelas + aba PEDIDOS (economia v12; táxi em 2 trechos; Dupla) (2026-10-06)
-- [ ] 14.3 Etapa C: 6 ratinhos (pixel-art) e sons de estrela/liberação (sound-design), aprovados pelo usuário
+- [x] 14.3 Etapa C: ratinhos das missões (aprovados) + ícones peso/relógio/estrela; som da estrela (opção A) e liberar = jingle unlock (2026-10-06)
 
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida

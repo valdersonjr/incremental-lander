@@ -19,7 +19,8 @@ from pixelart import *
 
 S = 16
 NAMES = ["box", "cake", "cake_squashed", "icecream", "icecream_melted", "wheel", "wheel_cracked",
-         "mouse_wait0", "mouse_wait1", "mouse_safe", "stabilizer", "turbo", "gift", "gas_can"]
+         "mouse_wait0", "mouse_wait1", "mouse_safe", "stabilizer", "turbo", "gift", "gas_can",
+         "weight", "clock", "star"]
 
 
 def face(cv: Canvas, x: int, y: int, sad: bool = False) -> None:
@@ -209,9 +210,58 @@ def gas_can() -> Canvas:
     return cv
 
 
+# --- ícones das missões (v12, 2026-10-06): Pesada = peso de academia fofo; Rápida = relógio; estrela de missão ---
+def weight() -> Canvas:
+    """Peso (kettlebell) gordinho de ferro com alça e rostinho: a carga da missão Pesada."""
+    cv = Canvas(S, S)
+    cv.ellipse(7.5, 10, 6, 5, "slate")                                 # corpo
+    cv.ellipse(6.5, 9, 4, 3, "lilac_grey")                             # luz (cima-esquerda)
+    cv.px(4, 7, "steel"); cv.px(5, 6, "steel")                          # brilho
+    cv.rect(5, 2, 6, 2, "slate"); cv.rect(4, 3, 2, 3, "slate"); cv.rect(10, 3, 2, 3, "slate")   # alça
+    cv.outline("ink")
+    for x in (6, 7, 8, 9):                                             # buraco da alça (vazado)
+        cv.px(x, 4, None); cv.px(x, 5, None)
+    face(cv, 6, 10)
+    return cv
+
+
+def clock() -> Canvas:
+    """Relógio redondo de cozinha com sininhos: o prazo da missão Rápida."""
+    cv = Canvas(S, S)
+    cv.ellipse(3.5, 2.5, 2, 1.5, "gold"); cv.ellipse(11.5, 2.5, 2, 1.5, "gold")   # sininhos
+    cv.ellipse(7.5, 9, 6, 6, "red")                                    # caixa
+    cv.ellipse(7.5, 9, 4.5, 4.5, "white")                              # mostrador
+    cv.px(5, 6, "mist"); cv.px(6, 6, "mist")
+    cv.vline(7, 6, 9, "ink"); cv.hline(8, 9, 9, "ink")                # ponteiros
+    cv.px(7, 14, "maroon"); cv.px(8, 14, "maroon")
+    cv.outline("ink")
+    return cv
+
+
+def star_icon() -> Canvas:
+    """Estrelinha dourada de missão (a moeda da árvore de PEDIDOS)."""
+    cv = Canvas(S, S)
+    cv.paint(["......aa......",
+              ".....abba.....",
+              ".....abba.....",
+              "aaaaabbbbaaaaa",
+              ".abbbbbbbbbba.",
+              "..abbbbbbbba..",
+              "...abbccbba...",
+              "...abbccbba...",
+              "..abbbaabbba..",
+              "..abba..abba..",
+              ".aba......aba.",
+              ".aa........aa."], {"a": "amber", "b": "gold", "c": "lemon"}, x=1, y=2)
+    cv.px(6, 5, "white"); cv.px(5, 6, "lemon")
+    cv.outline("ink")
+    return cv
+
+
 def build() -> list:
     return [box(), cake(), cake(True), icecream(), icecream(True), wheel(), wheel(True),
-            mouse(0), mouse(1), mouse(safe=True), stabilizer(), turbo(), gift(), gas_can()]
+            mouse(0), mouse(1), mouse(safe=True), stabilizer(), turbo(), gift(), gas_can(), weight(), clock(),
+            star_icon()]
 
 
 if __name__ == "__main__":

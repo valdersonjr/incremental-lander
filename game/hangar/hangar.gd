@@ -21,16 +21,13 @@ const UNITS := {"thrust": "m/s2", "tank": "gás", "efficiency": "m/s/gás", "pay
 const ICONS := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "contracts": "reputation",
 		"gear": "gear", "fleet": "fleet", "autopilot": "autopilot"}
 const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.MISSIONS, "PEDIDOS", "quality"], [Tab.ASSISTS, "AJUDAS", "distance"]]
-## Aba PEDIDOS: o que cada missao pede (tooltip) e a cor do ratinho de cada tipo (placeholder ate a arte da Etapa C:
-## rostinho do ratinho tingido).
+## Aba PEDIDOS: o que cada missao pede (tooltip); o rostinho e o ratinho do tipo (atlas kids: rat_<tipo>).
 const MISSION_TIP := {"heavy": "a nave fica pesada: sobe mais devagar e gasta mais gás",
 		"soft": "pouse bem devagar (a velocidade de pouso fica mais baixa a cada estrela)",
 		"fast": "chegue antes do relógio acabar (menos tempo a cada estrela)",
 		"passenger": "estrela 1: passe devagar pertinho do ratinho perdido; 2 e 3: táxi — pouse para buscar e leve de volta",
 		"tow": "a carga vai pendurada num cabo: não deixe bater no chão",
 		"double": "duas regras juntas no mesmo pedido"}
-const MISSION_TINT := {"heavy": Color("#f68f37"), "soft": Color("#f5a097"), "fast": Color("#4d9be6"),
-		"passenger": Color("#f9e65e"), "tow": Color("#a884f3"), "double": Color("#1ebc73")}
 const MISSION_CARD_W := 132
 ## Larguras das colunas das tabelas (px da arte) — iguais em todas as abas para alinhar.
 const COL_ACTION := 120
@@ -603,7 +600,7 @@ func _buy_button(r: Dictionary, width: int) -> Button:
 
 # --- aba PEDIDOS (arvore de missoes, v12 2026-10-06) ---------------------------------------------------------------
 
-## Uma linha por tipo de missao: rostinho do ratinho (cor do tipo) + nome + cartoes das estrelas ligados por setas.
+## Uma linha por tipo de missao: o ratinho do tipo + nome + cartoes das estrelas ligados por setas.
 ## Cartao = estrelas + multiplicador do pagamento + botao: "3 ★" (da para liberar), LIBERADA, ou apagado com cadeado
 ## (falta a estrela anterior / os tipos exigidos; o tooltip diz). Estrelas ganhas: 1 por entrega.
 func _add_missions() -> void:
@@ -629,8 +626,7 @@ func _add_missions() -> void:
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override(&"separation", 2)
 		var face := TextureRect.new()
-		face.texture = UiKit.kid("rat")
-		face.modulate = MISSION_TINT.get(kind, Color.WHITE)
+		face.texture = UiKit.kid("rat_" + kind)
 		face.custom_minimum_size = Vector2(24, 24)
 		face.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
 		face.tooltip_text = MISSION_TIP.get(kind, "")

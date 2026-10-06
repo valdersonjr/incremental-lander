@@ -2,8 +2,9 @@
 ## rostinho de quem pediu: se o lugar da entrega cabe na tela, o pino fica fincado no chao onde a plataforma vai
 ## nascer (a crianca ve para onde vai voar); se fica alem da tela, vai para a coluna da borda do lado dele (direita ou,
 ## na Lua, esquerda) com uma setinha (mais em cima = mais perto). Pino cinza = o gas nao chega (continua escolhivel).
-## Na Lua o pino mostra a MISSAO (Simples, Pesada, Pouso suave, Rapida, Passageiro, Cabo, Dupla). Um mini-cartao embaixo
-## mostra o pedido selecionado com figuras: missao, quanto do gas gasta, estrelas de dificuldade (da missao; Simples =
+## Na Lua o pino mostra o RATINHO do tipo de missao (cada tipo tem o seu: mineiro, ratao, confeiteira, sorveteiro,
+## taxista, ratinha do cabo, campeao). Um mini-cartao embaixo mostra o pedido selecionado com figuras: ratinho + figura
+## da regra, quanto do gas gasta, estrelas de dificuldade (da missao; Simples =
 ## as da plataforma) e o premio.
 ## Teclas 1..9 (ou teclado numerico) escolhem direto; setas andam entre os pinos e Enter escolhe; clique no pino ou
 ## em VAMOS! escolhe. E encerra o run (2 toques). Se o jogador tenta pilotar antes de escolher, os pinos pulam.
@@ -211,9 +212,6 @@ func _add_pin(i: int) -> void:
 		tr.name = part.capitalize()
 		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		tr.texture = UiKit.kid(_customer(info) if part == "face" else ("pin" if ok else "pin_off"))
-		if part == "face" and _has_missions():                 # Lua: o pino mostra a missao (16x16 no meio do pino)
-			tr.texture = CargoArt.icon(str(info["mission"]["kind"]))
-			tr.position = Vector2(4, 3)
 		if part == "face" and not ok:
 			tr.modulate = Color(0.7, 0.7, 0.75)
 		pin.add_child(tr)
@@ -234,7 +232,10 @@ func _has_missions() -> bool:
 	return not EconMath.mission_kinds(_planet).is_empty()
 
 
+## Rostinho de quem pediu: com missoes, o ratinho do tipo (rat_<tipo>, atlas kids); senao um do mundo pelo hash.
 func _customer(info: Dictionary) -> String:
+	if _has_missions():
+		return "rat_" + str(info["mission"]["kind"])
 	var faces: Array = CUSTOMERS.get(_planet, CUSTOMERS["luna"])
 	return faces[absi(hash(int(float(info["distance"])))) % faces.size()]
 

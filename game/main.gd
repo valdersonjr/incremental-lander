@@ -318,6 +318,8 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	var stars_before := _run.stars
 	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift)
 	GameState.add_stars(_run.stars - stars_before)
+	if _run.stars > stars_before:                              # estrela de missao: depois do "entregue"
+		get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
 	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
 	_note_record("longest_hop", float(result["distance"]))
