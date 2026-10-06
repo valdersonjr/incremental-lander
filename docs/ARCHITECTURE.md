@@ -62,6 +62,7 @@ game/run/offer_panel.*        # OfferPanel (v15): fila de chips no alto (%Board/
                               # mineiro) + cartão embaixo (%Face/%Cargo, balão %Balloon/%Say = MissionText.balloon, %Pads = 3
                               # botões de plataforma que partem, %Stars). Chip: hover seleciona, clique/Enter parte; ↑/↓
                               # plataforma, Shift+↑/↓ estrela, 1–9 partem, E encerra (2 toques). Teste: pad_button_center()
+scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target_lift_m, crest_scale, basin_m; mission_shape()
 scripts/ui/mission_text.gd    # MissionText: fala curta (balloon) e explicação (tip/kind_tip) de cada tipo de missão
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"

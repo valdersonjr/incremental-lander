@@ -102,7 +102,7 @@
 - [x] 15.2 Tela de escolha: fila de ratinhos no alto + cartão (balão com a regra, 3 plataformas = botões de partir com o
       prêmio, estrelas); sem gás e sem botão "vamos"; `MissionText` único (cartão + oficina) (2026-10-06)
 - [x] 15.3 Cada missão no seu mapa (seed por entrega) + tela escurece e a nave desce do céu; fundo mostra outro trecho (2026-10-06)
-- [ ] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia
+- [x] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia (≤1%: sem mudança) (2026-10-06)
 - [ ] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado)
 
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`

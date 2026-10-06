@@ -59,6 +59,10 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   perto/médio/longe em figura; cinza = o gás não chega). Embaixo, o **cartão** do escolhido: ratinho + carga, **balão de
   fala** com a regra em 2–3 palavras ("Devagarinho!", "Tá pesado!"…) e as **3 plataformas como botões de partir**, cada
   uma com o prêmio — clicar já parte. Sem barra de gás e sem botão "vamos" no cartão.
+  **Cada missão no seu mapa (v15)**: ao escolher, a tela escurece e a nave desce do céu numa plataforma de um lugar novo
+  (sem gastar gás). O relevo combina com a regra: Pesada = subida até o alvo; Pouso suave = alvo no alto de uma mesa;
+  Rápida = caminho baixo; Cabo = cratera no meio; resgate = ratinho no fundo de uma cratera; táxi = busca num degrau.
+  O que liga as entregas do run é o tanque.
   **Liberação jogando** (padrão Hades/Dead Cells): cada entrega dá **1 estrela**; **3 estrelas** liberam um nó na aba
   **PEDIDOS** da oficina (★1 de Pesada/Suave/Rápida abertas; Passageiro e Cabo pedem 2 tipos ★1; ★N pede ★N-1; Dupla
   pede ★3 em 2 tipos).

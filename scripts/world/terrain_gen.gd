@@ -12,8 +12,11 @@ extends RefCounted
 ## extend = px extras alem da margem (x: a esquerda, y: a direita) — o Flight estende quando a nave chega perto da
 ## borda. O relevo e ancorado em x = 0 (grade e limite de inclinacao correm de 0 para cada lado): estender ou criar
 ## plataformas novas NUNCA muda os pontos que ja existiam.
+## shape (v15, relevo da missao; world.json missions.<tipo>.terrain) mexe so no trecho partida -> 1a entrega:
+##   rise_m = o chao sobe ate o alvo (subida suave) · target_lift_m = alvo no alto de uma mesa/degrau ·
+##   crest_scale = altura da crista (0 = sem) · basin_m = cratera no meio do caminho (basin_width_frac da distancia).
 static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[float],
-		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO) -> Dictionary:
+		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO, shape: Dictionary = {}) -> Dictionary:
 	var cfg: Dictionary = WorldConfig.load_config()["terrain"]
 	var pcfg: Dictionary = cfg["planets"].get(planet_id, cfg["planets"]["luna"])
 	var step := WorldConfig.m_to_px(cfg["step_m"])
@@ -51,6 +54,11 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		prev_y = y
 	left.reverse()
 	var ridge := left + right
+	if pad_xs.size() > 1 and float(shape.get("rise_m", 0.0)) > 0.0:   # subida ate o alvo (smoothstep; depois fica alta)
+		var rise := WorldConfig.m_to_px(float(shape["rise_m"]))
+		for j in ridge.size():
+			var t := clampf(ridge[j].x / pad_xs[1], 0.0, 1.0)
+			ridge[j].y -= rise * t * t * (3.0 - 2.0 * t)
 
 	# plataformas: largura e elevacao do tipo; altura decidida no relevo de base (antes das cristas)
 	var side_slope: float = cfg["pad_side_slope"]
@@ -59,6 +67,8 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		var tc: Dictionary = cfg["pad_tiers"].get(tiers[i], cfg["pad_tiers"]["normal"])
 		var half := WorldConfig.m_to_px(float(tc["width_m"])) * 0.5
 		var lift := WorldConfig.m_to_px(float(tc["lift_m"]))
+		if i == 1:                                             # alvo da missao numa mesa/degrau
+			lift += WorldConfig.m_to_px(float(shape.get("target_lift_m", 0.0)))
 		# pico/vale precisa de espaco ate a plataforma ANTERIOR (so ela: uma plataforma nunca muda quando outra e
 		# criada depois — o lander pode estar pousado nela); perto demais -> plataforma no nivel do relevo
 		var reach := half + absf(lift) / side_slope + WorldConfig.m_to_px(10.0)
@@ -70,7 +80,15 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		pads.append({"id": i, "x": pad_xs[i], "half_width": half, "y": _height_at(ridge, pad_xs[i]) - lift,
 				"tier": tiers[i], "lift": lift})
 	for i in pads.size() - 1:
-		_add_crest(ridge, pads[i], pads[i + 1], cfg["crest"], pcfg, pads)
+		var crest: Dictionary = cfg["crest"]
+		if i == 0 and shape.has("crest_scale"):
+			if float(shape["crest_scale"]) <= 0.0:
+				continue
+			crest = crest.duplicate()
+			crest["frac"] = float(crest["frac"]) * float(shape["crest_scale"])
+		_add_crest(ridge, pads[i], pads[i + 1], crest, pcfg, pads)
+	if pads.size() > 1 and float(shape.get("basin_m", 0.0)) > 0.0:
+		_add_basin(ridge, pads[0], pads[1], shape)
 	var y_range := _y_range(ridge)
 	for p in pads:
 		y_range = _shape_pad(ridge, p, side_slope, y_range)
@@ -124,6 +142,42 @@ static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 			break
 		if absf(dx) < w:
 			ridge[j].y -= extra * (0.5 + 0.5 * cos(PI * dx / w))
+
+
+## Relevo pensado para a regra da missao (world.json missions.<tipo>.terrain; taxi = "taxi"; Dupla junta as partes
+## ficando com o maior de cada campo).
+static func mission_shape(p_mission: Dictionary, stage: int = 0) -> Dictionary:
+	var cfg: Dictionary = WorldConfig.load_config()["missions"]
+	var parts: Array = p_mission.get("parts", [])
+	if parts.is_empty():
+		parts = [{"kind": p_mission.get("kind", "simple")}]
+	var out := {}
+	for p: Dictionary in parts:
+		var key := str(p["kind"])
+		if key == "passenger" and stage > 0:
+			key = "taxi"
+		var t: Dictionary = (cfg.get(key, {}) as Dictionary).get("terrain", {})
+		for k: String in t:
+			if k == "crest_scale":                             # crista: a menor vence (Rapida/Cabo pedem trecho limpo)
+				out[k] = minf(float(out.get(k, INF)), float(t[k]))
+			else:
+				out[k] = maxf(float(out.get(k, 0.0)), float(t[k]))
+	return out
+
+
+## Cratera no meio do trecho a -> b (relevo da missao): cosseno de largura basin_width_frac x distancia, funda
+## basin_m (no maximo 15% da distancia, para a encosta continuar suave).
+static func _add_basin(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, shape: Dictionary) -> void:
+	var d := absf(float(b["x"]) - float(a["x"]))
+	var w := float(shape.get("basin_width_frac", 0.3)) * d
+	var depth := minf(WorldConfig.m_to_px(float(shape["basin_m"])), 0.15 * d)
+	var mid := (float(a["x"]) + float(b["x"])) * 0.5
+	for j in range(_first_at_or_after(ridge, mid - w), ridge.size()):
+		var dx := ridge[j].x - mid
+		if dx >= w:
+			break
+		if absf(dx) < w:
+			ridge[j].y += depth * (0.5 + 0.5 * cos(PI * dx / w))
 
 
 ## Pico (lift > 0) ou vale (lift < 0) em volta da plataforma: topo plano + encostas com side_slope.

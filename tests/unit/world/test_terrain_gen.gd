@@ -171,3 +171,48 @@ func test_voltar_por_cima_de_plataformas_nao_muda_as_antigas() -> void:
 		for dx in [-0.9, 0.0, 0.9]:
 			var x: float = float(p0["x"]) + dx * float(p0["half_width"])
 			assert_almost(TerrainGen.height_at(after["ridge"], x), float(p0["y"]), 1e-3, "topo do pad %d mudou" % i)
+
+
+## Relevo de cada tipo de missao (v15): deterministico, plataformas planas e sem paredoes mais ingremes que as do
+## relevo de sempre (as bordas das plataformas ja tem degraus curtos) nem que a encosta das mesas.
+func test_relevo_das_missoes() -> void:
+	var base := _steepest(TerrainGen.generate(9, "luna", [1500.0] as Array[float])["ridge"])
+	var limit := maxf(base, float(WorldConfig.load_config()["terrain"]["pad_side_slope"])) + 0.05
+	for kind: String in ["simple", "heavy", "soft", "fast", "tow", "passenger", "taxi"]:
+		var k := "passenger" if kind == "taxi" else kind
+		var shape := TerrainGen.mission_shape({"kind": k, "star": 1, "parts": [{"kind": k, "star": 1}]},
+				1 if kind == "taxi" else 0)
+		var a := TerrainGen.generate(9, "luna", [1500.0] as Array[float], ["normal"] as Array[String], Vector2.ZERO, shape)
+		var b := TerrainGen.generate(9, "luna", [1500.0] as Array[float], ["normal"] as Array[String], Vector2.ZERO, shape)
+		assert_eq(a["ridge"], b["ridge"], kind + ": mesma seed deveria dar o mesmo relevo")
+		for p: Dictionary in a["pads"]:
+			for dx in [-0.9, 0.0, 0.9]:
+				assert_almost(TerrainGen.height_at(a["ridge"], float(p["x"]) + dx * float(p["half_width"])),
+						float(p["y"]), 1e-3, "%s: plataforma %d plana" % [kind, p["id"]])
+		var steep := _steepest(a["ridge"])
+		assert_true(steep <= limit, "%s: encosta de %.2f (limite %.2f)" % [kind, steep, limit])
+
+
+func _steepest(r: PackedVector2Array) -> float:
+	var steep := 0.0
+	for j in range(1, r.size()):
+		if r[j].x - r[j - 1].x > 0.5:
+			steep = maxf(steep, absf(r[j].y - r[j - 1].y) / (r[j].x - r[j - 1].x))
+	return steep
+
+
+func test_relevo_das_missoes_muda_o_trecho() -> void:
+	var plain := TerrainGen.generate(9, "luna", [1500.0] as Array[float])
+	var heavy := TerrainGen.generate(9, "luna", [1500.0] as Array[float], ["normal"] as Array[String], Vector2.ZERO,
+			{"rise_m": 80.0})
+	assert_true(float(heavy["pads"][1]["y"]) < float(plain["pads"][1]["y"]) - WorldConfig.m_to_px(70.0),
+			"Pesada: o alvo deveria ficar ~80 m mais alto")
+	var soft := TerrainGen.generate(9, "luna", [1500.0] as Array[float], ["normal"] as Array[String], Vector2.ZERO,
+			{"target_lift_m": 70.0})
+	assert_almost(float(soft["pads"][1]["lift"]), WorldConfig.m_to_px(70.0), 0.01, "Suave: alvo numa mesa")
+	var tow := TerrainGen.generate(9, "luna", [1500.0] as Array[float], ["normal"] as Array[String], Vector2.ZERO,
+			{"crest_scale": 0.0, "basin_m": 60.0})
+	var mid := WorldConfig.m_to_px(750.0)
+	assert_true(TerrainGen.height_at(tow["ridge"], mid) > TerrainGen.height_at(plain["ridge"], mid),
+			"Cabo: o meio do caminho deveria ficar mais baixo (cratera, sem crista)")
+	assert_eq(TerrainGen.mission_shape({"kind": "simple", "star": 1, "parts": []}), {}, "Simples: relevo de sempre")

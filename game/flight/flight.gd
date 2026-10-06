@@ -53,6 +53,7 @@ var _anim_t := 0.0
 var _demo := false
 var _lift_y := 0.0                                 # camera olhando para cima perto do chao (px; sem o tremor)
 var _shake := 0.0                                  # trauma do tremor de tela (0..1; world.json > camera)
+var _shape: Dictionary = {}                        # relevo da missao do mapa (TerrainGen shape; world.json)
 var _bg_origin := 0.0                              # deslocamento do cenario de fundo (px): cada mapa mostra um trecho
 
 @onready var lander: Lander = %Lander
@@ -119,6 +120,7 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", dir: int = 1,
 		p_mission: Dictionary = {}, stage: int = 0) -> void:
 	_reset_map(seed_value)
+	_shape = TerrainGen.mission_shape(p_mission, stage)
 	set_target(distance_m, tier, dir, p_mission, stage)
 	_place_on_start_pad()
 	_arrive()
@@ -126,6 +128,7 @@ func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", 
 
 func _reset_map(seed_value: int) -> void:
 	_seed = seed_value
+	_shape = {}
 	_bg_origin = float(posmod(seed_value, 997)) * 37.0          # trecho do fundo de cada mapa (mesma seed = mesmo)
 	_pad_positions_m = [0.0]
 	_pad_tiers = []
@@ -231,7 +234,7 @@ func _rebuild_terrain() -> void:
 	for i in range(1, _pad_positions_m.size()):
 		distances.append(_pad_positions_m[i])
 	terrain.target_pad_id = target_pad_id
-	terrain.build(_seed, planet_id, distances, _pad_tiers, _extend)
+	terrain.build(_seed, planet_id, distances, _pad_tiers, _extend, _shape)
 
 
 func _planet_spec(pid: String) -> Dictionary:

@@ -15,10 +15,14 @@
   piloto do demo volta a "takeoff" ao tocar) + `Main._fade` (0,25 s); `world.json > missions.arrival`; fundo deslocado
   por mapa (`_bg_origin`); `offer_ground_screen` removido. Táxi: busca e volta no mesmo mapa. Teste novo
   `tests/integration/mission_map_flow` (partida x=0, descida sem gás, outra seed = outro mapa, mesma seed = mesmo).
-  Demo: várias missões seguidas (simples, táxi 2 trechos, cabo, rápida) sem erros. **Próximo: 15.4** — `shape` em
-  `TerrainGen.generate` por tipo (`world.json > missions.<kind>.terrain`: Pesada subida, Suave mesa, Rápida baixo, Cabo
-  cratera, resgate cratera rasa, táxi degrau) + medir `gas_used` × `gas_est` no demo; >10% → `mission_dv_mult`
-  (economy-balance). **15.5** — `MissionIntro` ao `Events.mission_unlocked` de nó ★1 (ratinho 2×, balão, certo × errado
+  Demo: várias missões seguidas (simples, táxi 2 trechos, cabo, rápida) sem erros.
+  15.4 ✅ relevo por tipo: `TerrainGen.generate(..., shape)` + `TerrainGen.mission_shape(missão, stage)`
+  (`world.json > missions.<tipo>.terrain`): Pesada `rise_m` 80 (subida até o alvo), Suave `target_lift_m` 70 (mesa),
+  Rápida `crest_scale` 0,35, Cabo sem crista + `basin_m` 60, resgate sem crista + cratera 45, táxi busca num degrau
+  40; Dupla = maior de cada campo. Só mexe no trecho partida → 1ª entrega (o 2º trecho do táxi não muda nada).
+  Economia: `tests/tools/mission_gas_probe` (piloto do demo, mesmas distâncias com/sem relevo) → diferença ≤ 1% (o arco
+  já passa por cima da crista) → **sem mudança na spec**. Prévia dos perfis: `tests/tools/mission_terrain_dump`.
+  Testes: `test_relevo_das_missoes*`. **15.5** — `MissionIntro` ao `Events.mission_unlocked` de nó ★1 (ratinho 2×, balão, certo × errado
   com as figuras de carga + check/cross).
 - **Fase 14 — Só a Lua + árvore de missões (2026-10-06)**. Pedidos: "polir ao máximo o primeiro [mundo] e ignorar os
   outros"; prestígio "era pra ter sido removido"; missões abstratas com estrelas.

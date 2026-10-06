@@ -289,7 +289,10 @@
         0.7,
         0.5,
         0.35
-      ]
+      ],
+      "terrain": {
+        "target_lift_m": 70.0
+      }
     },
     "fast": {
       "base_s": 10.0,
@@ -298,7 +301,10 @@
         1.0,
         0.8,
         0.65
-      ]
+      ],
+      "terrain": {
+        "crest_scale": 0.35
+      }
     },
     "tow": {
       "break_speed": 6.0,
@@ -318,7 +324,12 @@
           "rope_m": 30.0,
           "mass": 0.9
         }
-      ]
+      ],
+      "terrain": {
+        "crest_scale": 0.0,
+        "basin_m": 60.0,
+        "basin_width_frac": 0.32
+      }
     },
     "passenger": {
       "radius_m": 20.0,
@@ -329,7 +340,23 @@
         "normal",
         "narrow"
       ],
-      "board_q": 0.55
-    }
+      "board_q": 0.55,
+      "terrain": {
+        "crest_scale": 0.0,
+        "basin_m": 45.0,
+        "basin_width_frac": 0.25
+      }
+    },
+    "heavy": {
+      "terrain": {
+        "rise_m": 80.0
+      }
+    },
+    "taxi": {
+      "terrain": {
+        "target_lift_m": 40.0
+      }
+    },
+    "terrain_notes": "v15 (2026-10-06): relevo de cada tipo no trecho partida -> alvo (TerrainGen shape): heavy = subida ate o alvo (rise_m); soft = alvo no alto de uma mesa (target_lift_m); fast = crista baixa (crest_scale); tow = sem crista e cratera no meio (basin_m, basin_width_frac); passenger (resgate) = cratera rasa onde o ratinho espera; taxi = busca num degrau. Dupla: maior de cada campo (crista: a menor)."
   }
 }

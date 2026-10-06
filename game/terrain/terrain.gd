@@ -38,9 +38,9 @@ var _time := 0.0
 ## Gera o terreno e devolve os dados (ridge, pads, polygon). pad_tiers = tipo de cada plataforma de entrega.
 ## extend = px extras alem da margem (x: esquerda, y: direita) — ver TerrainGen.generate.
 func build(seed_value: int, planet_id: String, pad_distances_m: Array[float],
-		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO) -> Dictionary:
+		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO, relief: Dictionary = {}) -> Dictionary:
 	_planet_id = planet_id
-	var data := TerrainGen.generate(seed_value, planet_id, pad_distances_m, pad_tiers, extend)
+	var data := TerrainGen.generate(seed_value, planet_id, pad_distances_m, pad_tiers, extend, relief)
 	ridge = data["ridge"]
 	var look: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(planet_id, {})
 	RenderingServer.set_default_clear_color(Color(str(look.get("sky", "#2e222f"))))
