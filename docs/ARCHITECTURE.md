@@ -78,7 +78,7 @@ scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgr
                               # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Jogar · Sandbox ·
                               # Opções · Sair. Jogar abre 5 cartões (um por jogo salvo: missões liberadas N/total + barra,
-                              # créditos, runs, tempo; vazio = navezinha + Novo jogo; Apagar embaixo, 2 cliques; em uso =
+                              # créditos, runs, tempo; vazio = "+" + Novo jogo; Apagar embaixo, 2 cliques; em uso =
                               # moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.

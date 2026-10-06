@@ -153,7 +153,7 @@ func _fill_saves() -> void:
 
 
 ## Cartao-botao de um espaco: nome no topo; com jogo, a barra de missoes liberadas (estrela + N/total), creditos,
-## runs e tempo; vazio, a navezinha e "Novo jogo".
+## runs e tempo; vazio, um "+" e "Novo jogo".
 func _slot_card(n: int, s: Dictionary) -> Button:
 	var card := Button.new()
 	card.custom_minimum_size = Vector2(SLOT_CARD_W, 104)
@@ -217,12 +217,9 @@ func _slot_card(n: int, s: Dictionary) -> Button:
 		card.pressed.connect(func() -> void:
 			Sound.ui("click")
 			new_game_requested.emit(n))
-		var ship := TextureRect.new()
-		ship.texture = UiKit.kid("ship")
-		ship.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-		ship.custom_minimum_size = Vector2(24, 28)
-		ship.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(ship)
+		var plus := _card_label("+", &"DimLabel")
+		plus.add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)
+		box.add_child(plus)
 		box.add_child(_card_label("Novo jogo", &"DimLabel"))
 	return card
 

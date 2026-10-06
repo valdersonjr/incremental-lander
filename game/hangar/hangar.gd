@@ -114,7 +114,6 @@ func refresh() -> void:
 	_clear(_rows)
 	var launchable := Purchases.can_launch(planet, GameState.ship_stats())
 	_launch.disabled = not launchable
-	_launch.icon = UiKit.kid("ship") if launchable else null   # botao principal: navezinha (sem precisar ler)
 	_launch.text = "DECOLAR!  [Enter]" if launchable else "nave fraca: melhore Motor e Gasolina"
 	_fill_records()
 	_fill_tabs()
