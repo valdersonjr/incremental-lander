@@ -6,7 +6,7 @@
 ## o progresso do jogador — uma previa que simula compra dispararia o autosave sobre o save real).
 extends Node
 
-const SLOTS := 3
+const SLOTS := 5
 
 var PATH := "user://save.json"
 var TMP := "user://save.json.tmp"
@@ -137,7 +137,7 @@ func load_game() -> bool:
 
 
 ## Resumo de um jogo salvo para a tela de selecao (so leitura; nao mexe no jogo em uso).
-## {exists, ok, slot, current, planet, runs, credits, play_seconds}
+## {exists, ok, slot, current, planet, runs, credits, play_seconds, stars, nodes}
 func slot_summary(n: int) -> Dictionary:
 	var r := _read_slot(n)
 	var out := SaveData.summary(r["state"]) if r["ok"] else {}

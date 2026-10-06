@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-06)
+- **Menu inicial refeito (2026-10-06)**: só Jogar · Sandbox · Opções · Sair; Jogar abre 5 cartões de jogo salvo com a
+  progressão (missões liberadas N/total + barra, créditos, runs, tempo). `SaveManager.SLOTS` = 5; `SaveData.summary`
+  ganhou `stars`/`nodes`. Verificado: check, 96 testes, integrações slots_flow (5 cartões, destaque e progressão do jogo
+  em uso), esc_flow, save_roundtrip, release_fixes; prévia `title_preview -- --saves [--confirm]`.
 - **Fase 15 — Escolha intuitiva + missão no seu mapa (2026-10-06)**. 15.1 ✅ figuras (pad_normal/narrow/tight,
   dist_1..3, check/cross no atlas kids; `assets/ui/balloon.png` + `balloon_tail.png` em `art/src/ui/ui_kit.py`).
   15.2 ✅ nova tela de escolha (`OfferPanel`: fila de chips + cartão com balão e 3 plataformas que partem;

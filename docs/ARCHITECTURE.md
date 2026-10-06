@@ -76,8 +76,10 @@ autoload/game_state.gd        # GameState: recursos, níveis, current_planet (se
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
                               # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
-game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Continuar · Jogos salvos ·
-                              # Opções · Sair. Sinais play_requested (Continuar → hangar; sem progresso → run),
+game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Jogar · Sandbox ·
+                              # Opções · Sair. Jogar abre 5 cartões (um por jogo salvo: missões liberadas N/total + barra,
+                              # créditos, runs, tempo; vazio = navezinha + Novo jogo; Apagar embaixo, 2 cliques; em uso =
+                              # moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
                               # Main pula o menu com --demo, --dev_*, --no_title. Hangar.title_requested volta ao menu.
@@ -153,7 +155,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # copia saves/opções/telemetria de Godot/app_userdata/Incremental Lander, sem sobrescrever);
                               # save ILEGÍVEL (danificado/versão futura) nunca é sobrescrito: guardado como
                               # save.unreadable[N].json antes do próximo save + load_warning mostrado no menu inicial;
-                              # autosave também a cada entrega paga. SLOTS=3 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
+                              # autosave também a cada entrega paga. SLOTS=5 jogos salvos (jogo 1 = user://save.json, N = save_N.json; tmp→rename,
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes

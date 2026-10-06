@@ -27,13 +27,25 @@ func _ready() -> void:
 	GameState.runs_done = 5
 	GameState.resources["credits"] = 321.0
 	SaveManager.save_game()
-	# volta ao menu pelo hangar: o resumo mostra o jogo 2
+	# volta ao menu pelo hangar; Jogar abre os 5 cartoes: o do jogo 2 e o em uso, com a progressao
 	hangar.title_requested.emit()
 	await _frames(3)
-	var info_text := " ".join(title.find_child("Info", true, false).find_children("*", "Label", true, false).map(
-			func(l: Label) -> String: return l.text))
-	if not title.visible or not "Jogo 2" in info_text:
-		fails.append("menu nao mostra o jogo 2: '%s'" % info_text)
+	(title.find_child("Play", true, false) as Button).pressed.emit()
+	await _frames(3)
+	var cards := title.find_children("*", "Button", true, false).filter(func(b: Node) -> bool:
+		return str(b.get_meta(&"focus_key", "")).begins_with("slot:"))
+	if not title.visible or cards.size() != SaveManager.SLOTS:
+		fails.append("Jogar deveria abrir %d cartoes (veio %d)" % [SaveManager.SLOTS, cards.size()])
+	else:
+		var card2 := cards[1] as Button
+		var card_text := " ".join(card2.find_children("*", "Label", true, false).map(
+				func(l: Label) -> String: return l.text))
+		if card2.tooltip_text != "jogo em uso" or not "5 runs" in card_text or not "321" in card_text:
+			fails.append("cartao do jogo 2 sem a progressao/destaque: '%s'" % card_text)
+		if not "Novo jogo" in " ".join((cards[4] as Button).find_children("*", "Label", true, false).map(
+				func(l: Label) -> String: return l.text)):
+			fails.append("jogo 5 vazio deveria oferecer Novo jogo")
+	title._set_screen(TitleScreen.Screen.MENU)
 	# jogo 1 vazio: decola um run novo; o jogo 2 continua salvo
 	title.slot_play_requested.emit(1)
 	await _frames(3)

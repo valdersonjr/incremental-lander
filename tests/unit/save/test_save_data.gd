@@ -49,6 +49,7 @@ func test_resumo_para_a_tela_de_jogos_salvos() -> void:
 	assert_eq(s["runs"], 4)
 	assert_almost(s["credits"], 123.5)
 	assert_almost(s["play_seconds"], 321.0)
+	assert_eq(s["nodes"], 0, "nenhum no de missao liberado")
 
 
 func test_valores_de_tipo_errado_viram_zero_sem_erro() -> void:

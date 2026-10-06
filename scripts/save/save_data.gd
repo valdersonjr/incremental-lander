@@ -84,6 +84,8 @@ static func summary(state: Dictionary) -> Dictionary:
 		"runs": int(state.get("runs_done", 0)),
 		"credits": float(state.get("resources", {}).get("credits", 0.0)),
 		"play_seconds": float(state.get("play_seconds", 0.0)),
+		"stars": int(state.get("stars", 0)),
+		"nodes": (state.get("mission_nodes", []) as Array).size(),   # nos da arvore de missoes liberados
 	}
 
 
