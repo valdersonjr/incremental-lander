@@ -9,8 +9,13 @@
   missão. **17.1 ✅** economia v15: sai `max_per_run`, entra `run_fatigue` 1,7 (gás × 1,7^n, galão ÷ 1,7^n; ver
   `economy-balance/references/patterns/run-fatigue-records.md`); `RunState.fatigue`, `Flight.set_fatigue`/`eff_stats`,
   HUD conta entregas sem "/6". Verificado: check, 102 testes, paridade 31, demo sem erros.
-  **Próximo**: 17.2 recordes (protótipo HTML do painel do HUD e do resumo → aprovação → Godot) e 17.3 paisagens
-  (preview HTML dos perfis → aprovação → `TerrainGen` + `world.json > terrain.landscapes`).
+  **17.2 ✅** recordes do run: o usuário escolheu (protótipo `art/previews/recordes/recordes.html`, git-ignorado) o
+  **placar no canto (A)** e o **resumo com troféus (2)**. `RunState.record_values`, `GameState.RECORDS`/`record_text`,
+  save v4, `Hud._build_score`, `RunSummary._add_records`, troféu nos atlas `icons`/`kids`. Verificado: check, 104
+  testes + integrações, demo, capturas `flight_ui_preview -- --no_title --records`, `summary_preview`, `hangar_preview -- --late`.
+  Pendente: som próprio de recorde (hoje jingle milestone; sound-design).
+  **Próximo**: 17.3 paisagens — preview `art/previews/paisagens/paisagens.html` (7 receitas, aberto no Chrome)
+  aguardando a opinião do usuário → `TerrainGen` + `world.json > terrain.landscapes` + liberação na Estrada.
 - **PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07, ROADMAP 16.1–16.4)**. Pedido: "o jogador deveria
   visualizar toda sua progressão desde o início"; o usuário escolheu, entre 3 protótipos HTML
   (`art/previews/progressao/progressao.html`), a estrada por estrelas ("liberar igual um battlepass"). Spec v13:

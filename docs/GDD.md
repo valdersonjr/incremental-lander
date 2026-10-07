@@ -153,8 +153,11 @@ muda). Vêm prontas pela Estrada das Estrelas (v13; antes compra única em créd
 
 ## 7. Prestígio e fase final — removidos (2026-10-06)
 O usuário pediu tirar o prestígio (Poeira Estelar, loja, recomeço) e a fase final (Expedição ao Quarto). A Frota e o
-Piloto automático continuam, liberados por créditos (§6). Recordes pessoais (maior entrega, salto mais longo, maior
-combo → pousos perfeitos seguidos, run mais rico) ficam embaixo da nave na PROGRESSÃO e como "NOVO RECORDE" no resumo do run.
+Piloto automático continuam, liberados por créditos (§6). **Recordes pessoais (v15, "bata seu recorde")** — todos medidos num run: **dinheiro do run** (o principal),
+entregas, distância voada, pousos perfeitos e maior entrega. No voo, o placar do canto (variante A) mostra o dinheiro
+grande com a barra até o recorde (troféu) e os outros quatro como "valor/recorde"; o que passa fica dourado e o dinheiro
+avisa "NOVO RECORDE!". No fim do run (variante "troféus"): dinheiro grande + cartões que viram troféu com "NOVO!".
+Na PROGRESSÃO, a faixa de recordes (troféu + os 5 números) fica embaixo da nave.
 
 ## 9. Ritmo esperado (simulado, spec v11 — só a Lua)
 Primeira compra logo após o 1º run; Motor e Reputação chegam ao nível 80 em ~6–8 h; 1º drone ~2 h (engajado);

@@ -1,5 +1,7 @@
 ## HUD do voo (arte: UiKit): gas (barra ciano -> ambar -> vermelho), velocidades com cor de seguranca,
-## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, selo de Reputacao;
+## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), placar de recordes do run (v15: dinheiro
+## do run grande + barra ate o recorde; entregas, distancia, pousos perfeitos e maior entrega "valor/recorde", dourados
+## quando passam o recorde), selo de Reputacao;
 ## resultado do pouso em aviso central (pagamento com plataforma x reputacao x carga, chamado pelo Main).
 ## Carga (Lua): linha com a figura da carga + o que importa agora (barra do sorvete derretendo; bolo deixa o
 ## V.VERT mais exigente; ratinho fica colorido quando resgatado; queijo rachado).
@@ -22,8 +24,7 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _alt: Label = %Alt
 @onready var _dist: Label = %Dist
 @onready var _msg: Label = %Message
-@onready var _credits: Label = %Credits
-@onready var _deliveries: Label = %Deliveries
+@onready var _score: VBoxContainer = %Score
 @onready var _dist_icon: TextureRect = %DistIcon
 @onready var _toast: Control = %Toast
 @onready var _toast_title: Label = %ToastTitle
@@ -33,6 +34,11 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _rep: Label = %Rep
 @onready var _badge: TextureRect = %Badge
 var _hearts: Array[TextureRect] = []
+var _rec_start: Dictionary = {}                 # recordes no inicio do run (Main.set_records)
+var _rec_value: Dictionary = {}                 # id -> Label do valor no placar
+var _rec_best: Dictionary = {}                  # id -> Label "/recorde" (ou do recorde do dinheiro)
+var _rec_beaten: Dictionary = {}                # id -> ja passou o recorde neste run (pulsa/toca uma vez)
+var _money_bar: ProgressBar = null
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -56,8 +62,7 @@ func _ready() -> void:
 		_rep_panel.move_child(h, 1 + i)
 		_hearts.append(h)
 	(%DistIcon as TextureRect).texture = UiKit.icon("distance")
-	(%MoneyIcon as TextureRect).texture = UiKit.icon("credits")
-	(%DeliveriesIcon as TextureRect).texture = UiKit.icon("expedition")
+	_build_score()
 	_need_mark = ColorRect.new()
 	_need_mark.color = Color("#2e222f")                       # contorno ink + miolo dourado (Resurrect 64)
 	_need_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -116,9 +121,108 @@ func _process(delta: float) -> void:
 	else:
 		_dist.text = "escolha uma entrega"
 		_dist_icon.flip_h = false
-	_credits.text = EconMath.fmt(GameState.amount("credits"))
-	_deliveries.text = str(run.deliveries.size()) if run != null else ""
+	_update_score()
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
+
+
+## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
+func set_records(start: Dictionary) -> void:
+	_rec_start = start.duplicate()
+	_rec_beaten.clear()
+	for key: String in _rec_best:
+		var rec := float(_rec_start.get(key, 0.0))
+		var l: Label = _rec_best[key]
+		l.text = GameState.record_text(key, rec) if key == "run_money" else "/" + GameState.record_text(key, rec)
+		l.visible = rec > 0.0
+	(_rec_best["run_money"] as Label).get_parent().visible = float(_rec_start.get("run_money", 0.0)) > 0.0
+
+
+## Placar (variante A aprovada): dinheiro grande; barra + trofeu + recorde; grade 2x2 com os outros recordes.
+func _build_score() -> void:
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override(&"separation", 3)
+	var coin := TextureRect.new()
+	coin.texture = UiKit.icon("credits")
+	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coin.custom_minimum_size = Vector2(24, 24)
+	top.add_child(coin)
+	var money := Label.new()
+	money.theme_type_variation = &"BigValueLabel"
+	top.add_child(money)
+	_rec_value["run_money"] = money
+	_score.add_child(top)
+	var bar_row := HBoxContainer.new()
+	bar_row.add_theme_constant_override(&"separation", 3)
+	_money_bar = ProgressBar.new()
+	_money_bar.show_percentage = false
+	_money_bar.theme_type_variation = &"GasBar"
+	_money_bar.custom_minimum_size = Vector2(0, 7)
+	_money_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_money_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar_row.add_child(_money_bar)
+	var trophy := TextureRect.new()
+	trophy.texture = UiKit.icon("trophy")
+	trophy.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	trophy.custom_minimum_size = Vector2(12, 12)
+	bar_row.add_child(trophy)
+	var best := Label.new()
+	best.theme_type_variation = &"DimLabel"
+	bar_row.add_child(best)
+	_rec_best["run_money"] = best
+	_score.add_child(bar_row)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override(&"h_separation", 8)
+	grid.add_theme_constant_override(&"v_separation", 0)
+	for key: String in GameState.RECORDS:
+		if key == "run_money":
+			continue
+		var chip := HBoxContainer.new()
+		chip.add_theme_constant_override(&"separation", 2)
+		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var ic := TextureRect.new()
+		ic.texture = UiKit.icon(str(GameState.RECORDS[key][1]))
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		ic.custom_minimum_size = Vector2(12, 12)
+		ic.tooltip_text = str(GameState.RECORDS[key][0])
+		chip.add_child(ic)
+		var v := Label.new()
+		v.theme_type_variation = &"ValueLabel"
+		chip.add_child(v)
+		var r := Label.new()
+		r.theme_type_variation = &"DimLabel"
+		chip.add_child(r)
+		_rec_value[key] = v
+		_rec_best[key] = r
+		grid.add_child(chip)
+	_score.add_child(grid)
+	set_records({})
+
+
+func _update_score() -> void:
+	if run == null:
+		return
+	var values := run.record_values()
+	for key: String in _rec_value:
+		var v := float(values.get(key, 0.0))
+		var rec := float(_rec_start.get(key, 0.0))
+		var l: Label = _rec_value[key]
+		l.text = GameState.record_text(key, v)
+		var beaten := rec > 0.0 and v > rec
+		if key == "run_money":
+			l.theme_type_variation = &"BigMoneyLabel" if beaten else &"BigValueLabel"
+			_money_bar.value = (v / rec * 100.0) if rec > 0.0 else 0.0
+		else:
+			l.theme_type_variation = &"MoneyLabel" if beaten else &"ValueLabel"
+			(_rec_best[key] as Label).theme_type_variation = &"MoneyLabel" if beaten else &"DimLabel"
+		if beaten and not _rec_beaten.get(key, false):          # passou o recorde agora: pulinho (+ aviso no dinheiro)
+			_rec_beaten[key] = true
+			UiKit.pulse(l.get_parent(), 1.9, 0.5)
+			if key == "run_money":
+				var tw := create_tween()
+				tw.tween_interval(1.6)                          # depois do aviso da entrega
+				tw.tween_callback(_show_toast.bind("NOVO RECORDE!", str(GameState.RECORDS[key][0]), &"MoneyLabel"))
+				tw.tween_callback(Sound.jingle.bind("milestone"))
 
 
 ## Reputacao com o ratinho da entrega em andamento (v14): rostinho + coracoes (cheios = nivel) + bonus. Some sem alvo.

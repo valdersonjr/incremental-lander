@@ -29,6 +29,7 @@ var _run_time := 0.0
 var _run_active := false
 ## Recordes batidos neste run (aparecem no resumo depois do final do jogo).
 var _run_records: Array[String] = []
+var _rec_start: Dictionary = {}                 # recordes no inicio do run (o HUD e o resumo comparam com eles)
 ## Taxi (Passageiro 2-3): distancia do 1o trecho e presente pego nele (pagos ao fim do 2o trecho).
 var _taxi_first_m := 0.0
 var _taxi_gift_pay := 0.0
@@ -189,6 +190,13 @@ func _on_title_play() -> void:
 		_start_run()
 
 
+## Recordes do run ate agora (a cada entrega: bater a nave depois nao perde a marca).
+func _note_records() -> void:
+	var values := _run.record_values()
+	for key: String in values:
+		_note_record(key, float(values[key]))
+
+
 func _note_record(key: String, value: float) -> void:
 	if GameState.note_record(key, value) and not key in _run_records:
 		_run_records.append(key)
@@ -263,6 +271,8 @@ func _start_run() -> void:
 	_run_time = 0.0
 	_run_active = true
 	_run_records.clear()
+	_rec_start = GameState.records.duplicate()
+	_hud.set_records(_rec_start)
 	Events.run_started.emit(GameState.current_planet)
 	_show_offers()
 
@@ -346,9 +356,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	if _run.stars > stars_before:                              # estrela de missao: depois do "entregue"
 		get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
-	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
-	_note_record("longest_hop", float(result["distance"]))
-	_note_record("best_perfect", float(_run.perfect_streak))
+	_note_records()
 	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
 	_hud.show_delivery(_run.deliveries[-1])
 	if bool(_run.deliveries[-1].get("perfect", false)):        # pouso perfeito: estalo, depois da entrega
@@ -374,8 +382,10 @@ func _end_run() -> void:
 	var model_s := _run_time * float(WorldConfig.load_config()["time_scale"])
 	var fleet := GameState.settle_run(_run.earned, model_s)
 	GameState.tick_missions_new()
-	_note_record("best_run", float(_run.earned.get("credits", 0.0)) + float(fleet.get("credits", 0.0)))
+	_note_records()
 	var s := _run.summary()
+	s["rec_values"] = _run.record_values()
+	s["rec_start"] = _rec_start.duplicate()
 	s["fleet"] = fleet
 	s["records"] = _run_records.duplicate()
 	s["road_news"] = GameState.road_news().size()

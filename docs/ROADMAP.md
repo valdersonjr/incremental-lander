@@ -121,8 +121,11 @@
       `RunState.fatigue()` (gás estimado), `Flight.set_fatigue` (eficiência da missão), HUD de entregas sem "/6";
       testes (sem teto; run sempre acaba). MC 3×3 6 h: entregas/run ~2 no começo → ~15 no fim; Gasolina/Eficiência
       compradas (nív. ~50/~34; antes ~14/~7) (2026-10-07)
-- [ ] 17.2 Recordes (godot-dev): run guarda dinheiro, entregas, distância, pousos perfeitos e maior entrega; painel
-      de recordes no HUD (dinheiro em destaque) e resumo com cada número × o melhor; protótipo HTML antes
+- [x] 17.2 Recordes (godot-dev + pixel-art): `RunState.record_values` (dinheiro, entregas, distância, perfeitos, maior
+      entrega); `GameState.RECORDS`/`record_text`; save v4 (migra best_run/best_perfect/longest_hop); HUD placar A
+      (`Hud._build_score`/`set_records`), resumo "troféus" (`RunSummary._add_records`), troféu nos 2 atlas
+      (`ui_kit.py`/`kids_ui.py`); prévias `flight_ui_preview -- --records`, `summary_preview [-- --first]` (2026-10-07).
+      Pendente: som próprio de recorde (hoje: jingle milestone)
 - [ ] 17.3 Paisagens: receitas de relevo (Planície, Colinas, Serra, Vale, Planalto, Crateras, Degraus) sorteadas por
       missão; preview HTML antes; as novas liberadas na Estrada; Δv médio por paisagem conferido no modelo
 

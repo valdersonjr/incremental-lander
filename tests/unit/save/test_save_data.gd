@@ -75,10 +75,10 @@ func test_versao_de_save_mais_nova_nao_carrega() -> void:
 
 func test_recordes_ida_e_volta() -> void:
 	var st := _state()
-	st["records"] = {"best_delivery": 1500.0, "best_perfect": 4.0, "inventado": 9.0}
+	st["records"] = {"best_delivery": 1500.0, "run_perfect": 4.0, "inventado": 9.0}
 	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
 	assert_almost(back["state"]["records"]["best_delivery"], 1500.0)
-	assert_almost(back["state"]["records"]["best_perfect"], 4.0)
+	assert_almost(back["state"]["records"]["run_perfect"], 4.0)
 	assert_false(back["state"]["records"].has("inventado"))
 
 
@@ -125,6 +125,20 @@ func test_v2_vira_estrelas_acumuladas() -> void:
 	assert_false(back["state"]["levels"].has("contracts"), "upgrade Reputacao saiu")
 	assert_false(back["state"]["records"].has("best_combo"))
 	assert_true((back["state"]["rep_points"] as Dictionary).is_empty())
+
+
+func test_v3_recordes_viram_recordes_do_run() -> void:
+	var raw := {"save_version": 3, "resources": {"credits": 10.0}, "levels": {"thrust": 3}, "stars": 5,
+			"runs_done": 4, "play_seconds": 50.0,
+			"records": {"best_run": 9000.0, "best_perfect": 3.0, "longest_hop": 2500.0, "best_delivery": 1200.0}}
+	var back := SaveData.deserialize(raw)
+	assert_true(back["ok"])
+	var rec: Dictionary = back["state"]["records"]
+	assert_almost(rec["run_money"], 9000.0)
+	assert_almost(rec["run_perfect"], 3.0)
+	assert_almost(rec["run_distance"], 2500.0)
+	assert_almost(rec["best_delivery"], 1200.0)
+	assert_false(rec.has("best_run"))
 
 
 func test_estrada_e_reputacao_ida_e_volta() -> void:

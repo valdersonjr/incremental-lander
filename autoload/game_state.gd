@@ -20,12 +20,14 @@ var records: Dictionary = {}          # recordes pessoais (pos-jogo): RECORDS ->
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
 const ASSIST_FREE := "nav_arrow"
-## Recordes pessoais (estatistica, nao economia): id -> [nome para o jogador, icone].
+## Recordes pessoais (estatistica, nao economia; v15 "bata seu recorde": todos medidos num run, RunState.record_values):
+## id -> [nome para o jogador, icone 12 px, figura 24 px do cartao do resumo]. A ordem e a da tela (dinheiro primeiro).
 const RECORDS := {
-	"best_delivery": ["maior entrega", "credits"],
-	"longest_hop": ["salto mais longo (m)", "distance"],
-	"best_perfect": ["pousos perfeitos seguidos", "quality"],
-	"best_run": ["run mais rico", "expedition"],
+	"run_money": ["dinheiro num run", "credits", "coin"],
+	"run_deliveries": ["entregas num run", "expedition", "pin"],
+	"run_distance": ["distância voada num run", "distance", "arrow"],
+	"run_perfect": ["pousos perfeitos num run", "quality", "check"],
+	"best_delivery": ["maior entrega", "credits", "coins"],
 }
 
 var _fullscreen_applied := false
@@ -195,6 +197,16 @@ func settle_run(earned: Dictionary, seconds: float) -> Dictionary:
 	if not fleet.is_empty():
 		add_rewards(fleet)
 	return fleet
+
+
+## Valor de um recorde como texto (dinheiro e maior entrega = moedas; distancia em m/km; contagens inteiras).
+static func record_text(key: String, value: float) -> String:
+	match key:
+		"run_money", "best_delivery":
+			return EconMath.fmt(value)
+		"run_distance":
+			return ("%d m" % int(value)) if value < 1000.0 else ("%.1f km" % (value / 1000.0)).replace(".", ",")
+	return "%d" % int(value)
 
 
 ## Registra um valor para um recorde. Retorna true se bateu o recorde anterior (e havia um: a primeira marca nao conta).

@@ -458,13 +458,18 @@ func _records_row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 6)
+	var cup := TextureRect.new()                               # trofeu: "estes sao seus recordes"
+	cup.texture = UiKit.icon("trophy")
+	cup.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	cup.custom_minimum_size = Vector2(12, 12)
+	row.add_child(cup)
 	for key: String in GameState.RECORDS:
 		var v := float(GameState.records.get(key, 0.0))
 		if v <= 0.0:
 			continue
 		var info: Array = GameState.RECORDS[key]
-		var item := UiKit.icon_label(str(info[1]), "%d" % int(v) if key == "best_perfect" else EconMath.fmt(v),
-				&"MoneyLabel" if key in ["best_delivery", "best_run"] else &"ValueLabel")
+		var item := UiKit.icon_label(str(info[1]), GameState.record_text(key, v),
+				&"MoneyLabel" if key in ["run_money", "best_delivery"] else &"ValueLabel")
 		item.tooltip_text = "recorde: " + str(info[0])
 		item.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(item)

@@ -93,6 +93,8 @@ static func theme_for(world: String) -> Theme:
 	_label_var(t, &"DimLabel", color("lilac_grey"))
 	_label_var(t, &"ValueLabel", color("white"))
 	_label_var(t, &"MoneyLabel", color("gold"))
+	_label_var(t, &"BigMoneyLabel", color("gold"), TITLE_SIZE)     # numero principal (placar de recordes)
+	_label_var(t, &"BigValueLabel", color("white"), TITLE_SIZE)
 	_label_var(t, &"DustLabel", color("lavender"))
 	_label_var(t, &"BadLabel", color("red"))
 	_label_var(t, &"GoodLabel", color("leaf"))

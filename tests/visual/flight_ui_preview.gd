@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -20,6 +20,12 @@ func _ready() -> void:
 	for i in 20:
 		await get_tree().process_frame
 	var hud := main.find_child("Hud", true, false) as Hud
+	if "--records" in args:                                   # placar: recordes antigos + 5 entregas feitas neste run
+		hud.set_records({"run_money": 900.0, "run_deliveries": 8.0, "run_distance": 9800.0, "run_perfect": 2.0,
+				"best_delivery": 260.0})
+		for i in 5:
+			hud.run.complete_delivery(1400.0, 0.9, 10.0, [], 0.0, i % 2 == 0)
+		(main.find_child("OfferPanel", true, false) as Control).visible = false
 	if "--crashed" in args:
 		hud._on_delivery_finished({"crashed": true, "reason": "vertical_rapido", "quality": 0.0, "gas_used": 54.9})
 	if "--delivered" in args:                                  # aviso de entrega com plataforma e Reputacao

@@ -16,7 +16,10 @@ var offers: Array[float] = []             # distancias (m do modelo) das ofertas
 var offer_tiers: Array[String] = []       # tipo de plataforma de cada oferta (mesma ordem): normal/narrow/tight
 var rep_points: Dictionary = {}           # Reputacao por ratinho (v14): tipo -> pontos (vem do GameState no inicio do
                                           # run; complete_delivery soma; o Main devolve ao GameState a cada entrega)
-var perfect_streak := 0                   # pousos perfeitos seguidos neste run (recorde)
+var perfect_streak := 0                   # pousos perfeitos seguidos neste run (som do pouso perfeito)
+var perfect_count := 0                    # pousos perfeitos neste run (recorde run_perfect)
+var distance_flown := 0.0                 # metros entregues neste run (taxi soma os 2 trechos; recorde run_distance)
+var best_delivery := 0.0                  # maior pagamento de uma entrega neste run (recorde best_delivery)
 var offer_dirs: Array[int] = []          # lado de cada oferta: 1 = direita, -1 = esquerda
 var offer_mission: Array[Dictionary] = [] # missao de cada oferta ({kind, star, parts})
 var offer_slot: Array[String] = []        # espaco de cada oferta (simple0..2 ou o tipo do ratinho)
@@ -223,11 +226,20 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	deliveries[-1]["rep_kind"] = kind
 	deliveries[-1]["rep_pts"] = pts
 	perfect_streak = perfect_streak + 1 if perfect else 0
+	perfect_count += 1 if perfect else 0
+	distance_flown += distance + leg2_m(taken_mission, distance)
+	best_delivery = maxf(best_delivery, float(rewards.get("credits", 0.0)))
 	stars += int(EconMath.mission_spec().get("stars", {}).get("per_delivery", 1))
 	taken_tier = "normal"
 	taken_dir = 1
 	taken_mission = EconMath.simple_mission()
 	return rewards
+
+
+## Numeros do run para os recordes pessoais (GameState.RECORDS): o dinheiro e so o das entregas (+ presentes).
+func record_values() -> Dictionary:
+	return {"run_money": float(earned.get("credits", 0.0)), "run_deliveries": float(deliveries.size()),
+			"run_distance": distance_flown, "run_perfect": float(perfect_count), "best_delivery": best_delivery}
 
 
 ## Batida: a entrega em andamento e perdida e o run acaba (o que ja foi ganho fica; nao ganha reputacao).

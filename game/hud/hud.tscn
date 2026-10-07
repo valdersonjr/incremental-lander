@@ -138,47 +138,25 @@ theme_type_variation = &"DimLabel"
 
 [node name="Money" type="PanelContainer" parent="."]
 layout_mode = 0
-offset_left = 504.0
+offset_left = 450.0
 offset_top = 6.0
 offset_right = 634.0
 offset_bottom = 30.0
 mouse_filter = 2
 
-[node name="HBox" type="HBoxContainer" parent="Money"]
-layout_mode = 2
-theme_override_constants/separation = 3
-
-[node name="MoneyIcon" type="TextureRect" parent="Money/HBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(12, 12)
-layout_mode = 2
-stretch_mode = 3
-
-[node name="Credits" type="Label" parent="Money/HBox"]
+[node name="Score" type="VBoxContainer" parent="Money"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"MoneyLabel"
-
-[node name="DeliveriesIcon" type="TextureRect" parent="Money/HBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(12, 12)
-layout_mode = 2
-stretch_mode = 3
-
-[node name="Deliveries" type="Label" parent="Money/HBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"ValueLabel"
+theme_override_constants/separation = 1
 
 [node name="RepPanel" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
 offset_left = 500.0
-offset_top = 29.0
+offset_top = 86.0
 offset_right = 634.0
-offset_bottom = 53.0
+offset_bottom = 110.0
 mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 2

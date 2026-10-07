@@ -233,11 +233,15 @@ def icon(name: str) -> Canvas:
         P(["...aaaaa....", "..a.....a...", ".a..bbb..a..", ".a.b...b.a..", ".a.b.w.b.a..", ".a.b...b.a..",
            ".a..bbb..a..", "..a.....a...", "...aaaaa....", "............", "............", "............"],
           {"a": "leaf", "b": "sprout", "w": "white"})
+    elif name == "trophy":                                     # recorde pessoal (2026-10-07, "bata seu recorde")
+        P([".lggggggggl.", "lglllgggggal", "l.ggllggga.l", "l.gglggggg.l", ".lgggggggal.", "..aggggga...",
+           "...aggga....", "....aga.....", ".....a......", "....aaaa....", "...gggggga..", "...aaaaaaa.."],
+          {"l": "lemon", "g": "gold", "a": "amber"})
     return cv
 
 
 ICONS = ["credits", "ore", "stardust", "gas", "thrust", "tank", "efficiency", "reputation", "gear", "refinery",
-         "fleet", "autopilot", "planet", "prestige", "expedition", "options", "distance", "quality"]
+         "fleet", "autopilot", "planet", "prestige", "expedition", "options", "distance", "quality", "trophy"]
 
 
 # ------------------------------------------------------------------ amostra (prévia do estilo no jogo)

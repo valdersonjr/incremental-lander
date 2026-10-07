@@ -25,14 +25,8 @@ func show_summary(summary: Dictionary) -> void:
 	for c in _rows.get_children():
 		_rows.remove_child(c)
 		c.queue_free()
-	_rows.add_child(UiKit.stat_row("expedition", "entregas", "%d" % int(summary["deliveries"])))
-	_rows.add_child(UiKit.stat_row("quality", "qualidade média", "%d%%" % int(float(summary["avg_quality"]) * 100.0)))
-	var icons := {"credits": "credits"}
+	_add_records(summary.get("rec_values", {}), summary.get("rec_start", {}))
 	var names := {"credits": "créditos"}
-	var earned: Dictionary = summary["earned"]
-	for res: String in earned:
-		_rows.add_child(UiKit.stat_row(icons.get(res, "credits"), names.get(res, res), "+" + EconMath.fmt(
-				float(earned[res])), &"MoneyLabel"))
 	var fleet: Dictionary = summary.get("fleet", {})
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
@@ -49,15 +43,88 @@ func show_summary(summary: Dictionary) -> void:
 		(hint.get_child(0) as TextureRect).texture = UiKit.kid("star_on")
 		(hint.get_child(0) as TextureRect).expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_rows.add_child(hint)
-	for key: String in summary.get("records", []):             # recorde batido neste run
-		var info: Array = GameState.RECORDS.get(key, [key, ""])
-		_rows.add_child(UiKit.stat_row(str(info[1]), "NOVO RECORDE: " + str(info[0]), "!", &"GoodLabel"))
 	visible = true
 	# foco visivel no botao, mas so depois de um instante: Espaco (propulsor) apertado na hora da batida nao pula o resumo
 	get_tree().create_timer(FOCUS_DELAY).timeout.connect(func() -> void:
 		if visible and is_inside_tree():
 			_continue.grab_focus())
 	UiKit.pulse(%Panel, 1.3, 0.25)
+
+
+## Recordes (variante "troféus" aprovada): dinheiro do run grande + "NOVO RECORDE!"/recorde; 4 cartões (entregas,
+## distância, pousos perfeitos, maior entrega) que viram troféu quando passam o recorde. 0 = ainda sem recorde.
+func _add_records(values: Dictionary, start: Dictionary) -> void:
+	var money := float(values.get("run_money", 0.0))
+	var rec := float(start.get("run_money", 0.0))
+	var hero := HBoxContainer.new()
+	hero.alignment = BoxContainer.ALIGNMENT_CENTER
+	hero.add_theme_constant_override(&"separation", 4)
+	hero.add_child(_figure(UiKit.icon("credits")))
+	var big := Label.new()
+	big.text = EconMath.fmt(money)
+	big.theme_type_variation = &"BigMoneyLabel"
+	hero.add_child(big)
+	_rows.add_child(hero)
+	var line := HBoxContainer.new()
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.add_theme_constant_override(&"separation", 3)
+	if rec > 0.0 and money > rec:
+		var t := TextureRect.new()
+		t.texture = UiKit.icon("trophy")
+		t.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		line.add_child(t)
+		line.add_child(_label("NOVO RECORDE!", &"MoneyLabel"))
+		line.add_child(_label("antes " + EconMath.fmt(rec), &"DimLabel"))
+	elif rec > 0.0:
+		line.add_child(_label("recorde " + EconMath.fmt(rec), &"DimLabel"))
+	else:
+		line.add_child(_label("seu primeiro recorde!", &"DimLabel"))
+	_rows.add_child(line)
+	var cards := HBoxContainer.new()
+	cards.add_theme_constant_override(&"separation", 4)
+	for key: String in GameState.RECORDS:
+		if key == "run_money":
+			continue
+		var v := float(values.get(key, 0.0))
+		var r := float(start.get(key, 0.0))
+		var beaten := r > 0.0 and v > r
+		var card := PanelContainer.new()
+		card.theme_type_variation = &"SlimPanel"
+		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		card.tooltip_text = str(GameState.RECORDS[key][0])
+		var box := VBoxContainer.new()
+		box.add_theme_constant_override(&"separation", 0)
+		var fig := _figure(UiKit.kid("trophy" if beaten else str(GameState.RECORDS[key][2])))
+		fig.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		box.add_child(fig)
+		var val := _label(GameState.record_text(key, v), &"MoneyLabel" if beaten else &"ValueLabel")
+		val.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(val)
+		var cap := _label("NOVO!" if beaten else ("rec. " + GameState.record_text(key, r) if r > 0.0 else " "),
+				&"MoneyLabel" if beaten else &"DimLabel")
+		cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(cap)
+		card.add_child(box)
+		cards.add_child(card)
+		if beaten:
+			UiKit.pulse(card, 1.6, 0.6)
+	_rows.add_child(cards)
+
+
+static func _figure(tex: Texture2D) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = tex
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.custom_minimum_size = Vector2(24, 24)
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+static func _label(text: String, variation: StringName) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.theme_type_variation = variation
+	return l
 
 
 func _unhandled_input(event: InputEvent) -> void:

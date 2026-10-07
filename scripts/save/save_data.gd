@@ -3,14 +3,16 @@
 class_name SaveData
 extends RefCounted
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 4
 ## Migracoes (_migrate): versao -> funcao que recebe o dict e devolve a versao seguinte.
 ## v1 -> v2 (2026-10-06): sai prestigio, loja, outros mundos e Expedicao (so a Lua por enquanto).
 ## v2 -> v3 (2026-10-07): Estrada das Estrelas — estrelas viram total ACUMULADO (as gastas em nos de missao voltam:
 ## + unlock_cost por no); sai o upgrade Reputacao (filtro da spec) e o recorde de combo (vira pousos perfeitos).
+## v3 -> v4 (2026-10-07): recordes por run ("bata seu recorde"): best_run -> run_money, best_perfect (seguidos) ->
+## run_perfect, longest_hop -> run_distance (um run com aquele salto voou pelo menos isso); best_delivery fica.
 ## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
-const RECORD_IDS := ["best_delivery", "longest_hop", "best_perfect", "best_run"]
+const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
 
 
 ## Monta o dicionario do save a partir do estado do jogo.
@@ -109,6 +111,8 @@ static func _migrate(from_version: int, d: Dictionary) -> Dictionary:
 			return _from_v1(d)
 		2:
 			return _from_v2(d)
+		3:
+			return _from_v3(d)
 	return d
 
 
@@ -131,6 +135,19 @@ static func _from_v2(d: Dictionary) -> Dictionary:
 	if rec is Dictionary:
 		(rec as Dictionary).erase("best_combo")
 	out["save_version"] = 3
+	return out
+
+
+static func _from_v3(d: Dictionary) -> Dictionary:
+	var out := d.duplicate(true)
+	var rec: Variant = out.get("records", {})
+	if rec is Dictionary:
+		var r := rec as Dictionary
+		for pair: Array in [["best_run", "run_money"], ["best_perfect", "run_perfect"], ["longest_hop", "run_distance"]]:
+			if r.has(pair[0]):
+				r[pair[1]] = maxf(_num(r[pair[0]]), _num(r.get(pair[1], 0.0)))
+				r.erase(pair[0])
+	out["save_version"] = 4
 	return out
 
 

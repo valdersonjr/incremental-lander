@@ -122,9 +122,9 @@ func _process(_d: float) -> void:
 			GameState.levels = levels0
 			# recordes: a primeira marca nao e "novo recorde"; superar depois e
 			GameState.records = {}
-			_check("primeira_marca_nao_anuncia", not GameState.note_record("best_perfect", 2.0))
-			_check("superar_anuncia", GameState.note_record("best_perfect", 3.0))
-			_check("pior_nao_anuncia", not GameState.note_record("best_perfect", 1.0))
+			_check("primeira_marca_nao_anuncia", not GameState.note_record("run_perfect", 2.0))
+			_check("superar_anuncia", GameState.note_record("run_perfect", 3.0))
+			_check("pior_nao_anuncia", not GameState.note_record("run_perfect", 1.0))
 			# save ilegivel: guardado a parte, aviso para o jogador, nunca sobrescrito
 			var files := SaveManager.slot_files(2)
 			var f := FileAccess.open(files["path"], FileAccess.WRITE)

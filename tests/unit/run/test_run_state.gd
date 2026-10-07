@@ -65,6 +65,19 @@ func test_run_sempre_acaba_pelo_gas() -> void:
 	assert_true(n > 3, "nave forte ainda faz varias entregas (%d)" % n)
 
 
+func test_numeros_do_run_para_recordes() -> void:
+	var run := RunState.create("luna", stats, 5)
+	run.complete_delivery(500.0, 0.8, 20.0, [], 0.0, true)
+	run.complete_delivery(900.0, 0.9, 20.0, [], 0.0, false)
+	var v := run.record_values()
+	assert_eq(int(v["run_deliveries"]), 2)
+	assert_almost(v["run_distance"], 1400.0, 1e-6)
+	assert_eq(int(v["run_perfect"]), 1)
+	assert_almost(v["run_money"], float(run.earned["credits"]), 1e-6)
+	assert_almost(v["best_delivery"], maxf(float(run.deliveries[0]["rewards"]["credits"]),
+			float(run.deliveries[1]["rewards"]["credits"])), 1e-6)
+
+
 func test_batida_encerra_e_mantem_ganhos() -> void:
 	var run := RunState.create("luna", stats, 5)
 	run.complete_delivery(500.0, 0.8, 20.0)

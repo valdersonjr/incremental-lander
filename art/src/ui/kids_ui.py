@@ -466,6 +466,26 @@ def heart(on: bool) -> Canvas:
     return k
 
 
+def trophy() -> Canvas:
+    """Troféu do recorde pessoal (2026-10-07, "bata seu recorde"): taça dourada com alças em argola, haste e base."""
+    k = _canvas()
+    ox, oy = 4, 3
+    for y in range(9):                                         # taça: larga em cima, afunila
+        hw = 5 if y <= 4 else 9 - y
+        for x in range(8 - hw, 8 + hw):
+            k.px(ox + x, oy + y, "amber" if x >= 10 or y >= 6 else "gold")
+    for x, y in ((2, 1), (1, 1), (0, 2), (0, 3), (0, 4), (1, 5), (2, 6)):   # alças (argola vazada)
+        k.px(ox + x, oy + y, "amber"); k.px(ox + 15 - x, oy + y, "amber")
+    k.rect(ox + 7, oy + 9, 2, 3, "amber")                      # haste
+    k.rect(ox + 4, oy + 12, 8, 2, "gold"); k.rect(ox + 3, oy + 14, 10, 1, "amber")   # base
+    k.hline(ox + 4, ox + 11, oy + 12, "lemon")
+    for y in range(1, 5):                                      # brilho
+        k.px(ox + 5, oy + y, "lemon")
+    k.px(ox + 6, oy + 1, "white"); k.hline(ox + 3, ox + 12, oy, "lemon")
+    k.outline("ink")
+    return k
+
+
 MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
                 "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
 
@@ -474,7 +494,7 @@ NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on"
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
     + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
-    + ["rep_on", "rep_off", "heart_on", "heart_off"]
+    + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"]
 
 
 def build() -> Canvas:
@@ -485,7 +505,8 @@ def build() -> Canvas:
         + [make() for make in MISSION_MICE.values()] \
         + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()] \
         + [rep_badge.shield(True), rep_badge.shield(False)] \
-        + [heart(True), heart(False)]                              # corações da Reputação por ratinho (2026-10-07)
+        + [heart(True), heart(False)] \
+        + [trophy()]                                               # recorde pessoal (2026-10-07)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

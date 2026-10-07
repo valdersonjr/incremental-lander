@@ -56,6 +56,7 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # take_offer (→ taken_tier), complete_delivery(d, q, gás, cargo_ok) via EconMath.delivery_pay;
                               # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/carga p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
+                              # v15: sem teto; fatigue() = EconMath.run_fatigue_mult(entregas); record_values() (recordes do run)
 game/hud/hud.*                # (Fase 11/v14) %RepPanel: rostinho do ratinho da entrega + corações (nível) + bônus; show_reputation_up(kind, lv), "ALVO x m ×N",
                               # show_delivery(entry, rep_next) chamado pelo Main: ganho + plataforma/reputação/carga e
                               # "POUSO PERFEITO! próxima +10%"; terrain.gd escreve o multiplicador sob plataformas difíceis
@@ -71,7 +72,7 @@ scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target
 scripts/ui/mission_text.gd    # MissionText: fala curta (balloon), pedido/regra da janela (ask/say_rule), regra curta (rule) e
                               # explicação (tip/kind_tip) de cada tipo de missão
 game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
-game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
+game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central; v15 _add_records = dinheiro grande + 4 cartões-troféu): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
 autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, road_reached (parada da Estrada), reputation_up(kind, level), settings_changed
 autoload/game_state.gd        # GameState: recursos, níveis, current_planet (sempre "luna"), income_history, recordes,
@@ -169,7 +170,8 @@ export_presets.cfg            # macOS (universal, .zip), Windows (x86_64, pck em
 scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButton, tooltip, scrollbar), icon(nome), icon_label,
                               # color, volume_row(bus), toggle_row (crt_row, shake_row, fullscreen_row), key_row(ação)
                               # (remapear: clica e aperta a tecla; Esc desiste), stat_row, pulse (brilho), crash_text
-game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, créditos, ENTREGA n/6 (ícone), mensagem;
+game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, %Score = placar de recordes (v15:
+                              # _build_score/set_records(início do run)/_update_score; dourado + pulso + "NOVO RECORDE!"), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)
 autoload/telemetry.gd         # Telemetry (só no build de depuração/editor, ou com --telemetry; > 5 MB vira _old):
                               # user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
@@ -183,7 +185,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
-scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/rep_points; recorde best_perfect), ids removidos ignorados
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/rep_points; recorde best_perfect; v3→v4 2026-10-07: recordes por run — run_money/run_deliveries/run_distance/run_perfect/best_delivery), ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
 scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
                               # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift
