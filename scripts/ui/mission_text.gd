@@ -1,11 +1,16 @@
 ## Textos de cada tipo de missao para a interface (nao e economia; os nomes vem de EconMath.mission_kind(kind)["name"]).
 ## balloon(): fala curta do ratinho no cartao do pedido e na telinha "Novo amiguinho!" (2-3 palavras, para criancas).
+## rule(): a regra em poucas palavras, embaixo do balao no cartao do pedido (o que fazer para ganhar).
 ## tip(): explicacao mais longa (tooltips do cartao e da aba PEDIDOS da oficina).
 class_name MissionText
 extends RefCounted
 
 const BALLOON := {"simple": "Leva pra mim!", "heavy": "Tá pesado!", "soft": "Devagarinho!", "fast": "Rápido, derrete!",
 		"passenger": "Me pega!", "taxi": "Me busca!", "tow": "Não deixa bater!", "double": "Duas regras!"}
+const RULE := {"simple": "é só pousar na plataforma", "heavy": "nave pesada: sobe devagar",
+		"soft": "pouse bem devagar", "fast": "chegue antes do relógio",
+		"passenger": "passe devagar perto do ratinho", "taxi": "busque o ratinho e traga de volta",
+		"tow": "a carga no cabo não pode bater"}
 const TIP := {"simple": "entrega simples: é só pousar na plataforma",
 		"heavy": "a nave fica pesada: sobe mais devagar e gasta mais gás",
 		"soft": "pouse bem devagar (a velocidade de pouso fica mais baixa a cada estrela)",
@@ -19,6 +24,17 @@ const TIP := {"simple": "entrega simples: é só pousar na plataforma",
 ## Fala do ratinho do pedido m ({kind, star, parts}); o taxi (passageiro com 2o trecho) tem fala propria.
 static func balloon(m: Dictionary) -> String:
 	return BALLOON.get(_key(m), BALLOON["simple"])
+
+
+## Regra curta do pedido m (Dupla: as duas regras juntas com " + ").
+static func rule(m: Dictionary) -> String:
+	var parts: Array = m.get("parts", [])
+	if str(m.get("kind", "simple")) == "double" and not parts.is_empty():
+		var lines: Array[String] = []
+		for p: Dictionary in parts:
+			lines.append(RULE.get(_key({"kind": p["kind"], "parts": [p]}), ""))
+		return " + ".join(lines)
+	return RULE.get(_key(m), RULE["simple"])
 
 
 ## Explicacao do pedido m (Dupla: as regras das partes, uma por linha).

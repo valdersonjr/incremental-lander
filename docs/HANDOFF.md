@@ -4,6 +4,13 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
+- **Escolha de missão mais clara (2026-10-07)**. Pedido: "não dá pra saber o que as coisas significam". Cartão do
+  `OfferPanel` agora diz tudo em palavras simples: fala do ratinho + **nome do tipo** (spec), **regra curta**
+  (`MissionText.rule`/`RULE`), cada plataforma com o nome (normal/estreita/apertada), rótulo "dificuldade:" nas
+  estrelas, linha "clique numa plataforma para partir" (ou, em vermelho, "o gás pode não dar para chegar lá!"); na fila,
+  o mineiro mostra "perto/médio/longe" em texto (saíram as figuras dist_*). O cartão subiu para logo abaixo da fila
+  (não cobre mais a nave pousada — pendência da 15.6 resolvida). Verificado: check, 96 testes + integrações, capturas
+  `flight_ui_preview -- --no_title --missions --select=soft|simple2`. Pendência: o usuário aprovar jogando.
 - **Jogos salvos: lista compacta + Salvar no jogo (2026-10-07)**. Pedidos: "um embaixo do outro; horas jogadas, gold,
   estrela; tirar a barra; desenho do mapa atual no fundo"; depois "não precisa do botão de apagar, é só sobrescrever;
   tem que dar a opção de salvar dentro do jogo; ficou muito grande". Componente `game/title/save_slots.gd` (`SaveSlots`,

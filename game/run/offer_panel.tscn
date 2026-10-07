@@ -36,17 +36,14 @@ alignment = 1
 [node name="Card" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 7
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 1.0
 anchor_right = 0.5
-anchor_bottom = 1.0
 offset_left = -140.0
-offset_top = -60.0
+offset_top = 92.0
 offset_right = 140.0
-offset_bottom = -6.0
+offset_bottom = 146.0
 grow_horizontal = 2
-grow_vertical = 0
 mouse_filter = 2
 
 [node name="VBox" type="VBoxContainer" parent="Card"]
@@ -91,22 +88,38 @@ size_flags_vertical = 4
 mouse_filter = 2
 theme_override_constants/separation = 3
 
-[node name="Talk" type="MarginContainer" parent="Card/VBox/Row/Right"]
+[node name="Head" type="HBoxContainer" parent="Card/VBox/Row/Right"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Talk" type="MarginContainer" parent="Card/VBox/Row/Right/Head"]
 layout_mode = 2
 size_flags_horizontal = 0
 mouse_filter = 2
 theme_override_constants/margin_left = 5
 
-[node name="Balloon" type="PanelContainer" parent="Card/VBox/Row/Right/Talk"]
+[node name="Balloon" type="PanelContainer" parent="Card/VBox/Row/Right/Head/Talk"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"Balloon"
 
-[node name="Say" type="Label" parent="Card/VBox/Row/Right/Talk/Balloon"]
+[node name="Say" type="Label" parent="Card/VBox/Row/Right/Head/Talk/Balloon"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"BalloonLabel"
+
+[node name="Name" type="Label" parent="Card/VBox/Row/Right/Head"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"MoneyLabel"
+
+[node name="Rule" type="Label" parent="Card/VBox/Row/Right"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"ValueLabel"
 
 [node name="Pads" type="HBoxContainer" parent="Card/VBox/Row/Right"]
 unique_name_in_owner = true
@@ -114,9 +127,20 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 5
 
-[node name="Stars" type="HBoxContainer" parent="Card/VBox/Row/Right"]
+[node name="StarRow" type="HBoxContainer" parent="Card/VBox/Row/Right"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
-alignment = 1
+
+[node name="StarLabel" type="Label" parent="Card/VBox/Row/Right/StarRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DimLabel"
+text = "dificuldade:"
+
+[node name="Stars" type="HBoxContainer" parent="Card/VBox/Row/Right/StarRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4

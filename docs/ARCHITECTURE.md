@@ -59,8 +59,9 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
 game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
                               # com ganho + plataforma/combo/carga; terrain.gd escreve o multiplicador sob plataformas difíceis
 game/run/offer_panel.*        # OfferPanel (v15): fila de chips no alto (%Board/%Chips: rostinho, prêmio, perto/médio/longe do
-                              # mineiro) + cartão embaixo (%Face/%Cargo, balão %Balloon/%Say = MissionText.balloon, %Pads = 3
-                              # botões de plataforma que partem, %Stars). Chip: hover seleciona, clique/Enter parte; ↑/↓
+                              # mineiro, em texto) + cartão logo abaixo da fila (%Face/%Cargo, balão %Balloon/%Say =
+                              # MissionText.balloon + %Name do tipo, %Rule = MissionText.rule, %Pads = 3 botões de plataforma
+                              # com nome que partem, %StarRow "dificuldade:" + %Stars; %Hint = dica de partir/aviso de gás). Chip: hover seleciona, clique/Enter parte; ↑/↓
                               # plataforma, Shift+↑/↓ estrela, 1–9 partem, E encerra (2 toques). Teste: pad_button_center()
 scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target_lift_m, crest_scale, basin_m; mission_shape()
 scripts/ui/mission_text.gd    # MissionText: fala curta (balloon) e explicação (tip/kind_tip) de cada tipo de missão

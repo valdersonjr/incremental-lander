@@ -1,8 +1,9 @@
 ## Escolha do pedido (2026-10-06, versao D aprovada em art/previews/offer_card/; arte: UiKit.kid + balao).
-## No alto, a FILA de rostinhos: um chip por pedido (ratinho do tipo, premio; o mineiro mostra perto/medio/longe).
+## No alto, a FILA de rostinhos (e logo abaixo o cartao, para nao cobrir a nave pousada): um chip por pedido (ratinho do tipo, premio; o mineiro mostra perto/medio/longe).
 ## Cinza = o gas nao chega (continua escolhivel). Embaixo, o CARTAO do chip escolhido: ratinho + carga, balao de fala
-## com a regra (MissionText.balloon), as 3 PLATAFORMAS como botoes de partir (cada uma com o premio) e, se houver, as
-## estrelas de dificuldade. Sem gas e sem botao "vamos": clicar na plataforma ja parte.
+## com a fala (MissionText.balloon) + nome do tipo, a regra em palavras (MissionText.rule), as 3 PLATAFORMAS como botoes de partir (cada uma com o premio) e, se houver, as
+## estrelas de dificuldade (rotulo "dificuldade:"). Cada plataforma diz o nome (normal/estreita/apertada); o aviso do
+## cartao diz "clique numa plataforma para partir" (ou que o gas pode faltar). Sem gas e sem botao "vamos": clicar na plataforma ja parte.
 ## Mouse: passar no chip mostra o cartao dele; clicar no chip parte com a plataforma marcada; passar numa plataforma
 ## marca, clicar parte. Teclado: setas esquerda/direita andam na fila, cima/baixo trocam a plataforma, Shift + cima/baixo
 ## a estrela, Enter parte; 1..9 (ou teclado numerico) partem direto. E encerra o run (2 toques). Se o jogador tenta
@@ -17,12 +18,13 @@ signal end_requested
 const TIERS := ["normal", "narrow", "tight"]
 const PAD_ICON := {"normal": "pad_normal", "narrow": "pad_narrow", "tight": "pad_tight"}
 ## Botao de plataforma e chip da fila (px da arte).
-const PAD_BUTTON := Vector2(64, 32)
+const PAD_BUTTON := Vector2(64, 40)
 const CHIP := Vector2(35, 50)
 ## Recortes das celulas 24x24 do atlas kids (so o desenho, sem a sobra transparente).
 const CUT_COIN := Rect2(6, 9, 12, 12)
 const CUT_STAR := Rect2(6, 6, 12, 12)
-const CUT_DIST := Rect2(0, 5, 24, 15)
+## Faixas do mineiro (simple0..2), do mais perto ao mais longe.
+const DIST_NAMES := ["perto", "médio", "longe"]
 const CUT_PAD := Rect2(0, 11, 24, 9)
 ## Ultima escolha do jogador por tipo de missao ({kind: [plataforma, estrela]}): pedidos novos ja vem assim.
 static var last_choice: Dictionary = {}
@@ -47,6 +49,9 @@ var _board_y := 0.0
 @onready var _cargo: TextureRect = %Cargo
 @onready var _balloon: PanelContainer = %Balloon
 @onready var _say: Label = %Say
+@onready var _name: Label = %Name
+@onready var _rule: Label = %Rule
+@onready var _star_row: HBoxContainer = %StarRow
 @onready var _pads: HBoxContainer = %Pads
 @onready var _stars: HBoxContainer = %Stars
 
@@ -118,8 +123,10 @@ func _process(delta: float) -> void:
 	elif hint_flash > 0.0:
 		hint_flash -= delta
 		_set_hint("ESCOLHA UM AMIGUINHO PRIMEIRO!", &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel")
+	elif _sel >= 0 and not _infos[_sel]["reachable"]:
+		_set_hint("cuidado: o gás pode não dar para chegar lá!", &"BadLabel")
 	else:
-		_set_hint("", &"DimLabel")
+		_set_hint("clique numa plataforma para partir", &"DimLabel")
 	_board.position.y = _board_y - (3.0 if hint_flash > 0.0 and fmod(hint_flash, 0.4) > 0.2 else 0.0)
 
 
@@ -161,13 +168,13 @@ func _add_chip(i: int) -> void:
 			tr.modulate = Color(0.7, 0.7, 0.75)
 		pin.add_child(tr)
 	var slot: String = _run.offer_slot[i] if i < _run.offer_slot.size() else ""
-	var dist := TextureRect.new()                              # mineiro: perto/medio/longe (simple0..2)
-	dist.custom_minimum_size = Vector2(24, 15)                 # mesma altura em todos (premios alinhados)
-	dist.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var dist := Label.new()                                    # mineiro: perto/medio/longe (simple0..2)
+	dist.custom_minimum_size = Vector2(0, 12)                  # mesma altura em todos (premios alinhados)
+	dist.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	dist.theme_type_variation = &"DimLabel"
 	dist.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if slot.begins_with("simple") and slot.length() > 6:
-		dist.texture = _cut("dist_%d" % (int(slot.substr(6)) + 1), CUT_DIST)
-		dist.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		dist.text = DIST_NAMES[clampi(int(slot.substr(6)), 0, DIST_NAMES.size() - 1)]
 	box.add_child(dist)
 	var prize := Label.new()
 	prize.name = "Prize"
@@ -221,6 +228,8 @@ func _select(i: int) -> void:
 	_face.texture = UiKit.kid(_face_name(info))
 	_cargo.texture = CargoArt.icon(str(info["mission"]["kind"]))
 	_say.text = MissionText.balloon(info["mission"])
+	_name.text = str(EconMath.mission_kind(str(info["mission"]["kind"]))["name"])
+	_rule.text = MissionText.rule(info["mission"])
 	_fill_choices(i)
 
 
@@ -263,6 +272,12 @@ func _fill_choices(i: int) -> void:
 		pad.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(pad)
+		var pad_name := Label.new()
+		pad_name.text = str(EconMath.pad_tier(t)["name"])
+		pad_name.theme_type_variation = &"BalloonLabel" if on else &"ValueLabel"
+		pad_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		pad_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(pad_name)
 		b.tooltip_text = "plataforma %s: paga %s" % [EconMath.pad_tier(t)["name"],
 				UiKit.mult_text(float(EconMath.pad_tier(t)["mult"]))]
 		b.mouse_entered.connect(func() -> void:
@@ -274,7 +289,7 @@ func _fill_choices(i: int) -> void:
 		_pads.add_child(b)
 		_pad_buttons[t] = b
 	var stars: Array[int] = _run.stars_for(i) if _run != null else []
-	_stars.visible = stars.size() > 1
+	_star_row.visible = stars.size() > 1
 	for st: int in stars:
 		var b := _choice_button(Vector2(36, 14), st == star)
 		var row := HBoxContainer.new()
