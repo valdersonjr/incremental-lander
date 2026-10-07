@@ -32,8 +32,8 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
   - **Reputação** (v13, substitui o Combo): **pouso perfeito** (nave reta e macia: inclinação ≤ 25% e V.vert ≤ 40% do
     limite, `world.json > landing.perfect`) → a **próxima** entrega vale **+10%** (não acumula); outro pouso → sem bônus;
-    bater → perde a atual e a próxima. Fica guardada entre runs. Selo REPUTAÇÃO +10% no HUD (aceso/apagado) e
-    "com reputação +10%" no Você ganha.
+    bater → perde a atual e a próxima. Fica guardada entre runs. **Badge** no HUD (escudinho do ratinho: dourado aceso /
+    cinza apagado, + "+10%") e o mesmo badge no "Você ganha".
   - **Presentes no alto do morro (v10, 2026-10-06)**: metade dos saltos tem um presente no ponto mais alto do relevo
     entre as plataformas. Encostar **devagar** pega (perto e < 6 m/s; não é pouso). **Galão de gás** devolve 30% do
     tanque na hora; **presentinho** vale 30% do pagamento-base, pago junto com a entrega (bater perde). Opcional: descer

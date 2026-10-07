@@ -31,6 +31,8 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _toast_extra: Label = %ToastExtra
 @onready var _rep_panel: Control = %RepPanel
 @onready var _rep: Label = %Rep
+@onready var _badge: TextureRect = %Badge
+var _rep_was_on := false
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -109,12 +111,19 @@ func _process(delta: float) -> void:
 	_update_reputation(run.reputation if run != null else GameState.reputation)
 
 
-## Selo de Reputacao: aceso = a proxima entrega vale +bonus (houve pouso perfeito); apagado = pouse reto e macio.
+## Badge da Reputacao (escudinho do ratinho, atlas kids rep_on/rep_off): aceso = a proxima entrega vale +bonus
+## (houve pouso perfeito); apagado = cinza. Ao acender, da um pulinho.
 func _update_reputation(on: bool) -> void:
 	_rep_panel.visible = flight != null
-	_rep.text = "REPUTAÇÃO +%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
+	_rep.text = "+%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
 	_rep.theme_type_variation = &"MoneyLabel" if on else &"DimLabel"
-	_rep_panel.modulate.a = 1.0 if on else 0.55
+	_badge.texture = UiKit.kid("rep_on" if on else "rep_off")
+	_rep_panel.tooltip_text = "reputação: a próxima entrega vale +%d%%" % roundi(EconMath.reputation_bonus() * 100.0) \
+			if on else "pouse reto e macio para a próxima entrega valer mais"
+	if on and not _rep_was_on:
+		_badge.pivot_offset = Vector2(12, 12)
+		UiKit.pulse(_badge, 1.8, 0.4)
+	_rep_was_on = on
 
 
 ## "Da pra chegar?": marquinha na barra no gas que deve sobrar ao chegar pelo arco ideal (conta feita na decolagem;

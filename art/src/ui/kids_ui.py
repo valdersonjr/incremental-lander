@@ -16,6 +16,8 @@ sys.path.insert(0, ".claude/skills/pixel-art/scripts")
 sys.path.insert(0, "art/src/bg"); sys.path.insert(0, "art/src/terrain"); sys.path.insert(0, "art/src/sprites")
 from pixelart import *
 import moon_cute as mc
+sys.path.insert(0, "art/src/ui")
+import rep_badge
 
 CELL = 24
 FUR = ["white", "white", "cream", "peach"]
@@ -456,7 +458,8 @@ MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft"
 NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on", "star_off", "coins", "ship",
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
-    + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"]
+    + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
+    + ["rep_on", "rep_off"]
 
 
 def build() -> Canvas:
@@ -465,7 +468,8 @@ def build() -> Canvas:
              coins(), ship(), flame(False), flame(True), gas_bar(False), gas_bar(True), drop(True), drop(False),
              coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()] \
         + [make() for make in MISSION_MICE.values()] \
-        + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()]
+        + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()] \
+        + [rep_badge.shield(True), rep_badge.shield(False)]          # badge da Reputação (escolhido: escudinho, 2026-10-07)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

@@ -26,6 +26,13 @@
   O 1º rabinho (fino, 1 px de ponta) parecia solto: gordinho de 4 px na base.
 - Fonte extra: https://icelivin.itch.io/dialog-bubbles (balões de diálogo pixel em 9-slice, rabinho como peça à parte)
 
+## Badge da Reputação (2026-10-07)
+- Pedido: "o indicador de reputação na tela poderia ser um badge". 3 propostas em HTML (medalha com coração, roseta com
+  estrela, escudinho do ratinho), cada uma acesa/apagada e montada sobre a captura do HUD. **Escolhido: escudinho do
+  ratinho** (`art/src/ui/rep_badge.py`, células `rep_on`/`rep_off` do atlas kids). Apagado = mesma forma em cinza
+  (mist/steel), o padrão de buff ativo/inativo; ao acender dá um pulinho (UiKit.pulse).
+- Lição: fitas de medalha em 24 px somem atrás do disco; forma de escudo lê melhor e o rostinho conversa com os ratinhos.
+
 ## Fontes
 - https://www.shadcn.io/icon/game-icons-padlock (forma clássica do cadeado: alça em arco + corpo + fechadura)
 - https://itch.io/post/16155772 (idle: mostrar o próximo desbloqueio para o jogador poder se planejar)
@@ -34,3 +41,4 @@
 ## Despertador (2026-10-07)
 `clock`: tempo jogado nos cartões de save. Sininhos gold nos cantos de cima, disco `sky` + mostrador branco/mist,
 ponteiros ink (12h e 3h) com pino raspberry; lê bem em 16 px.
+- https://design.tutsplus.com/tutorials/quick-tip-create-a-nice-award-medal-icon--vector-4433 — anatomia de medalha (disco + fitas)

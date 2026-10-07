@@ -44,6 +44,8 @@
     "dist_3",
     "check",
     "cross",
-    "clock"
+    "clock",
+    "rep_on",
+    "rep_off"
   ]
 }

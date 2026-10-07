@@ -56,7 +56,7 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # take_offer (→ taken_tier), complete_delivery(d, q, gás, cargo_ok) via EconMath.delivery_pay;
                               # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/carga p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
-game/hud/hud.*                # (Fase 11/v13) selo REPUTAÇÃO +10% (%RepPanel: aceso/apagado), "ALVO x m ×N",
+game/hud/hud.*                # (Fase 11/v13) badge da Reputação (%RepPanel: escudinho rep_on/rep_off + "+10%"), "ALVO x m ×N",
                               # show_delivery(entry, rep_next) chamado pelo Main: ganho + plataforma/reputação/carga e
                               # "POUSO PERFEITO! próxima +10%"; terrain.gd escreve o multiplicador sob plataformas difíceis
 game/run/offer_panel.*        # OfferPanel (2026-10-07, janela de conversa): %Dim escurece o mapa; %Chips = TODOS os tipos de

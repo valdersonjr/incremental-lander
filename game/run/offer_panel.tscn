@@ -206,12 +206,20 @@ layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"TitleLabel"
 
+[node name="RepBadge" type="TextureRect" parent="Window/VBox/Bottom"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+stretch_mode = 3
+
 [node name="RepTag" type="Label" parent="Window/VBox/Bottom"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"MoneyLabel"
-text = "com reputação +10%"
+text = "+10%"
 
 [node name="Spacer" type="Control" parent="Window/VBox/Bottom"]
 layout_mode = 2

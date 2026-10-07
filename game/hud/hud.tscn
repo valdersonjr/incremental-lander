@@ -171,22 +171,30 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"ValueLabel"
 
-[node name="RepPanel" type="PanelContainer" parent="."]
+[node name="RepPanel" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
-offset_left = 504.0
-offset_top = 32.0
+offset_left = 560.0
+offset_top = 29.0
 offset_right = 634.0
-offset_bottom = 50.0
+offset_bottom = 53.0
 mouse_filter = 2
-theme_type_variation = &"SlimPanel"
+theme_override_constants/separation = 2
+alignment = 2
+
+[node name="Badge" type="TextureRect" parent="RepPanel"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_filter = 2
+stretch_mode = 3
 
 [node name="Rep" type="Label" parent="RepPanel"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MoneyLabel"
-horizontal_alignment = 1
+text = "+10%"
 
 [node name="Footer" type="HBoxContainer" parent="."]
 layout_mode = 1
