@@ -82,10 +82,7 @@ game/title/title_backdrop.*   # TitleBackdrop: cena PRÓPRIA do título (não us
                               # de sobra), nuvens à deriva, estrelas cintilando (_draw), estrela cadente a cada 7–13 s.
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: _clear_run, sem Flight; fundo = TitleBackdrop;
                               # logo + frase + coluna de botões à esquerda; subtelas no painel do meio). Jogar · Sandbox ·
-                              # Opções · Sair. Jogar abre 5 cartões em LISTA VERTICAL à direita do logo (um por jogo
-                              # salvo: faixa do mapa do jogo no fundo = assets/ui/save_bg_<mundo>.png; "Jogo N" + tempo
-                              # (despertador), créditos e estrelas; vazio = "+ Novo jogo"; Apagar ao lado, 2 cliques;
-                              # em uso = moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
+                              # Opções · Sair. Jogar abre a lista SaveSlots (PLAY) + Voltar. Sinais play_requested (continuar sem os cartões; só testes),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso; o fundo não depende mais do save), quit_requested; opções = volumes.
                               # Main._open_hangar monta o mundo (_build_hangar_world) quando não há Flight (vindo do título).
@@ -101,6 +98,11 @@ game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS
                               # tem "Menu inicial" (despausa; o run acaba, entregas já pagas) mas não "Novo jogo".
                               # open(Mode.HANGAR): "MENU" (Hangar.menu_requested → Main esconde o hangar); sinais
                               # title_requested, new_game_requested (Main: SaveManager.new_game → hangar), closed → hangar.
+game/title/save_slots.gd      # SaveSlots (VBox): 5 cartões compactos 250x28, um embaixo do outro: faixa do mapa do jogo
+                              # no fundo (assets/ui/save_bg_<mundo>.png, sem escalar), "Jogo N" + tempo (despertador),
+                              # créditos e estrelas; em uso = moldura dourada. SEM apagar. PLAY (menu inicial): com jogo →
+                              # slot_play_requested, vazio → new_game_requested. SAVE (menu do jogo): grava o jogo em uso
+                              # no espaço (SaveManager.save_to_slot; por cima de OUTRO jogo pede 2º clique) → slot_saved.
 game/hangar/hangar.*          # Hangar em ABAS (Q/E): NAVE (oficina: nave no meio + cartões; Piloto automático com cadeado
                               # até comprar Frota) | PEDIDOS (_add_missions: linha por tipo, cartões ★1-★3 com preço em
                               # estrelas / TEM / cadeado) | AJUDAS (árvore do Painel de bordo). Cabeçalho: créditos + faixa de RECORDES

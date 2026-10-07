@@ -34,7 +34,7 @@ func _ready() -> void:
 	(title.find_child("Play", true, false) as Button).pressed.emit()
 	await _frames(3)
 	var cards := title.find_children("*", "Button", true, false).filter(func(b: Node) -> bool:
-		return str(b.get_meta(&"focus_key", "")).begins_with("slot:"))
+		return b is Button and b.get_parent() is SaveSlots)
 	if not title.visible or cards.size() != SaveManager.SLOTS:
 		fails.append("Jogar deveria abrir %d cartoes (veio %d)" % [SaveManager.SLOTS, cards.size()])
 	else:
@@ -62,6 +62,32 @@ func _ready() -> void:
 	if SaveManager.slot != 2 or not hangar.visible or not is_equal_approx(GameState.amount("credits"), 321.0):
 		fails.append("jogo 2 deveria abrir no hangar com 321 cr (slot=%d hangar=%s cr=%s)" % [SaveManager.slot,
 				hangar.visible, GameState.amount("credits")])
+	# Salvar no menu do jogo: grava o jogo 2 no espaco 4 (vazio: 1 clique) e passa a usar o 4
+	var pause := main.find_child("PauseMenu", true, false) as PauseMenu
+	pause.open(PauseMenu.Mode.HANGAR)
+	pause._open_saves()
+	await _frames(2)
+	var slots := pause._slots
+	(slots.get_child(3) as Button).pressed.emit()
+	await _frames(2)
+	if SaveManager.slot != 4 or not is_equal_approx(float(SaveManager.slot_summary(4)["credits"]), 321.0) \
+			or not SaveManager.slot_summary(2)["ok"]:
+		fails.append("Salvar no espaco 4 vazio deveria gravar la e manter o 2 (slot=%d)" % SaveManager.slot)
+	# por cima do jogo 1 (com jogo, outro espaco): o 1o clique so pede confirmacao
+	SaveManager.save_to_slot(1)
+	SaveManager.load_slot(4)
+	GameState.resources["credits"] = 999.0
+	slots.fill()
+	await _frames(1)
+	(slots.get_child(0) as Button).pressed.emit()
+	await _frames(1)
+	if SaveManager.slot != 4 or is_equal_approx(float(SaveManager.slot_summary(1)["credits"]), 999.0):
+		fails.append("por cima de outro jogo deveria pedir um 2o clique")
+	(slots.get_child(0) as Button).pressed.emit()
+	await _frames(1)
+	if SaveManager.slot != 1 or not is_equal_approx(float(SaveManager.slot_summary(1)["credits"]), 999.0):
+		fails.append("2o clique deveria gravar por cima do jogo 1 (slot=%d)" % SaveManager.slot)
+	pause.close()
 	for n in range(1, SaveManager.SLOTS + 1):
 		SaveManager.delete_slot(n)
 	print("SLOTS_TEST " + ("OK" if fails.is_empty() else "FALHOU " + "; ".join(fails)))

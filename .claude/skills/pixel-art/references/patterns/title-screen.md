@@ -62,10 +62,11 @@ jogo tem que estar na tela; botões em coluna à esquerda.
 
 ## Fundo dos cartões de jogo salvo (2026-10-07)
 Pedido: "lista vertical, com horas jogadas, gold, estrela (sem barra de progresso) e o desenho do mapa atual no fundo".
-- `art/src/ui/save_card_bg.py` → `assets/ui/save_bg_<mundo>.png` (324x38 = miolo do cartão 330x44 menos a borda de
-  3 px). **Sem pintura nova**: monta o 1º quadro das camadas aprovadas do voo (céu, far, mid, plain) e recorta a faixa
+- `art/src/ui/save_card_bg.py` → `assets/ui/save_bg_<mundo>.png` (244x22 = miolo do cartão compacto 250x28 menos a
+  borda de 3 px; o usuário achou a 1ª versão 330x44 grande demais). **Sem pintura nova**: monta o 1º quadro das camadas aprovadas do voo (céu, far, mid, plain) e recorta a faixa
   do horizonte. As camadas são repetidas na horizontal (como no parallax) para o recorte poder passar de x=640.
 - Escolha do recorte (revisão em 3 tentativas): o morro de queijo cortado na borda e a mina/carrinho atrás do
-  "Jogo N" poluíam; ficou x=336 (céu limpo à esquerda para o título, montinhos escuros à direita sob os números).
+  "Jogo N" poluíam; na versão compacta ficou x=420, y=240 (céu limpo à esquerda para o título, só os montinhos; sem cunha/trilho cortados na borda).
+- Confirmação ("Gravar por cima?") em vermelho não lê sobre a arte: o cartão fica liso nesse estado.
 - Texto sobre a arte: contorno `ink` de 4 (outline_size) nos rótulos — legível sem escurecer a arte.
 - Exportar no tamanho exato do cartão e mostrar sem escalar (TextureRect KEEP_CENTERED num Control com clip).

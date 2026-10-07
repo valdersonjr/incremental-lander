@@ -180,6 +180,21 @@ func new_game(n: int = -1) -> void:
 	save_game()
 
 
+## "Salvar" do menu do jogo: grava o jogo em uso no espaco n e passa a usa-lo (o autosave segue nele). Se n tinha
+## outro jogo, ele e substituido (um arquivo ilegivel e guardado a parte antes). O espaco antigo fica como estava.
+func save_to_slot(n: int) -> bool:
+	if sandbox or not enabled:                                # o sandbox nunca grava
+		return false
+	if n != slot:
+		var r := _read_slot(n)
+		if r["exists"] and not r["ok"]:
+			_keep_unreadable(n)
+		_remove_slot_files(n)
+		_use_slot(n)
+	load_warning = ""
+	return save_game()
+
+
 ## Apaga um jogo salvo. Se for o jogo em uso, o estado em memoria volta ao inicio (sem gravar nada).
 func delete_slot(n: int) -> void:
 	if sandbox:                                               # jogos salvos so mudam fora do sandbox

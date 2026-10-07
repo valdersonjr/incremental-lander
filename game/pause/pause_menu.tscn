@@ -47,6 +47,7 @@ text = "PAUSA"
 horizontal_alignment = 1
 
 [node name="Columns" type="HBoxContainer" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 12
 
@@ -120,6 +121,24 @@ layout_mode = 2
 tooltip_text = "salva e volta ao menu inicial (lá você troca de jogo salvo)"
 text = "Menu inicial"
 
+[node name="SaveRow" type="HBoxContainer" parent="Center/Panel/VBox/Columns/Left/Game"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SaveLabel" type="Label" parent="Center/Panel/VBox/Columns/Left/Game/SaveRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Gravar o jogo num espaço"
+
+[node name="SaveButton" type="Button" parent="Center/Panel/VBox/Columns/Left/Game/SaveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 15)
+layout_mode = 2
+tooltip_text = "escolha um dos 5 espaços (pode gravar por cima de outro jogo)"
+text = "Salvar"
+
 [node name="NewGameRow" type="HBoxContainer" parent="Center/Panel/VBox/Columns/Left/Game"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -139,6 +158,24 @@ layout_mode = 2
 tooltip_text = "apaga este jogo: créditos, upgrades, mundos e prestígio (Esc cancela). Os outros jogos salvos não mudam."
 theme_type_variation = &"DangerButton"
 text = "Novo jogo"
+
+[node name="SavesView" type="VBoxContainer" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SavesTitle" type="Label" parent="Center/Panel/VBox/SavesView"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SectionLabel"
+text = "SALVAR EM QUAL ESPAÇO?"
+horizontal_alignment = 1
+
+[node name="SavesBack" type="Button" parent="Center/Panel/VBox/SavesView"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Voltar"
 
 [node name="Gap" type="Control" parent="Center/Panel/VBox"]
 custom_minimum_size = Vector2(0, 2)

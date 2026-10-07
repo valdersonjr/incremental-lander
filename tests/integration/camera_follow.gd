@@ -29,7 +29,7 @@ func _process(_d: float) -> void:
 			(title.find_child("Play", true, false) as Button).pressed.emit()
 		14:
 			for b: Node in title.find_children("*", "Button", true, false):
-				if b.get_meta(&"focus_key", "") == "slot:2":
+				if b.get_meta(&"slot", 0) == 2:
 					(b as Button).pressed.emit()
 		40:
 			_main._offers.offer_chosen.emit(0)

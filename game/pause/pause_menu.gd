@@ -2,7 +2,8 @@
 ## FLIGHT (Esc no voo): "PAUSA", congela a arvore (SceneTree.paused), volumes + controles + Menu inicial (o run acaba;
 ## as entregas feitas ja foram pagas) + CONTINUAR.
 ## HANGAR (Esc/Opções no hangar; a Main esconde o hangar): "MENU", volumes + controles + Menu inicial + Novo jogo
-## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. No sandbox: "Sair do sandbox" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
+## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. Nos dois modos, Salvar abre a lista dos jogos salvos (SaveSlots SAVE)
+## para gravar o jogo num dos espacos (por cima de outro com 2 cliques). No sandbox: "Sair do sandbox" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
 ## Roda com PROCESS_MODE_ALWAYS.
 class_name PauseMenu
 extends Control
@@ -32,6 +33,8 @@ const CONTROLS_FIXED := [
 
 var mode := Mode.FLIGHT
 var _confirm_new_game := false
+## Lista dos espacos para Salvar (aberta no lugar das colunas).
+var _slots: SaveSlots = null
 
 
 func _ready() -> void:
@@ -43,6 +46,17 @@ func _ready() -> void:
 		get_tree().paused = false
 		title_requested.emit())
 	%NewGame.pressed.connect(_on_new_game)
+	%SaveButton.pressed.connect(_open_saves)
+	%SavesBack.pressed.connect(_close_saves)
+	_slots = SaveSlots.new()
+	_slots.mode = SaveSlots.Mode.SAVE
+	_slots.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_slots.slot_saved.connect(func(n: int) -> void:
+		%SavesTitle.text = "Salvo no Jogo %d!" % n
+		%SavesTitle.theme_type_variation = &"GoodLabel"
+		_show_new_game())
+	%SavesView.add_child(_slots)
+	%SavesView.move_child(_slots, 1)
 	%RestoreKeys.pressed.connect(func() -> void:
 		Sound.ui("click")
 		GameState.reset_keys()
@@ -88,6 +102,9 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Ao menu inicial (entregas feitas ficam)"
 	%MenuButton.text = "Sair do sandbox" if sandbox else "Menu inicial"
 	%NewGameRow.visible = hangar and not sandbox                # apagar o jogo so com calma, no hangar
+	%SaveRow.visible = not sandbox                              # o sandbox nunca grava
+	%SaveLabel.text = "Gravar o jogo (agora no Jogo %d)" % SaveManager.slot
+	_close_saves(false)
 	_show_new_game()
 	visible = true
 	if not hangar:
@@ -120,15 +137,40 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
-		if _confirm_new_game:                                  # Esc primeiro desiste da confirmacao
+		if %SavesView.visible:                                 # na lista de espacos: desiste de gravar por cima / volta
+			if not _slots.cancel_confirm():
+				_close_saves()
+		elif _confirm_new_game:                                # Esc primeiro desiste da confirmacao
 			_confirm_new_game = false
 			Sound.ui("click")
 			_show_new_game()
 		else:
 			close()
-	elif event.is_action_pressed(&"confirm"):
+	elif event.is_action_pressed(&"confirm") and not %SavesView.visible:
 		get_viewport().set_input_as_handled()
 		close()
+
+
+## Troca as colunas pela lista dos espacos (o jogo em uso com o foco).
+func _open_saves() -> void:
+	Sound.ui("click")
+	%SavesTitle.text = "SALVAR EM QUAL ESPAÇO?"
+	%SavesTitle.theme_type_variation = &"SectionLabel"
+	%Columns.visible = false
+	%Continue.visible = false
+	%SavesView.visible = true
+	_slots.fill()
+
+
+func _close_saves(sound: bool = true) -> void:
+	if sound:
+		Sound.ui("click")
+	%SavesView.visible = false
+	%Columns.visible = true
+	%Continue.visible = true
+	%SaveLabel.text = "Gravar o jogo (agora no Jogo %d)" % SaveManager.slot
+	if sound:
+		%SaveButton.grab_focus()
 
 
 func _on_new_game() -> void:

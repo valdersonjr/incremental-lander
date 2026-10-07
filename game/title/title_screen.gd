@@ -1,6 +1,6 @@
 ## Menu inicial (tela de titulo) com cena PROPRIA (TitleBackdrop: gatinho heroi no morro de queijo, nada do mapa de
 ## voo). Logo + frase da proposta + coluna de botoes a esquerda; as subtelas abrem no painel do meio.
-## Jogar -> cartoes dos jogos salvos (SaveManager.SLOTS espacos com a progressao; jogar, novo jogo, apagar com 2 cliques) /
+## Jogar -> lista dos jogos salvos (SaveSlots: jogar ou novo jogo; nao ha apagar, grava-se por cima no menu do jogo) /
 ## Sandbox (testar tudo sem progressao: mundo + nave, nada e salvo) / Opcoes (volumes, CRT) / Sair. Emite sinais; a Main
 ## decide o fluxo (carregar, decolar, hangar).
 class_name TitleScreen
@@ -20,15 +20,6 @@ signal sandbox_requested(planet_id: String, strong: bool)
 
 enum Screen { MENU, SAVES, OPTIONS, SANDBOX }
 
-const SLOT_CARD_W := 330
-const SLOT_CARD_H := 44
-const SLOT_DEL_W := 60
-## Borda do cartao que fica sem o fundo do mapa (o contorno/foco do botao continua a vista).
-const SLOT_INSET := 3
-## Posicao do painel: a lista de jogos fica a direita do logo; as outras subtelas no meio, abaixo do logo.
-const PANEL_SAVES := Vector2(-112, 12)
-const PANEL_DEFAULT := Vector2(-90, 116)
-
 const HINTS := {
 	Screen.MENU: "setas: escolher  ·  Enter: confirmar",
 	Screen.SAVES: "setas: escolher  ·  Enter: confirmar  ·  Esc: voltar",
@@ -37,8 +28,8 @@ const HINTS := {
 }
 
 var _screen := Screen.MENU
-## Confirmacao pendente na lista de jogos ("" ou "del:N").
-var _confirm := ""
+## Lista dos jogos salvos (criada ao abrir a tela pela 1a vez).
+var _slots: SaveSlots = null
 ## Escolhas da tela do sandbox.
 var _sb_planet := "luna"
 var _sb_strong := true
@@ -75,28 +66,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
-		if _confirm != "":                                     # Esc primeiro desiste da confirmacao
-			_confirm = ""
-			Sound.ui("click")
-			_fill_saves()
-		elif _screen != Screen.MENU:
+		if _screen != Screen.MENU:
 			_set_screen(Screen.MENU)
 
 
 func _set_screen(s: Screen) -> void:
 	var back_from := _screen
 	_screen = s
-	_confirm = ""
 	_menu.visible = s == Screen.MENU
 	%Panel.visible = s != Screen.MENU                          # no menu, so a coluna da esquerda sobre a cena
-	%Tagline.visible = s != Screen.SAVES                       # a lista de jogos ocupa a direita do logo
-	var at: Vector2 = PANEL_SAVES if s == Screen.SAVES else PANEL_DEFAULT
-	%Panel.offset_left = at.x
-	%Panel.offset_right = -at.x
-	# a lista cresce para a direita (nao invade o logo); as outras crescem para os dois lados
-	%Panel.grow_horizontal = Control.GROW_DIRECTION_END if s == Screen.SAVES else Control.GROW_DIRECTION_BOTH
-	%Panel.offset_top = at.y
-	%Panel.offset_bottom = at.y
 	_saves.visible = s == Screen.SAVES
 	_options.visible = s == Screen.OPTIONS
 	_sandbox.visible = s == Screen.SANDBOX
@@ -126,167 +104,18 @@ func _refresh_menu() -> void:
 
 # --- jogos salvos ------------------------------------------------------------------------------------------------
 
-## Um cartao por espaco (SaveManager.SLOTS, um embaixo do outro): o cartao inteiro e o botao (com jogo: Jogar; vazio:
-## Novo jogo; ilegivel: desabilitado), com o fundo do mapa onde o jogo esta e tempo, creditos e estrelas. Ao lado de
-## cada um, Apagar com 2 cliques.
+## Lista compacta de SaveSlots (com jogo: Jogar; vazio: Novo jogo) + Voltar.
 func _fill_saves() -> void:
-	var focus_key := _focused_key()
-	for c in _saves.get_children():
-		if c.name != &"SavesTitle":
-			_saves.remove_child(c)
-			c.queue_free()
-	var first: Button = null
-	for n in range(1, SaveManager.SLOTS + 1):
-		var s := SaveManager.slot_summary(n)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override(&"separation", 4)
-		_saves.add_child(row)
-		var card := _slot_card(n, s)
-		row.add_child(card)
-		var del := Button.new()
-		del.custom_minimum_size = Vector2(SLOT_DEL_W, 20)
-		del.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		del.theme_type_variation = &"DangerButton"
-		del.set_meta(&"focus_key", "del:%d" % n)
-		del.disabled = not s["exists"]
-		del.text = "Sim, apagar" if _confirm == "del:%d" % n else "Apagar"
-		del.tooltip_text = "apaga este jogo para sempre (Esc cancela)"
-		del.pressed.connect(func() -> void: _on_delete(n))
-		row.add_child(del)
-		if first == null or (s["current"] and not card.disabled):
-			first = card if not card.disabled else del
-	var back := Button.new()
-	back.text = "Voltar"
-	back.set_meta(&"focus_key", "back")
-	back.pressed.connect(func() -> void: _set_screen(Screen.MENU))
-	_saves.add_child(back)
-	var target: Button = _find_focus(focus_key)
-	var btn: Button = target if target != null else first
-	(func() -> void:                                           # adiado; a lista pode ser refeita antes
-		if is_instance_valid(btn) and btn.is_inside_tree():
-			btn.grab_focus()).call_deferred()
-
-
-## Cartao-botao de um espaco: faixa do mapa do jogo no fundo (assets/ui/save_bg_<mundo>.png, recortada no centro),
-## nome a esquerda e, com jogo, tempo jogado, creditos e estrelas a direita; vazio, "+ Novo jogo".
-func _slot_card(n: int, s: Dictionary) -> Button:
-	var card := Button.new()
-	card.custom_minimum_size = Vector2(SLOT_CARD_W, SLOT_CARD_H)
-	card.set_meta(&"focus_key", "slot:%d" % n)
-	var current: bool = s["current"] and s["ok"]
-	if s["ok"]:
-		var bg_path := "res://assets/ui/save_bg_%s.png" % str(s["planet"])
-		if ResourceLoader.exists(bg_path):
-			var clip := Control.new()                          # recorta a faixa sem escalar (pixel nitido)
-			clip.clip_contents = true
-			clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			clip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, SLOT_INSET)
-			var bg := TextureRect.new()
-			bg.texture = load(bg_path)
-			bg.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-			bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			clip.add_child(bg)
-			card.add_child(clip)
-	var box := HBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
-	box.add_theme_constant_override(&"separation", 10)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(box)
-	var title := _card_label("Jogo %d" % n, &"GoodLabel" if current else &"ValueLabel")
-	title.add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)
-	box.add_child(title)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(spacer)
-	if s["ok"]:
-		if current:                                            # jogo em uso: moldura dourada (como a escolha atual)
-			card.tooltip_text = "jogo em uso"
-			var frame := Panel.new()
-			frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-			frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			frame.add_theme_stylebox_override(&"panel", UiKit.gold_frame())
-			card.add_child(frame)
-		card.pressed.connect(func() -> void:
-			Sound.ui("click")
-			slot_play_requested.emit(n))
-		box.add_child(_stat("clock", _fmt_time(float(s["play_seconds"])), &"ValueLabel"))
-		box.add_child(_stat("coin", EconMath.fmt(float(s["credits"])), &"MoneyLabel"))
-		box.add_child(_stat("star_on", str(int(s["stars"])), &"MoneyLabel"))
-	elif s["exists"]:                                          # arquivo ilegivel: so da para apagar
-		card.disabled = true
-		box.add_child(_card_label("save ilegível", &"BadLabel"))
-	else:
-		card.pressed.connect(func() -> void:
-			Sound.ui("click")
-			new_game_requested.emit(n))
-		var plus := _card_label("+", &"DimLabel")
-		plus.add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)
-		box.add_child(plus)
-		box.add_child(_card_label("Novo jogo", &"DimLabel"))
-	return card
-
-
-## Figura do atlas kids (16 px) + numero com contorno escuro, legivel sobre o fundo do mapa.
-func _stat(icon: String, text: String, variation: StringName) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 1)
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var pic := TextureRect.new()
-	pic.texture = UiKit.kid(icon)
-	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	pic.custom_minimum_size = Vector2(16, 16)
-	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(pic)
-	row.add_child(_card_label(text, variation))
-	return row
-
-
-func _card_label(text: String, variation: StringName) -> Label:
-	var l := Label.new()
-	l.text = text
-	l.theme_type_variation = variation
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	l.add_theme_color_override(&"font_outline_color", UiKit.color("ink"))   # legivel sobre o fundo do mapa
-	l.add_theme_constant_override(&"outline_size", 4)
-	return l
-
-
-func _on_delete(n: int) -> void:
-	Sound.ui("click")
-	var key := "del:%d" % n
-	if _confirm != key:
-		_confirm = key
-		_fill_saves()
-		return
-	_confirm = ""
-	var was_current := n == SaveManager.slot
-	SaveManager.delete_slot(n)
-	if was_current:
-		theme = UiKit.theme_for(GameState.current_planet)
-		current_slot_changed.emit()
-	_fill_saves()
-
-
-func _focused_key() -> String:
-	var f := get_viewport().gui_get_focus_owner()
-	if f != null and _saves.is_ancestor_of(f) and f.has_meta(&"focus_key"):
-		return str(f.get_meta(&"focus_key"))
-	return ""
-
-
-func _find_focus(key: String) -> Button:
-	if key == "":
-		return null
-	for b: Node in _saves.find_children("*", "Button", true, false):
-		if b.get_meta(&"focus_key", "") == key and not b.is_queued_for_deletion() and not (b as Button).disabled:
-			return b
-	return null
+	if _slots == null:
+		_slots = SaveSlots.new()
+		_slots.slot_play_requested.connect(func(n: int) -> void: slot_play_requested.emit(n))
+		_slots.new_game_requested.connect(func(n: int) -> void: new_game_requested.emit(n))
+		_saves.add_child(_slots)
+		var back := Button.new()
+		back.text = "Voltar"
+		back.pressed.connect(func() -> void: _set_screen(Screen.MENU))
+		_saves.add_child(back)
+	_slots.fill()
 
 
 # --- opcoes ------------------------------------------------------------------------------------------------------
@@ -376,11 +205,6 @@ func _choice_row(title: String, options: Array, current: String, pick: Callable)
 
 
 # --- utilitarios -------------------------------------------------------------------------------------------------
-
-func _fmt_time(s: float) -> String:
-	var t := int(s)
-	return "%dh%02dm" % [t / 3600, (t % 3600) / 60] if t >= 3600 else "%dm%02ds" % [t / 60, t % 60]
-
 
 func _planet_name(id: String) -> String:
 	for p: Dictionary in EconMath.spec["planets"]:

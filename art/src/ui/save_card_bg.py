@@ -11,9 +11,9 @@ sys.path.insert(0, ".claude/skills/pixel-art/scripts")
 from pixelart import *
 
 W, H = 640, 360
-STRIP_W, STRIP_H = 324, 38            # = miolo do cartão (330x44 menos a borda de 3 px)
-STRIP_TOP = 226                      # morros de fundo + horizonte na base (o chão escuro fica de fora)
-STRIP_X = 336                        # depois do carrinho: céu limpo atrás do "Jogo N", cunha de queijo e montinhos
+STRIP_W, STRIP_H = 244, 22            # = miolo do cartão (250x28 menos a borda de 3 px)
+STRIP_TOP = 240                      # topo dos montinhos até o horizonte (o chão escuro fica de fora)
+STRIP_X = 420                        # depois da mina e da cunha: céu limpo atrás do "Jogo N" e os montinhos
 
 
 def frame0(path: str, frames: int, w: int | None = None) -> Canvas:

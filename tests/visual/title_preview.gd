@@ -1,6 +1,6 @@
-## Previa do menu inicial (cena propria TitleBackdrop; sem voo atras). gdtool.py capture res://tests/visual/title_preview.tscn [-- --progress --options --confirm --planet=id]
+## Previa do menu inicial (cena propria TitleBackdrop; sem voo atras). gdtool.py capture res://tests/visual/title_preview.tscn [-- --progress --options --saves --planet=id]
 ## --progress: com jogo salvo (Continuar + resumo). --options: volumes. --sandbox: tela do sandbox. --saves: lista de jogos salvos (pasta propria
-## user://preview_saves com jogos 1, 3 e 4; nunca le o save real). --confirm: com --saves, apagar pedindo confirmacao.
+## user://preview_saves com jogos 1, 3 e 4; nunca le o save real).
 extends Node
 
 const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
@@ -21,10 +21,8 @@ func _ready() -> void:
 	layer.add_child(t)
 	t.open()
 	if "--saves" in args:
-		_fake_saves()
+		fake_saves()
 		t._set_screen(TitleScreen.Screen.SAVES)
-		if "--confirm" in args:
-			t._on_delete(3)
 	if "--sandbox" in args:
 		t._set_screen(TitleScreen.Screen.SANDBOX)
 	if "--options" in args:
@@ -32,7 +30,7 @@ func _ready() -> void:
 
 
 ## Jogos 1 (em uso), 3 e 4 numa pasta de previa, escritos direto (o SaveManager fica desligado nas previas).
-func _fake_saves() -> void:
+static func fake_saves() -> void:
 	SaveManager.set_dir("user://preview_saves")
 	for n in range(1, SaveManager.SLOTS + 1):
 		SaveManager._remove_slot_files(n)

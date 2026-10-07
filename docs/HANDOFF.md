@@ -4,13 +4,16 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
-- **Jogos salvos em lista vertical (2026-10-07)**: pedido do usuário ("um embaixo do outro; horas jogadas, gold,
-  estrela; tirar a barra; desenho do mapa atual no fundo"). `TitleScreen._fill_saves/_slot_card/_stat`: cartão 330x44
-  com a faixa do mapa (`art/src/ui/save_card_bg.py` → `assets/ui/save_bg_luna.png`, recorte das camadas do voo, sem
-  escalar) + "Jogo N" e despertador/moeda/estrela com contorno ink; Apagar ao lado; painel à direita do logo (frase
-  some só nessa tela). Ícone novo `clock` no atlas kids. Saíram a barra e "N runs". Verificado: check, 96 testes,
-  slots_flow (créditos + estrelas no cartão), esc_flow, save_roundtrip, release_fixes, captura `title_preview -- --saves`.
-  Pendência: o usuário aprovar vendo no jogo.
+- **Jogos salvos: lista compacta + Salvar no jogo (2026-10-07)**. Pedidos: "um embaixo do outro; horas jogadas, gold,
+  estrela; tirar a barra; desenho do mapa atual no fundo"; depois "não precisa do botão de apagar, é só sobrescrever;
+  tem que dar a opção de salvar dentro do jogo; ficou muito grande". Componente `game/title/save_slots.gd` (`SaveSlots`,
+  modos PLAY/SAVE) usado no menu inicial e no menu do jogo (pausa e hangar: linha "Gravar o jogo" → Salvar abre a lista
+  no lugar das colunas; por cima de outro jogo = 2 cliques; o espaço escolhido vira o jogo em uso). `SaveManager.save_to_slot`
+  (guarda à parte um arquivo ilegível antes). Cartão 250x28 com a faixa `assets/ui/save_bg_luna.png`
+  (`art/src/ui/save_card_bg.py`, recorte 244x22 das camadas do voo) + ícone `clock` no atlas kids. Saíram barra, runs
+  e Apagar (o "Novo jogo" da pausa no hangar continua). Verificado: check, 96 testes, todas as integrações (slots_flow
+  ganhou Salvar em vazio e por cima), capturas `title_preview -- --saves` e `pause_preview -- --saves [--overwrite]` (nova).
+  Pendência: o usuário aprovar vendo no jogo; com os 5 espaços cheios, jogo novo só pelo "Novo jogo" do hangar.
 - **Tela inicial própria (2026-10-06, ROADMAP 15.7)**: o título não monta mais o voo da Lua atrás. Cena
   `game/title/title_backdrop.*` (`TitleBackdrop`) com arte de `art/src/title/title_moon.py`: gatinho astronauta herói
   (102x115, `art/src/sprites/cat_hero.py`, k ajustável) acenando/respirando no morro de queijo, bandeira tremulando, nave
