@@ -184,7 +184,7 @@ def ground(cv: Canvas, top: int) -> None:
 
 
 # ------------------------------------------------------------------ cenas (fundo fixo + animado por quadro)
-STAGE = [(0, 0), (10, 22), (22, 36), (36, 42), (56, 44), (74, 43), (90, 36), (102, 20), (108, 0)]
+STAGE = [(0, 0), (9, 24), (18, 40), (27, 43.5), (56, 44), (74, 43), (90, 36), (102, 20), (108, 0)]   # topo largo e plano sob o gatinho (pés no chão)
 
 
 def scene_a_static() -> tuple:

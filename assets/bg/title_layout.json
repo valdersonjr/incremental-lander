@@ -2,7 +2,7 @@
   "notes": "Gerado por art/src/title/title_moon.py (pixel-art). Posi\u00e7\u00f5es = canto de cima-esquerdo dos sprites, em px na tela 640x360. Camadas: sky (fixa), clouds, back, front (parallax).",
   "cat": [
     325,
-    143
+    139
   ],
   "flag": [
     446,
