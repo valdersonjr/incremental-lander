@@ -228,7 +228,7 @@ func _start_run() -> void:
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
 			GameState.missions_new)
-	_run.reputation = GameState.reputation                     # a Reputacao vem do run anterior
+	_run.rep_points = GameState.rep_points.duplicate()        # Reputacao por ratinho (permanente)
 	_force_offer_extras()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
@@ -317,7 +317,6 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		_run.crash(str(result["reason"]))
-		GameState.reputation = _run.reputation                 # bateu: a proxima entrega vem sem bonus
 		_end_run()
 		return
 	if int(result.get("leg", 0)) == 1:                         # taxi: passageiro a bordo, agora o trecho de volta
@@ -338,7 +337,10 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	var stars_before := _run.stars
 	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift,
 			bool(result.get("perfect", false)))
-	GameState.reputation = _run.reputation
+	var rep_kind := str(_run.deliveries[-1].get("rep_kind", "simple"))
+	var rep_before := GameState.rep_level(rep_kind)
+	GameState.rep_points = _run.rep_points.duplicate()
+	var rep_up := GameState.rep_level(rep_kind) > rep_before
 	GameState.add_stars(_run.stars - stars_before)
 	if _run.stars > stars_before:                              # estrela de missao: depois do "entregue"
 		get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
@@ -347,9 +349,15 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_note_record("longest_hop", float(result["distance"]))
 	_note_record("best_perfect", float(_run.perfect_streak))
 	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
-	_hud.show_delivery(_run.deliveries[-1], _run.reputation)
-	if _run.reputation:                                        # pouso perfeito: estalo, depois da entrega
+	_hud.show_delivery(_run.deliveries[-1])
+	if bool(_run.deliveries[-1].get("perfect", false)):        # pouso perfeito: estalo, depois da entrega
 		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % clampi(_run.perfect_streak + 1, 2, 5)))
+	if rep_up:                                                 # subiu a reputacao com o ratinho: festa
+		Events.reputation_up.emit(rep_kind, GameState.rep_level(rep_kind))
+		var tw := _hud.create_tween()                          # tween do HUD: some junto se o run acabar antes
+		tw.tween_interval(0.9)
+		tw.tween_callback(_hud.show_reputation_up.bind(rep_kind, GameState.rep_level(rep_kind)))
+		tw.tween_callback(Sound.jingle.bind("unlock"))
 	_show_offers()
 
 

@@ -46,6 +46,8 @@
     "cross",
     "clock",
     "rep_on",
-    "rep_off"
+    "rep_off",
+    "heart_on",
+    "heart_off"
   ]
 }

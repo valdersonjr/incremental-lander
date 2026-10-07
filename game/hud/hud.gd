@@ -32,7 +32,7 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _rep_panel: Control = %RepPanel
 @onready var _rep: Label = %Rep
 @onready var _badge: TextureRect = %Badge
-var _rep_was_on := false
+var _hearts: Array[TextureRect] = []
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -45,6 +45,16 @@ const MISSION_FAIL := {"soft": "amassou!", "fast": "derreteu!", "tow": "rachou!"
 
 func _ready() -> void:
 	(%GasIcon as TextureRect).texture = UiKit.icon("gas")
+	for i in EconMath.reputation_levels().size():              # coracoes da Reputacao do ratinho da entrega
+		var h := TextureRect.new()
+		h.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		h.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		h.custom_minimum_size = Vector2(15, 15)
+		h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		h.pivot_offset = Vector2(7, 7)
+		_rep_panel.add_child(h)
+		_rep_panel.move_child(h, 1 + i)
+		_hearts.append(h)
 	(%DistIcon as TextureRect).texture = UiKit.icon("distance")
 	(%MoneyIcon as TextureRect).texture = UiKit.icon("credits")
 	(%DeliveriesIcon as TextureRect).texture = UiKit.icon("expedition")
@@ -108,22 +118,29 @@ func _process(delta: float) -> void:
 		_dist_icon.flip_h = false
 	_credits.text = EconMath.fmt(GameState.amount("credits"))
 	_deliveries.text = "%d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
-	_update_reputation(run.reputation if run != null else GameState.reputation)
+	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
 
-## Badge da Reputacao (escudinho do ratinho, atlas kids rep_on/rep_off): aceso = a proxima entrega vale +bonus
-## (houve pouso perfeito); apagado = cinza. Ao acender, da um pulinho.
-func _update_reputation(on: bool) -> void:
-	_rep_panel.visible = flight != null
-	_rep.text = "+%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
-	_rep.theme_type_variation = &"MoneyLabel" if on else &"DimLabel"
-	_badge.texture = UiKit.kid("rep_on" if on else "rep_off")
-	_rep_panel.tooltip_text = "reputação: a próxima entrega vale +%d%%" % roundi(EconMath.reputation_bonus() * 100.0) \
-			if on else "pouse reto e macio para a próxima entrega valer mais"
-	if on and not _rep_was_on:
-		_badge.pivot_offset = Vector2(12, 12)
-		UiKit.pulse(_badge, 1.8, 0.4)
-	_rep_was_on = on
+## Reputacao com o ratinho da entrega em andamento (v14): rostinho + coracoes (cheios = nivel) + bonus. Some sem alvo.
+func _update_reputation(kind: String) -> void:
+	_rep_panel.visible = kind != ""
+	if kind == "":
+		return
+	var lv := GameState.rep_level(kind)
+	_badge.texture = UiKit.kid("rat_" + kind)
+	for i in _hearts.size():
+		_hearts[i].texture = UiKit.kid("heart_on" if i < lv else "heart_off")
+	_rep.text = "+%d%%" % roundi((EconMath.reputation_mult(lv) - 1.0) * 100.0) if lv > 0 else ""
+	_rep_panel.tooltip_text = "reputação com este ratinho: missões cumpridas enchem os corações"
+
+
+## Subiu a reputacao com um ratinho (Main, depois da entrega): aviso e coracoes pulando.
+func show_reputation_up(kind: String, level: int) -> void:
+	var name := str(EconMath.mission_kind(kind).get("name", kind))
+	_show_toast("REPUTAÇÃO!", "%s gosta mais de você: +%d%%" % [name,
+			roundi((EconMath.reputation_mult(level) - 1.0) * 100.0)], &"GoodLabel")
+	for h in _hearts:
+		UiKit.pulse(h, 1.8, 0.4)
 
 
 ## "Da pra chegar?": marquinha na barra no gas que deve sobrar ao chegar pelo arco ideal (conta feita na decolagem;
@@ -206,8 +223,8 @@ func _on_delivery_finished(result: Dictionary) -> void:
 
 
 ## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, reputacao, carga).
-## entry = RunState.deliveries[-1]; rep_next = a proxima entrega tem o bonus da Reputacao (pouso perfeito agora).
-func show_delivery(entry: Dictionary, rep_next: bool) -> void:
+## entry = RunState.deliveries[-1] (rep = bonus do ratinho, rep_pts = pontos de reputacao ganhos, perfect).
+func show_delivery(entry: Dictionary) -> void:
 	var gain := float(entry["rewards"].get("credits", 0.0))
 	var text := "+%s   qualidade %d%%" % [EconMath.fmt(gain), int(float(entry["quality"]) * 100.0)]
 	var parts: Array[String] = []
@@ -224,10 +241,10 @@ func show_delivery(entry: Dictionary, rep_next: bool) -> void:
 		var name := str(EconMath.mission_kind(str(m["kind"]))["name"])
 		parts.append(("%s %s" % [name, UiKit.mult_text(mm)]) if failed.is_empty()
 				else "%s %s" % [MISSION_FAIL.get(str(failed[0]), "falhou"), UiKit.mult_text(mm)])
-	if rep_next:
-		parts.append("POUSO PERFEITO! próxima +%d%%" % roundi(EconMath.reputation_bonus() * 100.0))
-	elif float(entry.get("rep", 1.0)) > 1.0:
-		parts.append("pouso não foi perfeito: próxima sem bônus")
+	if bool(entry.get("perfect", false)):
+		parts.append("POUSO PERFEITO!")
+	if int(entry.get("rep_pts", 0)) > 0:
+		parts.append("+%d reputação" % int(entry["rep_pts"]))
 	_set_status("ENTREGA! " + text, &"GoodLabel")
 	_show_toast("ENTREGA!", text, &"GoodLabel")
 	_toast_extra.text = "  ·  ".join(parts)

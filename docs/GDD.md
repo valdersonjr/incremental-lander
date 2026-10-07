@@ -30,10 +30,12 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   compensa, mas exige gás num salto só.
 - **Variedade das entregas (v7, 2026-10-03)** — cada oferta é uma escolha de risco, não só de distância:
   - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
-  - **Reputação** (v13, substitui o Combo): **pouso perfeito** (nave reta e macia: inclinação ≤ 25% e V.vert ≤ 40% do
-    limite, `world.json > landing.perfect`) → a **próxima** entrega vale **+10%** (não acumula); outro pouso → sem bônus;
-    bater → perde a atual e a próxima. Fica guardada entre runs. **Badge** no HUD (escudinho do ratinho: dourado aceso /
-    cinza apagado, + "+10%") e o mesmo badge no "Você ganha".
+  - **Reputação por ratinho** (v14, substitui o Combo; padrão Death Stranding/Stardew): cada ratinho (tipo de pedido)
+    tem **3 corações** permanentes = **+10% / +20% / +30%** nos pedidos **dele**. Missão com a regra cumprida = 1 ponto,
+    com **pouso perfeito** (reto e macio: inclinação ≤ 25% e V.vert ≤ 40% do limite, `world.json > landing.perfect`) =
+    2 pontos; falhou ou bateu = 0. Limiares provisórios 5/15/30 pontos. No voo: rostinho + corações do ratinho da
+    entrega; no "Você ganha": coração + bônus; ao subir: aviso "X gosta mais de você". Aba **REPUTAÇÃO** na PROGRESSÃO
+    (cartão por ratinho, "faltam N", silhueta dos não liberados; nível máximo = escudinho "melhor amigo!").
   - **Presentes no alto do morro (v10, 2026-10-06)**: metade dos saltos tem um presente no ponto mais alto do relevo
     entre as plataformas. Encostar **devagar** pega (perto e < 6 m/s; não é pouso). **Galão de gás** devolve 30% do
     tanque na hora; **presentinho** vale 30% do pagamento-base, pago junto com a entrega (bater perde). Opcional: descer

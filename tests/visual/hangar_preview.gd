@@ -22,7 +22,7 @@ func _ready() -> void:
 		GameState.resources = {"credits": 4.2e5}
 		GameState.levels.merge({"thrust": 34, "tank": 21, "efficiency": 12, "gear": 9}, true)
 		GameState.records = {"best_delivery": 9.1e4, "longest_hop": 1.2e4, "best_perfect": 4.0, "best_run": 4.4e5}
-		GameState.reputation = true
+		GameState.rep_points = {"simple": 31, "heavy": 16, "soft": 6, "fast": 2}
 	var stars := int(opt.get("stars", "40" if "--late" in args else "0"))
 	var news := int(opt.get("news", "0"))
 	GameState.stars = maxi(0, stars - news)

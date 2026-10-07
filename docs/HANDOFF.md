@@ -10,7 +10,7 @@
   `progression.road` (29 paradas, estrelas ACUMULADAS = rascunho), `contracts.reputation` (+10% na entrega seguinte a um
   pouso perfeito; substitui o combo), sai o upgrade Reputação. Jogo: GameState (stars total, road_reached/road_seen,
   reputation, can_buy), SaveData v3 (migra v2), LandingRules.is_perfect + `world.json > landing.perfect`, selo no HUD e no
-  "Você ganha", tela PROGRESSÃO (hangar reescrito: RoadView, ShipView, RoadText; abas NAVE/AJUDAS/FROTA; ×1/×10/MÁX;
+  "Você ganha" (v14: virou Reputação por ratinho com 3 corações e aba REPUTAÇÃO), tela PROGRESSÃO (hangar reescrito: RoadView, ShipView, RoadText; abas NAVE/AJUDAS/FROTA; ×1/×10/MÁX;
   festa das paradas novas). Verificado: check, 100 testes + 11 integrações, paridade 28 grupos, demo 2400 quadros sem
   erro, capturas `hangar_preview` (--stars, --late, --news, --sel, --tab) e `flight_ui_preview -- --rep`.
   **Próximo**: 16.5 arte (peças que crescem: hoje placeholder em `ShipView._draw`; ícones da estrada; selo) e sons

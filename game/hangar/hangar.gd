@@ -15,10 +15,11 @@ signal title_requested
 ## Esc: abrir o menu do jogo fora da tela.
 signal menu_requested
 
-enum Tab { SHIP, ASSISTS, FLEET }
+enum Tab { SHIP, REPUTATION, ASSISTS, FLEET }
 
 const MISSION_INTRO := preload("res://game/run/mission_intro.tscn")
-const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.ASSISTS, "AJUDAS", "distance"], [Tab.FLEET, "FROTA", "fleet"]]
+const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.REPUTATION, "REPUTAÇÃO", "kid:heart_on"],
+		[Tab.ASSISTS, "AJUDAS", "distance"], [Tab.FLEET, "FROTA", "fleet"]]
 const CARD_W := 184
 const BULK := [[1, "×1"], [10, "×10"], [0, "MÁX"]]          # 0 = maximo possivel
 const TOAST_S := 1.6
@@ -96,6 +97,8 @@ func refresh() -> void:
 	match _tab:
 		Tab.SHIP:
 			_add_ship()
+		Tab.REPUTATION:
+			_add_reputation()
 		Tab.ASSISTS:
 			_add_assists()
 		Tab.FLEET:
@@ -167,7 +170,9 @@ func _fill_tabs() -> void:
 		b.focus_mode = Control.FOCUS_NONE
 		b.custom_minimum_size = Vector2(0, 15)
 		var locked := t == Tab.FLEET and not GameState.road_reached.has("fleet")
-		b.icon = UiKit.kid("lock") if locked else UiKit.icon(info[2])
+		var ic := str(info[2])
+		b.icon = UiKit.kid("lock") if locked else (UiKit.kid(ic.trim_prefix("kid:")) if ic.begins_with("kid:")
+				else UiKit.icon(ic))
 		b.add_theme_constant_override(&"icon_max_width", 12)
 		var news := t != _tab and _tab_has_news(t)
 		b.text = str(info[1]) + (" !" if news else "")
@@ -212,7 +217,7 @@ func _set_tab(t: Tab) -> void:
 
 
 func _cycle_tab(step: int) -> void:
-	var order: Array[Tab] = [Tab.SHIP, Tab.ASSISTS, Tab.FLEET]
+	var order: Array[Tab] = [Tab.SHIP, Tab.REPUTATION, Tab.ASSISTS, Tab.FLEET]
 	var i := order.find(_tab)
 	_set_tab(order[posmod((0 if i < 0 else i) + step, order.size())])
 
@@ -464,6 +469,99 @@ func _records_row() -> HBoxContainer:
 		item.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(item)
 	return row if row.get_child_count() > 0 else null
+
+
+# --- aba REPUTACAO (v14) ----------------------------------------------------------------------------------------
+
+## Um cartao por ratinho (padrao Stardew/Death Stranding): rostinho, nome, coracoes (nivel), bonus nos pedidos dele e
+## quanto falta para o proximo coracao. Ratinho ainda nao liberado: silhueta + lugar na estrada. Nivel maximo ganha o
+## escudinho dourado.
+func _add_reputation() -> void:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 3)
+	_body.add_child(col)
+	var how := Label.new()
+	how.text = "missão cumprida enche o coração do ratinho  ·  pouso perfeito enche o dobro"
+	how.theme_type_variation = &"DimLabel"
+	how.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(how)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override(&"h_separation", 4)
+	grid.add_theme_constant_override(&"v_separation", 3)
+	col.add_child(grid)
+	var open := GameState.missions_unlocked()
+	for k: Dictionary in EconMath.mission_kinds(GameState.current_planet):
+		grid.add_child(_rep_card(str(k["id"]), open.has(k["id"]) or str(k["id"]) == "simple"))
+
+
+func _rep_card(kind: String, open: bool) -> PanelContainer:
+	var pts := int(GameState.rep_points.get(kind, 0))
+	var lv := EconMath.reputation_level(pts)
+	var lvs := EconMath.reputation_levels()
+	var card := PanelContainer.new()
+	card.theme_type_variation = &"SlimPanel"
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.set_meta(&"row_key", "rep:" + kind)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 5)
+	card.add_child(row)
+	var face := _kid_rect("rat_" + kind, 24)
+	row.add_child(face)
+	var mid := VBoxContainer.new()
+	mid.add_theme_constant_override(&"separation", 0)
+	mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(mid)
+	var name := Label.new()
+	name.text = str(EconMath.mission_kind(kind)["name"])
+	mid.add_child(name)
+	var hearts := HBoxContainer.new()
+	hearts.add_theme_constant_override(&"separation", 1)
+	mid.add_child(hearts)
+	for i in lvs.size():
+		hearts.add_child(_kid_rect("heart_on" if i < lv else "heart_off", 15))
+	if lv > 0:
+		var bonus := Label.new()
+		bonus.text = " +%d%%" % roundi((EconMath.reputation_mult(lv) - 1.0) * 100.0)
+		bonus.theme_type_variation = &"MoneyLabel"
+		hearts.add_child(bonus)
+	var right := VBoxContainer.new()
+	right.add_theme_constant_override(&"separation", 1)
+	right.custom_minimum_size = Vector2(96, 0)
+	right.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(right)
+	var info := Label.new()
+	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if not open:
+		face.modulate = Color(0, 0, 0, 0.6)
+		card.modulate = Color(0.7, 0.7, 0.78)
+		info.text = "na estrada: %d" % int(EconMath.road_stop(kind + "1").get("stars", 0))
+		info.theme_type_variation = &"DimLabel"
+		right.add_child(info)
+		return card
+	if lv >= lvs.size():
+		var top := HBoxContainer.new()
+		top.alignment = BoxContainer.ALIGNMENT_CENTER
+		top.add_child(_kid_rect("rep_on", 24))
+		var l := Label.new()
+		l.text = "melhor amigo!"
+		l.theme_type_variation = &"GoodLabel"
+		top.add_child(l)
+		right.add_child(top)
+		return card
+	var prev := int(lvs[lv - 1]["points"]) if lv > 0 else 0
+	var need := int(lvs[lv]["points"])
+	info.text = "faltam %d" % (need - pts)
+	info.theme_type_variation = &"DimLabel"
+	right.add_child(info)
+	var bar := ProgressBar.new()
+	bar.show_percentage = false
+	bar.theme_type_variation = &"XpBar"
+	bar.custom_minimum_size = Vector2(90, 6)
+	bar.max_value = need - prev
+	bar.value = pts - prev
+	right.add_child(bar)
+	return card
 
 
 # --- aba AJUDAS --------------------------------------------------------------------------------------------------

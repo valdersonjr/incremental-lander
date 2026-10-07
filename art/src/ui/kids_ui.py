@@ -451,6 +451,21 @@ def clock() -> Canvas:
     return k
 
 
+def heart(on: bool) -> Canvas:
+    """Coração da Reputação por ratinho (2026-10-07, padrão Stardew): 15x13, cheio rosa com brilho; vazio cinza."""
+    k = _canvas()
+    rows = ["..###...###..", ".#####.#####.", "#############", "#############", "#############", ".###########.",
+            "..#########..", "...#######...", "....#####....", ".....###.....", "......#......"]
+    base, light, dark = ("hot_pink", "salmon", "raspberry") if on else ("steel", "mist", "slate")
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch == "#":
+                k.px(5 + x, 6 + y, dark if (x + y > 13 and on) or (x > 9 and y > 2) else base)
+    k.px(7, 7, light); k.px(8, 7, light); k.px(7, 8, light); k.px(6, 8, "white" if on else light)
+    k.outline("ink")
+    return k
+
+
 MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
                 "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
 
@@ -459,7 +474,7 @@ NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on"
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
     + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
-    + ["rep_on", "rep_off"]
+    + ["rep_on", "rep_off", "heart_on", "heart_off"]
 
 
 def build() -> Canvas:
@@ -469,7 +484,8 @@ def build() -> Canvas:
              coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()] \
         + [make() for make in MISSION_MICE.values()] \
         + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()] \
-        + [rep_badge.shield(True), rep_badge.shield(False)]          # badge da Reputação (escolhido: escudinho, 2026-10-07)
+        + [rep_badge.shield(True), rep_badge.shield(False)] \
+        + [heart(True), heart(False)]                              # corações da Reputação por ratinho (2026-10-07)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

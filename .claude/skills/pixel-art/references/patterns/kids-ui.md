@@ -31,6 +31,8 @@
   estrela, escudinho do ratinho), cada uma acesa/apagada e montada sobre a captura do HUD. **Escolhido: escudinho do
   ratinho** (`art/src/ui/rep_badge.py`, células `rep_on`/`rep_off` do atlas kids). Apagado = mesma forma em cinza
   (mist/steel), o padrão de buff ativo/inativo; ao acender dá um pulinho (UiKit.pulse).
+- Corações (2026-10-07): `heart_on`/`heart_off` 13x11 no atlas kids (Reputação por ratinho, padrão Stardew); o
+  escudinho virou o selo de "melhor amigo!" no nível máximo.
 - Lição: fitas de medalha em 24 px somem atrás do disco; forma de escudo lê melhor e o rostinho conversa com os ratinhos.
 
 ## Fontes

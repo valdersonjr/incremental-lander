@@ -16,6 +16,9 @@ signal stars_changed(amount: int)
 ## Parada da Estrada das Estrelas alcancada agora (GameState._check_road).
 @warning_ignore("unused_signal")
 signal road_reached(stop_id: String)
+## Subiu o nivel de reputacao com um ratinho (tipo de missao) — festa no voo e na PROGRESSAO.
+@warning_ignore("unused_signal")
+signal reputation_up(kind: String, level: int)
 ## Opcoes mudaram (volumes, filtro CRT): quem mostra algo das opcoes se atualiza.
 @warning_ignore("unused_signal")
 signal settings_changed

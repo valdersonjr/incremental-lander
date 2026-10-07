@@ -11,7 +11,7 @@ var stars := 0                        # estrelas ACUMULADAS (1 por entrega; nao 
 var mission_nodes: Array = []         # nos da arvore de missoes ja liberados (ids; vem da Estrada)
 var road_reached: Array = []          # paradas da Estrada das Estrelas ja alcancadas (ids; EconMath.road)
 var road_seen: Array = []             # paradas que o jogador ja viu festejar na PROGRESSAO
-var reputation := false               # Reputacao: a proxima entrega vale +bonus (houve pouso perfeito antes)
+var rep_points: Dictionary = {}       # Reputacao por ratinho (v14): tipo de missao -> pontos (permanentes)
 var missions_new: Dictionary = {}     # tipo recem-liberado -> runs em que ainda aparece mais (new_boost)
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
@@ -55,7 +55,7 @@ func reset() -> void:
 	missions_new = {}
 	road_reached = []
 	road_seen = []
-	reputation = false
+	rep_points = {}
 	runs_done = 0
 	play_seconds = 0.0
 	records = {}
@@ -160,6 +160,11 @@ func _check_road(quiet: bool = false) -> void:
 			Events.road_reached.emit(id)
 
 
+## Nivel de reputacao (0..3) com o ratinho do tipo kind.
+func rep_level(kind: String) -> int:
+	return EconMath.reputation_level(int(rep_points.get(kind, 0)))
+
+
 ## Paradas alcancadas que o jogador ainda nao viu na PROGRESSAO (em ordem).
 func road_news() -> Array:
 	return road_reached.filter(func(id: String) -> bool: return not road_seen.has(id))
@@ -205,7 +210,7 @@ func note_record(key: String, value: float) -> bool:
 func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "current_planet": current_planet,
 			"income_history": income_history, "stars": stars, "mission_nodes": mission_nodes,
-			"missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "reputation": reputation, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
+			"missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "rep_points": rep_points, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -219,7 +224,7 @@ func apply_save_state(st: Dictionary) -> void:
 	missions_new = st.get("missions_new", {})
 	road_reached = st.get("road_reached", [])
 	road_seen = st.get("road_seen", [])
-	reputation = bool(st.get("reputation", false))
+	rep_points = st.get("rep_points", {})
 	runs_done = st["runs_done"]
 	play_seconds = st["play_seconds"]
 	settings = st["settings"]

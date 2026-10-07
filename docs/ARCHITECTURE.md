@@ -56,7 +56,7 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # take_offer (→ taken_tier), complete_delivery(d, q, gás, cargo_ok) via EconMath.delivery_pay;
                               # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/carga p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
-game/hud/hud.*                # (Fase 11/v13) badge da Reputação (%RepPanel: escudinho rep_on/rep_off + "+10%"), "ALVO x m ×N",
+game/hud/hud.*                # (Fase 11/v14) %RepPanel: rostinho do ratinho da entrega + corações (nível) + bônus; show_reputation_up(kind, lv), "ALVO x m ×N",
                               # show_delivery(entry, rep_next) chamado pelo Main: ganho + plataforma/reputação/carga e
                               # "POUSO PERFEITO! próxima +10%"; terrain.gd escreve o multiplicador sob plataformas difíceis
 game/run/offer_panel.*        # OfferPanel (2026-10-07, janela de conversa): %Dim escurece o mapa; %Chips = TODOS os tipos de
@@ -73,13 +73,13 @@ scripts/ui/mission_text.gd    # MissionText: fala curta (balloon), pedido/regra 
 game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, road_reached (parada da Estrada), settings_changed
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, road_reached (parada da Estrada), reputation_up(kind, level), settings_changed
 autoload/game_state.gd        # GameState: recursos, níveis, current_planet (sempre "luna"), income_history, recordes,
                               # settle_run() (paga a frota ao fim do run); ship_stats(), buy_upgrade(), buy_upgrade_max(),
                               # upgrade_rows(), locked_upgrades() (via Purchases/EconMath); opções (volumes, teclas, ajudas);
                               # v13: stars = total ACUMULADO; add_stars() anda na Estrada (_check_road: ratinho → mission_nodes,
                               # habilidade/ajuda → nível 1, Frota/Piloto → can_buy) e emite Events.road_reached; road_reached,
-                              # road_seen, road_news(), mark_road_seen(); reputation (bool, entre runs); can_buy(id);
+                              # road_seen, road_news(), mark_road_seen(); rep_points {tipo: pontos} + rep_level(kind) (v14); can_buy(id);
                               # missions_unlocked(), tick_missions_new() (fim do run)
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
@@ -113,7 +113,8 @@ game/title/save_slots.gd      # SaveSlots (VBox): 5 cartões compactos 250x28, u
                               # no espaço (SaveManager.save_to_slot; por cima de OUTRO jogo pede 2º clique) → slot_saved.
 game/hangar/hangar.*          # Hangar = tela PROGRESSÃO (v13; raiz Control: %Frame + %Balloon + %Toast + MissionIntro): cabeçalho
                               # (abas, ×1/×10/MÁX, moedas, estrelas) | %Road (RoadView) | %Body por aba (Q/E): NAVE (ShipView +
-                              # 4 cartões de peça em degraus de 10, habilidades em cima, recordes embaixo) | AJUDAS (grade 4×2,
+                              # 4 cartões de peça em degraus de 10, habilidades em cima, recordes embaixo) | REPUTAÇÃO (cartão por ratinho:
+                              # corações, bônus, "faltam N", silhueta/estrada, "melhor amigo!") | AJUDAS (grade 4×2,
                               # LIGADA/DESLIGADA ou "na estrada: N") | FROTA (cadeado até a parada; drones + Piloto). open():
                               # a navezinha anda das estrelas vistas até as de agora e as paradas novas festejam (_show_next_news:
                               # ratinho ★1 = MissionIntro, resto = toast + confete). Esc = fecha balão / menu do jogo.
@@ -182,7 +183,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
-scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/reputation; recorde best_perfect), ids removidos ignorados
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/rep_points; recorde best_perfect), ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
 scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
                               # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift

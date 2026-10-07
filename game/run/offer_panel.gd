@@ -329,10 +329,7 @@ func _show_talk(talk: bool) -> void:
 	_cat_say.text = "Hmm... acho que a gasolina não dá!"
 	_accept.disabled = false
 	_total.text = "+" + EconMath.fmt(info["pay_typical"])
-	%RepTag.text = "+%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
-	%RepBadge.texture = UiKit.kid("rep_on")
-	for n: CanvasItem in [%RepBadge, %RepTag]:                 # badge da Reputacao: a entrega vale +bonus
-		n.visible = _run.reputation
+	_fill_rep()
 	_fill_columns()
 	_place_balloons()
 	_update_chip(_kind)
@@ -342,8 +339,18 @@ func _show_talk(talk: bool) -> void:
 func _set_gain_visible(on: bool) -> void:
 	for n: CanvasItem in [%Gain, %Coin, _total]:
 		n.visible = on
-	%RepTag.visible = on and _run != null and _run.reputation
+	%RepTag.visible = on and _run != null and _run.rep_level(_kind) > 0
 	%RepBadge.visible = %RepTag.visible
+
+
+## Reputacao com o ratinho escolhido (v14): coracao + bonus no "Voce ganha" (so com nivel >= 1).
+func _fill_rep() -> void:
+	var lv := _run.rep_level(_kind)
+	%RepBadge.texture = UiKit.kid("heart_on")
+	%RepTag.text = "+%d%%" % roundi((EconMath.reputation_mult(lv) - 1.0) * 100.0)
+	%RepBadge.tooltip_text = "reputação com este ratinho: nível %d de %d" % [lv, EconMath.reputation_levels().size()]
+	for n: CanvasItem in [%RepBadge, %RepTag]:
+		n.visible = lv > 0
 
 
 ## Balao do ratinho encostado nele (direita, meio da cabeca); balao do gatinho no alto, do lado do capacete.

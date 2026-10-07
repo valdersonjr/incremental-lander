@@ -335,8 +335,9 @@ def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
 
 
 # --- Variedade das entregas (v7): plataformas com multiplicador (cristais sairam na v9) ---
-# v13: o combo virou Reputacao (contracts.reputation): pouso perfeito -> a proxima entrega vale +bonus (nao acumula).
-# Espelho GDScript: EconMath.pad_tier / reputation_mult / delivery_pay. Spec sem as chaves = v6 intacta.
+# v14: Reputacao POR RATINHO (contracts.reputation): pontos permanentes por tipo de missao (missao cumprida = points_ok,
+# com pouso perfeito = points_perfect; falhou/bateu = 0); niveis (levels[i].points) dao +bonus nos pedidos DAQUELE
+# ratinho. Espelho GDScript: EconMath.pad_tier / reputation_* / delivery_pay. Spec sem as chaves = v6 intacta.
 
 def pad_tier(E: dict, tier_id: str) -> dict:
     """Tipo de plataforma (contracts.pad_tiers): mult (pagamento), weight (chance na oferta),
@@ -347,18 +348,29 @@ def pad_tier(E: dict, tier_id: str) -> dict:
     return {"id": "normal", "mult": 1.0, "weight": 1.0, "q_drop": 0.0, "crash_mult": 1.0}
 
 
-def reputation_mult(E: dict, active: float) -> float:
-    """Multiplicador da Reputacao (v13): o pouso anterior foi perfeito -> x(1 + bonus). active: 0/1 (no modelo
-    esperado, a chance de estar ativa). No jogo "perfeito" = reto e macio (world.json > landing.perfect); no modelo,
-    q >= reputation.model_q_min."""
-    r = E["contracts"].get("reputation")
-    if not r:
-        return 1.0
-    return 1.0 + r["bonus"] * min(1.0, max(0.0, float(active)))
+def reputation_level(E: dict, points: float) -> int:
+    """Nivel de reputacao (0..len(levels)) de um ratinho com `points` pontos acumulados."""
+    r = E["contracts"].get("reputation") or {}
+    return sum(1 for lv in r.get("levels", []) if points >= lv["points"])
+
+
+def reputation_mult(E: dict, level: int) -> float:
+    """Multiplicador do pagamento dos pedidos de um ratinho no nivel `level` (0 = x1)."""
+    r = E["contracts"].get("reputation") or {}
+    lvs = r.get("levels", [])
+    return 1.0 if level <= 0 or not lvs else 1.0 + lvs[min(level, len(lvs)) - 1]["bonus"]
+
+
+def reputation_points(E: dict, ok: bool, perfect: bool) -> int:
+    """Pontos que uma entrega da ao ratinho: missao cumprida (+ pouso perfeito vale mais); falhou/bateu = 0."""
+    r = E["contracts"].get("reputation") or {}
+    if not ok:
+        return 0
+    return int(r.get("points_perfect", 2) if perfect else r.get("points_ok", 1))
 
 
 def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
-                 rep: float = 0, mission_m: float = 1.0) -> float:
+                 rep: int = 0, mission_m: float = 1.0) -> float:
     """Pagamento de uma entrega concluida: base x qualidade x plataforma x reputacao x carga (o jogo usa a mesma
     conta; mission_m = mission_mult(missao, falhas))."""
     C = E["contracts"]
@@ -625,16 +637,15 @@ def _offer_stream(E: dict, planet: dict, seed: int, extra: int = 256) -> tuple[l
 
 def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random, expected: bool = False,
            stream: tuple | None = None, log: list | None = None, missions: dict | None = None,
-           boost: dict | None = None) -> RunResult:
+           boost: dict | None = None, rep: dict | None = None) -> RunResult:
     """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
     pega a de maior pagamento esperado por gas (plataforma dificil paga mais, mas derruba a qualidade e
-    aumenta a batida de quem pilota pior). Reputacao (v13): pouso perfeito (q >= model_q_min) da +bonus na
-    proxima entrega.
+    aumenta a batida de quem pilota pior). Reputacao (v14): rep = {tipo: nivel} multiplica os pedidos de cada ratinho.
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
     pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita.
     missions = {kind: estrela} liberadas (v12; None = so Simples); boost = {kind: runs} recem-liberados."""
     if mission_kinds(E, planet["id"]):
-        return _do_run_missions(E, planet, stats, prof, rng, expected, stream, log, missions)
+        return _do_run_missions(E, planet, stats, prof, rng, expected, stream, log, missions, rep)
     gas = stats["tank"]
     C = E["contracts"]
     has_tiers = bool(C.get("pad_tiers"))
@@ -661,9 +672,6 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     cargo = C.get("cargo_mass", 0.0)
     arcade = E.get("physics", {}).get("mode", "arcade") == "arcade"
     eff = stats["efficiency"]
-    combo = C.get("reputation")                # Reputacao (v13): pouso perfeito -> proxima entrega +bonus
-    q_min = combo["model_q_min"] if combo else 2.0
-    streak = 0.0                              # Reputacao ativa (0/1; esperado: chance)
     cg_pay, cg_dv, cg_t = mission_expect(E, planet, prof, stats, missions, boost)
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     cg_dv *= 1.0 + gf_dv                      # buscar o presente custa um pouco de gas
@@ -701,19 +709,15 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         gas -= best_gas
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
-        cm = reputation_mult(E, streak)
-        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + gf_pay)
+        cm = 1.0
+        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cg_pay + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof) * cg_t
         if expected:
             pay *= (1 - pc)
-            if combo:
-                streak = _p_good(prof, tier, q_min)
         elif rng.random() < pc:
             crashed = True
             break
-        elif combo:
-            streak = 1.0 if q >= q_min else 0.0
         if log is not None:
             log.append((best, tier["id"], q, cm))
         for k, w in rewards_w.items():
@@ -789,7 +793,8 @@ CRASH_RISK_K = 3.0      # escolha de plataforma/estrela: (1 - chance de bater)^K
 
 
 def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
-                     stream: tuple | None, log: list | None, missions: dict | None) -> RunResult:
+                     stream: tuple | None, log: list | None, missions: dict | None,
+                     rep: dict | None = None) -> RunResult:
     """Run com missoes (v12.1): um pedido por espaco (3 da Simples + 1 por ratinho liberado); o jogador escolhe no
     cartao o tamanho da plataforma e a estrela -> o modelo escolhe a combinacao de maior valor esperado por gas."""
     unlocked = missions or {"simple": 1}
@@ -799,8 +804,6 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     qbonus = C.get("quality_bonus", 0.5)
     qexp = C.get("quality_exp", 1.0)
     max_per_run = C.get("max_per_run", 10 ** 9)
-    combo = C.get("reputation")                # Reputacao (v13): pouso perfeito -> proxima entrega +bonus
-    q_min = combo["model_q_min"] if combo else 2.0
     tiers = C.get("pad_tiers") or [{"id": "normal", "mult": 1.0}]
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     rewards_w = planet.get("rewards", {"credits": 1.0})
@@ -840,7 +843,6 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     n = 0
     maxd = dist = 0.0
     crashed = False
-    streak = 0.0                              # Reputacao ativa (0/1; esperado: chance)
     while n < max_per_run:
         pick, best_score = None, 0.0
         for sl, it in items.items():
@@ -855,19 +857,15 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         gas -= g_need
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
-        cm = reputation_mult(E, streak)
+        cm = reputation_mult(E, (rep or {}).get("simple" if pick.startswith("simple") else pick, 0))
         pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, d, stats, prof) * ch["t"]
         if expected:
             pay *= (1 - pc)
-            if combo:
-                streak = _p_good(prof, tier, q_min)
         elif rng.random() < pc:
             crashed = True
             break
-        elif combo:
-            streak = 1.0 if q >= q_min else 0.0
         if log is not None:
             log.append((d, tier["id"], q, cm, pick, ch["star"]))
         for k, w in rewards_w.items():
@@ -1013,6 +1011,8 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     # estrada (v13, progression.road): estrelas ACUMULADAS (nao se gastam) liberam as paradas sozinhas
     road = road_spec(E)
     reached: set = set()
+    rep_pts: dict = {}     # Reputacao por ratinho (v14): tipo -> pontos (permanentes)
+    RQ = (E["contracts"].get("reputation") or {}).get("model_q_min", 2.0)
     mu = missions_unlocked(E, owned) if MS else None
     boost: dict = {}
 
@@ -1027,7 +1027,13 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
 
     while t < hours * 3600 and runs < max_runs:
         stats = stats_now()
-        r = do_run(E, planets[current], stats, prof, rng, missions=mu, boost=boost)
+        rep_lv = {k: reputation_level(E, v) for k, v in rep_pts.items()}
+        dlog: list = []
+        r = do_run(E, planets[current], stats, prof, rng, missions=mu, boost=boost, rep=rep_lv, log=dlog)
+        for entry in dlog[:r.deliveries]:          # entrega feita (modelo: falha de regra ja esta no pagamento medio)
+            if len(entry) >= 6:
+                kind = "simple" if str(entry[4]).startswith("simple") else str(entry[4])
+                rep_pts[kind] = rep_pts.get(kind, 0) + reputation_points(E, True, entry[2] >= RQ)
         runs += 1
         if MS:
             boost = {k: v - 1 for k, v in boost.items() if v > 1}
@@ -1217,7 +1223,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             if goal.get("stop", True):
                 break
     res.final = {"t_h": t / 3600, "runs": runs, "levels": levels, "unlocked": sorted(unlocked), "shop": shop,
-                 "missions": sorted(owned) if MS else [], "stars": stars if MS else 0,
+                 "missions": sorted(owned) if MS else [], "stars": stars if MS else 0, "reputation": {k: reputation_level(E, v) for k, v in rep_pts.items()},
                  "money": money, "lifetime": lifetime, "prestige_points": ppoints, "stats": stats_now()}
     return res
 

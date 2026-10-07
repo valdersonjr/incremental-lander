@@ -8,6 +8,7 @@ const SAVE_VERSION := 3
 ## v1 -> v2 (2026-10-06): sai prestigio, loja, outros mundos e Expedicao (so a Lua por enquanto).
 ## v2 -> v3 (2026-10-07): Estrada das Estrelas — estrelas viram total ACUMULADO (as gastas em nos de missao voltam:
 ## + unlock_cost por no); sai o upgrade Reputacao (filtro da spec) e o recorde de combo (vira pousos perfeitos).
+## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
 const RECORD_IDS := ["best_delivery", "longest_hop", "best_perfect", "best_run"]
 
@@ -26,7 +27,7 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"missions_new": state.get("missions_new", {}).duplicate(),
 		"road_reached": state.get("road_reached", []).duplicate(),
 		"road_seen": state.get("road_seen", []).duplicate(),
-		"reputation": bool(state.get("reputation", false)),
+		"rep_points": state.get("rep_points", {}).duplicate(),
 		"runs_done": state["runs_done"],
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
@@ -59,7 +60,7 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"missions_new": {},
 		"road_reached": _filter_ids(d.get("road_reached", []), _road_ids()),
 		"road_seen": _filter_ids(d.get("road_seen", []), _road_ids()),
-		"reputation": d.get("reputation", false) is bool and bool(d.get("reputation", false)),
+		"rep_points": {},
 		"runs_done": maxi(0, int(_num(d.get("runs_done", 0)))),
 		"play_seconds": maxf(0.0, _num(d.get("play_seconds", 0.0))),
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
@@ -77,6 +78,7 @@ static func deserialize(raw: Variant) -> Dictionary:
 			warnings.append("missao '%s' nao existe mais na spec: ignorada" % n)
 	var kind_ids: Array = EconMath.mission_spec().get("kinds", []).map(func(k: Dictionary) -> String: return k["id"])
 	st["missions_new"] = _filter_numbers(d.get("missions_new", {}), kind_ids, "missao nova", warnings, true)
+	st["rep_points"] = _filter_numbers(d.get("rep_points", {}), kind_ids, "reputacao", warnings, true)
 	var hist: Variant = d.get("income_history", [])
 	for h: Variant in (hist if hist is Array else []):
 		if h is Dictionary and h.get("earned") is Dictionary:

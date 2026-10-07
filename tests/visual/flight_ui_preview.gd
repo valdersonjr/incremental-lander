@@ -8,8 +8,8 @@ const MAIN := preload("res://game/main.tscn")
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	if "--rep" in args:                                        # Reputacao acesa (pouso perfeito no run anterior)
-		GameState.reputation = true
+	if "--rep" in args:                                        # reputacao com o mineiro no nivel 2
+		GameState.rep_points = {"simple": int(EconMath.reputation_levels()[1]["points"])}
 	if "--sandbox" in args:                                    # sessao de sandbox (nave forte)
 		Sandbox.begin("luna", true)
 	if "--missions" in args:                                   # todos os ratinhos liberados (cartao com estrelas)
@@ -23,9 +23,8 @@ func _ready() -> void:
 	if "--crashed" in args:
 		hud._on_delivery_finished({"crashed": true, "reason": "vertical_rapido", "quality": 0.0, "gas_used": 54.9})
 	if "--delivered" in args:                                  # aviso de entrega com plataforma e Reputacao
-		main._run.reputation = true
-		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "rep": 1.1,
-				"perfect": true}, true)
+		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "rep": 1.2,
+				"perfect": true, "rep_pts": 2})
 	var offers := main.find_child("OfferPanel", true, false) as OfferPanel
 	for a in args:                                             # --select=slot: janela do ratinho desse pedido
 		if a.begins_with("--select="):                         # (simple2 = mineiro, longe; plataforma estreita)

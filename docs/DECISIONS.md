@@ -138,7 +138,9 @@ de batalha.
   As **moedas compram só as peças da nave** (Motor, Gasolina, Eficiência, Resistência) em degraus de 10, com a peça
   crescendo no desenho.
 - Abas NAVE · AJUDAS (ligar e desligar) · FROTA, visíveis desde o início com cadeado. A aba PEDIDOS sai.
-- **Reputação = o antigo Combo, simplificado** (o upgrade "Reputação" comprado com moedas sai): bônus fixo de **+10%**
+- ~~Reputação = +10% na entrega seguinte a um pouso perfeito~~ → **substituída no mesmo dia pela Reputação por ratinho**
+  (ver abaixo).
+- (histórico) **Reputação = o antigo Combo, simplificado** (o upgrade "Reputação" comprado com moedas sai): bônus fixo de **+10%**
   (não acumula), liberado desde o início. **Pouso perfeito** (nave reta e pouso macio) → a **próxima** entrega vale
   +10%. Qualquer outro pouso → a próxima fica sem bônus. **Bateu** → perde o bônus da entrega atual e a próxima também
   vem sem. Precisa de um **indicador** (aceso/apagado) no voo e no "Você ganha" da escolha de missão. Proposta de
@@ -148,3 +150,12 @@ de batalha.
 - **Economia depois**: primeiro as regras e a jogabilidade; estrelas por parada, preços sem o upgrade de Reputação e
   Gasolina/Eficiência pouco compradas serão ajustados depois, de acordo com a jogabilidade (pedido do usuário).
 - Protótipo: `art/previews/progressao/progressao.html` (dados de `make_data.py`; fonte do jogo convertida em TTF por `fnt2ttf.py` só para o protótipo).
+
+## 2026-10-07 — Reputação por ratinho (permanente, 3 corações)
+Usuário: "poderia ter uma aba de reputação por tipo de ratinho… permanente por número de missões concluídas… 3 níveis,
+10, 20 ou 30%". Pesquisa (Death Stranding: conexão por cliente sobe com entrega em bom estado e nota S vale mais;
+Stardew: corações; Persona: cada nível muda o personagem) → missão cumprida = 1 ponto, pouso perfeito = 2, falhou/bateu
+= 0; corações em vez de escudinhos (o escudinho virou o selo de "melhor amigo!" no nível 3). Sai o +10% na entrega
+seguinte e o badge do canto do voo. Limiares 5/15/30 provisórios (economia depois, jogando). Usuário: "precisa html
+não, implementa logo".
+

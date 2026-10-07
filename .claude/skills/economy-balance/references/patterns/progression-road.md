@@ -21,7 +21,7 @@
 
 ## Modelagem aqui
 - Parâmetros (v13, rascunho): 29 paradas; estrelas 1 + 123·f^1,45 (1 → 124); tipos start/mission/grant/unlock/final.
-- Reputação: +10% na entrega seguinte a um pouso perfeito (modelo: q ≥ 0,85), não acumula.
+- Reputação (v14): POR RATINHO, permanente: 5/15/30 pontos → +10/20/30% nos pedidos dele; cumprida = 1, pouso perfeito = 2 (modelo: q ≥ 0,85). (v13 tinha +10% na entrega seguinte: trocado no mesmo dia.)
 - Extensões: `econ.road_spec/road_reached_now/road_can_buy/reputation_mult`; `EconMath.road/road_reached_now/
   road_can_buy/road_stop/reputation_mult/reputation_bonus`.
 
@@ -33,6 +33,7 @@
 | Pior parede (engaged) | 10–13 min | maior | 32 min |
 
 ## Decisões do usuário
+- 2026-10-07: Reputação por ratinho (Death Stranding/Stardew) no lugar do bônus por pouso.
 - 2026-10-07: escolheu a estrada por estrelas entre 3 protótipos HTML; Reputação = +10% por pouso perfeito (reto,
   macio), bater perde a atual e a próxima; economia fina depois, jogando.
 
@@ -40,3 +41,4 @@
 - https://www.gamedeveloper.com/game-platforms/let-s-talk-battle-passes-part-1 — trilha com prêmio a cada nível
 - https://www.psychologyofgames.com/2019/07/the-psychology-of-fortnite-s-battle-pass/ — progresso visível, trilha incompleta incomoda
 - https://www.ggrecon.com/guides/rogue-legacy-2-skill-tree/ — progressão que vira um desenho que cresce
+- https://www.noobfeed.com/articles/death-stranding-2-guide-5-star-connection-levels-unlock-items — conexão por cliente, entrega boa conta mais

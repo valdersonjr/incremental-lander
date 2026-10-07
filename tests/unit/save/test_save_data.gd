@@ -124,16 +124,16 @@ func test_v2_vira_estrelas_acumuladas() -> void:
 	assert_eq(back["state"]["stars"], 2 + 2 * cost, "as estrelas gastas voltam para o total")
 	assert_false(back["state"]["levels"].has("contracts"), "upgrade Reputacao saiu")
 	assert_false(back["state"]["records"].has("best_combo"))
-	assert_false(back["state"]["reputation"])
+	assert_true((back["state"]["rep_points"] as Dictionary).is_empty())
 
 
 func test_estrada_e_reputacao_ida_e_volta() -> void:
 	var st := _state()
 	st["road_reached"] = ["start", "heavy1", "parada_inventada"]
 	st["road_seen"] = ["start"]
-	st["reputation"] = true
+	st["rep_points"] = {"soft": 7, "inventado": 3}
 	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
 	assert_true(back["ok"])
 	assert_eq(back["state"]["road_reached"], ["start", "heavy1"])
 	assert_eq(back["state"]["road_seen"], ["start"])
-	assert_true(back["state"]["reputation"])
+	assert_eq(back["state"]["rep_points"], {"soft": 7})

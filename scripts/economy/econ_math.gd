@@ -178,24 +178,41 @@ static func draw_pad_tier(rng: RandomNumberGenerator) -> String:
 	return tiers[tiers.size() - 1]["id"]
 
 
-## Multiplicador da Reputacao (v13, contracts.reputation): o pouso anterior foi perfeito -> x(1 + bonus).
-## "Perfeito" no jogo = reto e macio (world.json > landing.perfect; LandingRules.is_perfect).
-static func reputation_mult(active: bool) -> float:
-	var r: Dictionary = spec["contracts"].get("reputation", {})
-	if r.is_empty() or not active:
+## Reputacao por ratinho (v14, contracts.reputation): pontos permanentes por tipo de missao; levels[i].points ->
+## +bonus nos pedidos DAQUELE ratinho. Espelho de econ.reputation_level / reputation_mult / reputation_points.
+static func reputation_levels() -> Array:
+	return spec["contracts"].get("reputation", {}).get("levels", [])
+
+
+## Nivel (0..3) de um ratinho com points pontos.
+static func reputation_level(points: int) -> int:
+	var n := 0
+	for lv: Dictionary in reputation_levels():
+		if points >= int(lv["points"]):
+			n += 1
+	return n
+
+
+## Multiplicador do pagamento no nivel level (0 = x1).
+static func reputation_mult(level: int) -> float:
+	var lvs := reputation_levels()
+	if level <= 0 or lvs.is_empty():
 		return 1.0
-	return 1.0 + float(r["bonus"])
+	return 1.0 + float(lvs[mini(level, lvs.size()) - 1]["bonus"])
 
 
-## Bonus da Reputacao (0.10 = +10%), para mostrar no selo.
-static func reputation_bonus() -> float:
-	return float(spec["contracts"].get("reputation", {}).get("bonus", 0.0))
+## Pontos de uma entrega: regra cumprida (ok) da points_ok; com pouso perfeito, points_perfect; falhou/bateu = 0.
+static func reputation_points(ok: bool, perfect: bool) -> int:
+	var r: Dictionary = spec["contracts"].get("reputation", {})
+	if not ok:
+		return 0
+	return int(r.get("points_perfect", 2)) if perfect else int(r.get("points_ok", 1))
 
 
 ## Pagamento de uma entrega concluida: base x qualidade x plataforma x reputacao x carga (mesma conta do simulador;
 ## mission_m = mission_mult(missao, falhas)).
 static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,
-		tier_id: String = "normal", rep: bool = false, mission_m: float = 1.0) -> float:
+		tier_id: String = "normal", rep: int = 0, mission_m: float = 1.0) -> float:
 	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) \
 			* reputation_mult(rep) * mission_m
 

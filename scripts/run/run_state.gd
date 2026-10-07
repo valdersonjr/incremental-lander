@@ -1,7 +1,7 @@
 ## Estado de um run (logica pura, testavel): ofertas de entrega, entregas feitas, ganhos e fim do run.
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
 ## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
-## tipo de plataforma x reputacao x missao).
+## tipo de plataforma x reputacao do ratinho x missao).
 ## Lua: cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e MISSAO (economy.json contracts.missions).
 ## v12.1: um pedido por ESPACO (EconMath.mission_slots: a Simples tem 3 faixas perto -> longe, cada ratinho liberado tem
 ## 1); o jogador escolhe no cartao o tamanho da plataforma e a estrela (set_choice). Entregou -> o mesmo espaco ganha
@@ -13,8 +13,8 @@ var planet_id := ""
 var stats: Dictionary = {}
 var offers: Array[float] = []             # distancias (m do modelo) das ofertas atuais
 var offer_tiers: Array[String] = []       # tipo de plataforma de cada oferta (mesma ordem): normal/narrow/tight
-var reputation := false                   # Reputacao: a proxima entrega vale +bonus (pouso perfeito antes;
-                                          # vem do GameState no inicio do run e volta para ele no fim)
+var rep_points: Dictionary = {}           # Reputacao por ratinho (v14): tipo -> pontos (vem do GameState no inicio do
+                                          # run; complete_delivery soma; o Main devolve ao GameState a cada entrega)
 var perfect_streak := 0                   # pousos perfeitos seguidos neste run (recorde)
 var offer_dirs: Array[int] = []          # lado de cada oferta: 1 = direita, -1 = esquerda
 var offer_mission: Array[Dictionary] = [] # missao de cada oferta ({kind, star, parts})
@@ -104,8 +104,8 @@ func offer_info(index: int, gas_left: float) -> Dictionary:
 		"mission": m,
 		"mission_mult": mm,
 		"mult": float(EconMath.pad_tier(tier)["mult"]),
-		"pay_best": _pay(d, d2, 1.0, tier, mm),
-		"pay_typical": _pay(d, d2, 0.7, tier, mm),
+		"pay_best": _pay(d, d2, 1.0, tier, mm, str(m.get("kind", "simple"))),
+		"pay_typical": _pay(d, d2, 0.7, tier, mm, str(m.get("kind", "simple"))),
 		"gas_est": gas_est,
 		"reachable": gas_est <= gas_left,
 	}
@@ -115,7 +115,7 @@ func offer_info(index: int, gas_left: float) -> Dictionary:
 func pay_for_tier(index: int, tier: String) -> float:
 	var d: float = offers[index]
 	var m: Dictionary = offer_mission[index]
-	return _pay(d, leg2_m(m, d), 0.7, tier, EconMath.mission_mult(m))
+	return _pay(d, leg2_m(m, d), 0.7, tier, EconMath.mission_mult(m), str(m.get("kind", "simple")))
 
 
 ## Gas estimado de uma missao de distancia d (os 2 trechos do taxi; Pesada divide o motor; Cabo x dv_mult).
@@ -138,10 +138,16 @@ func leg2_m(m: Dictionary, d: float) -> float:
 	return maxf(d * f, float(_planet["distance"][0])) if f > 0.0 else 0.0
 
 
-func _pay(d: float, d2: float, quality: float, tier: String, mm: float) -> float:
-	var pay := EconMath.delivery_pay(planet_id, d, stats, quality, tier, reputation, mm)
+## Nivel de reputacao (0..3) do ratinho do tipo kind.
+func rep_level(kind: String) -> int:
+	return EconMath.reputation_level(int(rep_points.get(kind, 0)))
+
+
+func _pay(d: float, d2: float, quality: float, tier: String, mm: float, kind: String) -> float:
+	var lv := rep_level(kind)
+	var pay := EconMath.delivery_pay(planet_id, d, stats, quality, tier, lv, mm)
 	if d2 > 0.0:
-		pay += EconMath.delivery_pay(planet_id, d2, stats, quality, tier, reputation, mm)
+		pay += EconMath.delivery_pay(planet_id, d2, stats, quality, tier, lv, mm)
 	return pay
 
 
@@ -186,17 +192,19 @@ func take_offer(index: int) -> float:
 
 
 ## Registra uma entrega concluida (na plataforma taken_tier, com a reputacao atual)
-## e devolve as recompensas {recurso: qtd}. Depois a Reputacao: pouso perfeito -> a proxima vale +bonus; outro -> sem.
+## e devolve as recompensas {recurso: qtd}. Depois a Reputacao do ratinho: regra cumprida soma pontos (pouso perfeito
+## soma mais); falhou = 0.
 ## gift_pay = creditos do presente pego no alto do morro (EconMath.gift_value; v10), somados ao pagamento.
 ## failed = kinds das regras da missao taken_mission que falharam (paga mult x fail_mult; nunca acaba o run).
 ## Taxi: distance = 1o trecho; o 2o (leg2 x distance) tambem paga. Ganha estrelas (stars.per_delivery).
 ## Detalhes da conta ficam em deliveries[-1] (base, mult, rep, missao) para o HUD mostrar.
 func complete_delivery(distance: float, quality: float, gas_used: float, failed: Array = [],
 		gift_pay: float = 0.0, perfect: bool = false) -> Dictionary:
-	var rep := EconMath.reputation_mult(reputation)
+	var kind := str(taken_mission.get("kind", "simple"))
+	var rep := EconMath.reputation_mult(rep_level(kind))
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
 	var mm := EconMath.mission_mult(taken_mission, failed)
-	var pay := _pay(distance, leg2_m(taken_mission, distance), quality, taken_tier, mm) + gift_pay
+	var pay := _pay(distance, leg2_m(taken_mission, distance), quality, taken_tier, mm, kind) + gift_pay
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
 	for res: String in weights:
@@ -206,7 +214,10 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 			"tier": taken_tier, "mult": mult, "rep": rep,
 			"perfect": perfect, "mission": taken_mission, "failed": failed.duplicate(), "mission_mult": mm,
 			"gift_pay": gift_pay})
-	reputation = perfect
+	var pts := EconMath.reputation_points(failed.is_empty(), perfect)   # regra cumprida; pouso perfeito vale mais
+	rep_points[kind] = int(rep_points.get(kind, 0)) + pts
+	deliveries[-1]["rep_kind"] = kind
+	deliveries[-1]["rep_pts"] = pts
 	perfect_streak = perfect_streak + 1 if perfect else 0
 	stars += int(EconMath.mission_spec().get("stars", {}).get("per_delivery", 1))
 	taken_tier = "normal"
@@ -217,10 +228,8 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	return rewards
 
 
-## Batida: a entrega em andamento e perdida e o run acaba (o que ja foi ganho fica). Perde a Reputacao:
-## a proxima entrega (no proximo run) vem sem bonus.
+## Batida: a entrega em andamento e perdida e o run acaba (o que ja foi ganho fica; nao ganha reputacao).
 func crash(reason: String) -> void:
-	reputation = false
 	perfect_streak = 0
 	finish("batida:" + reason)
 
