@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
+- **Fase 18 — Mundos novos (2026-10-07)**: plano aprovado (mundos paralelos, recordes por mundo + bônus de recorde,
+  Estrada única com parada `world`, seletor). **18.1 ✅** o usuário ficou com os 5 conceitos de
+  `art/previews/mundos/mundos.html` (git-ignorado): Nuvens → Bolhas → Cogumelos → Sorvete → Jardim.
+  **Próximo**: 18.2 economia (planets[], paradas `world`, `record_bonus`, simulador).
 - **Fase 17 — Bata seu recorde + paisagens (2026-10-07)**. Plano aprovado: run sem teto (meta = recordes pessoais;
   bater acaba o run; HUD com snapshot de todos os recordes, dinheiro em destaque) + relevo com receitas variadas por
   missão. **17.1 ✅** economia v15: sai `max_per_run`, entra `run_fatigue` 1,7 (gás × 1,7^n, galão ÷ 1,7^n; ver

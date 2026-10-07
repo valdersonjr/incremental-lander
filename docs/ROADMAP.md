@@ -112,6 +112,24 @@
       Plataforma) → escolhido A "Vitrine" v3 (gatinho herói acenando no morro de queijo, logo de doce, frase da proposta,
       Jogar com 3 estados, parallax/nuvens/estrelas) (2026-10-06)
 
+## Fase 18 — Mundos novos (2026-10-07) · skills: `pixel-art`, `economy-balance`, `godot-dev`, `sound-design`
+> Pedido do usuário: "ser sempre a Lua de queijo deixa desinteressante?" → pesquisa (novidade moderada; Hill Climb
+> Racing 2: mapas paralelos com recorde próprio e bônus por bater a marca; Clash Royale: arenas como paradas grandes
+> da trilha única; Cut the Rope: estrelas abrem mundos). Plano aprovado: mundos paralelos (mesma nave/moedas/ratinhos,
+> física própria, renda até ~1,3× a da Lua), recordes por mundo + bônus de recorde, uma Estrada só com parada
+> `world`, seletor de mundo na PROGRESSÃO. Mundos NOVOS (não os 3 antigos).
+- [x] 18.1 Conceitos (pixel-art): `art/previews/mundos/mundos.html` (5 cenas animadas + preto e branco); o usuário
+      ficou com **todos**, na ordem Nuvens (correntes que sobem) → Bolhas (bolhas empurram; mar = splash) →
+      Cogumelos (chapéu-mola) → Sorvete (chão escorregadio) → Jardim (vento lateral) (2026-10-07)
+- [ ] 18.2 Economia: planets[] dos 5 mundos, paradas `world` na Estrada, `contracts.record_bonus`, simulador
+      escolhendo o mundo com o bônus; meta renda/h 1,0–1,3× a Lua e a Lua continuar sendo jogada
+- [ ] 18.3 Multimundo no código: mundos liberados, seletor (protótipo HTML antes), save v5 (recordes por mundo),
+      bônus de recorde, parada `world` com festa, dados por mundo (world.json, ui_kit)
+- [ ] 18.4 Mecânica de cada mundo (base Hazards/HazardView do commit 4ec1ea1)
+- [ ] 18.5 Arte de cada mundo (cute-scene-method, validada no jogo)
+- [ ] 18.6 Som: ambiência + som do elemento + jingle de mundo novo
+- [ ] 18.7 Jogar e ajustar
+
 ## Fase 17 — Bata seu recorde + paisagens (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido do usuário: o run como meta imposta (teto de 6 entregas) não combina; "competir com ele mesmo": tanque cheio,
 > quantas missões conseguir, guardar dinheiro/distância/entregas e evoluir a nave para bater recordes (padrão Hill Climb
