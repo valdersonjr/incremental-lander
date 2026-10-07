@@ -43,6 +43,7 @@
     "dist_2",
     "dist_3",
     "check",
-    "cross"
+    "cross",
+    "clock"
   ]
 }

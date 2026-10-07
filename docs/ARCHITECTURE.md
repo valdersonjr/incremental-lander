@@ -82,9 +82,10 @@ game/title/title_backdrop.*   # TitleBackdrop: cena PRÓPRIA do título (não us
                               # de sobra), nuvens à deriva, estrelas cintilando (_draw), estrela cadente a cada 7–13 s.
 game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: _clear_run, sem Flight; fundo = TitleBackdrop;
                               # logo + frase + coluna de botões à esquerda; subtelas no painel do meio). Jogar · Sandbox ·
-                              # Opções · Sair. Jogar abre 5 cartões (um por jogo salvo: missões liberadas N/total + barra,
-                              # créditos, runs, tempo; vazio = "+" + Novo jogo; Apagar embaixo, 2 cliques; em uso =
-                              # moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
+                              # Opções · Sair. Jogar abre 5 cartões em LISTA VERTICAL à direita do logo (um por jogo
+                              # salvo: faixa do mapa do jogo no fundo = assets/ui/save_bg_<mundo>.png; "Jogo N" + tempo
+                              # (despertador), créditos e estrelas; vazio = "+ Novo jogo"; Apagar ao lado, 2 cliques;
+                              # em uso = moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
                               # (apagou o jogo em uso; o fundo não depende mais do save), quit_requested; opções = volumes.
                               # Main._open_hangar monta o mundo (_build_hangar_world) quando não há Flight (vindo do título).

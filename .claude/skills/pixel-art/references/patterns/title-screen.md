@@ -59,3 +59,13 @@ jogo tem que estar na tela; botões em coluna à esquerda.
 - https://medium.com/swlh/deceptively-simple-design-cabde40af87f — Stardew: o título define o tom
 - https://www.gameuidatabase.com/gameData.php?id=53 — Celeste: montanha + letras puxando o olho
 - https://www.indiedb.com/news/creating-the-main-menu — personagem vivo/idle no menu
+
+## Fundo dos cartões de jogo salvo (2026-10-07)
+Pedido: "lista vertical, com horas jogadas, gold, estrela (sem barra de progresso) e o desenho do mapa atual no fundo".
+- `art/src/ui/save_card_bg.py` → `assets/ui/save_bg_<mundo>.png` (324x38 = miolo do cartão 330x44 menos a borda de
+  3 px). **Sem pintura nova**: monta o 1º quadro das camadas aprovadas do voo (céu, far, mid, plain) e recorta a faixa
+  do horizonte. As camadas são repetidas na horizontal (como no parallax) para o recorte poder passar de x=640.
+- Escolha do recorte (revisão em 3 tentativas): o morro de queijo cortado na borda e a mina/carrinho atrás do
+  "Jogo N" poluíam; ficou x=336 (céu limpo à esquerda para o título, montinhos escuros à direita sob os números).
+- Texto sobre a arte: contorno `ink` de 4 (outline_size) nos rótulos — legível sem escurecer a arte.
+- Exportar no tamanho exato do cartão e mostrar sem escalar (TextureRect KEEP_CENTERED num Control com clip).

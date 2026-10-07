@@ -43,11 +43,13 @@ func _fake_saves() -> void:
 			st["runs_done"] = 112
 			st["resources"]["credits"] = 3.7e9
 			st["play_seconds"] = 4.0 * 3600.0 + 125.0
+			st["stars"] = 27
 			st["mission_nodes"] = nodes.slice(0, nodes.size() * 2 / 3)
 		if n == 4:
 			st["runs_done"] = 9
 			st["resources"]["credits"] = 5400.0
 			st["play_seconds"] = 900.0
+			st["stars"] = 5
 			st["mission_nodes"] = nodes.slice(0, 2)
 		var f := FileAccess.open(SaveManager.slot_files(n)["path"], FileAccess.WRITE)
 		f.store_string(JSON.stringify(SaveData.serialize(st)))

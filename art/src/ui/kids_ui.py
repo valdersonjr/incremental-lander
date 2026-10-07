@@ -434,6 +434,21 @@ def cross() -> Canvas:
     return k
 
 
+def clock() -> Canvas:
+    """Tempo de jogo: despertador fofo (sininhos no topo, mostrador branco com rim azul, ponteiros ink)."""
+    k = _canvas()
+    for bx in (6, 18):                                         # sininhos
+        mc.sphere(k, bx, 6, 3.2, 3.2, ["lemon", "gold", "gold", "amber"])
+    k.px(8, 20, "blue"); k.px(16, 20, "blue")                  # pezinhos
+    mc.disc(k, 12, 13, 8.6, "sky")
+    mc.sphere(k, 12, 13, 6.6, 6.6, ["white", "white", "mist", "mist"])
+    k.vline(12, 8, 13, "ink")                                  # ponteiro grande (12h)
+    k.hline(12, 15, 13, "ink")                                 # ponteiro pequeno (3h)
+    k.px(12, 13, "raspberry")
+    k.outline("ink")
+    return k
+
+
 MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
                 "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
 
@@ -441,7 +456,7 @@ MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft"
 NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on", "star_off", "coins", "ship",
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
-    + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross"]
+    + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"]
 
 
 def build() -> Canvas:
@@ -450,7 +465,7 @@ def build() -> Canvas:
              coins(), ship(), flame(False), flame(True), gas_bar(False), gas_bar(True), drop(True), drop(False),
              coin_one(), pad(False), pad(True), rock(), drone(), drone(2), drone(1, True), arrow(), lock(), mystery()] \
         + [make() for make in MISSION_MICE.values()] \
-        + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross()]
+        + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()]
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

@@ -20,7 +20,14 @@ signal sandbox_requested(planet_id: String, strong: bool)
 
 enum Screen { MENU, SAVES, OPTIONS, SANDBOX }
 
-const SLOT_CARD_W := 104
+const SLOT_CARD_W := 330
+const SLOT_CARD_H := 44
+const SLOT_DEL_W := 60
+## Borda do cartao que fica sem o fundo do mapa (o contorno/foco do botao continua a vista).
+const SLOT_INSET := 3
+## Posicao do painel: a lista de jogos fica a direita do logo; as outras subtelas no meio, abaixo do logo.
+const PANEL_SAVES := Vector2(-112, 12)
+const PANEL_DEFAULT := Vector2(-90, 116)
 
 const HINTS := {
 	Screen.MENU: "setas: escolher  ·  Enter: confirmar",
@@ -82,6 +89,14 @@ func _set_screen(s: Screen) -> void:
 	_confirm = ""
 	_menu.visible = s == Screen.MENU
 	%Panel.visible = s != Screen.MENU                          # no menu, so a coluna da esquerda sobre a cena
+	%Tagline.visible = s != Screen.SAVES                       # a lista de jogos ocupa a direita do logo
+	var at: Vector2 = PANEL_SAVES if s == Screen.SAVES else PANEL_DEFAULT
+	%Panel.offset_left = at.x
+	%Panel.offset_right = -at.x
+	# a lista cresce para a direita (nao invade o logo); as outras crescem para os dois lados
+	%Panel.grow_horizontal = Control.GROW_DIRECTION_END if s == Screen.SAVES else Control.GROW_DIRECTION_BOTH
+	%Panel.offset_top = at.y
+	%Panel.offset_bottom = at.y
 	_saves.visible = s == Screen.SAVES
 	_options.visible = s == Screen.OPTIONS
 	_sandbox.visible = s == Screen.SANDBOX
@@ -111,35 +126,33 @@ func _refresh_menu() -> void:
 
 # --- jogos salvos ------------------------------------------------------------------------------------------------
 
-## Um cartao por espaco (SaveManager.SLOTS, lado a lado): o cartao inteiro e o botao (com jogo: Jogar; vazio:
-## Novo jogo; ilegivel: desabilitado) e mostra a progressao (missoes liberadas na arvore, creditos, runs, tempo).
-## Embaixo de cada um, Apagar com 2 cliques.
+## Um cartao por espaco (SaveManager.SLOTS, um embaixo do outro): o cartao inteiro e o botao (com jogo: Jogar; vazio:
+## Novo jogo; ilegivel: desabilitado), com o fundo do mapa onde o jogo esta e tempo, creditos e estrelas. Ao lado de
+## cada um, Apagar com 2 cliques.
 func _fill_saves() -> void:
 	var focus_key := _focused_key()
 	for c in _saves.get_children():
 		if c.name != &"SavesTitle":
 			_saves.remove_child(c)
 			c.queue_free()
-	var cards := HBoxContainer.new()
-	cards.add_theme_constant_override(&"separation", 6)
-	_saves.add_child(cards)
 	var first: Button = null
 	for n in range(1, SaveManager.SLOTS + 1):
 		var s := SaveManager.slot_summary(n)
-		var col := VBoxContainer.new()
-		col.add_theme_constant_override(&"separation", 3)
-		cards.add_child(col)
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override(&"separation", 4)
+		_saves.add_child(row)
 		var card := _slot_card(n, s)
-		col.add_child(card)
+		row.add_child(card)
 		var del := Button.new()
-		del.custom_minimum_size = Vector2(0, 15)
+		del.custom_minimum_size = Vector2(SLOT_DEL_W, 20)
+		del.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		del.theme_type_variation = &"DangerButton"
 		del.set_meta(&"focus_key", "del:%d" % n)
 		del.disabled = not s["exists"]
 		del.text = "Sim, apagar" if _confirm == "del:%d" % n else "Apagar"
 		del.tooltip_text = "apaga este jogo para sempre (Esc cancela)"
 		del.pressed.connect(func() -> void: _on_delete(n))
-		col.add_child(del)
+		row.add_child(del)
 		if first == null or (s["current"] and not card.disabled):
 			first = card if not card.disabled else del
 	var back := Button.new()
@@ -154,21 +167,39 @@ func _fill_saves() -> void:
 			btn.grab_focus()).call_deferred()
 
 
-## Cartao-botao de um espaco: nome no topo; com jogo, a barra de missoes liberadas (estrela + N/total), creditos,
-## runs e tempo; vazio, um "+" e "Novo jogo".
+## Cartao-botao de um espaco: faixa do mapa do jogo no fundo (assets/ui/save_bg_<mundo>.png, recortada no centro),
+## nome a esquerda e, com jogo, tempo jogado, creditos e estrelas a direita; vazio, "+ Novo jogo".
 func _slot_card(n: int, s: Dictionary) -> Button:
 	var card := Button.new()
-	card.custom_minimum_size = Vector2(SLOT_CARD_W, 104)
+	card.custom_minimum_size = Vector2(SLOT_CARD_W, SLOT_CARD_H)
 	card.set_meta(&"focus_key", "slot:%d" % n)
-	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 6)
-	box.add_theme_constant_override(&"separation", 3)
-	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	var current: bool = s["current"] and s["ok"]
+	if s["ok"]:
+		var bg_path := "res://assets/ui/save_bg_%s.png" % str(s["planet"])
+		if ResourceLoader.exists(bg_path):
+			var clip := Control.new()                          # recorta a faixa sem escalar (pixel nitido)
+			clip.clip_contents = true
+			clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			clip.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, SLOT_INSET)
+			var bg := TextureRect.new()
+			bg.texture = load(bg_path)
+			bg.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			clip.add_child(bg)
+			card.add_child(clip)
+	var box := HBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT, Control.PRESET_MODE_MINSIZE, 10)
+	box.add_theme_constant_override(&"separation", 10)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(box)
-	var current: bool = s["current"] and s["ok"]
 	var title := _card_label("Jogo %d" % n, &"GoodLabel" if current else &"ValueLabel")
+	title.add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)
 	box.add_child(title)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(spacer)
 	if s["ok"]:
 		if current:                                            # jogo em uso: moldura dourada (como a escolha atual)
 			card.tooltip_text = "jogo em uso"
@@ -180,38 +211,9 @@ func _slot_card(n: int, s: Dictionary) -> Button:
 		card.pressed.connect(func() -> void:
 			Sound.ui("click")
 			slot_play_requested.emit(n))
-		var total: int = maxi((EconMath.mission_spec().get("nodes", []) as Array).size(), 1)
-		var done := mini(int(s["nodes"]), total)
-		var star_row := HBoxContainer.new()
-		star_row.alignment = BoxContainer.ALIGNMENT_CENTER
-		star_row.add_theme_constant_override(&"separation", 2)
-		star_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var star := TextureRect.new()
-		star.texture = UiKit.kid("star_on")
-		star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		star.custom_minimum_size = Vector2(14, 14)
-		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		star_row.add_child(star)
-		star_row.add_child(_card_label("%d/%d" % [done, total], &"MoneyLabel"))
-		box.add_child(star_row)
-		var bar := ProgressBar.new()                           # progressao: missoes liberadas na arvore
-		bar.show_percentage = false
-		bar.theme_type_variation = &"XpBar"
-		bar.custom_minimum_size = Vector2(SLOT_CARD_W - 20, 6)
-		bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		bar.max_value = total
-		bar.value = done
-		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(bar)
-		for line: HBoxContainer in [UiKit.icon_label("credits", EconMath.fmt(float(s["credits"])), &"MoneyLabel"),
-				UiKit.icon_label("expedition", "%d runs" % int(s["runs"]), &"DimLabel")]:
-			line.alignment = BoxContainer.ALIGNMENT_CENTER
-			for c: Control in line.get_children():
-				c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			line.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			box.add_child(line)
-		box.add_child(_card_label(_fmt_time(float(s["play_seconds"])), &"DimLabel"))
+		box.add_child(_stat("clock", _fmt_time(float(s["play_seconds"])), &"ValueLabel"))
+		box.add_child(_stat("coin", EconMath.fmt(float(s["credits"])), &"MoneyLabel"))
+		box.add_child(_stat("star_on", str(int(s["stars"])), &"MoneyLabel"))
 	elif s["exists"]:                                          # arquivo ilegivel: so da para apagar
 		card.disabled = true
 		box.add_child(_card_label("save ilegível", &"BadLabel"))
@@ -226,12 +228,32 @@ func _slot_card(n: int, s: Dictionary) -> Button:
 	return card
 
 
+## Figura do atlas kids (16 px) + numero com contorno escuro, legivel sobre o fundo do mapa.
+func _stat(icon: String, text: String, variation: StringName) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 1)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var pic := TextureRect.new()
+	pic.texture = UiKit.kid(icon)
+	pic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	pic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	pic.custom_minimum_size = Vector2(16, 16)
+	pic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(pic)
+	row.add_child(_card_label(text, variation))
+	return row
+
+
 func _card_label(text: String, variation: StringName) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.theme_type_variation = variation
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	l.add_theme_color_override(&"font_outline_color", UiKit.color("ink"))   # legivel sobre o fundo do mapa
+	l.add_theme_constant_override(&"outline_size", 4)
 	return l
 
 

@@ -26,6 +26,7 @@ func _ready() -> void:
 		fails.append("novo jogo no espaco 2 nao decolou (slot=%d)" % SaveManager.slot)
 	GameState.runs_done = 5
 	GameState.resources["credits"] = 321.0
+	GameState.stars = 4
 	SaveManager.save_game()
 	# volta ao menu pelo hangar; Jogar abre os 5 cartoes: o do jogo 2 e o em uso, com a progressao
 	hangar.title_requested.emit()
@@ -38,9 +39,9 @@ func _ready() -> void:
 		fails.append("Jogar deveria abrir %d cartoes (veio %d)" % [SaveManager.SLOTS, cards.size()])
 	else:
 		var card2 := cards[1] as Button
-		var card_text := " ".join(card2.find_children("*", "Label", true, false).map(
-				func(l: Label) -> String: return l.text))
-		if card2.tooltip_text != "jogo em uso" or not "5 runs" in card_text or not "321" in card_text:
+		var texts := card2.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+		var card_text := " ".join(texts)
+		if card2.tooltip_text != "jogo em uso" or not "321" in texts or not "4" in texts:   # creditos e estrelas
 			fails.append("cartao do jogo 2 sem a progressao/destaque: '%s'" % card_text)
 		if not "Novo jogo" in " ".join((cards[4] as Button).find_children("*", "Label", true, false).map(
 				func(l: Label) -> String: return l.text)):

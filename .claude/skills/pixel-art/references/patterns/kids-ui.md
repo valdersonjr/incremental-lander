@@ -30,3 +30,7 @@
 - https://www.shadcn.io/icon/game-icons-padlock (forma clássica do cadeado: alça em arco + corpo + fechadura)
 - https://itch.io/post/16155772 (idle: mostrar o próximo desbloqueio para o jogador poder se planejar)
 - https://icelivin.itch.io/dialog-bubbles (balão de fala pixel em 9-slice)
+
+## Despertador (2026-10-07)
+`clock`: tempo jogado nos cartões de save. Sininhos gold nos cantos de cima, disco `sky` + mostrador branco/mist,
+ponteiros ink (12h e 3h) com pino raspberry; lê bem em 16 px.
