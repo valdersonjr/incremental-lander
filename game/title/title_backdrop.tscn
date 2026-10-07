@@ -1,0 +1,84 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/title/title_backdrop.gd" id="1_bd"]
+[ext_resource type="Texture2D" path="res://assets/bg/title_sky.png" id="2_sky"]
+[ext_resource type="Texture2D" path="res://assets/bg/title_clouds.png" id="3_clouds"]
+[ext_resource type="Texture2D" path="res://assets/bg/title_back.png" id="4_back"]
+[ext_resource type="Texture2D" path="res://assets/bg/title_front.png" id="5_front"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/title_flag_frames.tres" id="6_flag"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/title_lander_frames.tres" id="7_lander"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/title_cat_frames.tres" id="8_cat"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/title_star_frames.tres" id="9_star"]
+
+[node name="TitleBackdrop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_bd")
+
+[node name="Sky" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("2_sky")
+
+[node name="Twinkle" type="Control" parent="."]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+
+[node name="Star" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("9_star")
+animation = &"fall"
+centered = false
+
+[node name="Clouds" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 260.0
+mouse_filter = 2
+texture = ExtResource("3_clouds")
+
+[node name="Back" type="TextureRect" parent="."]
+layout_mode = 0
+offset_right = 656.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("4_back")
+
+[node name="Front" type="Control" parent="."]
+layout_mode = 0
+offset_right = 656.0
+offset_bottom = 360.0
+mouse_filter = 2
+
+[node name="Ground" type="TextureRect" parent="Front"]
+layout_mode = 0
+offset_right = 656.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("5_front")
+
+[node name="Flag" type="AnimatedSprite2D" parent="Front"]
+sprite_frames = ExtResource("6_flag")
+animation = &"wave"
+autoplay = "wave"
+centered = false
+
+[node name="Lander" type="AnimatedSprite2D" parent="Front"]
+sprite_frames = ExtResource("7_lander")
+animation = &"idle"
+autoplay = "idle"
+centered = false
+
+[node name="Cat" type="AnimatedSprite2D" parent="Front"]
+sprite_frames = ExtResource("8_cat")
+animation = &"idle"
+autoplay = "idle"
+centered = false

@@ -1,4 +1,5 @@
-## Menu inicial (tela de titulo): fica por cima da cena do mundo atual (nave parada na plataforma, fundo animado).
+## Menu inicial (tela de titulo) com cena PROPRIA (TitleBackdrop: gatinho heroi no morro de queijo, nada do mapa de
+## voo). Logo + frase da proposta + coluna de botoes a esquerda; as subtelas abrem no painel do meio.
 ## Jogar -> cartoes dos jogos salvos (SaveManager.SLOTS espacos com a progressao; jogar, novo jogo, apagar com 2 cliques) /
 ## Sandbox (testar tudo sem progressao: mundo + nave, nada e salvo) / Opcoes (volumes, CRT) / Sair. Emite sinais; a Main
 ## decide o fluxo (carregar, decolar, hangar).
@@ -80,6 +81,7 @@ func _set_screen(s: Screen) -> void:
 	_screen = s
 	_confirm = ""
 	_menu.visible = s == Screen.MENU
+	%Panel.visible = s != Screen.MENU                          # no menu, so a coluna da esquerda sobre a cena
 	_saves.visible = s == Screen.SAVES
 	_options.visible = s == Screen.OPTIONS
 	_sandbox.visible = s == Screen.SANDBOX

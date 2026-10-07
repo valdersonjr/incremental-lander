@@ -118,10 +118,12 @@ static func theme_for(world: String) -> Theme:
 	t.set_type_variation(&"PrimaryButton", &"Button")
 	t.set_stylebox(&"normal", &"PrimaryButton", _box(wd + "button_primary.png", 6, m))
 	t.set_stylebox(&"hover", &"PrimaryButton", _box(wd + "button_primary_hover.png", 6, m))
+	t.set_stylebox(&"pressed", &"PrimaryButton", _box(wd + "button_primary.png", 6, m + Vector4(0, 1, 0, -1)))
 	t.set_stylebox(&"focus", &"PrimaryButton", _focus_box(color("white")))
 	t.set_color(&"font_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_hover_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_focus_color", &"PrimaryButton", color("ink"))
+	t.set_color(&"font_pressed_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_shadow_color", &"PrimaryButton", Color(0, 0, 0, 0))
 	t.set_color(&"font_disabled_color", &"PrimaryButton", color("slate"))
 	# acao destrutiva (apagar progresso, recomecar): botao comum com texto vermelho

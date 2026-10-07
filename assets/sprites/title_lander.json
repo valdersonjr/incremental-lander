@@ -1,0 +1,20 @@
+{
+  "frame_width": 80,
+  "frame_height": 70,
+  "animations": [
+    {
+      "name": "idle",
+      "row": 0,
+      "frames": 6,
+      "durations_ms": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "loop": true
+    }
+  ]
+}

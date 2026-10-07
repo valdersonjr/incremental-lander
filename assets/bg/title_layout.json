@@ -1,0 +1,68 @@
+{
+  "notes": "Gerado por art/src/title/title_moon.py (pixel-art). Posi\u00e7\u00f5es = canto de cima-esquerdo dos sprites, em px na tela 640x360. Camadas: sky (fixa), clouds, back, front (parallax).",
+  "cat": [
+    325,
+    143
+  ],
+  "flag": [
+    446,
+    193
+  ],
+  "lander": [
+    478,
+    180
+  ],
+  "star": [
+    372,
+    14
+  ],
+  "twinkle": [
+    [
+      437,
+      59
+    ],
+    [
+      308,
+      26
+    ],
+    [
+      268,
+      82
+    ],
+    [
+      361,
+      26
+    ],
+    [
+      360,
+      99
+    ],
+    [
+      558,
+      10
+    ],
+    [
+      533,
+      83
+    ],
+    [
+      405,
+      98
+    ],
+    [
+      356,
+      39
+    ],
+    [
+      477,
+      24
+    ]
+  ],
+  "layer_pad": 8,
+  "cloud_drift_px": 3,
+  "parallax_px": {
+    "clouds": 2,
+    "back": 3,
+    "front": 6
+  }
+}

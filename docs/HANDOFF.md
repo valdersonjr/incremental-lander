@@ -4,6 +4,16 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-06)
+- **Tela inicial própria (2026-10-06, ROADMAP 15.7)**: o título não monta mais o voo da Lua atrás. Cena
+  `game/title/title_backdrop.*` (`TitleBackdrop`) com arte de `art/src/title/title_moon.py`: gatinho astronauta herói
+  (102x115, `art/src/sprites/cat_hero.py`, k ajustável) acenando/respirando no morro de queijo, bandeira tremulando, nave
+  "pôster" com luzinhas, Terra dormindo, ratinhos espiando, nuvens à deriva, estrelas cintilando, estrela cadente;
+  parallax leve pelo mouse. Logo desenhado (`art/src/ui/logo.py` → `assets/ui/logo.png`) + frase "Pouse. Entregue.
+  Evolua sua nave." + coluna de botões à esquerda; subtelas no painel do meio. `Main._show_title` = `_clear_run` (sem
+  Flight); `_open_hangar` monta o mundo (`_build_hangar_world`) quando falta. PrimaryButton ganhou estado apertado.
+  Verificado: check, 96 testes, 11 integrações (nova `title_backdrop`), demo sem erros, capturas `title_preview`
+  (menu e `--saves`). Conceitos/histórico: `art/previews/title_concepts/` (`A_v3.html` = aprovado).
+  Pendência: o usuário ver rodando no jogo (parallax/animações só aparecem ao vivo).
 - **Menu inicial refeito (2026-10-06)**: só Jogar · Sandbox · Opções · Sair; Jogar abre 5 cartões de jogo salvo com a
   progressão (missões liberadas N/total + barra, créditos, runs, tempo). `SaveManager.SLOTS` = 5; `SaveData.summary`
   ganhou `stars`/`nodes`. Verificado: check, 96 testes, integrações slots_flow (5 cartões, destaque e progressão do jogo

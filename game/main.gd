@@ -62,12 +62,10 @@ func _ready() -> void:
 	_title.new_game_requested.connect(func(slot: int) -> void:
 		SaveManager.new_game(slot)
 		_start_run())
-	_title.current_slot_changed.connect(_build_title_world)
 	_title.sandbox_requested.connect(func(planet_id: String, strong: bool) -> void:
 		Sandbox.begin(planet_id, strong)
 		_title.visible = false
-		_build_title_world()                                   # fundo do hangar = o mundo escolhido
-		_open_hangar())
+		_open_hangar())                                        # o hangar monta o mundo escolhido atras
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().quit())
@@ -150,6 +148,8 @@ func _back_to_hangar() -> void:
 func _open_hangar() -> void:
 	if Sandbox.active():
 		Sandbox.top_up()
+	if _flight == null:                                        # vindo do titulo (cena propria): monta o mundo atras
+		_build_hangar_world()
 	for c: Control in [_hud, _offers, _summary]:
 		if c != null and is_instance_valid(c):
 			c.visible = false
@@ -158,20 +158,21 @@ func _open_hangar() -> void:
 	Sound.ambience(GameState.current_planet)
 
 
-## Menu inicial por cima da cena do mundo atual (nave parada na plataforma de partida, sem entrega). Voltar ao menu
-## encerra o sandbox (o jogo salvo verdadeiro volta).
+## Menu inicial com cena propria (TitleBackdrop, dentro da TitleScreen): nenhum voo fica montado atras. Voltar ao
+## menu encerra o sandbox (o jogo salvo verdadeiro volta).
 func _show_title() -> void:
 	_abandon_run()                                             # run em andamento fecha a conta no jogo em uso
 	Sandbox.end()
 	_hangar.visible = false
-	_build_title_world()
+	_clear_run()
 	_gui.move_child(_title, -1)
 	_title.open()
 	Sound.music("title")
+	Sound.ambience("luna")                                     # a cena do titulo e a Lua de queijo
 
 
-## Cena de fundo do menu: o mundo do jogo em uso, nave parada na plataforma.
-func _build_title_world() -> void:
+## Cena de fundo do hangar: o mundo do jogo em uso, nave parada na plataforma.
+func _build_hangar_world() -> void:
 	_clear_run()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)

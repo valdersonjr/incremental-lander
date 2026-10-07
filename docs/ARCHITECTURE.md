@@ -76,12 +76,18 @@ autoload/game_state.gd        # GameState: recursos, níveis, current_planet (se
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
                               # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
-game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: Flight parado + menu). Jogar · Sandbox ·
+game/title/title_backdrop.*   # TitleBackdrop: cena PRÓPRIA do título (não usa o voo): camadas assets/bg/title_{sky,clouds,
+                              # back,front}.png + sprites title_{cat,flag,lander,star}, posições em assets/bg/title_layout.json
+                              # (art/src/title/title_moon.py). Parallax leve pelo mouse (px inteiro; camadas com layer_pad
+                              # de sobra), nuvens à deriva, estrelas cintilando (_draw), estrela cadente a cada 7–13 s.
+game/title/title_screen.*     # TitleScreen: menu inicial (Main._show_title: _clear_run, sem Flight; fundo = TitleBackdrop;
+                              # logo + frase + coluna de botões à esquerda; subtelas no painel do meio). Jogar · Sandbox ·
                               # Opções · Sair. Jogar abre 5 cartões (um por jogo salvo: missões liberadas N/total + barra,
                               # créditos, runs, tempo; vazio = "+" + Novo jogo; Apagar embaixo, 2 cliques; em uso =
                               # moldura dourada). Sinais play_requested (continuar sem os cartões; só testes),
                               # slot_play_requested(n) (Main: load_slot → idem), new_game_requested(n), current_slot_changed
-                              # (apagou o jogo em uso → Main refaz o fundo), quit_requested; opções = volumes.
+                              # (apagou o jogo em uso; o fundo não depende mais do save), quit_requested; opções = volumes.
+                              # Main._open_hangar monta o mundo (_build_hangar_world) quando não há Flight (vindo do título).
                               # Main pula o menu com --demo, --dev_*, --no_title. Hangar.title_requested volta ao menu.
 scripts/save/sandbox.gd       # Sandbox (estático): begin(planeta, forte) guarda o jogo (save + cópia em memória), liga
                               # SaveManager.sandbox (só grava opções) e desliga a telemetria; estado de teste de
