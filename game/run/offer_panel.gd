@@ -1,117 +1,158 @@
-## Escolha do pedido (2026-10-06, versao D aprovada em art/previews/offer_card/; arte: UiKit.kid + balao).
-## No alto, a FILA de rostinhos (e logo abaixo o cartao, para nao cobrir a nave pousada): um chip por pedido (ratinho do tipo, premio; o mineiro mostra perto/medio/longe).
-## Cinza = o gas nao chega (continua escolhivel). Embaixo, o CARTAO do chip escolhido: ratinho + carga, balao de fala
-## com a fala (MissionText.balloon) + nome do tipo, a regra em palavras (MissionText.rule), as 3 PLATAFORMAS como botoes de partir (cada uma com o premio) e, se houver, as
-## estrelas de dificuldade (rotulo "dificuldade:"). Cada plataforma diz o nome (normal/estreita/apertada); o aviso do
-## cartao diz "clique numa plataforma para partir" (ou que o gas pode faltar). Sem gas e sem botao "vamos": clicar na plataforma ja parte.
-## Mouse: passar no chip mostra o cartao dele; clicar no chip parte com a plataforma marcada; passar numa plataforma
-## marca, clicar parte. Teclado: setas esquerda/direita andam na fila, cima/baixo trocam a plataforma, Shift + cima/baixo
-## a estrela, Enter parte; 1..9 (ou teclado numerico) partem direto. E encerra o run (2 toques). Se o jogador tenta
-## pilotar antes de escolher, a fila pula.
+## Escolha do pedido = JANELA DE CONVERSA (2026-10-07, maquete aprovada em art/previews/mission_talk/; arte:
+## art/src/ui/mission_talk.py). No alto, a FILA com TODOS os ratinhos de missão do planeta, sempre na mesma ordem:
+## os ainda não liberados ficam em silhueta (sem cor) e não dão para escolher. Um rostinho por tipo: os pedidos do
+## mesmo ratinho (ex.: o mineiro com perto/médio/longe) viram a coluna "Distância" da janela.
+## Janela: palco com o gatinho herói (esquerda) e o ratinho (direita) com UM balão (pedido + regra com certo × errado);
+## colunas Distância | Tamanho da plataforma | Dificuldade (cada uma só aparece se houver opção; clicar só marca);
+## embaixo "Você ganha" + ACEITAR MISSÃO. Gás pouco: o gatinho fica preocupado e avisa. Aceitar: gatinho faz joinha
+## ("Deixa comigo!"), ratinho comemora, e o pedido parte (offer_chosen) depois de ACCEPT_S.
+## Teclado/controle: esquerda/direita trocam o ratinho, cima/baixo a plataforma, Shift + cima/baixo a dificuldade,
+## 1..3 a distância, Enter aceita; E encerra o run (2 toques). Se o jogador tenta pilotar antes de aceitar, a janela pula.
 class_name OfferPanel
 extends Control
 
 signal offer_chosen(index: int)
 signal end_requested
 
-## Tamanhos de plataforma escolhiveis no cartao (v12.1), do mais facil ao mais dificil, com a figura de cada um.
+## Tamanhos de plataforma escolhiveis (v12.1), do mais facil ao mais dificil.
 const TIERS := ["normal", "narrow", "tight"]
-const PAD_ICON := {"normal": "pad_normal", "narrow": "pad_narrow", "tight": "pad_tight"}
-## Botao de plataforma e chip da fila (px da arte).
-const PAD_BUTTON := Vector2(64, 40)
+## Nomes das distancias de um ratinho, do mais perto ao mais longe (2 opcoes = perto/longe).
+const DIST_NAMES := ["perto", "médio", "longe"]
 const CHIP := Vector2(35, 50)
-## Recortes das celulas 24x24 do atlas kids (so o desenho, sem a sobra transparente).
+const OPTION := Vector2(124, 17)
 const CUT_COIN := Rect2(6, 9, 12, 12)
 const CUT_STAR := Rect2(6, 6, 12, 12)
-## Faixas do mineiro (simple0..2), do mais perto ao mais longe.
-const DIST_NAMES := ["perto", "médio", "longe"]
-const CUT_PAD := Rect2(0, 11, 24, 9)
-## Ultima escolha do jogador por tipo de missao ({kind: [plataforma, estrela]}): pedidos novos ja vem assim.
+const CUT_MARK := Rect2(4, 6, 16, 16)
+## Tempo entre o clique em aceitar e a partida (joinha + comemoracao).
+const ACCEPT_S := 0.5
+## Ultima escolha do jogador por tipo de missao ({kind: [plataforma, estrela, distancia]}): pedidos novos ja vem assim.
 static var last_choice: Dictionary = {}
 
 ## Segundos restantes do aviso (tentou pilotar antes de escolher). Exposto para o teste de controles.
 var hint_flash := 0.0
 ## Segundos restantes para o 2o toque de E confirmar o fim do run (um toque sem querer nao encerra).
 var end_armed := 0.0
-var _count := 0
-var _infos: Array[Dictionary] = []
-var _chips: Array[Button] = []
-var _pad_buttons: Dictionary = {}     # tier -> Button do cartao atual
-var _sel := -1
-var _gas_left := 0.0
 var _run: RunState = null
+var _gas_left := 0.0
+var _kinds: Array[String] = []          # todos os ratinhos do planeta, na ordem da spec
+var _groups: Dictionary = {}            # kind -> Array[int] (indices dos pedidos, perto -> longe)
+var _dsel: Dictionary = {}              # kind -> indice escolhido dentro do grupo
+var _chips: Dictionary = {}             # kind -> Button
+var _kind := ""
+var _peek := ""                         # ratinho bloqueado sob o mouse ("" = nenhum)
+var _accepting := false
+var _option_buttons: Dictionary = {}    # "tier:normal" / "dist:0" / "star:2" -> Button (teste)
 var _board_y := 0.0
+var _talk_left := 0.0
 
+@onready var _dim: ColorRect = %Dim
 @onready var _board: Control = %Board
 @onready var _chip_row: HBoxContainer = %Chips
-@onready var _hint: Label = %Hint
-@onready var _face: TextureRect = %Face
-@onready var _cargo: TextureRect = %Cargo
-@onready var _balloon: PanelContainer = %Balloon
-@onready var _say: Label = %Say
-@onready var _name: Label = %Name
+@onready var _window: PanelContainer = %Window
+@onready var _cat: AnimatedSprite2D = %Cat
+@onready var _mouse: AnimatedSprite2D = %Mouse
+@onready var _mouse_balloon: PanelContainer = %MouseBalloon
+@onready var _ask: Label = %Ask
+@onready var _rule_row: HBoxContainer = %RuleRow
 @onready var _rule: Label = %Rule
-@onready var _star_row: HBoxContainer = %StarRow
-@onready var _pads: HBoxContainer = %Pads
-@onready var _stars: HBoxContainer = %Stars
+@onready var _pics: HBoxContainer = %Pics
+@onready var _dots: ColorRect = %Dots
+@onready var _cat_balloon: PanelContainer = %CatBalloon
+@onready var _cat_say: Label = %CatSay
+@onready var _columns: HBoxContainer = %Columns
+@onready var _total: Label = %Total
+@onready var _accept: Button = %Accept
+@onready var _hint: Label = %Hint
 
 
 func _ready() -> void:
 	_board_y = _board.position.y
+	_dim.color = Color(UiKit.color("ink"), 0.55)
+	(%Ground as ColorRect).color = UiKit.color("amber")
+	(%GroundTop as ColorRect).color = UiKit.color("gold")
+	_dots.color = UiKit.color("peach")
+	(%Line as ColorRect).color = UiKit.color("purple")
+	(%Coin as TextureRect).texture = _cut("coin", CUT_COIN)
+	(%Gain as Label).add_theme_color_override(&"font_color", UiKit.color("white"))
+	_total.add_theme_color_override(&"font_color", UiKit.color("gold"))
+	_rule.add_theme_color_override(&"font_color", UiKit.color("wine"))
 	var tail := load("res://assets/ui/balloon_tail.png") as Texture2D
-	_balloon.draw.connect(func() -> void:                      # rabinho por cima da borda esquerda, para o ratinho
-		_balloon.draw_texture(tail, Vector2(-5.0, roundf(_balloon.size.y * 0.5) - 4.0)))
+	var img := tail.get_image()
+	img.flip_x()
+	var tail_r := ImageTexture.create_from_image(img)
+	_mouse_balloon.draw.connect(func() -> void:                # rabinho na borda direita, para o ratinho
+		_mouse_balloon.draw_texture(tail_r, Vector2(_mouse_balloon.size.x - 1.0,
+				roundf(_mouse_balloon.size.y * 0.5) - 4.0)))
+	_cat_balloon.draw.connect(func() -> void:                  # rabinho na borda esquerda, para o gatinho
+		_cat_balloon.draw_texture(tail, Vector2(-5.0, roundf(_cat_balloon.size.y * 0.5) - 4.0)))
+	_accept.pressed.connect(_on_accept)
 
 
 ## Mostra os pedidos do run com o gas que resta.
 func show_offers(run: RunState, gas_left: float) -> void:
-	for c in _chip_row.get_children():
-		_chip_row.remove_child(c)
-		c.queue_free()
-	_chips.clear()
-	_infos.clear()
-	_gas_left = gas_left
 	_run = run
-	_count = run.offers.size()
-	for i in _count:                                           # pedido novo ja vem com a ultima escolha do tipo
-		var lc: Array = last_choice.get(str(run.offer_mission[i]["kind"]), [])
-		if not lc.is_empty():
-			run.set_choice(i, str(lc[0]), int(lc[1]))
-		_infos.append(run.offer_info(i, gas_left))
-		_add_chip(i)
-	for i in _count:                                           # setas andam na ordem dos pedidos (perto -> longe)
-		var c := _chips[i]
-		var prev := _chips[maxi(i - 1, 0)].get_path()
-		var next := _chips[mini(i + 1, _count - 1)].get_path()
-		c.focus_neighbor_left = prev
-		c.focus_neighbor_right = next
-		c.focus_neighbor_top = c.get_path()                    # cima/baixo escolhem a plataforma (_input)
-		c.focus_neighbor_bottom = c.get_path()
-		c.focus_previous = prev
-		c.focus_next = next
+	_gas_left = gas_left
+	_accepting = false
+	_peek = ""
 	hint_flash = 0.0
 	end_armed = 0.0
+	_kinds.clear()
+	for k: Dictionary in EconMath.mission_kinds(run.planet_id):
+		_kinds.append(str(k["id"]))
+	if _kinds.is_empty():
+		_kinds.append("simple")
+	_groups.clear()
+	for i in run.offers.size():                                # pedidos ja vem ordenados por distancia
+		var kind := str(run.offer_mission[i]["kind"])
+		if not _groups.has(kind):
+			_groups[kind] = []
+		(_groups[kind] as Array).append(i)
+	for kind: String in _groups:                               # pedido novo ja vem com a ultima escolha do tipo
+		var lc: Array = last_choice.get(kind, [])
+		var g: Array = _groups[kind]
+		_dsel[kind] = clampi(int(lc[2]) if lc.size() > 2 else 0, 0, g.size() - 1)
+		if lc.size() >= 2:
+			for i: int in g:
+				run.set_choice(i, str(lc[0]), int(lc[1]))
+	_build_chips()
 	visible = true
-	# foco no 1o pedido alcancavel: setas/direcional + Enter/A escolhem (controle e teclado sem numeros)
-	var first := 0
-	for i in _count:
-		if _infos[i]["reachable"]:
-			first = i
+	_kind = ""
+	var first := ""                                            # 1o ratinho com pedido alcancavel (o mais perto)
+	for i in run.offers.size():
+		if run.offer_info(i, gas_left)["reachable"]:
+			first = str(run.offer_mission[i]["kind"])
 			break
-	_sel = -1
-	if _count > 0:
+	if first == "" and not _groups.is_empty():
+		first = str(run.offer_mission[0]["kind"])
+	if first != "":
 		_select(first)
-		_chips[first].grab_focus.call_deferred()
+	_window.pivot_offset = _window.size * 0.5
+	_window.scale = Vector2(0.92, 0.92)
+	create_tween().tween_property(_window, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_BACK) \
+			.set_ease(Tween.EASE_OUT)
 
 
-## Centro (tela) do chip do pedido i — usado pelo teste de controles para simular o clique.
+## Indice (em run.offers) do pedido marcado na janela.
+func selected_offer() -> int:
+	if _kind == "" or not _groups.has(_kind):
+		return -1
+	var g: Array = _groups[_kind]
+	return int(g[clampi(int(_dsel.get(_kind, 0)), 0, g.size() - 1)])
+
+
+## Centro (tela) do rostinho do ratinho do pedido i (teste de controles).
 func offer_line_center(i: int) -> Vector2:
-	return _chips[i].get_global_rect().get_center()
+	return (_chips[str(_run.offer_mission[i]["kind"])] as Button).get_global_rect().get_center()
 
 
-## Centro (tela) do botao da plataforma tier no cartao do pedido escolhido (teste de controles).
+## Centro (tela) do botao da plataforma tier (teste de controles).
 func pad_button_center(tier: String) -> Vector2:
-	return (_pad_buttons[tier] as Button).get_global_rect().get_center()
+	return (_option_buttons["tier:" + tier] as Button).get_global_rect().get_center()
+
+
+## Centro (tela) do botao ACEITAR MISSAO (teste de controles).
+func accept_button_center() -> Vector2:
+	return _accept.get_global_rect().get_center()
 
 
 func _process(delta: float) -> void:
@@ -122,12 +163,14 @@ func _process(delta: float) -> void:
 		_set_hint("E de novo para encerrar o run (o que você ganhou fica)", &"MoneyLabel")
 	elif hint_flash > 0.0:
 		hint_flash -= delta
-		_set_hint("ESCOLHA UM AMIGUINHO PRIMEIRO!", &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel")
-	elif _sel >= 0 and not _infos[_sel]["reachable"]:
-		_set_hint("cuidado: o gás pode não dar para chegar lá!", &"BadLabel")
+		_set_hint("ACEITE UMA MISSÃO PRIMEIRO!", &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel")
 	else:
-		_set_hint("clique numa plataforma para partir", &"DimLabel")
-	_board.position.y = _board_y - (3.0 if hint_flash > 0.0 and fmod(hint_flash, 0.4) > 0.2 else 0.0)
+		_set_hint("", &"DimLabel")
+	_window.position.y = _board_y + 54.0 - (3.0 if hint_flash > 0.0 and fmod(hint_flash, 0.4) > 0.2 else 0.0)
+	if _talk_left > 0.0:                                       # o ratinho fala um pouquinho e volta a respirar
+		_talk_left -= delta
+		if _talk_left <= 0.0 and not _accepting and _mouse.animation == &"talk":
+			_mouse.play(&"idle")
 
 
 func _set_hint(text: String, variation: StringName) -> void:
@@ -136,66 +179,258 @@ func _set_hint(text: String, variation: StringName) -> void:
 	_hint.theme_type_variation = variation
 
 
-# --- fila de chips ---------------------------------------------------------------------------------------------------
+# --- fila de ratinhos -------------------------------------------------------------------------------------------------
 
-func _add_chip(i: int) -> void:
-	var info := _infos[i]
-	var ok: bool = info["reachable"]
-	var chip := Button.new()
-	chip.flat = true
-	chip.add_theme_stylebox_override(&"focus", StyleBoxEmpty.new())   # escolha = pino dourado (pin_sel)
-	chip.custom_minimum_size = CHIP
-	chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	chip.tooltip_text = _tooltip(info)
-	var box := VBoxContainer.new()
-	box.name = "Box"
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override(&"separation", 0)
-	chip.add_child(box)
-	var pin := Control.new()
-	pin.name = "Pin"
-	pin.custom_minimum_size = Vector2(24, 24)
-	pin.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	pin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(pin)
-	for part: String in ["bg", "face"]:
-		var tr := TextureRect.new()
-		tr.name = part.capitalize()
-		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		tr.texture = UiKit.kid(_face_name(info) if part == "face" else ("pin" if ok else "pin_off"))
-		if part == "face" and not ok:
-			tr.modulate = Color(0.7, 0.7, 0.75)
-		pin.add_child(tr)
-	var slot: String = _run.offer_slot[i] if i < _run.offer_slot.size() else ""
-	var dist := Label.new()                                    # mineiro: perto/medio/longe (simple0..2)
-	dist.custom_minimum_size = Vector2(0, 12)                  # mesma altura em todos (premios alinhados)
-	dist.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	dist.theme_type_variation = &"DimLabel"
-	dist.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if slot.begins_with("simple") and slot.length() > 6:
-		dist.text = DIST_NAMES[clampi(int(slot.substr(6)), 0, DIST_NAMES.size() - 1)]
-	box.add_child(dist)
-	var prize := Label.new()
-	prize.name = "Prize"
+func _build_chips() -> void:
+	for c in _chip_row.get_children():
+		_chip_row.remove_child(c)
+		c.queue_free()
+	_chips.clear()
+	for kind in _kinds:
+		var open := _groups.has(kind)
+		var chip := Button.new()
+		chip.flat = true
+		chip.focus_mode = Control.FOCUS_NONE                   # setas sao tratadas em _input
+		chip.custom_minimum_size = CHIP
+		chip.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if open else Control.CURSOR_ARROW
+		var box := VBoxContainer.new()
+		box.name = "Box"
+		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_theme_constant_override(&"separation", 0)
+		chip.add_child(box)
+		var pin := Control.new()
+		pin.name = "Pin"
+		pin.custom_minimum_size = Vector2(24, 24)
+		pin.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		pin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(pin)
+		for part: String in ["bg", "face"]:
+			var tr := TextureRect.new()
+			tr.name = part.capitalize()
+			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			tr.texture = UiKit.kid("rat_" + kind if part == "face" else ("pin" if open else "pin_off"))
+			if part == "face" and not open:                    # ainda nao liberado: silhueta sem cor
+				tr.modulate = Color(UiKit.color("purple"), 1.0) * Color(0.55, 0.5, 0.65)
+			pin.add_child(tr)
+		var prize := Label.new()
+		prize.name = "Prize"
+		prize.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		prize.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		prize.custom_minimum_size = Vector2(0, 22)
+		prize.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		box.add_child(prize)
+		if open:
+			chip.mouse_entered.connect(func() -> void: _peek_locked(""))
+			chip.pressed.connect(_select.bind(kind))
+		else:
+			chip.mouse_entered.connect(_peek_locked.bind(kind))
+			chip.mouse_exited.connect(func() -> void: _peek_locked(""))
+		_chip_row.add_child(chip)
+		_chips[kind] = chip
+		_update_chip(kind)
+
+
+## Premio do pedido marcado no rostinho (cinza se o gas nao chega; vazio se ainda nao liberado).
+func _update_chip(kind: String) -> void:
+	var prize := _chips[kind].get_node("Box/Prize") as Label
+	if not _groups.has(kind):
+		prize.text = ""
+		return
+	var g: Array = _groups[kind]
+	var i := int(g[clampi(int(_dsel.get(kind, 0)), 0, g.size() - 1)])
+	var info := _run.offer_info(i, _gas_left)
 	prize.text = "+" + EconMath.fmt(info["pay_typical"])
-	prize.theme_type_variation = &"MoneyLabel" if ok else &"DimLabel"
-	prize.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	prize.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(prize)
-	chip.focus_entered.connect(_select.bind(i))
-	chip.mouse_entered.connect(func() -> void: chip.grab_focus())
-	chip.pressed.connect(func() -> void: offer_chosen.emit(i))
-	_chip_row.add_child(chip)
-	_chips.append(chip)
+	prize.theme_type_variation = &"MoneyLabel" if info["reachable"] else &"DimLabel"
 
 
-## Rostinho de quem pediu: o ratinho do tipo de missao (rat_<tipo>, atlas kids).
-func _face_name(info: Dictionary) -> String:
-	return "rat_" + str(info["mission"]["kind"])
+func _select(kind: String) -> void:
+	if _accepting or not _groups.has(kind):
+		return
+	if _kind != "" and _chips.has(_kind):
+		(_chips[_kind].get_node("Box/Pin/Bg") as TextureRect).texture = UiKit.kid("pin")
+	var changed := kind != _kind
+	_kind = kind
+	(_chips[kind].get_node("Box/Pin/Bg") as TextureRect).texture = UiKit.kid("pin_sel")
+	if changed:
+		UiKit.pulse(_chips[kind], 1.4, 0.2)
+		Sound.ui("click")
+	_show_talk(changed)
 
 
-## Parte r de uma celula do atlas kids (o desenho sem a sobra transparente, para alinhar nos containers).
+## Ratinho bloqueado sob o mouse: aparece apagado na janela com "Ainda não liberado!" (kind "" = volta ao marcado).
+func _peek_locked(kind: String) -> void:
+	if _accepting or kind == _peek:
+		return
+	_peek = kind
+	_show_talk(false)
+
+
+# --- janela de conversa -----------------------------------------------------------------------------------------------
+
+func _show_talk(talk: bool) -> void:
+	var kind := _peek if _peek != "" else _kind
+	if kind == "":
+		return
+	_mouse.sprite_frames = load("res://assets/sprites/talk_mouse_%s_frames.tres" % kind) as SpriteFrames
+	var fr := _mouse.sprite_frames.get_frame_texture(&"idle", 0)
+	_mouse.position = Vector2(408.0 - 30.0 - fr.get_width(), 112.0 - 6.0 - fr.get_height())
+	var cfr := _cat.sprite_frames.get_frame_texture(&"idle", 0)
+	_cat.position = Vector2(22.0, 112.0 - 6.0 - cfr.get_height())
+	for c in _pics.get_children():
+		_pics.remove_child(c)
+		c.queue_free()
+	if _peek != "":                                            # bloqueado: silhueta + aviso
+		_mouse.modulate = Color(0.25, 0.2, 0.3)
+		_mouse.play(&"idle")
+		_ask.text = "Ainda não liberado!"
+		_rule.text = "Junte estrelas na oficina."
+		_cat.play(&"idle")
+		_cat_balloon.visible = false
+		_columns.modulate.a = 0.0                              # some sem mudar o tamanho da janela
+		_accept.disabled = true
+		_set_gain_visible(false)
+		_place_balloons()
+		return
+	_mouse.modulate = Color.WHITE
+	_columns.modulate.a = 1.0
+	_set_gain_visible(true)
+	var i := selected_offer()
+	var info := _run.offer_info(i, _gas_left)
+	var m: Dictionary = info["mission"]
+	_ask.text = MissionText.ask(m)
+	_rule.text = MissionText.say_rule(m)
+	var pics: Array = MissionIntro.PICS.get(MissionText._key(m) if MissionText._key(m) != "taxi" else "passenger",
+			["box", ""])
+	if str(m["kind"]) == "simple":
+		pics = ["box", ""]
+	for p: int in 2:
+		if str(pics[p]) == "":
+			continue
+		var pic := TextureRect.new()
+		pic.texture = CargoArt.tex(str(pics[p]))
+		pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_pics.add_child(pic)
+		var mark := TextureRect.new()
+		mark.texture = _cut("check" if p == 0 else "cross", CUT_MARK)
+		mark.custom_minimum_size = Vector2(10, 10)
+		mark.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		mark.size_flags_vertical = Control.SIZE_SHRINK_END
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_pics.add_child(mark)
+	if talk:
+		_mouse.play(&"talk")
+		_talk_left = 0.7
+	elif _mouse.animation != &"talk":
+		_mouse.play(&"idle")
+	var worried := not bool(info["reachable"])
+	_cat.play(&"worried" if worried else &"idle")
+	_cat_balloon.visible = worried
+	_cat_say.text = "Hmm... acho que a gasolina não dá!"
+	_accept.disabled = false
+	_total.text = "+" + EconMath.fmt(info["pay_typical"])
+	_fill_columns()
+	_place_balloons()
+	_update_chip(_kind)
+
+
+## "Você ganha" + moeda + valor (some no ratinho bloqueado, que nao tem premio).
+func _set_gain_visible(on: bool) -> void:
+	for n: CanvasItem in [%Gain, %Coin, _total]:
+		n.visible = on
+
+
+## Balao do ratinho encostado nele (direita, meio da cabeca); balao do gatinho no alto, do lado do capacete.
+func _place_balloons() -> void:
+	_mouse_balloon.reset_size()
+	_mouse_balloon.size = _mouse_balloon.get_combined_minimum_size()
+	_mouse_balloon.position = Vector2(_mouse.position.x - 6.0 - _mouse_balloon.size.x, 40.0)
+	_mouse_balloon.queue_redraw()
+	_cat_balloon.reset_size()
+	_cat_balloon.size = _cat_balloon.get_combined_minimum_size()
+	var cfr := _cat.sprite_frames.get_frame_texture(&"idle", 0)
+	_cat_balloon.position = Vector2(_cat.position.x + cfr.get_width() - 2.0, 4.0)
+	_cat_balloon.queue_redraw()
+
+
+## Colunas de escolha: Distancia (se o ratinho tem mais de 1 pedido) | Tamanho da plataforma | Dificuldade (se ha
+## mais de 1 estrela). Clicar so marca; partir e no ACEITAR MISSAO.
+func _fill_columns() -> void:
+	for c in _columns.get_children():
+		_columns.remove_child(c)
+		c.queue_free()
+	_option_buttons.clear()
+	var i := selected_offer()
+	var info := _run.offer_info(i, _gas_left)
+	var g: Array = _groups[_kind]
+	if g.size() > 1:
+		var opts: Array = []
+		for d in g.size():
+			var name: String = DIST_NAMES[0 if d == 0 else (DIST_NAMES.size() - 1 if d == g.size() - 1 else 1)]
+			var ok: bool = _run.offer_info(int(g[d]), _gas_left)["reachable"]
+			opts.append({"key": "dist:%d" % d, "text": name, "on": d == int(_dsel[_kind]), "ok": ok,
+					"do": _choose_dist.bind(d)})
+		_add_column("Distância", opts)
+	var opts_t: Array = []
+	for t: String in TIERS:
+		opts_t.append({"key": "tier:" + t, "text": str(EconMath.pad_tier(t)["name"]), "on": t == info["tier"], "ok": true,
+				"do": _choose.bind(t, int(info["mission"]["star"]))})
+	_add_column("Tamanho da plataforma", opts_t)
+	var stars: Array[int] = _run.stars_for(i)
+	if stars.size() > 1:
+		var opts_s: Array = []
+		for st: int in stars:
+			opts_s.append({"key": "star:%d" % st, "stars": st, "on": st == int(info["mission"]["star"]), "ok": true,
+					"do": _choose.bind(str(info["tier"]), st)})
+		_add_column("Dificuldade", opts_s)
+
+
+func _add_column(title: String, opts: Array) -> void:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 2)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lab := Label.new()
+	lab.text = title
+	lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lab.add_theme_color_override(&"font_color", UiKit.color("lemon"))
+	col.add_child(lab)
+	for o: Dictionary in opts:
+		var b := Button.new()
+		b.focus_mode = Control.FOCUS_NONE
+		b.custom_minimum_size = OPTION
+		b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		if o["on"]:
+			b.theme_type_variation = &"PrimaryButton"
+			var frame := Panel.new()
+			frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			frame.add_theme_stylebox_override(&"panel", UiKit.gold_frame())
+			b.add_child(frame)
+		if o.has("stars"):
+			var row := HBoxContainer.new()
+			row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.alignment = BoxContainer.ALIGNMENT_CENTER
+			row.add_theme_constant_override(&"separation", -4)
+			for k in int(o["stars"]):
+				var s := TextureRect.new()
+				s.texture = _cut("star_on", CUT_STAR)
+				s.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+				s.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				row.add_child(s)
+			b.add_child(row)
+		else:
+			b.text = str(o["text"])
+			if not o["ok"]:                                    # o gas pode nao dar: vermelho (legivel aceso ou nao)
+				for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color"]:
+					b.add_theme_color_override(c, UiKit.color("crimson") if o["on"] else UiKit.color("lilac_grey"))
+		b.pressed.connect(o["do"])
+		col.add_child(b)
+		_option_buttons[o["key"]] = b
+	_columns.add_child(col)
+
+
+## Parte r de uma celula do atlas kids.
 func _cut(name: String, r: Rect2) -> AtlasTexture:
 	var base := UiKit.kid(name) as AtlasTexture
 	var at := AtlasTexture.new()
@@ -204,165 +439,103 @@ func _cut(name: String, r: Rect2) -> AtlasTexture:
 	return at
 
 
-func _tooltip(info: Dictionary) -> String:
-	var t := "%s · distância %s m · pagamento típico +%s" % [EconMath.mission_kind(str(info["mission"]["kind"]))["name"],
-			EconMath.fmt(info["distance"]), EconMath.fmt(info["pay_typical"])]
-	t += "\n" + MissionText.tip(info["mission"])
-	if not info["reachable"]:
-		t += "\narriscado: precisa de mais gás do que resta"
-	return t
+# --- escolhas ---------------------------------------------------------------------------------------------------------
 
-
-# --- cartao do pedido escolhido ---------------------------------------------------------------------------------------
-
-func _select(i: int) -> void:
-	if i == _sel or i < 0 or i >= _count:
+## Aplica plataforma e estrela no pedido marcado (e guarda como ultima escolha do tipo).
+func _choose(tier: String, star: int) -> void:
+	if _run == null or _accepting or _kind == "" or _peek != "":
 		return
-	if _sel >= 0 and _sel < _chips.size():
-		(_chips[_sel].get_node("Box/Pin/Bg") as TextureRect).texture = \
-				UiKit.kid("pin" if _infos[_sel]["reachable"] else "pin_off")
-	_sel = i
-	var info := _infos[i]
-	(_chips[i].get_node("Box/Pin/Bg") as TextureRect).texture = UiKit.kid("pin_sel")
-	UiKit.pulse(_chips[i], 1.4, 0.2)
-	_face.texture = UiKit.kid(_face_name(info))
-	_cargo.texture = CargoArt.icon(str(info["mission"]["kind"]))
-	_say.text = MissionText.balloon(info["mission"])
-	_name.text = str(EconMath.mission_kind(str(info["mission"]["kind"]))["name"])
-	_rule.text = MissionText.rule(info["mission"])
-	_fill_choices(i)
-
-
-## Botoes do cartao: as 3 plataformas (figura + premio; clicar parte) e as estrelas liberadas da missao.
-func _fill_choices(i: int) -> void:
-	for c in _pads.get_children():
-		_pads.remove_child(c)
-		c.queue_free()
-	for c in _stars.get_children():
-		_stars.remove_child(c)
-		c.queue_free()
-	_pad_buttons.clear()
-	var info := _infos[i]
-	var star := int(info["mission"]["star"])
-	for t: String in TIERS:
-		var on: bool = t == info["tier"]
-		var b := _choice_button(PAD_BUTTON, on)
-		var box := VBoxContainer.new()
-		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.alignment = BoxContainer.ALIGNMENT_CENTER
-		box.add_theme_constant_override(&"separation", 2)
-		b.add_child(box)
-		var prize := HBoxContainer.new()
-		prize.alignment = BoxContainer.ALIGNMENT_CENTER
-		prize.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		prize.add_theme_constant_override(&"separation", 1)
-		var coin := TextureRect.new()
-		coin.texture = _cut("coin", CUT_COIN)
-		coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		prize.add_child(coin)
-		var lab := Label.new()
-		lab.text = "+" + EconMath.fmt(_run.pay_for_tier(i, t))
-		lab.theme_type_variation = &"BalloonLabel" if on else &"MoneyLabel"
-		lab.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		prize.add_child(lab)
-		box.add_child(prize)
-		var pad := TextureRect.new()
-		pad.texture = _cut(PAD_ICON[t], CUT_PAD)
-		pad.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(pad)
-		var pad_name := Label.new()
-		pad_name.text = str(EconMath.pad_tier(t)["name"])
-		pad_name.theme_type_variation = &"BalloonLabel" if on else &"ValueLabel"
-		pad_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		pad_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_child(pad_name)
-		b.tooltip_text = "plataforma %s: paga %s" % [EconMath.pad_tier(t)["name"],
-				UiKit.mult_text(float(EconMath.pad_tier(t)["mult"]))]
-		b.mouse_entered.connect(func() -> void:
-			if t != _infos[i]["tier"]:
-				_choose(i, t, int(_infos[i]["mission"]["star"])))
-		b.pressed.connect(func() -> void:                     # parte sem remontar o cartao (o botao some junto)
-			_remember(i, t, int(_infos[i]["mission"]["star"]))
-			offer_chosen.emit(i))
-		_pads.add_child(b)
-		_pad_buttons[t] = b
-	var stars: Array[int] = _run.stars_for(i) if _run != null else []
-	_star_row.visible = stars.size() > 1
-	for st: int in stars:
-		var b := _choice_button(Vector2(36, 14), st == star)
-		var row := HBoxContainer.new()
-		row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.add_theme_constant_override(&"separation", -4)      # estrelas encostadas (cabem 3 no botao)
-		for k in st:
-			var s := TextureRect.new()
-			s.texture = _cut("star_on", CUT_STAR)
-			s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			row.add_child(s)
-		b.add_child(row)
-		var lv := EconMath.mission_level(str(info["mission"]["kind"]), st)
-		b.tooltip_text = "dificuldade %d: paga %s (Shift + cima/baixo troca)" % [st, UiKit.mult_text(float(lv["mult"]))]
-		b.pressed.connect(func() -> void: _choose(i, str(_infos[i]["tier"]), st))
-		_stars.add_child(b)
-
-
-## Botao do cartao: o escolhido fica no estilo principal com a moldura dourada (como o pino escolhido).
-func _choice_button(size_px: Vector2, on: bool) -> Button:
-	var b := Button.new()
-	b.focus_mode = Control.FOCUS_NONE                          # setas continuam andando na fila
-	b.custom_minimum_size = size_px
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	if on:
-		b.theme_type_variation = &"PrimaryButton"
-		var frame := Panel.new()
-		frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		frame.add_theme_stylebox_override(&"panel", UiKit.gold_frame())
-		b.add_child(frame)
-	return b
-
-
-## Aplica a escolha (plataforma, estrela) no pedido i, guarda como ultima do tipo e atualiza chip + cartao.
-func _choose(i: int, tier: String, star: int) -> void:
-	if _run == null or i < 0 or i >= _count:
-		return
-	_remember(i, tier, star)
-	(_chips[i].get_node("Box/Prize") as Label).text = "+" + EconMath.fmt(_infos[i]["pay_typical"])
-	_chips[i].tooltip_text = _tooltip(_infos[i])
-	Sound.ui("click")
-	var keep := _sel
-	_sel = -1
-	_select(keep)
-
-
-## Grava a escolha (plataforma, estrela) no pedido i e como ultima do tipo, sem mexer na tela.
-func _remember(i: int, tier: String, star: int) -> void:
+	var i := selected_offer()
 	_run.set_choice(i, tier, star)
-	last_choice[str(_run.offer_mission[i]["kind"])] = [tier, int(_run.offer_mission[i]["star"])]
-	_infos[i] = _run.offer_info(i, _gas_left)
+	_remember()
+	Sound.ui("click")
+	_show_talk(false)
 
 
-## Cima/baixo: plataforma; Shift + cima/baixo: estrela (antes do foco dos chips e do aviso de pilotar).
+## Troca a distancia do ratinho marcado, levando junto a plataforma e a estrela escolhidas.
+func _choose_dist(d: int) -> void:
+	if _run == null or _accepting or _kind == "" or _peek != "":
+		return
+	var g: Array = _groups[_kind]
+	d = clampi(d, 0, g.size() - 1)
+	var old := _run.offer_info(selected_offer(), _gas_left)
+	_dsel[_kind] = d
+	_run.set_choice(int(g[d]), str(old["tier"]), int(old["mission"]["star"]))
+	_remember()
+	Sound.ui("click")
+	_show_talk(false)
+
+
+func _remember() -> void:
+	var info := _run.offer_info(selected_offer(), _gas_left)
+	last_choice[_kind] = [str(info["tier"]), int(info["mission"]["star"]), int(_dsel.get(_kind, 0))]
+
+
+func _on_accept() -> void:
+	if _accepting or _peek != "" or selected_offer() < 0:
+		return
+	_accepting = true
+	_remember()
+	var i := selected_offer()
+	_cat.play(&"thumb")
+	_mouse.play(&"happy")
+	_cat_say.text = "Deixa comigo!"
+	_cat_balloon.visible = true
+	_ask.text = "Obaaa!"
+	_rule_row.visible = false
+	_dots.visible = false
+	_place_balloons()
+	await get_tree().create_timer(ACCEPT_S).timeout
+	_rule_row.visible = true
+	_dots.visible = true
+	if visible and _accepting:
+		offer_chosen.emit(i)
+
+
+## Muda de ratinho na fila (so os liberados), no sentido step.
+func _step_kind(step: int) -> void:
+	var open: Array[String] = []
+	for k in _kinds:
+		if _groups.has(k):
+			open.append(k)
+	if open.is_empty():
+		return
+	var j := open.find(_kind)
+	_select(open[clampi(j + step, 0, open.size() - 1)])
+
+
+## Setas, 1..3 e Enter antes do aviso de pilotar (cima/esquerda/direita tambem sao teclas da nave).
 func _input(event: InputEvent) -> void:
-	if not visible or _sel < 0 or not (event is InputEventKey) or not event.pressed:
+	if not visible or _kind == "" or _accepting:
 		return
-	var k: int = (event as InputEventKey).keycode
-	if k != KEY_UP and k != KEY_DOWN:
-		return
-	get_viewport().set_input_as_handled()
-	var step := 1 if k == KEY_UP else -1
-	var info := _infos[_sel]
-	if (event as InputEventKey).shift_pressed:
-		var stars: Array[int] = _run.stars_for(_sel)
-		var j := stars.find(int(info["mission"]["star"]))
-		if stars.size() > 1:
-			_choose(_sel, str(info["tier"]), stars[clampi(j + step, 0, stars.size() - 1)])
-	else:
-		var t := TIERS.find(str(info["tier"]))
-		_choose(_sel, TIERS[clampi(t + step, 0, TIERS.size() - 1)], int(info["mission"]["star"]))
+	if event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"ui_right"):
+		get_viewport().set_input_as_handled()
+		_step_kind(-1 if event.is_action_pressed(&"ui_left") else 1)
+	elif event.is_action_pressed(&"ui_up") or event.is_action_pressed(&"ui_down"):
+		get_viewport().set_input_as_handled()
+		var step := 1 if event.is_action_pressed(&"ui_up") else -1
+		var info := _run.offer_info(selected_offer(), _gas_left)
+		if event is InputEventKey and (event as InputEventKey).shift_pressed:
+			var stars: Array[int] = _run.stars_for(selected_offer())
+			var j := stars.find(int(info["mission"]["star"]))
+			if stars.size() > 1:
+				_choose(str(info["tier"]), stars[clampi(j + step, 0, stars.size() - 1)])
+		else:
+			var t := TIERS.find(str(info["tier"]))
+			_choose(TIERS[clampi(t - step, 0, TIERS.size() - 1)], int(info["mission"]["star"]))
+	elif event.is_action_pressed(&"ui_accept"):
+		get_viewport().set_input_as_handled()
+		_on_accept()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		var k: int = (event as InputEventKey).keycode
+		var n := -1
+		if k >= KEY_1 and k <= KEY_3:
+			n = k - KEY_1
+		elif k >= KEY_KP_1 and k <= KEY_KP_3:
+			n = k - KEY_KP_1                                   # teclado numerico tambem vale
+		if n >= 0 and n < (_groups[_kind] as Array).size():
+			get_viewport().set_input_as_handled()
+			_choose_dist(n)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -377,14 +550,4 @@ func _unhandled_input(event: InputEvent) -> void:
 			end_armed = 2.0
 	elif event.is_action_pressed(&"thrust") or event.is_action_pressed(&"rotate_left") \
 			or event.is_action_pressed(&"rotate_right"):
-		hint_flash = 2.0                                       # tentou pilotar antes de escolher: avisa
-	elif event is InputEventKey and event.pressed and not event.echo:
-		var k: int = event.keycode
-		var n := -1
-		if k >= KEY_1 and k <= KEY_9:
-			n = k - KEY_1
-		elif k >= KEY_KP_1 and k <= KEY_KP_9:
-			n = k - KEY_KP_1                                   # teclado numerico tambem vale
-		if n >= 0 and n < _count:
-			get_viewport().set_input_as_handled()
-			offer_chosen.emit(n)
+		hint_flash = 2.0                                       # tentou pilotar antes de aceitar: avisa

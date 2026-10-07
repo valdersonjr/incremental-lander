@@ -4,6 +4,17 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
+- **Janela de conversa na escolha da missão (2026-10-07, ROADMAP 15.8)**. Pedido: "o gatinho laranja astronauta
+  conversando com o ratinho e não apenas uma nave parada"; maquete aprovada após ajustes (só o valor final embaixo,
+  rótulos em vez de perguntas, botões só texto, ACEITAR MISSÃO, um balão + colunas, um rostinho por ratinho, fila com
+  todos os ratinhos e os bloqueados em silhueta). Arte: `art/src/sprites/mouse_hero.py` (7 ratinhos de corpo inteiro),
+  `cat_hero.py` ganhou `thumb`/`worried`, `art/src/ui/mission_talk.py` exporta `talk_cat`, `talk_mouse_<tipo>`,
+  `talk_stage_luna`, `button_go*`; `ui_kit.json` ganhou peach/purple/wine/crimson. Código: `OfferPanel` refeito (ver
+  ARCHITECTURE), `MissionText.ask/say_rule`, tema `GoButton`; prévia `flight_ui_preview` ganhou `--no_offers`,
+  `--select=slot`, `--peek=kind`, `--accept`. Verificado: check, 96 testes + 11 integrações (controls_test agora marca a
+  plataforma e clica em Aceitar; variante `--numpad` = 1 + Enter), demo 2400 quadros sem erros, capturas (jogo novo,
+  confeiteira com estrelas, longe sem gás, aceite, ratinho bloqueado). Pendência: o usuário jogar e aprovar; a carga
+  na mão do ratinho é a figurinha de 16 px (pequena).
 - **Escolha de missão mais clara (2026-10-07)**. Pedido: "não dá pra saber o que as coisas significam". Cartão do
   `OfferPanel` agora diz tudo em palavras simples: fala do ratinho + **nome do tipo** (spec), **regra curta**
   (`MissionText.rule`/`RULE`), cada plataforma com o nome (normal/estreita/apertada), rótulo "dificuldade:" nas

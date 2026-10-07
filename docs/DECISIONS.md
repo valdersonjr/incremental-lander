@@ -119,3 +119,9 @@ Só figuras (risquinhos de distância, barrinhas de plataforma, estrelas soltas)
 do tipo, regra curta, nome de cada plataforma, rótulo "dificuldade" e a dica de que clicar na plataforma parte; o
 mineiro diz perto/médio/longe. Palavras simples continuam valendo para criança (como Motor, Gasolina). O cartão fica
 logo abaixo da fila (céu), não embaixo cobrindo a nave.
+
+## 2026-10-07 — Escolha da missão vira janela de conversa
+O gatinho herói conversa com o ratinho (corpo inteiro) numa janela sobre o mapa escurecido. Um rostinho por tipo na
+fila (pedidos do mesmo ratinho = coluna "Distância", que vale para qualquer ratinho no futuro); a fila mostra todos os
+ratinhos do planeta e os não liberados ficam em silhueta. Escolher só marca; partir é no botão ACEITAR MISSÃO.
+Botões sem dinheiro: só o "Você ganha" final. Substitui o cartão de 2026-10-06 (plataforma = botão de partir).

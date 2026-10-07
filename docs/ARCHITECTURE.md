@@ -58,13 +58,17 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
 game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
                               # com ganho + plataforma/combo/carga; terrain.gd escreve o multiplicador sob plataformas difíceis
-game/run/offer_panel.*        # OfferPanel (v15): fila de chips no alto (%Board/%Chips: rostinho, prêmio, perto/médio/longe do
-                              # mineiro, em texto) + cartão logo abaixo da fila (%Face/%Cargo, balão %Balloon/%Say =
-                              # MissionText.balloon + %Name do tipo, %Rule = MissionText.rule, %Pads = 3 botões de plataforma
-                              # com nome que partem, %StarRow "dificuldade:" + %Stars; %Hint = dica de partir/aviso de gás). Chip: hover seleciona, clique/Enter parte; ↑/↓
-                              # plataforma, Shift+↑/↓ estrela, 1–9 partem, E encerra (2 toques). Teste: pad_button_center()
+game/run/offer_panel.*        # OfferPanel (2026-10-07, janela de conversa): %Dim escurece o mapa; %Chips = TODOS os tipos de
+                              # EconMath.mission_kinds (bloqueado = silhueta, _peek_locked no hover); pedidos agrupados por
+                              # tipo (_groups kind -> índices perto→longe, _dsel = distância marcada). %Window: %Stage (palco
+                              # talk_stage_luna + %Cat/%Mouse AnimatedSprite2D talk_*_frames + %MouseBalloon = MissionText.ask/
+                              # say_rule + certo×errado de MissionIntro.PICS + %CatBalloon), %Columns (Distância/Tamanho da
+                              # plataforma/Dificuldade; clicar só marca), %Total + %Accept (GoButton) → joinha/happy e
+                              # offer_chosen(i) após ACCEPT_S. Teclas: ←/→ ratinho, ↑/↓ plataforma, Shift+↑/↓ estrela, 1–3
+                              # distância, Enter aceita, E encerra (2 toques). Teste: pad_button_center/accept_button_center
 scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target_lift_m, crest_scale, basin_m; mission_shape()
-scripts/ui/mission_text.gd    # MissionText: fala curta (balloon) e explicação (tip/kind_tip) de cada tipo de missão
+scripts/ui/mission_text.gd    # MissionText: fala curta (balloon), pedido/regra da janela (ask/say_rule), regra curta (rule) e
+                              # explicação (tip/kind_tip) de cada tipo de missão
 game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"

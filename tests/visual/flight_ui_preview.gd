@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--missions] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -23,13 +23,22 @@ func _ready() -> void:
 	if "--delivered" in args:                                  # aviso de entrega com plataforma e combo
 		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "combo": 1.2,
 				"good": true}, 3)
-	for a in args:                                             # --select=kind: cartao do pedido desse ratinho
-		if a.begins_with("--select="):
-			var offers := main.find_child("OfferPanel", true, false) as OfferPanel
+	var offers := main.find_child("OfferPanel", true, false) as OfferPanel
+	for a in args:                                             # --select=slot: janela do ratinho desse pedido
+		if a.begins_with("--select="):                         # (simple2 = mineiro, longe; plataforma estreita)
 			var i := offers._run.offer_slot.find(a.get_slice("=", 1))
 			if i >= 0:
-				offers._select(i)
-				offers._choose(i, "narrow", offers._run.stars_for(i).back())
+				var kind := str(offers._run.offer_mission[i]["kind"])
+				offers._select(kind)
+				offers._choose_dist((offers._groups[kind] as Array).find(i))
+				offers._choose("narrow", offers._run.stars_for(i).back())
+		elif a.begins_with("--peek="):                         # --peek=kind: ratinho ainda nao liberado sob o mouse
+			offers._peek_locked(a.get_slice("=", 1))
+	if "--accept" in args:                                     # joinha + comemoracao (sem partir)
+		offers._on_accept()
+	if "--no_offers" in args:                                  # so o mapa (fundo das maquetes da janela de conversa)
+		(main.find_child("OfferPanel", true, false) as Control).visible = false
+		(main.find_child("Hud", true, false) as CanvasItem).visible = false
 	if "--pause" in args:
 		(main.find_child("PauseMenu", true, false) as PauseMenu).open()
 	if "--hangar" in args:

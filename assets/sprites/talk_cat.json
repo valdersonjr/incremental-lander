@@ -1,0 +1,40 @@
+{
+  "frame_width": 73,
+  "frame_height": 82,
+  "animations": [
+    {
+      "name": "idle",
+      "row": 0,
+      "frames": 6,
+      "durations_ms": [
+        900,
+        500,
+        700,
+        120,
+        600,
+        500
+      ],
+      "loop": true
+    },
+    {
+      "name": "thumb",
+      "row": 1,
+      "frames": 2,
+      "durations_ms": [
+        90,
+        600
+      ],
+      "loop": false
+    },
+    {
+      "name": "worried",
+      "row": 2,
+      "frames": 2,
+      "durations_ms": [
+        400,
+        400
+      ],
+      "loop": true
+    }
+  ]
+}

@@ -26,6 +26,7 @@ ARMS = {  # (ombro -> mão) em unidades de desenho (k=1); mão = luva sea
     "wave2": [((20, 44), (16, 52)), ((42, 43), (49, 31))],
     "float": [((20, 44), (11, 40)), ((42, 44), (51, 40))],
     "hold": [((20, 44), (25, 52)), ((42, 44), (38, 52))],
+    "thumb": [((20, 44), (16, 52)), ((42, 44), (49, 41))],     # joinha (janela de conversa do pedido)
 }
 LEGS = {
     "stand": [((26, 56), (25, 63)), ((36, 56), (37, 63))],
@@ -86,7 +87,7 @@ class Cat:
             r = self.s(2.9 - 0.9 * t)
             sphere(cv, x, y, r, r, ["white", "cream", "cream", "peach"] if t > 0.78 else FUR)
 
-    def head(self, cv: Canvas, blink: bool) -> None:
+    def head(self, cv: Canvas, blink: bool, worried: bool = False) -> None:
         cx, cy = round(self.HX), round(self.HY + self.s(2))
         k = Canvas(self.W, self.H)
         for sd in (-1, 1):                                # orelhas (triângulos gordinhos)
@@ -114,13 +115,21 @@ class Cat:
                     k.px(x0 + ew - 1, ey + eh - 1, "slate")
                 else:
                     k.px(x0 + 1, ey, "white")
+        if worried:                                       # sobrancelhas inclinadas (meio do rosto mais alto)
+            for ox, sd in ((-6, 1), (4, -1)):
+                x0 = cx + round(self.s(ox))
+                for t in range(ew + 1):
+                    k.px(x0 - (1 if sd > 0 else 0) + t, ey - self.n(2) - (t if sd > 0 else ew - t) // 2, "rust")
         sphere(k, cx, cy + self.s(6), self.s(4), self.s(2.6), ["white", "cream", "cream", "peach"])   # focinho
         nw = self.n(2)
         k.hline(cx - nw // 2, cx - nw // 2 + nw - 1, cy + round(self.s(4)), "pink")                   # nariz
         k.hline(cx - nw // 2, cx - nw // 2 + nw - 1, cy + round(self.s(4)) + 1, "rose")
-        my = cy + round(self.s(7))                                   # boquinha "w"
-        k.px(cx - nw // 2 - 1, my, "ink"); k.px(cx - nw // 2 + nw, my, "ink")
-        k.hline(cx - nw // 2, cx - nw // 2 + nw - 1, my + 1, "ink")
+        my = cy + round(self.s(7))                                   # boquinha "w" (preocupado: "o")
+        if worried:
+            k.rect(cx - nw // 2, my, nw, self.n(2), "ink")
+        else:
+            k.px(cx - nw // 2 - 1, my, "ink"); k.px(cx - nw // 2 + nw, my, "ink")
+            k.hline(cx - nw // 2, cx - nw // 2 + nw - 1, my + 1, "ink")
         for ox in (-9, 8):                                # bochechas
             k.rect(cx + round(self.s(ox)), cy + round(self.s(5)), self.n(2), max(1, self.n(1)), "pink")
         for sd in (-1, 1):                                # bigodes
@@ -159,7 +168,7 @@ class Cat:
                 cv.px(x, y, "lilac_grey")
 
     def body(self, pose: str = "rest", legs: str = "stand", blink: bool = False, tail_up: int = 0,
-             breathe: int = 0) -> Canvas:
+             breathe: int = 0, worried: bool = False) -> Canvas:
         """breathe = 1 abaixa o capacete 1 px (respiração sutil, alternar com 0)."""
         s, p = self.s, self.p
         hy0 = self.HY
@@ -198,14 +207,22 @@ class Cat:
             capsule(cv, ax, ay, bx, by, s(3.2), SUIT)
             sphere(cv, bx, by, s(3.4), s(3.4), BOOT)
         self.helmet_glass(cv)                              # capacete
-        self.head(cv, blink)
+        self.head(cv, blink, worried)
         self.helmet_shine(cv)
+        if worried:                                        # gotinha de suor no vidro
+            gx, gy = round(self.HX + s(10)), round(self.HY - s(4))
+            cv.rect(gx, gy, self.n(2), self.n(3), "pale_sky"); cv.px(gx, gy + self.n(3), "sky")
+            cv.px(gx, gy - 1, "pale_sky")
         self.helmet_ring(cv)
         ax = round(self.HX + s(9))                         # antena com bolinha (assinatura do capacete)
         for t in range(self.n(1)):
             cv.vline(ax + t, round(self.HY - self.HR - s(3)), round(self.HY - self.HR + s(2)), "steel")
         sphere(cv, ax + s(0.5) * (self.k > 1.2), self.HY - self.HR - s(5), s(2.4), s(2.4),
                ["white", "pink", "hot_pink", "raspberry"])
+        if pose == "thumb":                                # polegar para cima saindo da luva
+            hx, hy = self.p(ARMS["thumb"][1][1])
+            cv.rect(round(hx - s(1)), round(hy - s(5.5)), self.n(2), round(s(3)), "aqua")
+            cv.px(round(hx - s(1)), round(hy - s(5.5)), "ice")
         cv.outline("ink")
         self.HY = hy0
         return cv
@@ -222,6 +239,7 @@ def frames(k: float = 1.0) -> dict:
         "rest": c.body(), "blink": c.body(blink=True),
         "wave0": c.body("wave0"), "wave1": c.body("wave1"), "wave2": c.body("wave2"),
         "float": c.body("float", "float", tail_up=3), "hold": c.body("hold"),
+        "thumb": c.body("thumb", tail_up=2), "worried": c.body("hold", worried=True),
     }
 
 

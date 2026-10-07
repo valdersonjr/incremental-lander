@@ -105,6 +105,9 @@
 - [x] 15.4 Relevo pensado para cada regra (subida, mesa, cratera, degrau…) + conferir gás com a economia (≤1%: sem mudança) (2026-10-06)
 - [x] 15.5 Telinha "Novo amiguinho!" ao liberar um tipo (ratinho, balão, certo × errado) (2026-10-06)
 - [ ] 15.6 Aprovação do usuário jogando (cartão, descida, relevos; tamanho da cratera do Cabo em saltos curtos)
+- [x] 15.8 Janela de conversa na escolha da missão: gatinho herói × ratinho de corpo inteiro (7 tipos), um balão (pedido
+      + regra), colunas Distância/Plataforma/Dificuldade, "Você ganha" + ACEITAR MISSÃO; fila com todos os ratinhos
+      (bloqueados em silhueta) (2026-10-07)
 - [x] 15.7 Tela inicial própria (sem o mapa de voo): pesquisa de telas profissionais → 3 conceitos (Vitrine/Passeio/
       Plataforma) → escolhido A "Vitrine" v3 (gatinho herói acenando no morro de queijo, logo de doce, frase da proposta,
       Jogar com 3 estados, parallax/nuvens/estrelas) (2026-10-06)

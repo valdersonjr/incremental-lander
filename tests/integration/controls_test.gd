@@ -26,6 +26,18 @@ func _ready() -> void:
 	add_child(_main)
 
 
+func _click(pos: Vector2) -> void:
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.position = pos
+	click.global_position = pos
+	click.pressed = true
+	Input.parse_input_event(click)
+	var up := click.duplicate() as InputEventMouseButton
+	up.pressed = false
+	Input.parse_input_event(up)
+
+
 func _key(code: Key, pressed: bool) -> void:
 	var ev := InputEventKey.new()
 	ev.keycode = code
@@ -69,18 +81,12 @@ func _physics_process(_delta: float) -> void:
 				var panel := _main.find_child("OfferPanel", true, false) as OfferPanel
 				_log.append("W antes de escolher: estado=%s aviso=%s" % [Lander.State.keys()[l.state], panel.hint_flash > 0.0])
 				_hint_ok = panel.hint_flash > 0.0 and l.state == Lander.State.LANDED
-				if "--numpad" in OS.get_cmdline_user_args():
+				if "--numpad" in OS.get_cmdline_user_args():           # 1 = perto, Enter do teclado numerico aceita
 					_key(KEY_KP_1, true); _key(KEY_KP_1, false)
-				else:
-					var click := InputEventMouseButton.new()
-					click.button_index = MOUSE_BUTTON_LEFT
-					click.position = panel.pad_button_center("normal")   # plataforma do cartao = partir
-					click.global_position = click.position
-					click.pressed = true
-					Input.parse_input_event(click)
-					var up := click.duplicate() as InputEventMouseButton
-					up.pressed = false
-					Input.parse_input_event(up)
+					_key(KEY_KP_ENTER, true); _key(KEY_KP_ENTER, false)
+				else:                                                   # marca a plataforma e clica em ACEITAR
+					_click(panel.pad_button_center("normal"))
+					_click(panel.accept_button_center())
 				_step = 2
 				_frames = 0
 		2:

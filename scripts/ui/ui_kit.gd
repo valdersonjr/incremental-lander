@@ -126,6 +126,14 @@ static func theme_for(world: String) -> Theme:
 	t.set_color(&"font_pressed_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_shadow_color", &"PrimaryButton", Color(0, 0, 0, 0))
 	t.set_color(&"font_disabled_color", &"PrimaryButton", color("slate"))
+	# aceitar missao (janela de conversa do pedido): botao principal recolorido em verde, texto branco
+	t.set_type_variation(&"GoButton", &"Button")
+	var go := wd + "button_go.png" if ResourceLoader.exists(wd + "button_go.png") else DIR + "luna/button_go.png"
+	var go_hover := go.replace("button_go.png", "button_go_hover.png")
+	t.set_stylebox(&"normal", &"GoButton", _box(go, 6, m))
+	t.set_stylebox(&"hover", &"GoButton", _box(go_hover, 6, m))
+	t.set_stylebox(&"pressed", &"GoButton", _box(go, 6, m + Vector4(0, 1, 0, -1)))
+	t.set_stylebox(&"focus", &"GoButton", _focus_box(color("white")))
 	# acao destrutiva (apagar progresso, recomecar): botao comum com texto vermelho
 	t.set_type_variation(&"DangerButton", &"Button")
 	for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color"]:

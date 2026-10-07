@@ -55,10 +55,14 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   (normal ×1 · estreita ×1,5 · apertada ×2,2) e a **dificuldade** (estrelas liberadas); falhar a ★3 paga bem menos
   (×0,3) que a ★1 (×0,6). Teclado: cima/baixo = plataforma, Shift + cima/baixo = estrela; o jogo lembra a última escolha
   de cada ratinho.
-  **Tela de escolha (v15, 2026-10-06)**: no alto, a **fila de rostinhos** (um por pedido, com o prêmio; o mineiro mostra
-  perto/médio/longe em figura; cinza = o gás não chega). Embaixo, o **cartão** do escolhido: ratinho + carga, **balão de
-  fala** com a regra em 2–3 palavras ("Devagarinho!", "Tá pesado!"…) e as **3 plataformas como botões de partir**, cada
-  uma com o prêmio — clicar já parte. Sem barra de gás e sem botão "vamos" no cartão.
+  **Tela de escolha = janela de conversa (2026-10-07)**: no alto, a **fila com todos os ratinhos** do planeta, sempre na
+  mesma ordem — um rostinho por tipo, com o prêmio da escolha marcada; os ainda não liberados ficam em **silhueta** (álbum
+  de figurinhas). Embaixo, a **janela**: o **gatinho herói** conversa com o **ratinho** (corpo inteiro, segurando a
+  carga) sobre um palco da Lua; **um balão** com o pedido ("Meu bolo é fofinho!") e a regra com certo × errado
+  ("Pousa bem devagarinho, senão amassa!"). Escolhas em **colunas**: Distância (perto/médio/longe, quando o ratinho tem
+  mais de um pedido — hoje o mineiro; no futuro qualquer um) | Tamanho da plataforma | Dificuldade (estrelas). Botões só
+  com texto; embaixo só o **"Você ganha"** final + **ACEITAR MISSÃO** (gatinho faz joinha "Deixa comigo!", ratinho
+  comemora). Gás pouco: o gatinho fica preocupado e avisa.
   **Cada missão no seu mapa (v15)**: ao escolher, a tela escurece e a nave desce do céu numa plataforma de um lugar novo
   (sem gastar gás). O relevo combina com a regra: Pesada = subida até o alvo; Pouso suave = alvo no alto de uma mesa;
   Rápida = caminho baixo; Cabo = cratera no meio; resgate = ratinho no fundo de uma cratera; táxi = busca num degrau.

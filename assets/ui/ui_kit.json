@@ -96,7 +96,11 @@
     "violet": "#a884f3",
     "lavender": "#eaaded",
     "aqua": "#30e1b9",
-    "ice": "#8ff8e2"
+    "ice": "#8ff8e2",
+    "peach": "#fca790",
+    "purple": "#905ea9",
+    "wine": "#7a3045",
+    "crimson": "#ae2334"
   },
   "world_files": [
     "panel.png",
