@@ -262,6 +262,7 @@ func _start_run() -> void:
 	for c: Control in [_hud, _offers, _summary, _pause]:
 		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
+	_flight.landscapes = GameState.landscapes()
 	Sound.music("flight")
 	Sound.ambience(GameState.current_planet)
 	_hud.bind(_flight, _run)

@@ -73,6 +73,10 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   **Cada missão no seu mapa (v15)**: ao escolher, a tela escurece e a nave desce do céu numa plataforma de um lugar novo
   (sem gastar gás). O relevo combina com a regra: Pesada = subida até o alvo; Pouso suave = alvo no alto de uma mesa;
   Rápida = caminho baixo; Cabo = cratera no meio; resgate = ratinho no fundo de uma cratera; táxi = busca num degrau.
+  **Paisagens (v15, 2026-10-07)**: cada mapa sorteia uma paisagem liberada e varia altura, morros e desnível dentro dela —
+  Planície e Colinas desde o início; Serra (8★), Vale (20★), Planalto (37★), Crateras (56★) e Degraus (78★) chegam
+  pela Estrada das Estrelas (`world.json > terrain.landscapes`; preview aprovado `art/previews/paisagens/`). A regra da
+  missão continua valendo por cima. O fundo acompanha a altura média do chão (vale não mostra o "pé" do cenário).
   O que liga as entregas do run é o tanque.
   **Liberação jogando** (padrão Hades/Dead Cells): cada entrega dá **1 estrela**; **3 estrelas** liberam um nó na aba
   **PEDIDOS** da oficina (★1 de Pesada/Suave/Rápida abertas; Passageiro e Cabo pedem 2 tipos ★1; ★N pede ★N-1; Dupla

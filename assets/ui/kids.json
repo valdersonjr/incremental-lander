@@ -49,6 +49,13 @@
     "rep_off",
     "heart_on",
     "heart_off",
-    "trophy"
+    "trophy",
+    "land_planicie",
+    "land_colinas",
+    "land_serra",
+    "land_vale",
+    "land_planalto",
+    "land_crateras",
+    "land_degraus"
   ]
 }

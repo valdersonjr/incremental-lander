@@ -126,8 +126,12 @@
       (`Hud._build_score`/`set_records`), resumo "troféus" (`RunSummary._add_records`), troféu nos 2 atlas
       (`ui_kit.py`/`kids_ui.py`); prévias `flight_ui_preview -- --records`, `summary_preview [-- --first]` (2026-10-07).
       Pendente: som próprio de recorde (hoje: jingle milestone)
-- [ ] 17.3 Paisagens: receitas de relevo (Planície, Colinas, Serra, Vale, Planalto, Crateras, Degraus) sorteadas por
-      missão; preview HTML antes; as novas liberadas na Estrada; Δv médio por paisagem conferido no modelo
+- [x] 17.3 Paisagens (godot-dev + pixel-art + economy-balance): 7 receitas em `world.json > terrain.landscapes`
+      (`TerrainGen.landscape`/`pick_landscape`, ruído ridged, degraus, desnível ±, alvo em mesa/vale, 0–3 morros,
+      crateras); `Flight.landscapes` (do `GameState.landscapes()`); 5 paradas `landscape` na Estrada (economy.json,
+      rascunho) + ícones `land_*` no atlas kids; fundo segue o chão (`background.ground_follow`); plataforma no nível
+      sem parede colada; prévia `landscape_preview [-- --near] [--seed=N]`; testes (8 seeds × 7 paisagens) (2026-10-07).
+      Δv: o modelo da economia não usa o relevo (arco ideal); conferir jogando/telemetria
 
 ## Fase 16 — PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
 > Pedido do usuário: ver toda a progressão desde o início ("incita a querer chegar lá"). Escolheu, entre 3 protótipos

@@ -162,6 +162,17 @@ func _check_road(quiet: bool = false) -> void:
 			Events.road_reached.emit(id)
 
 
+## Paisagens do relevo liberadas (v15): as do jogo novo (world.json terrain.landscapes.start) + as paradas
+## "land_<id>" alcancadas na Estrada. Cada missao sorteia uma delas (TerrainGen.pick_landscape).
+func landscapes() -> Array[String]:
+	var out: Array[String] = []
+	out.assign(WorldConfig.load_config()["terrain"]["landscapes"]["start"])
+	for id: String in road_reached:
+		if id.begins_with("land_") and not id.substr(5) in out:
+			out.append(id.substr(5))
+	return out
+
+
 ## Nivel de reputacao (0..3) com o ratinho do tipo kind.
 func rep_level(kind: String) -> int:
 	return EconMath.reputation_level(int(rep_points.get(kind, 0)))

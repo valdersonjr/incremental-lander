@@ -216,3 +216,58 @@ func test_relevo_das_missoes_muda_o_trecho() -> void:
 	assert_true(TerrainGen.height_at(tow["ridge"], mid) > TerrainGen.height_at(plain["ridge"], mid),
 			"Cabo: o meio do caminho deveria ficar mais baixo (cratera, sem crista)")
 	assert_eq(TerrainGen.mission_shape({"kind": "simple", "star": 1, "parts": []}), {}, "Simples: relevo de sempre")
+
+
+func _land_ids() -> Array:
+	return (WorldConfig.load_config()["terrain"]["landscapes"] as Dictionary).keys().filter(
+			func(k: String) -> bool: return k != "notes" and k != "start")
+
+
+func test_paisagens_validas_e_deterministicas() -> void:
+	var cfg: Dictionary = WorldConfig.load_config()["terrain"]
+	for id: String in _land_ids():
+		for seed_value in [3, 17, 91, 5, 42, 77, 123, 256]:
+			var shape := {"land": TerrainGen.landscape(id, seed_value)}
+			var t := TerrainGen.generate(seed_value, "luna", [900.0] as Array[float], [], Vector2.ZERO, shape)
+			var again := TerrainGen.generate(seed_value, "luna", [900.0] as Array[float], [], Vector2.ZERO,
+					{"land": TerrainGen.landscape(id, seed_value)})
+			assert_eq(t["ridge"], again["ridge"], "%s: mesma seed = mesmo mapa" % id)
+			for pad: Dictionary in t["pads"]:                  # topo plano em toda plataforma
+				var half := float(pad["half_width"]) - 0.5
+				for x in [float(pad["x"]) - half, float(pad["x"]), float(pad["x"]) + half]:
+					assert_almost(TerrainGen.height_at(t["ridge"], x), float(pad["y"]), 0.01,
+							"%s seed %d: plataforma plana" % [id, seed_value])
+			var lim := maxf(float(cfg["max_slope"]) * float(cfg["terrace_slope_mult"]),
+					float((cfg["landscapes"][id] as Dictionary).get("side_slope", cfg["pad_side_slope"]))) + 0.05
+			var r: PackedVector2Array = t["ridge"]
+			var worst := 0.0
+			for j in range(1, r.size()):
+				var dx := r[j].x - r[j - 1].x
+				if dx > 0.5:
+					worst = maxf(worst, absf(r[j].y - r[j - 1].y) / dx)
+			assert_true(worst <= lim * 1.6, "%s seed %d: encosta %.2f (limite ~%.2f)" % [id, seed_value, worst, lim])
+
+
+func test_vale_e_planalto_mudam_a_altura_do_alvo() -> void:
+	for seed_value in [5, 6, 7]:
+		var v := TerrainGen.generate(seed_value, "luna", [1000.0] as Array[float], [], Vector2.ZERO,
+				{"land": TerrainGen.landscape("vale", seed_value)})
+		var m := TerrainGen.generate(seed_value, "luna", [1000.0] as Array[float], [], Vector2.ZERO,
+				{"land": TerrainGen.landscape("planalto", seed_value)})
+		assert_true(float(v["pads"][1]["lift"]) < -50.0, "vale: alvo afundado")
+		assert_true(float(m["pads"][1]["lift"]) > 50.0, "planalto: alvo em mesa")
+
+
+func test_sorteio_de_paisagem_usa_so_as_liberadas() -> void:
+	var seen := {}
+	for seed_value in 40:
+		seen[TerrainGen.pick_landscape(["planicie", "colinas"], seed_value)] = true
+	assert_eq(seen.keys().size(), 2)
+	assert_true(seen.has("planicie") and seen.has("colinas"))
+	assert_eq(TerrainGen.pick_landscape([], 3), "")
+
+
+func test_altura_media_em_volta() -> void:
+	var r := PackedVector2Array([Vector2(-1000, 0), Vector2(0, 0), Vector2(1000, 100)])
+	assert_almost(TerrainGen.mean_height(r, 0.0, 400.0), (0.0 + 0.0 + 0.0 + 20.0 + 40.0) / 5.0, 0.01)
+

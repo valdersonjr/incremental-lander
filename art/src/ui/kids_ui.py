@@ -486,6 +486,37 @@ def trophy() -> Canvas:
     return k
 
 
+# perfil do chao (altura em px a partir da base, x = 0..17) de cada paisagem do relevo (2026-10-07, Estrada)
+LAND_PROFILES = {
+    "planicie": [6, 6, 6, 6, 7, 7, 7, 6, 6, 6, 6, 6, 7, 7, 7, 6, 6, 6],
+    "colinas": [5, 5, 6, 7, 8, 9, 10, 11, 11, 11, 10, 9, 8, 7, 6, 5, 5, 5],
+    "serra": [4, 6, 9, 12, 9, 6, 7, 10, 14, 10, 7, 5, 8, 11, 8, 5, 4, 4],
+    "vale": [11, 11, 11, 11, 10, 8, 5, 3, 3, 3, 3, 5, 8, 10, 11, 11, 11, 11],
+    "planalto": [4, 4, 4, 4, 4, 5, 6, 12, 12, 12, 12, 12, 12, 6, 5, 4, 4, 4],
+    "crateras": [8, 8, 8, 7, 4, 3, 4, 7, 8, 8, 7, 4, 3, 4, 7, 8, 8, 8],
+    "degraus": [3, 3, 3, 3, 6, 6, 6, 6, 9, 9, 9, 9, 12, 12, 12, 12, 12, 12],
+}
+
+
+def landscape(kind: str) -> Canvas:
+    """Paisagem do relevo (parada da Estrada): janelinha redonda com céu rosado e o chão de queijo no formato dela."""
+    k = _canvas()
+    mc.sphere(k, 12, 12, 10.6, 10.6, ["peach", "salmon", "salmon", "raspberry"])
+    prof = LAND_PROFILES[kind]
+    for i, h in enumerate(prof):
+        x = 3 + i
+        top = 20 - h
+        for y in range(top, 23):
+            k.px(x, y, "lemon" if y == top else ("gold" if y < top + 3 else "amber"))
+    # recorta o chao no circulo da janelinha
+    for y in range(CELL):
+        for x in range(CELL):
+            if (x + 0.5 - 12) ** 2 + (y + 0.5 - 12) ** 2 > 10.6 ** 2:
+                k.px(x, y, "clear")
+    k.outline("ink")
+    return k
+
+
 MISSION_MICE = {"rat_simple": mouse_simple, "rat_heavy": mouse_heavy, "rat_soft": mouse_soft, "rat_fast": mouse_fast,
                 "rat_passenger": mouse_passenger, "rat_tow": mouse_tow, "rat_double": mouse_double}
 
@@ -494,7 +525,7 @@ NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on"
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
     + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
-    + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"]
+    + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"] + ["land_" + n for n in LAND_PROFILES]
 
 
 def build() -> Canvas:
@@ -506,7 +537,8 @@ def build() -> Canvas:
         + [pad_tier(10), pad_tier(7), pad_tier(4), distance(1), distance(2), distance(3), check(), cross(), clock()] \
         + [rep_badge.shield(True), rep_badge.shield(False)] \
         + [heart(True), heart(False)] \
-        + [trophy()]                                               # recorde pessoal (2026-10-07)
+        + [trophy()] \
+        + [landscape(n) for n in LAND_PROFILES]                     # paisagens do relevo na Estrada (2026-10-07)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

@@ -15,19 +15,26 @@ extends RefCounted
 ## shape (v15, relevo da missao; world.json missions.<tipo>.terrain) mexe so no trecho partida -> 1a entrega:
 ##   rise_m = o chao sobe ate o alvo (subida suave) · target_lift_m = alvo no alto de uma mesa/degrau ·
 ##   crest_scale = altura da crista (0 = sem) · basin_m = cratera no meio do caminho (basin_width_frac da distancia).
+## shape["land"] (v15, paisagem sorteada por missao: TerrainGen.landscape; world.json terrain.landscapes) troca a
+## receita: amplitude/frequencia/oitavas do ruido, ridged (picos), terrace_m (degraus), rise_m (desnivel, soma ao da
+## missao), target_lift_m (alvo em mesa > 0 ou vale < 0, com side_slope proprio), crests (0-3 morros) x crest_frac
+## (x crest_scale da missao), basins (crateras) x basin_m. Sem "land" = a receita de sempre (planeta).
 static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[float],
 		pad_tiers: Array[String] = [], extend: Vector2 = Vector2.ZERO, shape: Dictionary = {}) -> Dictionary:
 	var cfg: Dictionary = WorldConfig.load_config()["terrain"]
 	var pcfg: Dictionary = cfg["planets"].get(planet_id, cfg["planets"]["luna"])
 	var step := WorldConfig.m_to_px(cfg["step_m"])
 	var margin := WorldConfig.m_to_px(cfg["margin_m"])
-	var amp := WorldConfig.m_to_px(pcfg["amplitude_m"])
-	var max_slope: float = cfg["max_slope"]
+	var land: Dictionary = shape.get("land", {})
+	var amp := WorldConfig.m_to_px(float(land.get("amplitude_m", pcfg["amplitude_m"])))
+	var terrace := WorldConfig.m_to_px(float(land.get("terrace_m", 0.0)))
+	var ridged := bool(land.get("ridged", false))
+	var max_slope: float = float(cfg["max_slope"]) * (float(cfg.get("terrace_slope_mult", 2.5)) if terrace > 0.0 else 1.0)
 
 	var noise := FastNoiseLite.new()
 	noise.seed = seed_value
-	noise.frequency = float(pcfg["frequency"]) / WorldConfig.m_to_px(1.0)
-	noise.fractal_octaves = int(pcfg["octaves"])
+	noise.frequency = float(land.get("frequency", pcfg["frequency"])) / WorldConfig.m_to_px(1.0)
+	noise.fractal_octaves = int(land.get("octaves", pcfg["octaves"]))
 
 	var pad_xs: Array[float] = [0.0]
 	var tiers: Array[String] = ["normal"]
@@ -41,24 +48,27 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 
 	# relevo de base: de 0 para a direita e de 0 para a esquerda, limitando a inclinacao a partir da ancora
 	var right := PackedVector2Array()
-	var prev_y := -noise.get_noise_1d(0.0) * amp
+	var prev_y := _base_y(noise, 0.0, amp, ridged)
 	for k in range(0, k_max + 1):
-		var y := clampf(-noise.get_noise_1d(k * step) * amp, prev_y - max_slope * step, prev_y + max_slope * step)
+		var y := clampf(_base_y(noise, k * step, amp, ridged), prev_y - max_slope * step, prev_y + max_slope * step)
 		right.append(Vector2(k * step, y))
 		prev_y = y
 	var left := PackedVector2Array()
 	prev_y = right[0].y
 	for k in range(-1, k_min - 1, -1):
-		var y := clampf(-noise.get_noise_1d(k * step) * amp, prev_y - max_slope * step, prev_y + max_slope * step)
+		var y := clampf(_base_y(noise, k * step, amp, ridged), prev_y - max_slope * step, prev_y + max_slope * step)
 		left.append(Vector2(k * step, y))
 		prev_y = y
 	left.reverse()
 	var ridge := left + right
-	if pad_xs.size() > 1 and float(shape.get("rise_m", 0.0)) > 0.0:   # subida ate o alvo (smoothstep; depois fica alta)
-		var rise := WorldConfig.m_to_px(float(shape["rise_m"]))
+	var rise_m := float(shape.get("rise_m", 0.0)) + float(land.get("rise_m", 0.0))
+	if pad_xs.size() > 1 and rise_m != 0.0:                 # desnivel ate o alvo (smoothstep; depois fica): > 0 sobe
+		var rise := WorldConfig.m_to_px(rise_m)
 		for j in ridge.size():
 			var t := clampf(ridge[j].x / pad_xs[1], 0.0, 1.0)
 			ridge[j].y -= rise * t * t * (3.0 - 2.0 * t)
+	if terrace > 0.0:                                          # degraus: altura em patamares (depois do desnivel)
+		_terrace(ridge, terrace, max_slope * step)
 
 	# plataformas: largura e elevacao do tipo; altura decidida no relevo de base (antes das cristas)
 	var side_slope: float = cfg["pad_side_slope"]
@@ -67,31 +77,46 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 		var tc: Dictionary = cfg["pad_tiers"].get(tiers[i], cfg["pad_tiers"]["normal"])
 		var half := WorldConfig.m_to_px(float(tc["width_m"])) * 0.5
 		var lift := WorldConfig.m_to_px(float(tc["lift_m"]))
-		if i == 1:                                             # alvo da missao numa mesa/degrau
-			lift += WorldConfig.m_to_px(float(shape.get("target_lift_m", 0.0)))
+		var pad_side := side_slope
+		if i == 1:                                             # alvo da missao numa mesa/degrau (ou vale da paisagem)
+			lift += WorldConfig.m_to_px(float(shape.get("target_lift_m", 0.0)) + float(land.get("target_lift_m", 0.0)))
+			pad_side = float(land.get("side_slope", side_slope))
 		# pico/vale precisa de espaco ate a plataforma ANTERIOR (so ela: uma plataforma nunca muda quando outra e
 		# criada depois — o lander pode estar pousado nela); perto demais -> plataforma no nivel do relevo
-		var reach := half + absf(lift) / side_slope + WorldConfig.m_to_px(10.0)
+		var reach := half + absf(lift) / pad_side + WorldConfig.m_to_px(10.0)
 		if i > 0:
 			var prev: Dictionary = pads[i - 1]
-			var prev_reach := float(prev["half_width"]) + absf(float(prev["lift"])) / side_slope
+			var prev_reach := float(prev["half_width"]) + absf(float(prev["lift"])) / float(prev["side"])
 			if absf(pad_xs[i] - pad_xs[i - 1]) < reach + prev_reach:
 				lift = 0.0
 		pads.append({"id": i, "x": pad_xs[i], "half_width": half, "y": _height_at(ridge, pad_xs[i]) - lift,
-				"tier": tiers[i], "lift": lift})
+				"tier": tiers[i], "lift": lift, "side": pad_side})
 	for i in pads.size() - 1:
 		var crest: Dictionary = cfg["crest"]
-		if i == 0 and shape.has("crest_scale"):
-			if float(shape["crest_scale"]) <= 0.0:
+		var n := 1
+		if i == 0 and (shape.has("crest_scale") or land.has("crests")):
+			n = int(land.get("crests", 1))
+			var scale := float(shape.get("crest_scale", 1.0))
+			if scale <= 0.0 or n <= 0:
 				continue
 			crest = crest.duplicate()
-			crest["frac"] = float(crest["frac"]) * float(shape["crest_scale"])
-		_add_crest(ridge, pads[i], pads[i + 1], crest, pcfg, pads)
+			crest["frac"] = float(land.get("crest_frac", crest["frac"])) * scale
+		if n == 1:
+			_add_crest(ridge, pads[i], pads[i + 1], crest, pcfg, pads, 0.5, -1.0, ridged)
+		else:                                                  # varios morros espalhados no trecho (mais baixos)
+			crest["frac"] = float(crest["frac"]) * 0.85
+			for c in n:
+				_add_crest(ridge, pads[i], pads[i + 1], crest, pcfg, pads, 0.25 + 0.5 * c / float(n - 1), 0.14, ridged)
 	if pads.size() > 1 and float(shape.get("basin_m", 0.0)) > 0.0:
 		_add_basin(ridge, pads[0], pads[1], shape)
+	if pads.size() > 1 and int(land.get("basins", 0)) > 0:    # crateras da paisagem, espalhadas no trecho
+		var nb := int(land["basins"])
+		var bs := {"basin_m": float(land.get("basin_m", 50.0)), "basin_width_frac": float(land.get("basin_width_frac", 0.08))}
+		for b in nb:
+			_add_basin(ridge, pads[0], pads[1], bs, 0.2 + 0.6 * (b + 0.5) / float(nb))
 	var y_range := _y_range(ridge)
 	for p in pads:
-		y_range = _shape_pad(ridge, p, side_slope, y_range)
+		y_range = _shape_pad(ridge, p, float(p["side"]), y_range)
 	for k in range(pads.size() - 1, -1, -1):                   # topo plano garantido; a mais antiga ganha
 		var p: Dictionary = pads[k]
 		var half_p := float(p["half_width"]) + 0.001
@@ -119,8 +144,10 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 ## A inclinacao da lombada e limitada (max_bump_slope) para a arte e o pouso continuarem legiveis.
 ## Funciona para os dois lados (pedido a esquerda: b antes de a). Sem crista se outra plataforma fica entre as duas
 ## (voltar por cima de plataformas antigas: a lombada as afundaria num buraco).
+## t = posicao do morro no trecho (0..1, a -> b), wfrac = meia-largura / distancia (< 0 = crest.half_width_frac),
+## ridged = topo pontudo (Serra).
 static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, crest: Dictionary,
-		pcfg: Dictionary, pads: Array[Dictionary] = []) -> void:
+		pcfg: Dictionary, pads: Array[Dictionary] = [], t: float = 0.5, wfrac: float = -1.0, ridged: bool = false) -> void:
 	var d := absf(float(b["x"]) - float(a["x"]))
 	if d < WorldConfig.m_to_px(float(crest["min_distance_m"])):
 		return
@@ -130,8 +157,8 @@ static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 		if p["id"] != a["id"] and p["id"] != b["id"] and float(p["x"]) > lo and float(p["x"]) < hi:
 			return
 	var h := minf(float(crest["frac"]) * d, WorldConfig.m_to_px(float(pcfg["crest_max_m"])))
-	var w := float(crest["half_width_frac"]) * d
-	var mid := (float(a["x"]) + float(b["x"])) * 0.5
+	var w := (float(crest["half_width_frac"]) if wfrac < 0.0 else wfrac) * d
+	var mid := lerpf(float(a["x"]), float(b["x"]), t)
 	var peak_y := minf(float(a["y"]), float(b["y"])) - h        # y cresce para baixo
 	var extra := minf(_height_at(ridge, mid) - peak_y, float(crest["max_bump_slope"]) * w / (PI * 0.5))
 	if extra <= 0.0:
@@ -141,7 +168,54 @@ static func _add_crest(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 		if dx >= w:
 			break
 		if absf(dx) < w:
-			ridge[j].y -= extra * (0.5 + 0.5 * cos(PI * dx / w))
+			var k := 0.5 + 0.5 * cos(PI * dx / w)
+			ridge[j].y -= extra * (pow(k, 1.6) if ridged else k)
+
+
+## Altura do relevo de base no x (px): ruido x amplitude; ridged = vales largos e picos pontudos (1 - |n|).
+static func _base_y(noise: FastNoiseLite, x: float, amp: float, ridged: bool) -> float:
+	var v := noise.get_noise_1d(x)
+	if ridged:
+		v = (1.0 - absf(v)) * 1.6 - 0.8
+	return -v * amp
+
+
+## Degraus: arredonda a altura para patamares de 'size' px e limita a rampa entre eles (ida e volta).
+static func _terrace(ridge: PackedVector2Array, size: float, max_dy: float) -> void:
+	for j in ridge.size():
+		ridge[j].y = roundf(ridge[j].y / size) * size
+	for j in range(1, ridge.size()):
+		ridge[j].y = clampf(ridge[j].y, ridge[j - 1].y - max_dy, ridge[j - 1].y + max_dy)
+	for j in range(ridge.size() - 2, -1, -1):
+		ridge[j].y = clampf(ridge[j].y, ridge[j + 1].y - max_dy, ridge[j + 1].y + max_dy)
+
+
+## Paisagem resolvida para uma missao (world.json terrain.landscapes.<id>): cada faixa [min, max] vira um valor
+## sorteado pela seed (contagens crests/basins arredondadas). Mesma seed = mesma paisagem. id desconhecido = {}.
+static func landscape(land_id: String, seed_value: int) -> Dictionary:
+	var spec: Dictionary = (WorldConfig.load_config()["terrain"].get("landscapes", {}) as Dictionary).get(land_id, {})
+	if spec.is_empty():
+		return {}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value * 7 + 3
+	var out := {"id": land_id}
+	for k: String in spec:
+		var v: Variant = spec[k]
+		if v is Array and (v as Array).size() == 2:
+			var x := lerpf(float(v[0]), float(v[1]), rng.randf())
+			out[k] = roundi(x) if k in ["crests", "basins"] else x
+		elif k != "name" and k != "desc":
+			out[k] = v
+	return out
+
+
+## Paisagem da missao: uma das liberadas, sorteada pela seed do mapa (mesma seed = mesma).
+static func pick_landscape(unlocked: Array, seed_value: int) -> String:
+	if unlocked.is_empty():
+		return ""
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value * 31 + 11
+	return str(unlocked[rng.randi() % unlocked.size()])
 
 
 ## Relevo pensado para a regra da missao (world.json missions.<tipo>.terrain; taxi = "taxi"; Dupla junta as partes
@@ -167,11 +241,12 @@ static func mission_shape(p_mission: Dictionary, stage: int = 0) -> Dictionary:
 
 ## Cratera no meio do trecho a -> b (relevo da missao): cosseno de largura basin_width_frac x distancia, funda
 ## basin_m (no maximo 15% da distancia, para a encosta continuar suave).
-static func _add_basin(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, shape: Dictionary) -> void:
+static func _add_basin(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, shape: Dictionary,
+		t: float = 0.5) -> void:
 	var d := absf(float(b["x"]) - float(a["x"]))
 	var w := float(shape.get("basin_width_frac", 0.3)) * d
 	var depth := minf(WorldConfig.m_to_px(float(shape["basin_m"])), 0.15 * d)
-	var mid := (float(a["x"]) + float(b["x"])) * 0.5
+	var mid := lerpf(float(a["x"]), float(b["x"]), t)
 	for j in range(_first_at_or_after(ridge, mid - w), ridge.size()):
 		var dx := ridge[j].x - mid
 		if dx >= w:
@@ -180,7 +255,8 @@ static func _add_basin(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 			ridge[j].y += depth * (0.5 + 0.5 * cos(PI * dx / w))
 
 
-## Pico (lift > 0) ou vale (lift < 0) em volta da plataforma: topo plano + encostas com side_slope.
+## Pico (lift > 0) ou vale (lift < 0) em volta da plataforma: topo plano + encostas com side_slope. No nivel (lift 0):
+## o chao em volta fica dentro de +-side_slope a partir das bordas (sem buraco nem parede colada no deck).
 ## y_range = (menor y, maior y) do contorno: limita a faixa que a encosta pode alcancar (o resto nao muda).
 ## Devolve o y_range atualizado (um vale pode descer o contorno abaixo do maior y anterior).
 static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: float, y_range: Vector2) -> Vector2:
@@ -188,7 +264,7 @@ static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: flo
 	var cx := float(p["x"])
 	var half := float(p["half_width"])
 	var py := float(p["y"])
-	var reach := half + 0.001
+	var reach := half + maxf(y_range.y - y_range.x, 0.0) / side_slope + 1.0   # no nivel: encosta para os 2 lados
 	if lift > 0.0:
 		reach = half + maxf(y_range.y - py, 0.0) / side_slope + 1.0
 	elif lift < 0.0:
@@ -203,8 +279,18 @@ static func _shape_pad(ridge: PackedVector2Array, p: Dictionary, side_slope: flo
 			ridge[j].y = minf(ridge[j].y, py + (dx - half) * side_slope)
 		elif lift < 0.0:
 			ridge[j].y = maxf(ridge[j].y, py - (dx - half) * side_slope)
+		else:                                                  # no nivel: sem parede colada na borda (relevo alto)
+			ridge[j].y = clampf(ridge[j].y, py - (dx - half) * side_slope, py + (dx - half) * side_slope)
 		y_range = Vector2(minf(y_range.x, ridge[j].y), maxf(y_range.y, ridge[j].y))
 	return y_range
+
+
+## Altura media do relevo em volta de x (5 amostras de x - span a x + span) — o fundo do voo acompanha o chao.
+static func mean_height(ridge: PackedVector2Array, x: float, span: float) -> float:
+	var total := 0.0
+	for i in 5:
+		total += height_at(ridge, x + span * (i / 2.0 - 1.0))
+	return total / 5.0
 
 
 ## Ponto mais alto do relevo (menor y) entre x_a e x_b — usado pelo piloto automatico para nao raspar cristas.

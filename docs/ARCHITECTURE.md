@@ -69,6 +69,8 @@ game/run/offer_panel.*        # OfferPanel (2026-10-07, janela de conversa): %Di
                               # offer_chosen(i) após ACCEPT_S. Teclas: ←/→ ratinho, ↑/↓ plataforma, Shift+↑/↓ estrela, 1–3
                               # distância, Enter aceita, E encerra (2 toques). Teste: pad_button_center/accept_button_center
 scripts/world/terrain_gen.gd  # (v15) shape do relevo da missão: rise_m, target_lift_m, crest_scale, basin_m; mission_shape()
+                              # shape["land"] = paisagem (landscape(id, seed) resolve as faixas; pick_landscape(liberadas, seed));
+                              # _base_y (ridged), _terrace, mean_height (fundo segue o chão; Flight._bg_ground)
 scripts/ui/mission_text.gd    # MissionText: fala curta (balloon), pedido/regra da janela (ask/say_rule), regra curta (rule) e
                               # explicação (tip/kind_tip) de cada tipo de missão
 game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
@@ -130,7 +132,8 @@ art/src/sprites/              # lander.py (fonte do sprite), lander_styles.py (5
 game/terrain/terrain.tscn/.gd # Terrain: Polygon2D (Fill) + BodyBand (UV no mundo) + DepthBand (escurecimento) + BandLit/BandFlat/BandShade (faixas cisalhadas com arte) + Line2D (Surface,
                               # só placeholder) + StaticBody2D com ConcavePolygonShape2D (segmentos); pedregulhos em _draw;
                               # Pads (AnimatedSprite2D por plataforma: idle/target) + Beam/Marker no alvo (setter target_pad_id)
-game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam);
+game/background/backdrop.*    # Backdrop (CanvasLayer -1): camadas sky/clouds/planet/far/mid/plain; setup(planeta, ref_y), follow(cam)
+                              # (Flight passa cam.y - _bg_ground: altura média do chão perto da câmera, world.json background.ground_follow);
                               # anima quadros (meta anim) e rola nuvens
 game/background/war_fx.gd     # WarFx (filho do Backdrop, logo após "mid"): guerra viva no fundo (discos, lasers, traçantes,
                               # abates, clarões); coordenadas da camada mid; contrato meta "war" (opcional por planeta)

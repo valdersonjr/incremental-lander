@@ -14,8 +14,14 @@
   save v4, `Hud._build_score`, `RunSummary._add_records`, troféu nos atlas `icons`/`kids`. Verificado: check, 104
   testes + integrações, demo, capturas `flight_ui_preview -- --no_title --records`, `summary_preview`, `hangar_preview -- --late`.
   Pendente: som próprio de recorde (hoje jingle milestone; sound-design).
-  **Próximo**: 17.3 paisagens — preview `art/previews/paisagens/paisagens.html` (7 receitas, aberto no Chrome)
-  aguardando a opinião do usuário → `TerrainGen` + `world.json > terrain.landscapes` + liberação na Estrada.
+  **Correção** (pedido do usuário): o run só acaba com o tanque vazio de verdade (`Main.GAS_EMPTY`); pedido longe
+  demais fica vermelho mas pode ser tentado.
+  **17.3 ✅** paisagens: 7 receitas (`world.json > terrain.landscapes`), 5 liberadas pela Estrada, ícones `land_*`,
+  fundo segue o chão, plataforma no nível sem parede. Verificado: check, 108 testes (+ paisagens em 8 seeds), demo,
+  capturas `landscape_preview` (visão geral e `--near`).
+  **Próximo**: o usuário jogar a Fase 17 (run sem teto + recordes + paisagens); depois 16.5 (arte/sons pendentes,
+  incluindo som de recorde) e a fase de economia (16.6: cansaço 1,7, Frota não comprada, estrelas das paradas).
+  Visual pendente: plataforma bem abaixo da partida ainda mostra um pouco da planície escura do fundo.
 - **PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07, ROADMAP 16.1–16.4)**. Pedido: "o jogador deveria
   visualizar toda sua progressão desde o início"; o usuário escolheu, entre 3 protótipos HTML
   (`art/previews/progressao/progressao.html`), a estrada por estrelas ("liberar igual um battlepass"). Spec v13:

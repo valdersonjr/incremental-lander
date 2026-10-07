@@ -13,6 +13,8 @@ signal stranded
 var planet_id := "luna"
 var stats: Dictionary = {}
 var fatigue := 1.0                                 # cansaco do run (v15): gas da missao x fatigue
+var landscapes: Array[String] = []                 # paisagens liberadas (Main; vazio = relevo de sempre)
+var landscape_id := ""                             # paisagem do mapa atual
 var target_distance_m := 0.0
 var current_pad_id := 0
 var target_pad_id := -1
@@ -55,6 +57,7 @@ var _demo := false
 var _lift_y := 0.0                                 # camera olhando para cima perto do chao (px; sem o tremor)
 var _shake := 0.0                                  # trauma do tremor de tela (0..1; world.json > camera)
 var _shape: Dictionary = {}                        # relevo da missao do mapa (TerrainGen shape; world.json)
+var _bg_ground := 0.0                              # altura media do chao perto da camera - partida (px, suavizada)
 var _bg_origin := 0.0                              # deslocamento do cenario de fundo (px): cada mapa mostra um trecho
 
 @onready var lander: Lander = %Lander
@@ -88,7 +91,12 @@ func _process(delta: float) -> void:
 	_shake = maxf(_shake - float(cam["shake_decay"]) * delta, 0.0)
 	var amp := _shake * _shake * float(cam["shake_px"]) if GameState.shake_enabled() else 0.0
 	camera.offset = Vector2(roundf(randf_range(-amp, amp)), _lift_y + roundf(randf_range(-amp, amp)))
-	backdrop.follow(camera.get_screen_center_position() + Vector2(_bg_origin, 0.0))
+	var center := camera.get_screen_center_position()
+	var gf: Dictionary = WorldConfig.load_config()["background"].get("ground_follow", {})
+	if float(gf.get("speed", 0.0)) > 0.0 and not terrain.pads.is_empty():   # fundo desce/sobe com o chao (vale, mesa)
+		var target := TerrainGen.mean_height(terrain.ridge, center.x, float(gf["span_px"])) - float(terrain.pads[0]["y"])
+		_bg_ground = lerpf(_bg_ground, target, 1.0 - exp(-float(gf["speed"]) * delta))
+	backdrop.follow(center + Vector2(_bg_origin, -_bg_ground))
 
 
 ## Tremor de tela (somado; 1 = batida). Desligavel nas opcoes.
@@ -122,6 +130,9 @@ func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", 
 		p_mission: Dictionary = {}, stage: int = 0) -> void:
 	_reset_map(seed_value)
 	_shape = TerrainGen.mission_shape(p_mission, stage)
+	landscape_id = TerrainGen.pick_landscape(landscapes, seed_value)
+	if landscape_id != "":                                     # paisagem sorteada pela seed (mesma seed = mesma)
+		_shape["land"] = TerrainGen.landscape(landscape_id, seed_value)
 	set_target(distance_m, tier, dir, p_mission, stage)
 	_place_on_start_pad()
 	_arrive()
@@ -157,6 +168,7 @@ func _place_on_start_pad() -> void:
 	var start_pad: Dictionary = terrain.pads[0]
 	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
 	lander.global_position = Vector2(float(start_pad["x"]), float(start_pad["y"]) - feet - 0.5)
+	_bg_ground = 0.0
 	lander.reset_physics_interpolation()
 	camera.global_position = lander.global_position
 	# a Flight nova entra enquanto a anterior (fundo do menu) ainda nao saiu da arvore: com a interpolacao de fisica,

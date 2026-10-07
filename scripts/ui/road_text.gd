@@ -42,6 +42,8 @@ static func stop_name(stop: Dictionary) -> String:
 			return "Lua completa!"
 		"mission":
 			return str(EconMath.mission_kind(_node(id)["kind"])["name"])
+		"landscape":
+			return str(_land(id).get("name", id))
 	return str(EconMath._find("upgrades", id).get("name", id))
 
 
@@ -60,6 +62,8 @@ static func stop_icon(stop: Dictionary) -> Texture2D:
 			return UiKit.kid("star_on")
 		"mission":
 			return UiKit.kid("rat_" + str(_node(id)["kind"]))
+		"landscape":
+			return UiKit.kid(id)
 	match id:
 		"stabilizer", "turbo":
 			return CargoArt.tex(id)
@@ -91,6 +95,9 @@ static func stop_desc(stop: Dictionary) -> String:
 			if star > 1:
 				return "Pedido com %d estrelas: mais difícil e paga mais! %s" % [star, MissionText.say_rule(m)]
 			return "Novo amiguinho! %s %s" % [MissionText.ask(m), MissionText.say_rule(m)]
+		"landscape":
+			var d := str(_land(id).get("desc", ""))
+			return "Nova paisagem! " + d.left(1).to_upper() + d.substr(1)
 		"unlock":
 			return "Libera: " + ("drones que fazem entregas sozinhos e trazem moedas" if id == "fleet"
 					else "os drones trazem mais moedas")
@@ -102,6 +109,11 @@ static func stop_desc(stop: Dictionary) -> String:
 ## Degrau (0..) de uma peca no nivel lv.
 static func stage_of(level: int, max_level: int) -> int:
 	return mini(level / STAGE, maxi(0, ceili(float(max_level) / STAGE) - 1))
+
+
+## Paisagem da parada "land_<id>" (world.json terrain.landscapes).
+static func _land(stop_id: String) -> Dictionary:
+	return (WorldConfig.load_config()["terrain"]["landscapes"] as Dictionary).get(stop_id.substr(5), {})
 
 
 static func _node(id: String) -> Dictionary:

@@ -62,6 +62,213 @@
       "half_width_frac": 0.25,
       "min_distance_m": 320.0,
       "max_bump_slope": 1.0
+    },
+    "terrace_slope_mult": 2.5,
+    "landscapes": {
+      "notes": "v15 (2026-10-07, preview aprovado art/previews/paisagens/paisagens.html): cada missao sorteia uma paisagem liberada (TerrainGen.pick_landscape) e cada faixa [min, max] vira um valor pela seed (TerrainGen.landscape). start = liberadas no jogo novo; as outras chegam pela Estrada (economy.json progression.road, type landscape, id land_<paisagem>). amplitude_m/frequency/octaves = ruido; ridged = picos; terrace_m = degraus; rise_m = desnivel ate o alvo; target_lift_m = alvo em mesa (> 0) ou vale (< 0) com side_slope; crests x crest_frac = morros; basins x basin_m = crateras.",
+      "start": [
+        "planicie",
+        "colinas"
+      ],
+      "planicie": {
+        "name": "Planície",
+        "amplitude_m": [
+          18,
+          30
+        ],
+        "frequency": [
+          0.002,
+          0.004
+        ],
+        "octaves": 3,
+        "crests": [
+          0,
+          0
+        ],
+        "crest_frac": [
+          0,
+          0
+        ],
+        "rise_m": [
+          -20,
+          20
+        ],
+        "desc": "chão quase liso, sem morro no caminho"
+      },
+      "colinas": {
+        "name": "Colinas",
+        "amplitude_m": [
+          60,
+          80
+        ],
+        "frequency": [
+          0.0025,
+          0.0035
+        ],
+        "octaves": 4,
+        "crests": [
+          1,
+          1
+        ],
+        "crest_frac": [
+          0.1,
+          0.14
+        ],
+        "rise_m": [
+          -30,
+          30
+        ],
+        "desc": "um morro no meio do caminho"
+      },
+      "serra": {
+        "name": "Serra",
+        "amplitude_m": [
+          80,
+          120
+        ],
+        "frequency": [
+          0.0032,
+          0.0045
+        ],
+        "octaves": 3,
+        "ridged": true,
+        "crests": [
+          2,
+          3
+        ],
+        "crest_frac": [
+          0.1,
+          0.16
+        ],
+        "rise_m": [
+          -40,
+          40
+        ],
+        "desc": "morros pontudos no caminho: voe por cima!"
+      },
+      "vale": {
+        "name": "Vale",
+        "amplitude_m": [
+          40,
+          70
+        ],
+        "frequency": [
+          0.003,
+          0.004
+        ],
+        "octaves": 4,
+        "crests": [
+          0,
+          1
+        ],
+        "crest_frac": [
+          0.06,
+          0.1
+        ],
+        "rise_m": [
+          -20,
+          20
+        ],
+        "target_lift_m": [
+          -140,
+          -90
+        ],
+        "side_slope": 1.6,
+        "desc": "a entrega fica lá embaixo, entre paredes"
+      },
+      "planalto": {
+        "name": "Planalto",
+        "amplitude_m": [
+          30,
+          55
+        ],
+        "frequency": [
+          0.003,
+          0.004
+        ],
+        "octaves": 4,
+        "crests": [
+          0,
+          0
+        ],
+        "crest_frac": [
+          0,
+          0
+        ],
+        "rise_m": [
+          -10,
+          10
+        ],
+        "target_lift_m": [
+          90,
+          140
+        ],
+        "side_slope": 2.4,
+        "desc": "a entrega fica no alto de uma mesa"
+      },
+      "crateras": {
+        "name": "Crateras",
+        "amplitude_m": [
+          25,
+          45
+        ],
+        "frequency": [
+          0.003,
+          0.004
+        ],
+        "octaves": 3,
+        "crests": [
+          0,
+          1
+        ],
+        "crest_frac": [
+          0.06,
+          0.1
+        ],
+        "rise_m": [
+          -20,
+          20
+        ],
+        "basins": [
+          2,
+          3
+        ],
+        "basin_m": [
+          40,
+          75
+        ],
+        "basin_width_frac": 0.08,
+        "desc": "buracos redondos no caminho"
+      },
+      "degraus": {
+        "name": "Degraus",
+        "amplitude_m": [
+          110,
+          150
+        ],
+        "frequency": [
+          0.002,
+          0.003
+        ],
+        "octaves": 3,
+        "crests": [
+          0,
+          0
+        ],
+        "crest_frac": [
+          0,
+          0
+        ],
+        "rise_m": [
+          -60,
+          90
+        ],
+        "terrace_m": [
+          35,
+          50
+        ],
+        "desc": "chão em escada, subindo ou descendo"
+      }
     }
   },
   "background": {
@@ -93,6 +300,11 @@
         0.15,
         0.1
       ]
+    },
+    "ground_follow": {
+      "notes": "v15 (paisagens): o fundo acompanha a altura MEDIA do chao em volta da camera (span_px para cada lado, 5 amostras), suavizada (speed 1/s); assim um vale/descida nao mostra a planicie do fundo por baixo do chao. 0 = desliga.",
+      "span_px": 320.0,
+      "speed": 3.0
     }
   },
   "camera": {
