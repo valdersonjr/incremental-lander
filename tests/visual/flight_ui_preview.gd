@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -15,6 +15,10 @@ func _ready() -> void:
 	if "--missions" in args:                                   # todos os ratinhos liberados (cartao com estrelas)
 		GameState.mission_nodes.assign(["heavy1", "soft1", "fast1", "heavy2", "soft2", "passenger1", "fast2", "tow1",
 				"soft3"])
+	for a in args:                                             # --world=<id>: voa nesse mundo (v16; libera a parada)
+		if a.begins_with("--world="):
+			GameState.road_reached.append("world_" + a.get_slice("=", 1))
+			GameState.select_world(a.get_slice("=", 1))
 	var main := MAIN.instantiate()
 	add_child(main)
 	for i in 20:

@@ -23,6 +23,7 @@ var _offers: OfferPanel = null
 var _summary: RunSummary = null
 var _fade: ColorRect = null                # tela escura entre missoes (cada missao tem o seu mapa)
 var _hangar: Hangar = null
+var _world_map: WorldMap = null                 # Mapa das estrelas (v16): escolher o mundo antes de decolar
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
 ## Segundos reais do run em andamento, sem pausa (o relogio para com o jogo pausado ou a janela sem foco): a frota
@@ -53,7 +54,12 @@ func _ready() -> void:
 	_hangar = HANGAR_SCENE.instantiate()
 	_gui.add_child(_hangar)
 	_hangar.visible = false
-	_hangar.launch_requested.connect(_on_launch_requested)
+	_hangar.launch_requested.connect(_on_hangar_launch)
+	_world_map = WorldMap.new()
+	_world_map.name = "WorldMap"
+	_world_map.fly_requested.connect(_on_world_chosen)
+	_world_map.closed.connect(func() -> void: _hangar.open())
+	_gui.add_child(_world_map)
 	_hangar.title_requested.connect(_show_title)
 	_title = TITLE_SCENE.instantiate()
 	_gui.add_child(_title)
@@ -274,7 +280,7 @@ func _start_run() -> void:
 	_run_time = 0.0
 	_run_active = true
 	_run_records.clear()
-	_rec_start = GameState.records.duplicate()
+	_rec_start = GameState.world_records().duplicate()
 	_hud.set_records(_rec_start)
 	Events.run_started.emit(GameState.current_planet)
 	_show_offers()
@@ -387,10 +393,16 @@ func _end_run() -> void:
 	var model_s := _run_time * float(WorldConfig.load_config()["time_scale"])
 	var fleet := GameState.settle_run(_run.earned, model_s)
 	GameState.tick_missions_new()
+	var values := _run.record_values()
+	# bonus de recorde (v16): bater o recorde de dinheiro deste mundo (ou a 1a visita) paga uma parte do run
+	var bonus := EconMath.record_bonus(float(values["run_money"]), float(_rec_start.get("run_money", 0.0)))
+	if bonus > 0.0:
+		GameState.add_rewards({"credits": bonus})
 	_note_records()
 	var s := _run.summary()
-	s["rec_values"] = _run.record_values()
+	s["rec_values"] = values
 	s["rec_start"] = _rec_start.duplicate()
+	s["record_bonus"] = bonus
 	s["fleet"] = fleet
 	s["records"] = _run_records.duplicate()
 	s["road_news"] = GameState.road_news().size()
@@ -412,6 +424,22 @@ func _on_continue() -> void:
 		_demo_shop()
 		await get_tree().create_timer(float(_args.get("hangar_wait", 0.5))).timeout
 		_on_launch_requested()
+
+
+## DECOLAR na PROGRESSAO: com mais de um mundo liberado abre o Mapa das estrelas; so a Lua = decola direto.
+func _on_hangar_launch() -> void:
+	if GameState.worlds().size() > 1:
+		_hangar.visible = false
+		_world_map.theme = _hangar.theme
+		_gui.move_child(_world_map, -1)
+		_world_map.open()
+	else:
+		_on_launch_requested()
+
+
+func _on_world_chosen(planet_id: String) -> void:
+	GameState.select_world(planet_id)
+	_on_launch_requested()
 
 
 func _on_launch_requested() -> void:

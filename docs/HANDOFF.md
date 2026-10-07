@@ -8,8 +8,11 @@
   Estrada única com parada `world`, seletor). **18.1 ✅** o usuário ficou com os 5 conceitos de
   `art/previews/mundos/mundos.html` (git-ignorado): Nuvens → Bolhas → Cogumelos → Sorvete → Jardim.
   **18.2 ✅** economia v16 (`balance/sims/2026-10-07-v16-worlds.py`; padrão `economy-balance/.../parallel-worlds.md`).
-  **Próximo**: 18.3 multimundo no código (save v5 com recordes por mundo, mundos liberados, seletor — protótipo HTML
-  antes —, bônus de recorde na Main/HUD/resumo, festa da parada `world`, dados por mundo no world.json/ui_kit).
+  **18.3 ✅** multimundo: Mapa das estrelas (escolhido pelo usuário), save v5, recordes por mundo, bônus de recorde;
+  mundos jogáveis com cores provisórias. Verificado: check, 108 testes + integrações (nova `world_flow`), demo,
+  capturas `world_map_preview [--all]` e `flight_ui_preview -- --no_title --world=cogumelos`.
+  **Próximo**: 18.4 mecânica de cada mundo (correntes, bolhas, cogumelo-mola, chão escorregadio, vento) — base no
+  `Hazards`/`HazardView` do commit 4ec1ea1; depois 18.5 arte e 18.6 som.
 - **Fase 17 — Bata seu recorde + paisagens (2026-10-07)**. Plano aprovado: run sem teto (meta = recordes pessoais;
   bater acaba o run; HUD com snapshot de todos os recordes, dinheiro em destaque) + relevo com receitas variadas por
   missão. **17.1 ✅** economia v15: sai `max_per_run`, entra `run_fatigue` 1,7 (gás × 1,7^n, galão ÷ 1,7^n; ver

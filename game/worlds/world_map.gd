@@ -1,0 +1,261 @@
+## Mapa das estrelas (v16, variante C aprovada em art/previews/seletor/seletor.html): os mundos num caminho pontilhado,
+## a navezinha no mundo escolhido e o botao "VOAR EM ...". Mundo aberto mostra o recorde de dinheiro (trofeu) ou
+## "NOVO! +40%" (ainda nao visitado: 1a visita paga bonus); fechado mostra cadeado + estrelas da parada da Estrada.
+## Setas/clique escolhem, Enter/botao voa (fly_requested), Esc fecha (closed).
+class_name WorldMap
+extends Control
+
+signal fly_requested(planet_id: String)
+signal closed
+
+const BADGE := 24                                   # planetinha em pixel (arte da pecinha), mostrado em 2x
+const STARS := 46
+
+var _ids: Array[String] = []
+var _nodes: Dictionary = {}                          # id -> {"box": VBoxContainer, "badge": TextureRect, "name": Label}
+var _sel := ""
+var _lander: TextureRect
+var _fly: Button
+var _stars_label: Label
+var _bob := 0.0
+
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
+	visible = false
+	var title := Label.new()
+	title.text = "MUNDOS"
+	title.theme_type_variation = &"TitleLabel"
+	title.position = Vector2(12, 6)
+	add_child(title)
+	var stars_row := HBoxContainer.new()
+	stars_row.add_theme_constant_override(&"separation", 2)
+	stars_row.position = Vector2(580, 8)
+	stars_row.add_child(_star_icon(16))
+	_stars_label = Label.new()
+	_stars_label.theme_type_variation = &"MoneyLabel"
+	stars_row.add_child(_stars_label)
+	add_child(stars_row)
+	_fly = Button.new()
+	_fly.theme_type_variation = &"PrimaryButton"
+	_fly.custom_minimum_size = Vector2(240, 18)
+	_fly.position = Vector2(200, 330)
+	_fly.size = Vector2(240, 18)
+	_fly.pressed.connect(func() -> void: _go())
+	add_child(_fly)
+	_lander = TextureRect.new()
+	var at := AtlasTexture.new()
+	at.atlas = load("res://assets/sprites/lander.png")
+	at.region = Rect2(0, 0, 32, 32)
+	_lander.texture = at
+	_lander.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_lander)
+
+
+## Abre o mapa com o mundo atual escolhido.
+func open() -> void:
+	_build()
+	_select(GameState.current_planet if GameState.current_planet in _ids else "luna")
+	visible = true
+	_stars_label.text = "%d" % GameState.stars
+	_fly.grab_focus()
+
+
+## Posicoes dos mundos no caminho (zigue-zague da esquerda-baixo para a direita-alto), em px da tela 640x360.
+static func node_positions(n: int) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	for i in n:
+		var t := float(i) / maxf(1.0, n - 1)
+		out.append(Vector2(70.0 + t * 500.0, 250.0 - t * 110.0 + (-35.0 if i % 2 == 1 else 15.0)))
+	return out
+
+
+func _build() -> void:
+	for c: Variant in _nodes.values():
+		(c["box"] as Control).queue_free()
+	_nodes.clear()
+	_ids.clear()
+	for p: Dictionary in EconMath.spec["planets"]:
+		_ids.append(str(p["id"]))
+	var open_ids := GameState.worlds()
+	var pos := node_positions(_ids.size())
+	for i in _ids.size():
+		var id := _ids[i]
+		var is_open := id in open_ids
+		var box := VBoxContainer.new()
+		box.alignment = BoxContainer.ALIGNMENT_CENTER
+		box.add_theme_constant_override(&"separation", 0)
+		box.custom_minimum_size = Vector2(96, 0)
+		box.mouse_filter = Control.MOUSE_FILTER_STOP
+		var badge := TextureRect.new()
+		badge.texture = planet_texture(id, not is_open)
+		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		badge.custom_minimum_size = Vector2(BADGE * 2, BADGE * 2)
+		badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		badge.pivot_offset = Vector2(BADGE, BADGE)
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.add_child(badge)
+		var name := Label.new()
+		name.text = str(EconMath._find("planets", id).get("name", id))
+		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name.theme_type_variation = &"ValueLabel" if is_open else &"DimLabel"
+		box.add_child(name)
+		box.add_child(_info_row(id, is_open))
+		add_child(box)
+		box.position = pos[i] - Vector2(48, BADGE)
+		box.gui_input.connect(_on_node_input.bind(id))
+		_nodes[id] = {"box": box, "badge": badge, "name": name}
+	move_child(_lander, -1)
+	queue_redraw()
+
+
+## Linha de baixo do mundo: trofeu + recorde | "NOVO! +40%" | cadeado + estrelas que a parada pede.
+func _info_row(id: String, is_open: bool) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", 2)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ic := TextureRect.new()
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	ic.custom_minimum_size = Vector2(12, 12)
+	var l := Label.new()
+	if not is_open:
+		var lock := TextureRect.new()
+		lock.texture = UiKit.kid("lock")
+		lock.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lock.custom_minimum_size = Vector2(12, 12)
+		row.add_child(lock)
+		l.text = "%d" % int(EconMath.road_stop("world_" + id).get("stars", 0))
+		l.theme_type_variation = &"DimLabel"
+		row.add_child(l)
+		row.add_child(_star_icon(10))
+		return row
+	var rec := float(GameState.world_records(id).get("run_money", 0.0))
+	if rec > 0.0:
+		ic.texture = UiKit.icon("trophy")
+		row.add_child(ic)
+		l.text = EconMath.fmt(rec)
+		l.theme_type_variation = &"MoneyLabel"
+	else:
+		var first := float((EconMath.spec["contracts"].get("record_bonus", {}) as Dictionary).get("first_frac", 0.0))
+		l.text = "NOVO! +%d%%" % roundi(first * 100.0)
+		l.theme_type_variation = &"GoodLabel"
+	row.add_child(l)
+	return row
+
+
+## Planetinha 24x24 em pixel (ceu em cima, chao ondulado embaixo, pintinhas, contorno ink) nas cores
+## world.json > terrain.planets.<id>.map; cinza quando fechado. (Placeholder ate a arte da 18.5.)
+static func planet_texture(id: String, locked: bool) -> ImageTexture:
+	var cfg: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(id, {})
+	var cols: Array = cfg.get("map", ["#fca790", "#f68181", "#f9c22b"])
+	var img := Image.create(BADGE, BADGE, false, Image.FORMAT_RGBA8)
+	for y in BADGE:
+		for x in BADGE:
+			var d := Vector2(x + 0.5 - 12.0, y + 0.5 - 12.0).length()
+			if d > 10.5:
+				continue
+			var c := Color(str(cols[0] if y < 10 else cols[1]))
+			var gy := 14 + roundi(sin(x / 3.5) * 1.5)
+			if y >= gy:
+				c = Color(str(cols[2]))
+				if (x * 7 + y * 3) % 11 == 0:
+					c = Color(str(cols[0]))
+			if d > 9.6:
+				c = Color("#2e222f")
+			elif locked:
+				var v := c.get_luminance()
+				c = Color(v, v, v)
+			img.set_pixel(x, y, c)
+	return ImageTexture.create_from_image(img)
+
+
+static func _star_icon(px: int) -> TextureRect:
+	var st := TextureRect.new()
+	st.texture = UiKit.kid("star_on")
+	st.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	st.custom_minimum_size = Vector2(px, px)
+	st.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	st.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return st
+
+
+func _select(id: String) -> void:
+	_sel = id
+	for k: String in _nodes:
+		var n: Dictionary = _nodes[k]
+		(n["badge"] as Control).scale = Vector2.ONE * (1.15 if k == id else 1.0)
+		if k in GameState.worlds():
+			(n["name"] as Label).theme_type_variation = &"MoneyLabel" if k == id else &"ValueLabel"
+	_fly.text = "VOAR EM %s!  [Enter]" % str(EconMath._find("planets", id).get("name", id)).to_upper()
+	Sound.ui("click")
+
+
+func _on_node_input(event: InputEvent, id: String) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not id in GameState.worlds():
+			UiKit.pulse(_nodes[id]["badge"], 1.5, 0.3)
+			return
+		if id == _sel:
+			_go()
+		else:
+			_select(id)
+
+
+func _go() -> void:
+	if not visible:
+		return
+	visible = false
+	fly_requested.emit(_sel)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible:
+		return
+	if event.is_action_pressed(&"ui_cancel"):
+		get_viewport().set_input_as_handled()
+		visible = false
+		closed.emit()
+	elif event.is_action_pressed(&"confirm") or event.is_action_pressed(&"ui_accept"):
+		get_viewport().set_input_as_handled()
+		_go()
+	elif event.is_action_pressed(&"ui_left") or event.is_action_pressed(&"ui_right"):
+		get_viewport().set_input_as_handled()
+		var open_ids := GameState.worlds()
+		var i := open_ids.find(_sel)
+		i = clampi(i + (1 if event.is_action_pressed(&"ui_right") else -1), 0, open_ids.size() - 1)
+		_select(open_ids[i])
+
+
+func _process(delta: float) -> void:
+	if not visible or not _nodes.has(_sel):
+		return
+	_bob += delta
+	var box: Control = _nodes[_sel]["box"]
+	_lander.position = box.position + Vector2(64, -18 + roundf(sin(_bob * 2.5) * 2.0))
+
+
+func _draw() -> void:
+	# ceu do mapa: faixas da Resurrect 64 (anil -> marinho -> ameixa -> ink) com transicao pontilhada (xadrez) de 8 px
+	var bands := [Color("#484a77"), Color("#323353"), Color("#45293f"), Color("#2e222f")]
+	var h := 360.0 / bands.size()
+	for i in bands.size():
+		draw_rect(Rect2(0, i * h, 640, h), bands[i])
+		if i > 0:
+			for y in range(int(i * h) - 8, int(i * h)):
+				for x in range(posmod(y, 2), 640, 2 if y >= int(i * h) - 4 else 4):
+					draw_rect(Rect2(x, y, 1, 1), bands[i])
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in STARS:
+		var p := Vector2(rng.randi_range(0, 639), rng.randi_range(0, 359))
+		draw_rect(Rect2(p, Vector2.ONE * (2 if i % 7 == 0 else 1)), Color("#eaaded") if i % 3 else Color("#ffffff"))
+	var pos := node_positions(_ids.size())
+	for i in range(1, pos.size()):                           # caminho pontilhado entre os mundos
+		var a: Vector2 = pos[i - 1]
+		var b: Vector2 = pos[i]
+		var n := int(a.distance_to(b) / 8.0)
+		for k in n:
+			if k % 2 == 0:
+				draw_rect(Rect2(a.lerp(b, float(k) / n).round(), Vector2(2, 2)), Color("#7f708a"))

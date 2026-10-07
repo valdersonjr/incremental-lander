@@ -124,8 +124,13 @@
 - [x] 18.2 Economia (v16): 5 planets `road: true` (g 1,15/2,4/3,2/4,0/4,9; pay calibrado para 1,15× a Lua com a
       nave do fim), paradas `world_<id>` (24/44/66/88/110★), `record_bonus` 15% (1ª visita 40%); simulador com
       recorde por mundo; MC: Lua 25–29% dos runs, nenhum mundo domina; `RoadText` reconhece parada de mundo (2026-10-07)
-- [ ] 18.3 Multimundo no código: mundos liberados, seletor (protótipo HTML antes), save v5 (recordes por mundo),
-      bônus de recorde, parada `world` com festa, dados por mundo (world.json, ui_kit)
+- [x] 18.3 Multimundo no código: usuário escolheu o **Mapa das estrelas** (`art/previews/seletor/seletor.html`,
+      variante C). `GameState.worlds/select_world/world_records` (recordes por mundo), save v5 (migra recordes para
+      "luna"; guarda o mundo liberado), bônus de recorde pago na Main e mostrado no resumo, `WorldMap`
+      (`game/worlds/world_map.gd`: caminho pontilhado, planetinhas 24 px provisórios, troféu/NOVO/cadeado, navezinha,
+      VOAR EM …; DECOLAR abre o mapa quando há 2+ mundos), dados provisórios por mundo (world.json terrain.planets +
+      routes), `RoadText` com parada de mundo; prévias `world_map_preview [-- --all]`, `flight_ui_preview --world=<id>`;
+      integração `world_flow` (2026-10-07)
 - [ ] 18.4 Mecânica de cada mundo (base Hazards/HazardView do commit 4ec1ea1)
 - [ ] 18.5 Arte de cada mundo (cute-scene-method, validada no jogo)
 - [ ] 18.6 Som: ambiência + som do elemento + jingle de mundo novo

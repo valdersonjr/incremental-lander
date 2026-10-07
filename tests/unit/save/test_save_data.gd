@@ -39,7 +39,14 @@ func test_dados_invalidos() -> void:
 	neg["current_planet"] = "kronos"
 	var st: Dictionary = SaveData.deserialize(neg)["state"]
 	assert_almost(st["resources"]["credits"], 0.0, 1e-9, "negativo vira 0")
-	assert_eq(st["current_planet"], "luna", "so a Lua existe")
+	assert_eq(st["current_planet"], "luna", "mundo que nao existe vira a Lua")
+	var closed := SaveData.serialize(_state())
+	closed["current_planet"] = "jardim"
+	assert_eq(SaveData.deserialize(closed)["state"]["current_planet"], "luna", "mundo fechado vira a Lua")
+	var open_w := SaveData.serialize(_state())
+	open_w["current_planet"] = "nuvens"
+	open_w["road_reached"] = ["start", "world_nuvens"]
+	assert_eq(SaveData.deserialize(open_w)["state"]["current_planet"], "nuvens", "mundo liberado fica")
 
 
 func test_resumo_para_a_tela_de_jogos_salvos() -> void:
@@ -75,11 +82,14 @@ func test_versao_de_save_mais_nova_nao_carrega() -> void:
 
 func test_recordes_ida_e_volta() -> void:
 	var st := _state()
-	st["records"] = {"best_delivery": 1500.0, "run_perfect": 4.0, "inventado": 9.0}
+	st["records"] = {"luna": {"best_delivery": 1500.0, "run_perfect": 4.0, "inventado": 9.0},
+			"nuvens": {"run_money": 70.0}, "planeta_inventado": {"run_money": 5.0}}
 	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
-	assert_almost(back["state"]["records"]["best_delivery"], 1500.0)
-	assert_almost(back["state"]["records"]["run_perfect"], 4.0)
-	assert_false(back["state"]["records"].has("inventado"))
+	assert_almost(back["state"]["records"]["luna"]["best_delivery"], 1500.0)
+	assert_almost(back["state"]["records"]["luna"]["run_perfect"], 4.0)
+	assert_false(back["state"]["records"]["luna"].has("inventado"))
+	assert_almost(back["state"]["records"]["nuvens"]["run_money"], 70.0)
+	assert_false(back["state"]["records"].has("planeta_inventado"))
 
 
 ## Save v1 (com prestigio e outros mundos) abre na v2: niveis e creditos ficam, o resto sai sem erro.
@@ -133,7 +143,7 @@ func test_v3_recordes_viram_recordes_do_run() -> void:
 			"records": {"best_run": 9000.0, "best_perfect": 3.0, "longest_hop": 2500.0, "best_delivery": 1200.0}}
 	var back := SaveData.deserialize(raw)
 	assert_true(back["ok"])
-	var rec: Dictionary = back["state"]["records"]
+	var rec: Dictionary = back["state"]["records"]["luna"]                # v4 -> v5: recordes antigos sao da Lua
 	assert_almost(rec["run_money"], 9000.0)
 	assert_almost(rec["run_perfect"], 3.0)
 	assert_almost(rec["run_distance"], 2500.0)

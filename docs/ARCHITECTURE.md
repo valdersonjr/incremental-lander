@@ -188,7 +188,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
-scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/rep_points; recorde best_perfect; v3→v4 2026-10-07: recordes por run — run_money/run_deliveries/run_distance/run_perfect/best_delivery), ids removidos ignorados
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/rep_points; recorde best_perfect; v3→v4 2026-10-07: recordes por run — run_money/run_deliveries/run_distance/run_perfect/best_delivery; v4→v5: recordes por mundo {planeta: {id: valor}} e current_planet guardado se liberado), ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
 scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
                               # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift
@@ -278,3 +278,13 @@ game/main.gd                         # _on_offer_chosen: _fade (ColorRect) escur
                                      # kind:estrela|double:a+b, --dev_missions=ids, --dev_stars=N
 ```
 game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember; OfferPanel.last_choice por tipo; _input cima/baixo); RunState.pay_for_tier = prêmio de cada botão
+
+## Mundos paralelos (v16, Fase 18)
+- `GameState.worlds()` = Lua + mundos das paradas `world_<id>` alcançadas; `select_world(id)`; `records` = {planeta: {id: valor}},
+  `world_records(planeta="")`, `note_record` grava no mundo atual.
+- `game/worlds/world_map.gd` (`WorldMap`, montado em código): `open()`, sinais `fly_requested(id)` / `closed`;
+  `planet_texture(id, locked)` desenha o planetinha 24 px com `world.json > terrain.planets.<id>.map` (placeholder até a arte).
+- `Main._on_hangar_launch`: 2+ mundos → mapa; `_on_world_chosen` → `select_world` + run. `_end_run` paga
+  `EconMath.record_bonus(dinheiro do run, recorde do mundo no início)`; `summary.record_bonus` aparece no resumo.
+- Mundo sem arte: backdrop vazio, céu = `terrain.planets.<id>.sky`, chão placeholder `fill/surface`, tema da Lua.
+

@@ -464,7 +464,7 @@ func _records_row() -> HBoxContainer:
 	cup.custom_minimum_size = Vector2(12, 12)
 	row.add_child(cup)
 	for key: String in GameState.RECORDS:
-		var v := float(GameState.records.get(key, 0.0))
+		var v := float(GameState.world_records().get(key, 0.0))
 		if v <= 0.0:
 			continue
 		var info: Array = GameState.RECORDS[key]

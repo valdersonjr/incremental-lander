@@ -27,6 +27,12 @@ func show_summary(summary: Dictionary) -> void:
 		c.queue_free()
 	_add_records(summary.get("rec_values", {}), summary.get("rec_start", {}))
 	var names := {"credits": "créditos"}
+	var bonus := float(summary.get("record_bonus", 0.0))
+	if bonus > 0.0:                                            # bonus de recorde do mundo (v16)
+		var first := float((summary.get("rec_start", {}) as Dictionary).get("run_money", 0.0)) <= 0.0
+		var brow := UiKit.stat_row("trophy", "primeira visita!" if first else "bônus de recorde",
+				"+" + EconMath.fmt(bonus), &"MoneyLabel")
+		_rows.add_child(brow)
 	var fleet: Dictionary = summary.get("fleet", {})
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(

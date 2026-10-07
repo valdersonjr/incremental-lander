@@ -108,6 +108,8 @@ func _card(n: int, s: Dictionary) -> Button:
 ## Faixa do mapa do jogo no fundo, no tamanho do miolo do cartao (sem escalar: pixel nitido).
 func _add_map(card: Button, planet: String) -> void:
 	var path := "res://assets/ui/save_bg_%s.png" % planet
+	if not ResourceLoader.exists(path):                        # mundo ainda sem faixa propria: a da Lua
+		path = "res://assets/ui/save_bg_luna.png"
 	if not ResourceLoader.exists(path):
 		return
 	var clip := Control.new()

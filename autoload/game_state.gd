@@ -15,7 +15,7 @@ var rep_points: Dictionary = {}       # Reputacao por ratinho (v14): tipo de mis
 var missions_new: Dictionary = {}     # tipo recem-liberado -> runs em que ainda aparece mais (new_boost)
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
-var records: Dictionary = {}          # recordes pessoais (pos-jogo): RECORDS -> maior valor ja feito
+var records: Dictionary = {}          # recordes pessoais POR MUNDO (v16): planeta -> {RECORDS id -> maior valor}
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
@@ -220,13 +220,40 @@ static func record_text(key: String, value: float) -> String:
 	return "%d" % int(value)
 
 
-## Registra um valor para um recorde. Retorna true se bateu o recorde anterior (e havia um: a primeira marca nao conta).
+## Recordes de um mundo ({id: valor}; vazio = nunca voou la). planet "" = mundo atual.
+func world_records(planet: String = "") -> Dictionary:
+	return records.get(planet if planet != "" else current_planet, {})
+
+
+## Registra um valor para um recorde do mundo atual. Retorna true se bateu o recorde anterior (e havia um: a primeira
+## marca nao conta).
 func note_record(key: String, value: float) -> bool:
-	var old := float(records.get(key, 0.0))
+	if not records.has(current_planet):
+		records[current_planet] = {}
+	var rec: Dictionary = records[current_planet]
+	var old := float(rec.get(key, 0.0))
 	if value <= old:
 		return false
-	records[key] = value
+	rec[key] = value
 	return old > 0.0
+
+
+## Mundos liberados (v16, mundos paralelos): a Lua + os das paradas "world" alcancadas, na ordem da spec.
+func worlds() -> Array[String]:
+	var out: Array[String] = []
+	for p: Dictionary in EconMath.spec["planets"]:
+		var id := str(p["id"])
+		if not bool(p.get("road", false)) or road_reached.has("world_" + id):
+			out.append(id)
+	return out
+
+
+## Escolhe o mundo do proximo voo (so os liberados). Retorna false se o mundo ainda esta fechado.
+func select_world(planet: String) -> bool:
+	if not planet in worlds():
+		return false
+	current_planet = planet
+	return true
 
 
 ## Estado para o save (SaveData.serialize).

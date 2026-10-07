@@ -39,7 +39,87 @@
         "sky": "#2e222f",
         "fill": "#3e3546",
         "surface": "#9babb2",
-        "crest_max_m": 900.0
+        "crest_max_m": 900.0,
+        "map": [
+          "#fca790",
+          "#f68181",
+          "#f9c22b"
+        ]
+      },
+      "nuvens": {
+        "amplitude_m": 70.0,
+        "frequency": 0.003,
+        "octaves": 4,
+        "sky": "#8fd3ff",
+        "fill": "#c7dcd0",
+        "surface": "#ffffff",
+        "crest_max_m": 900.0,
+        "map": [
+          "#8fd3ff",
+          "#eaaded",
+          "#ffffff"
+        ],
+        "notes": "v16: placeholder ate a arte (18.5): ceu/chao em cor chapada da Resurrect 64; map = cores do planetinha no Mapa das estrelas (ceu, horizonte, chao)."
+      },
+      "bolhas": {
+        "amplitude_m": 70.0,
+        "frequency": 0.003,
+        "octaves": 4,
+        "sky": "#4d9be6",
+        "fill": "#e6904e",
+        "surface": "#fbb954",
+        "crest_max_m": 900.0,
+        "map": [
+          "#8fd3ff",
+          "#8ff8e2",
+          "#0eaf9b"
+        ],
+        "notes": "v16: placeholder ate a arte (18.5): ceu/chao em cor chapada da Resurrect 64; map = cores do planetinha no Mapa das estrelas (ceu, horizonte, chao)."
+      },
+      "cogumelos": {
+        "amplitude_m": 70.0,
+        "frequency": 0.003,
+        "octaves": 4,
+        "sky": "#323353",
+        "fill": "#753c54",
+        "surface": "#a24b6f",
+        "crest_max_m": 900.0,
+        "map": [
+          "#323353",
+          "#6b3e75",
+          "#e83b3b"
+        ],
+        "notes": "v16: placeholder ate a arte (18.5): ceu/chao em cor chapada da Resurrect 64; map = cores do planetinha no Mapa das estrelas (ceu, horizonte, chao)."
+      },
+      "sorvete": {
+        "amplitude_m": 70.0,
+        "frequency": 0.003,
+        "octaves": 4,
+        "sky": "#8ff8e2",
+        "fill": "#ed8099",
+        "surface": "#ffffff",
+        "crest_max_m": 900.0,
+        "map": [
+          "#8ff8e2",
+          "#fdcbb0",
+          "#ed8099"
+        ],
+        "notes": "v16: placeholder ate a arte (18.5): ceu/chao em cor chapada da Resurrect 64; map = cores do planetinha no Mapa das estrelas (ceu, horizonte, chao)."
+      },
+      "jardim": {
+        "amplitude_m": 70.0,
+        "frequency": 0.003,
+        "octaves": 4,
+        "sky": "#4d9be6",
+        "fill": "#239063",
+        "surface": "#91db69",
+        "crest_max_m": 900.0,
+        "map": [
+          "#4d9be6",
+          "#8fd3ff",
+          "#239063"
+        ],
+        "notes": "v16: placeholder ate a arte (18.5): ceu/chao em cor chapada da Resurrect 64; map = cores do planetinha no Mapa das estrelas (ceu, horizonte, chao)."
       }
     },
     "pad_side_slope": 1.1,
@@ -486,7 +566,22 @@
       "left_chance": 0.45
     },
     "nudge_m": 60.0,
-    "clear_m": 40.0
+    "clear_m": 40.0,
+    "nuvens": {
+      "left_chance": 0.45
+    },
+    "bolhas": {
+      "left_chance": 0.45
+    },
+    "cogumelos": {
+      "left_chance": 0.45
+    },
+    "sorvete": {
+      "left_chance": 0.45
+    },
+    "jardim": {
+      "left_chance": 0.45
+    }
   },
   "abilities": {
     "notes": "Habilidades compradas na oficina (economy.json upgrades com ability). stabilizer: segurando a tecla, a nave volta a ficar de pe (gira com stabilize_gain x inclinacao, ate a velocidade normal de giro). turbo: segurando, empuxo x turbo_mult (o gas por delta-v e o mesmo: gasta mais rapido).",

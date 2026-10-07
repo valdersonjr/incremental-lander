@@ -21,7 +21,7 @@ func _ready() -> void:
 	if "--late" in args:
 		GameState.resources = {"credits": 4.2e5}
 		GameState.levels.merge({"thrust": 34, "tank": 21, "efficiency": 12, "gear": 9}, true)
-		GameState.records = {"run_money": 4.4e5, "run_deliveries": 14.0, "run_distance": 2.1e4, "run_perfect": 5.0,
+		GameState.records["luna"] = {"run_money": 4.4e5, "run_deliveries": 14.0, "run_distance": 2.1e4, "run_perfect": 5.0,
 				"best_delivery": 9.1e4}
 		GameState.rep_points = {"simple": 31, "heavy": 16, "soft": 6, "fast": 2}
 	var stars := int(opt.get("stars", "40" if "--late" in args else "0"))
