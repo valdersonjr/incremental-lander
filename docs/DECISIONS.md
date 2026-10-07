@@ -125,3 +125,26 @@ O gatinho herói conversa com o ratinho (corpo inteiro) numa janela sobre o mapa
 fila (pedidos do mesmo ratinho = coluna "Distância", que vale para qualquer ratinho no futuro); a fila mostra todos os
 ratinhos do planeta e os não liberados ficam em silhueta. Escolher só marca; partir é no botão ACEITAR MISSÃO.
 Botões sem dinheiro: só o "Você ganha" final. Substitui o cartão de 2026-10-06 (plataforma = botão de partir).
+
+## 2026-10-07 — Oficina vira PROGRESSÃO com Estrada das Estrelas (escolhida, a implementar)
+O usuário não gostou da árvore da Oficina e pediu que o jogador veja toda a progressão desde o início. Comparou três
+protótipos HTML de alta fidelidade (estrada por estrelas, por nível da nave e "só mostrar") e escolheu a **Estrada das
+Estrelas** ("ficou muito massa a estrada 1… liberar igual um battlepass ficou inteligente"). Padrão: Trophy Road / passe
+de batalha.
+- A tela passa a se chamar **PROGRESSÃO**. No alto fica a **Estrada da Lua** com todos os prêmios visíveis desde o começo
+  (Mineiro → ratinhos e estrelas, habilidades, ajudas, Frota, Piloto automático → "Lua completa"). A nave marca a
+  posição, o próximo prêmio fica em destaque com "faltam N⭐", e clicar num prêmio abre um balão.
+- **As estrelas não se gastam**: cada entrega dá ⭐, as estrelas empurram a nave e cada parada libera sozinha o prêmio.
+  As **moedas compram só as peças da nave** (Motor, Gasolina, Eficiência, Resistência) em degraus de 10, com a peça
+  crescendo no desenho.
+- Abas NAVE · AJUDAS (ligar e desligar) · FROTA, visíveis desde o início com cadeado. A aba PEDIDOS sai.
+- **Reputação = o antigo Combo, simplificado** (o upgrade "Reputação" comprado com moedas sai): bônus fixo de **+10%**
+  (não acumula), liberado desde o início. **Pouso perfeito** (nave reta e pouso macio) → a **próxima** entrega vale
+  +10%. Qualquer outro pouso → a próxima fica sem bônus. **Bateu** → perde o bônus da entrega atual e a próxima também
+  vem sem. Precisa de um **indicador** (aceso/apagado) no voo e no "Você ganha" da escolha de missão. Proposta de
+  "perfeito" (a calibrar jogando, em `data/world.json`): inclinação ≤ 25% de `max_tilt` e V.vert ≤ 40% de `max_vy`.
+  O bônus fica guardado entre runs.
+- Ratinhos em **ordem fixa** na estrada (salvo objeção do usuário).
+- **Economia depois**: primeiro as regras e a jogabilidade; estrelas por parada, preços sem o upgrade de Reputação e
+  Gasolina/Eficiência pouco compradas serão ajustados depois, de acordo com a jogabilidade (pedido do usuário).
+- Protótipo: `art/previews/progressao/progressao.html` (dados de `make_data.py`; fonte do jogo convertida em TTF por `fnt2ttf.py` só para o protótipo).

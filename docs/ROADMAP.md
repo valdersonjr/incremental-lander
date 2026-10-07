@@ -112,6 +112,38 @@
       Plataforma) → escolhido A "Vitrine" v3 (gatinho herói acenando no morro de queijo, logo de doce, frase da proposta,
       Jogar com 3 estados, parallax/nuvens/estrelas) (2026-10-06)
 
+## Fase 16 — PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
+> Pedido do usuário: ver toda a progressão desde o início ("incita a querer chegar lá"). Escolheu, entre 3 protótipos
+> HTML, a **Estrada das Estrelas** (padrão Trophy Road / passe de batalha). Protótipo: `art/previews/progressao/`.
+> Regras em `docs/DECISIONS.md` (2026-10-07). **Economia fina depois, de acordo com a jogabilidade**: nesta fase os
+> números novos são provisórios (marcados "rascunho" na spec), só o suficiente para jogar.
+- [ ] 16.1 Spec + espelho (economy-balance): `progression.road` em `economy.json` (paradas em ordem: Mineiro, ratinhos
+      ★1–★3 e Dupla, Estabilizador, Turbo, 7 ajudas, Frota, Piloto automático, "Lua completa"; estrelas provisórias da
+      curva do protótipo); `contracts.reputation` (+10%, substitui `combo`); sai o upgrade `contracts` (Reputação por
+      moedas) e os marcos dele; `econ.py` + `econ_math.gd` (estrelas acumuladas liberam paradas; reputação) +
+      `test_econ_parity.py`; `screen()` só para ver que nada quebrou (sem rebalancear); CHANGELOG + versão
+- [ ] 16.2 Estado e save (godot-dev): `GameState.stars` vira **total acumulado** (não se gasta);
+      `road_reached` (ids) libera sozinho (ratinho → nó de missão; habilidade/ajuda → nível 1; Frota/Piloto → podem ser
+      comprados); `reputation_ready` (bool, guardado entre runs); migração do save v2→v3 (total = estrelas + 3 × nós
+      liberados; o que já foi comprado continua); testes unitários do save e da estrada
+- [ ] 16.3 Reputação no voo (godot-dev): pouso perfeito = inclinação ≤ 25% de `max_tilt` e V.vert ≤ 40% de `max_vy`
+      (`data/world.json > landing.perfect`, calibrável) → próxima entrega +10%; outro pouso → sem; batida → perde a atual
+      e a próxima; o painel COMBO do HUD vira o **selo de Reputação** (aceso/apagado + aviso "Pouso perfeito! próxima
+      +10%"); "Você ganha" da escolha de missão mostra o selo; recorde "maior combo" sai (ou vira "pousos perfeitos
+      seguidos"); testes de RunState
+- [ ] 16.4 Tela PROGRESSÃO (godot-dev): o hangar renomeado; **Estrada da Lua** no topo (rolagem por setas/roda/arrasto
+      e teclado, nave na posição, próximo prêmio pulsando com "faltam N", balão ao clicar); aba NAVE = nave grande + 4
+      cartões de peça em degraus de 10 (bolinhas, "Motor II!" com festinha, peça que brilha ao passar o mouse);
+      Estabilizador/Turbo ganhos acima da nave; seletor ×1/×10/MÁX; aba AJUDAS (ligar/desligar; cadeado com "na
+      estrada: N⭐"); aba FROTA (cadeado até a parada; pista de drones + Piloto automático); aba PEDIDOS sai;
+      aviso "Na estrada: novo prêmio!" ao voltar do voo (substitui o MissionIntro de nó comprado); prévias
+      `hangar_preview` (`--road`, `--tab=…`, `--t=…`) e integrações atualizadas
+- [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
+      `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;
+      sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito
+- [ ] 16.6 Aprovação do usuário jogando → depois, fase de economia (estrelas por parada, preços sem o upgrade de
+      Reputação, Gasolina/Eficiência pouco compradas, marcos alinhados aos degraus)
+
 ## Fase 13 — Simples e com ajudas ✅ (2026-10-05) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido: "tirar essa porra de cristal e refinaria, não vi mta diversão" + árvore de atributos que facilita a vida
 > (setinha → cor de chegando → rota traçada…). "A ideia do jogo é ser simples".
