@@ -112,6 +112,20 @@
       Plataforma) → escolhido A "Vitrine" v3 (gatinho herói acenando no morro de queijo, logo de doce, frase da proposta,
       Jogar com 3 estados, parallax/nuvens/estrelas) (2026-10-06)
 
+## Fase 17 — Bata seu recorde + paisagens (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`
+> Pedido do usuário: o run como meta imposta (teto de 6 entregas) não combina; "competir com ele mesmo": tanque cheio,
+> quantas missões conseguir, guardar dinheiro/distância/entregas e evoluir a nave para bater recordes (padrão Hill Climb
+> Racing / Learn to Fly). E "o relevo é muito igual": receita nova a cada missão. Plano aprovado em 2026-10-07.
+- [x] 17.1 Run sem teto (economy-balance + godot-dev): sai `max_per_run`; `contracts.run_fatigue` 1,7 (gás do salto ×
+      1,7^n; galão devolve gás / 1,7^n) garante que o run acaba; `econ.py`/`EconMath.run_fatigue_mult`, paridade 31;
+      `RunState.fatigue()` (gás estimado), `Flight.set_fatigue` (eficiência da missão), HUD de entregas sem "/6";
+      testes (sem teto; run sempre acaba). MC 3×3 6 h: entregas/run ~2 no começo → ~15 no fim; Gasolina/Eficiência
+      compradas (nív. ~50/~34; antes ~14/~7) (2026-10-07)
+- [ ] 17.2 Recordes (godot-dev): run guarda dinheiro, entregas, distância, pousos perfeitos e maior entrega; painel
+      de recordes no HUD (dinheiro em destaque) e resumo com cada número × o melhor; protótipo HTML antes
+- [ ] 17.3 Paisagens: receitas de relevo (Planície, Colinas, Serra, Vale, Planalto, Crateras, Degraus) sorteadas por
+      missão; preview HTML antes; as novas liberadas na Estrada; Δv médio por paisagem conferido no modelo
+
 ## Fase 16 — PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
 > Pedido do usuário: ver toda a progressão desde o início ("incita a querer chegar lá"). Escolheu, entre 3 protótipos
 > HTML, a **Estrada das Estrelas** (padrão Trophy Road / passe de batalha). Protótipo: `art/previews/progressao/`.

@@ -15,3 +15,4 @@ mecânica, procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Eta
 | assist-tree | Árvore de ajudas de voo (informação, não potência; compra única persistente) | GMTK roguelites, landers com radar | upgrades[assist] | 2026-10-05 |
 | mission-unlocks | Liberação gradual dos tipos de pedido (jogando, não comprando) + cliente visual por tipo | Slay the Spire, Hades II, Death Stranding, Good Pizza Great Pizza | (proposta) contracts.cargo/pad_tiers | 2026-10-06 |
 | progression-road | Estrada das Estrelas: estrelas acumuladas liberam prêmios visíveis desde o início; Reputação +10% | Clash Royale, Fortnite, Hades, Kingdom Rush | progression.road, contracts.reputation | 2026-10-07 |
+| run-fatigue-records | Run sem teto, meta = recorde pessoal; cansaço geométrico do gás para o run acabar | Hill Climb Racing, Learn to Fly, Tiny Wings | contracts.run_fatigue | 2026-10-07 |

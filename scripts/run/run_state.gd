@@ -1,6 +1,7 @@
 ## Estado de um run (logica pura, testavel): ofertas de entrega, entregas feitas, ganhos e fim do run.
 ## Regras da economy-balance (run-model.md): ofertas log-uniformes na faixa do planeta, oferta cumprida e
-## substituida (regenerate), teto de entregas (max_per_run), pagamento via EconMath.delivery_pay (qualidade x
+## substituida (regenerate), sem teto de entregas (v15: o gas de cada salto cresce com fatigue(); o run acaba pelo gas
+## ou na batida), pagamento via EconMath.delivery_pay (qualidade x
 ## tipo de plataforma x reputacao do ratinho x missao).
 ## Lua: cada oferta tambem tem LADO (world.json routes: pedidos a esquerda) e MISSAO (economy.json contracts.missions).
 ## v12.1: um pedido por ESPACO (EconMath.mission_slots: a Simples tem 3 faixas perto -> longe, cada ratinho liberado tem
@@ -29,7 +30,6 @@ var deliveries: Array[Dictionary] = []
 var earned: Dictionary = {}               # recurso -> quantidade ganha neste run
 var over := false
 var end_reason := ""
-var max_deliveries := 6
 
 var _rng := RandomNumberGenerator.new()
 var _rng_extra := RandomNumberGenerator.new()   # lado + missao (sequencia propria)
@@ -55,7 +55,6 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_
 		if p["id"] == p_planet_id:
 			run._planet = p
 	var c: Dictionary = EconMath.spec["contracts"]
-	run.max_deliveries = int(c.get("max_per_run", 6))
 	if not EconMath.mission_kinds(p_planet_id).is_empty():
 		for slot in EconMath.mission_slots(run.unlocked):
 			run._add_slot_offer(slot)
@@ -129,7 +128,12 @@ func mission_gas(m: Dictionary, d: float) -> float:
 	var d2 := leg2_m(m, d)
 	if d2 > 0.0:
 		dv += EconMath.estimated_hop_dv(planet_id, d2, st)
-	return dv * EconMath.mission_dv_mult(m) / float(stats["efficiency"])
+	return dv * EconMath.mission_dv_mult(m) / float(stats["efficiency"]) * fatigue()
+
+
+## Cansaco do run (v15): multiplicador do gas da proxima missao (EconMath.run_fatigue_mult das entregas feitas).
+func fatigue() -> float:
+	return EconMath.run_fatigue_mult(deliveries.size())
 
 
 ## Distancia do 2o trecho do taxi (0 = sem): leg2 x d, nunca menor que a entrega mais curta do mundo.
@@ -223,8 +227,6 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	taken_tier = "normal"
 	taken_dir = 1
 	taken_mission = EconMath.simple_mission()
-	if deliveries.size() >= max_deliveries:
-		finish("limite_de_entregas")
 	return rewards
 
 

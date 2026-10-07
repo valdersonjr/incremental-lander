@@ -789,6 +789,12 @@ def _mission_choices(E: dict, planet: dict, stats: dict, prof: Profile, kind: st
     return out
 
 
+def run_fatigue_mult(E: dict, n: int) -> float:
+    """v15: multiplicador do gas do salto depois de n entregas no run (contracts.run_fatigue ^ n; 1 = sem cansaco).
+    Com tanque T e custo c, o maximo de entregas e ~ log(1 + T(k-1)/c) / log k: cresce com a nave, mas e finito."""
+    return E["contracts"].get("run_fatigue", 1.0) ** n
+
+
 CRASH_RISK_K = 3.0      # escolha de plataforma/estrela: (1 - chance de bater)^K (bater perde o resto do run)
 
 
@@ -803,7 +809,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     eff = stats["efficiency"]
     qbonus = C.get("quality_bonus", 0.5)
     qexp = C.get("quality_exp", 1.0)
-    max_per_run = C.get("max_per_run", 10 ** 9)
+    max_per_run = min(C.get("max_per_run", 10 ** 9), 1000)   # 1000 = trava de seguranca do modelo (v15: sem teto)
     tiers = C.get("pad_tiers") or [{"id": "normal", "mult": 1.0}]
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     rewards_w = planet.get("rewards", {"credits": 1.0})
@@ -845,8 +851,9 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     crashed = False
     while n < max_per_run:
         pick, best_score = None, 0.0
+        fat = run_fatigue_mult(E, n)
         for sl, it in items.items():
-            if it and it[1] <= gas:
+            if it and it[1] * fat <= gas:
                 score = (it[2] * it[3]["mult"] * it[4]["pay"]) / it[1]
                 if score > best_score:
                     pick, best_score = sl, score
@@ -854,7 +861,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
             break
         d, g_need, base, tier, ch = items[pick]
         items[pick] = info(pick, slot_distance(E, planet, pick, next_u())) if C.get("regenerate", True) else None
-        gas -= g_need
+        gas -= g_need * fat
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         cm = reputation_mult(E, (rep or {}).get("simple" if pick.startswith("simple") else pick, 0))
@@ -871,7 +878,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         for k, w in rewards_w.items():
             total[k] += pay * w
         n += 1
-        gas = min(stats["tank"], gas + gf_gas * stats["tank"])
+        gas = min(stats["tank"], gas + gf_gas * stats["tank"] / fat)   # galao encolhe com o cansaco
         maxd = max(maxd, d)
         dist += d
     t += prof.run_overhead_s

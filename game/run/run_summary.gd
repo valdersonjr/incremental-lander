@@ -69,6 +69,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _reason_text(reason: String) -> String:
 	if reason.begins_with("batida"):
 		return "a nave bateu: " + UiKit.crash_text(reason.get_slice(":", 1))
-	return {"limite_de_entregas": "limite de entregas", "sem_gas": "acabou o gás", "encerrado": "run encerrado",
+	return {"sem_gas": "acabou o gás", "encerrado": "run encerrado",
 			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave"}.get(
 			reason, reason)

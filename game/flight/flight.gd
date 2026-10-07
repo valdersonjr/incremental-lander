@@ -12,6 +12,7 @@ signal stranded
 
 var planet_id := "luna"
 var stats: Dictionary = {}
+var fatigue := 1.0                                 # cansaco do run (v15): gas da missao x fatigue
 var target_distance_m := 0.0
 var current_pad_id := 0
 var target_pad_id := -1
@@ -124,6 +125,20 @@ func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", 
 	set_target(distance_m, tier, dir, p_mission, stage)
 	_place_on_start_pad()
 	_arrive()
+
+
+## Cansaco do run (v15, RunState.fatigue): a missao gasta fatigue x o gas normal (motor igual, eficiencia / fatigue);
+## o galao devolve gas / fatigue. O Main chama antes de cada begin_mission.
+func set_fatigue(f: float) -> void:
+	fatigue = f
+	lander.params["efficiency"] = float(stats["efficiency"]) / f
+
+
+## Stats com a eficiencia da missao atual (cansaco do run) para as ajudas que estimam o gas.
+func eff_stats() -> Dictionary:
+	var s := stats.duplicate()
+	s["efficiency"] = float(stats["efficiency"]) / fatigue
+	return s
 
 
 func _reset_map(seed_value: int) -> void:
@@ -333,7 +348,7 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"planet": planet_id,
 		"distance": target_distance_m,
 		"thrust": stats["thrust"],
-		"efficiency": stats["efficiency"],
+		"efficiency": float(lander.params["efficiency"]),
 		"tank": stats["tank"],
 		"gas_used": info["gas_used"],
 		"hop_time_s": info["flight_time_m"],
@@ -405,7 +420,7 @@ func _tick_gift() -> void:
 		return
 	gift_taken = true
 	if gift_kind == "gas":
-		var add := EconMath.gift_gas(stats, "gas")
+		var add := EconMath.gift_gas(stats, "gas") / fatigue
 		lander.gas = minf(float(lander.params["tank"]), lander.gas + add)
 		_float_text("+" + EconMath.fmt(add) + " gás", _gift_pos + Vector2(0, -24))
 	else:

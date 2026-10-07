@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 14,
-    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo). v12.1: um pedido por ratinho; jogador escolhe plataforma e estrela. v13: PROGRESSAO - estrada das estrelas (progression.road; estrelas acumuladas liberam ratinhos, habilidades, ajudas, Frota e Piloto) e Reputacao +10% apos pouso perfeito (contracts.reputation substitui combo); sai o upgrade Reputacao por creditos. Numeros provisorios. v14: Reputacao por ratinho (contracts.reputation.levels: 5/15/30 pontos -> +10/20/30% nos pedidos daquele ratinho; cumprida = 1, pouso perfeito = 2); sai o +10% na entrega seguinte."
+    "version": 15,
+    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo). v12.1: um pedido por ratinho; jogador escolhe plataforma e estrela. v13: PROGRESSAO - estrada das estrelas (progression.road; estrelas acumuladas liberam ratinhos, habilidades, ajudas, Frota e Piloto) e Reputacao +10% apos pouso perfeito (contracts.reputation substitui combo); sai o upgrade Reputacao por creditos. Numeros provisorios. v14: Reputacao por ratinho (contracts.reputation.levels: 5/15/30 pontos -> +10/20/30% nos pedidos daquele ratinho; cumprida = 1, pouso perfeito = 2); sai o +10% na entrega seguinte. v15: run sem teto de entregas (sai max_per_run); contracts.run_fatigue 1,7 = gas do salto x 1,7^n (n = entregas ja feitas no run), galao devolve gas / 1,7^n; o run acaba pelo gas (ou batida) e o jogador tenta bater os recordes."
   },
   "physics": {
     "mode": "arcade",
@@ -384,7 +384,6 @@
     "quality_bonus": 1.5,
     "cargo_mass": 0.0,
     "regenerate": true,
-    "max_per_run": 6,
     "quality_exp": 2.0,
     "pad_tiers": [
       {
@@ -747,7 +746,8 @@
           "bonus": 0.3
         }
       ]
-    }
+    },
+    "run_fatigue": 1.7
   },
   "profiles_override": {},
   "targets": {

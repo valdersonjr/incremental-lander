@@ -117,7 +117,7 @@ func _process(delta: float) -> void:
 		_dist.text = "escolha uma entrega"
 		_dist_icon.flip_h = false
 	_credits.text = EconMath.fmt(GameState.amount("credits"))
-	_deliveries.text = "%d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
+	_deliveries.text = str(run.deliveries.size()) if run != null else ""
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
 
@@ -151,7 +151,7 @@ func _update_need_mark(l: Lander, tank: float) -> void:
 	if not _need_mark.visible:
 		return
 	var start := l.gas if l.state == Lander.State.LANDED else l.gas_at_takeoff
-	var left := Assists.gas_left_at_arrival(flight.planet_id, flight.target_distance_m, flight.stats, start)
+	var left := Assists.gas_left_at_arrival(flight.planet_id, flight.target_distance_m, flight.eff_stats(), start)
 	var w := _gas_bar.size.x
 	_need_mark.size = Vector2(3, _gas_bar.size.y + 2)
 	_need_mark.position = Vector2(roundf(clampf(left / tank, 0.0, 1.0) * (w - 3.0)), -1)

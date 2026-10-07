@@ -36,6 +36,7 @@ P = {
     "node_passenger1_yes": node_ok(E, mission_spec(E)["nodes"][5], {"heavy1", "fast1"}),
     "gift_pay_luna": gift_value(E, planets["luna"], 4200.0, st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gift")),
     "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
+    "run_fatigue_5": run_fatigue_mult(E, 5),
     "slot_dist": [slot_distance(E, planets["luna"], "simple0", 0.3), slot_distance(E, planets["luna"], "simple2", 0.9),
                   slot_distance(E, planets["luna"], "heavy", 0.5)],
     "rep_levels": [reputation_level(E, 0), reputation_level(E, 5), reputation_level(E, 14), reputation_level(E, 99)],

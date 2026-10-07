@@ -158,4 +158,4 @@ Stardew: corações; Persona: cada nível muda o personagem) → missão cumprid
 = 0; corações em vez de escudinhos (o escudinho virou o selo de "melhor amigo!" no nível 3). Sai o +10% na entrega
 seguinte e o badge do canto do voo. Limiares 5/15/30 provisórios (economia depois, jogando). Usuário: "precisa html
 não, implementa logo".
-
+| 2026-10-07 | **Run "bata seu recorde"**: sai o teto de 6 entregas; o run acaba só pelo gás (ou batida) e a meta é bater recordes pessoais (dinheiro em destaque, snapshot de todos no HUD). Para o run não ser infinito com tanque exponencial: cansaço `run_fatigue` 1,7 (gás × 1,7^n; galão ÷ 1,7^n): k 1,06–1,22 ainda dava 20–40 entregas; 1,7 dá ~2 → ~15 | usuário: "competir com ele mesmo… quantas missões quiser… incentivo de evoluir a nave para records maiores"; "analisar matematicamente para a nave não conseguir fazer infinitas entregas"; bater acaba o run | `data/economy.json` v15, `RunState.fatigue`, `Flight.set_fatigue`, `balance/sims/2026-10-07-v15-run-records.py` |

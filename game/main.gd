@@ -299,6 +299,7 @@ func _on_offer_chosen(index: int) -> void:
 	if flight != _flight or _run == null:                      # o run acabou/recomecou durante a tela escura
 		return
 	var seed_value := hash([_run_seed, _run.deliveries.size()])
+	_flight.set_fatigue(_run.fatigue())
 	if EconMath.mission_leg2(m) > 0.0:                         # taxi: 1o trecho ate a plataforma de busca
 		var tiers: Array = WorldConfig.load_config()["missions"]["passenger"]["pickup_tier"]
 		var pickup: String = tiers[clampi(EconMath.mission_has(m, "passenger"), 1, tiers.size()) - 1]

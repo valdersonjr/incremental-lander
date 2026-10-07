@@ -36,12 +36,33 @@ func test_oferta_cumprida_e_substituida() -> void:
 	assert_eq(run.offers.size(), before, "regenerate: a lista mantem o tamanho")
 
 
-func test_teto_de_entregas_encerra_run() -> void:
+func test_sem_teto_e_gas_cresce_por_entrega() -> void:
 	var run := RunState.create("luna", stats, 5)
-	for i in run.max_deliveries:
+	var m := EconMath.simple_mission()
+	var g0 := run.mission_gas(m, 800.0)
+	for i in 10:
 		run.complete_delivery(500.0, 0.8, 20.0)
-	assert_true(run.over)
-	assert_eq(run.end_reason, "limite_de_entregas")
+	assert_false(run.over, "v15: sem teto de entregas")
+	var k := float(EconMath.spec["contracts"]["run_fatigue"])
+	assert_almost(run.mission_gas(m, 800.0), g0 * pow(k, 10), g0 * 1e-6, "gas da missao x fatigue^n")
+
+
+func test_run_sempre_acaba_pelo_gas() -> void:
+	# tanque enorme + galao em todo salto: mesmo assim o gas que cresce acaba com o run
+	var big := EconMath.ship_stats({"thrust": 60, "tank": 80, "efficiency": 60})
+	var run := RunState.create("luna", big, 9)
+	var gas := float(big["tank"])
+	var m := EconMath.simple_mission()
+	var n := 0
+	while n < 500:
+		var need := run.mission_gas(m, 600.0)
+		if need > gas:
+			break
+		gas = minf(float(big["tank"]), gas - need + EconMath.gift_gas(big, "gas") / run.fatigue())
+		run.complete_delivery(600.0, 0.9, need)
+		n += 1
+	assert_true(n < 500, "o run termina (%d entregas)" % n)
+	assert_true(n > 3, "nave forte ainda faz varias entregas (%d)" % n)
 
 
 func test_batida_encerra_e_mantem_ganhos() -> void:

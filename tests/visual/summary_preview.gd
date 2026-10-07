@@ -14,6 +14,6 @@ func _ready() -> void:
 	var s: RunSummary = SUMMARY_SCENE.instantiate()
 	s.theme = UiKit.theme_for(planet)
 	layer.add_child(s)
-	var reason := "batida:vertical_rapido" if "--crash" in OS.get_cmdline_user_args() else "limite_de_entregas"
+	var reason := "batida:vertical_rapido" if "--crash" in OS.get_cmdline_user_args() else "sem_gas"
 	s.show_summary({"reason": reason, "deliveries": 6, "avg_quality": 0.84,
 			"earned": {"credits": 12450.0}, "fleet": {"credits": 3100.0}})

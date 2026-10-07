@@ -274,6 +274,12 @@ static func gift_gas(stats: Dictionary, kind_id: String) -> float:
 	return float(gift_kind(kind_id).get("gas_frac", 0.0)) * float(stats["tank"])
 
 
+## v15: multiplicador do gas do salto depois de n entregas no run (contracts.run_fatigue ^ n; 1 = sem cansaco).
+## O run nao tem teto de entregas: o gas que cresce a cada entrega garante que ele acaba (galao devolve gas / esse fator).
+static func run_fatigue_mult(n: int) -> float:
+	return pow(float(spec["contracts"].get("run_fatigue", 1.0)), n)
+
+
 ## Sorteia o presente do salto: "" (sem presente; chance da spec) ou o id do tipo (pelos pesos).
 static func draw_gift(planet_id: String, rng: RandomNumberGenerator) -> String:
 	var kinds := gift_kinds(planet_id)

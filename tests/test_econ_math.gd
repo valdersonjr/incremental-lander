@@ -27,6 +27,7 @@ func _init() -> void:
 		"node_passenger1_yes": EconMath.mission_node_ok(EconMath.mission_spec()["nodes"][5], ["heavy1", "fast1"]),
 		"gift_pay_luna": EconMath.gift_value("luna", 4200.0, st, "gift"),
 		"gift_gas": EconMath.gift_gas(st, "gas"),
+		"run_fatigue_5": EconMath.run_fatigue_mult(5),
 		"slot_dist": [EconMath.slot_distance("luna", "simple0", 0.3), EconMath.slot_distance("luna", "simple2", 0.9),
 				EconMath.slot_distance("luna", "heavy", 0.5)],
 		"rep_levels": [EconMath.reputation_level(0), EconMath.reputation_level(5), EconMath.reputation_level(14),
