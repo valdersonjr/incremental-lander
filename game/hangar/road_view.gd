@@ -27,7 +27,6 @@ var _track: Control
 var _avatar: TextureRect
 var _title: HBoxContainer
 var _bar: ProgressBar
-var _pct: Label
 var _stop_nodes: Dictionary = {}       # id -> Control da parada
 var _built := false
 var _center_x := -1.0
@@ -50,9 +49,6 @@ func _ready() -> void:
 	_bar.custom_minimum_size = Vector2(70, 6)
 	_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_title.add_child(_bar)
-	_pct = Label.new()
-	_pct.theme_type_variation = &"MoneyLabel"
-	_title.add_child(_pct)
 	_clip = Control.new()
 	_clip.clip_contents = true
 	_clip.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -97,7 +93,6 @@ func rebuild(from_stars: int = -1, recenter: bool = false) -> void:
 	_track.size = _track.custom_minimum_size
 	_bar.max_value = maxi(1, road.size())
 	_bar.value = done
-	_pct.text = "%d%%" % roundi(100.0 * done / maxf(1.0, road.size()))
 	_avatar = TextureRect.new()
 	var at := AtlasTexture.new()
 	at.atlas = load("res://assets/sprites/lander.png")

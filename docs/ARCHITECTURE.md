@@ -117,7 +117,7 @@ game/hangar/hangar.*          # Hangar = tela PROGRESSÃO (v13; raiz Control: %F
                               # LIGADA/DESLIGADA ou "na estrada: N") | FROTA (cadeado até a parada; drones + Piloto). open():
                               # a navezinha anda das estrelas vistas até as de agora e as paradas novas festejam (_show_next_news:
                               # ratinho ★1 = MissionIntro, resto = toast + confete). Esc = fecha balão / menu do jogo.
-game/hangar/road_view.gd      # RoadView: Estrada das Estrelas (todas as paradas, linha que enche, navezinha, "faltam N", rolagem por
+game/hangar/road_view.gd      # RoadView: Estrada das Estrelas (todas as paradas, barrinha sem porcentagem, linha que enche, navezinha, "faltam N", rolagem por
                               # setas/roda/arrasto); rebuild(from_stars, recenter), stop_pressed(id), stop_anchor(), celebrate()
 game/hangar/ship_view.gd      # ShipView: lander 3x com peças que crescem por degrau (placeholder _draw até a arte da 16.5); highlight(id)
 scripts/ui/road_text.gd       # RoadText (puro): nome/figura/frase de cada parada e das peças; STAGE = 10; stage_of()
