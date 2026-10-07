@@ -1,4 +1,4 @@
-## Estrada das Estrelas (tela PROGRESSAO, v13): TODAS as paradas da spec (EconMath.road) lado a lado desde o comeco,
+## Estrada das Estrelas (tela PROGRESSAO, v13; sem titulo nem barra de progresso, pedido do usuario): TODAS as paradas da spec (EconMath.road) lado a lado desde o comeco,
 ## padrao Trophy Road. Cada parada: estrelas que pede (em cima), bolinha com a figura, nome (embaixo); feita = verde
 ## com check, proxima = dourada pulsando com "faltam N", futura = apagada. A navezinha marca as estrelas do jogador
 ## entre as paradas; a linha se enche ate ela. Rola com as setas dos lados, a roda do mouse ou arrastando; clicar numa
@@ -12,7 +12,7 @@ const SPACING := 76                    # distancia entre paradas (px)
 const X0 := 40                         # centro da 1a parada
 const BUBBLE := 30                     # diametro da bolinha
 const TOP := 13                        # y da bolinha (abaixo da linha das estrelas)
-const HEAD := 13                       # altura da linha do titulo
+const HEAD := 2                        # folga em cima (sem titulo nem barra: a estrada fala por si)
 const ARROW_W := 12
 const SCROLL_STEP := 228.0
 
@@ -25,8 +25,6 @@ var _avatar_x := 0.0
 var _clip: Control
 var _track: Control
 var _avatar: TextureRect
-var _title: HBoxContainer
-var _bar: ProgressBar
 var _stop_nodes: Dictionary = {}       # id -> Control da parada
 var _built := false
 var _center_x := -1.0
@@ -34,21 +32,6 @@ var _center_x := -1.0
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, HEAD + 84)
-	_title = HBoxContainer.new()
-	_title.add_theme_constant_override(&"separation", 5)
-	_title.position = Vector2(ARROW_W + 4, -1)
-	_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_title)
-	var t := Label.new()
-	t.text = "ESTRADA DA LUA"
-	t.theme_type_variation = &"SectionLabel"
-	_title.add_child(t)
-	_bar = ProgressBar.new()
-	_bar.show_percentage = false
-	_bar.theme_type_variation = &"XpBar"
-	_bar.custom_minimum_size = Vector2(70, 6)
-	_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_title.add_child(_bar)
 	_clip = Control.new()
 	_clip.clip_contents = true
 	_clip.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -79,20 +62,15 @@ func rebuild(from_stars: int = -1, recenter: bool = false) -> void:
 	_stop_nodes.clear()
 	var road := EconMath.road()
 	var next_i := _next_index(road)
-	var done := 0
 	for i in road.size():
 		var stop: Dictionary = road[i]
 		var reached := GameState.road_reached.has(stop["id"])
-		if reached:
-			done += 1
 		var n := _make_stop(stop, reached, i == next_i and not reached)
 		n.position = Vector2(X0 + i * SPACING - SPACING / 2.0, 0)
 		_track.add_child(n)
 		_stop_nodes[stop["id"]] = n
 	_track.custom_minimum_size = Vector2(X0 * 2 + SPACING * maxi(0, road.size() - 1), 84)
 	_track.size = _track.custom_minimum_size
-	_bar.max_value = maxi(1, road.size())
-	_bar.value = done
 	_avatar = TextureRect.new()
 	var at := AtlasTexture.new()
 	at.atlas = load("res://assets/sprites/lander.png")
