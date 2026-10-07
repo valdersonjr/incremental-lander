@@ -180,6 +180,13 @@ static func kid(name: String) -> Texture2D:
 	return at
 
 
+## O atlas kids tem essa peca? (mundos novos usam "mystery" ate a arte chegar)
+static func has_kid(name: String) -> bool:
+	if _kids_meta.is_empty():
+		_kids_meta = JSON.parse_string(FileAccess.get_file_as_string(DIR + "kids.json"))
+	return (_kids_meta["names"] as Array).has(name)
+
+
 ## Linha "icone + texto" pronta (HBox) — usada pelas telas.
 static func icon_label(icon_name: String, text: String, variation: StringName = &"") -> HBoxContainer:
 	var row := HBoxContainer.new()

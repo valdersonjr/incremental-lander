@@ -37,6 +37,8 @@ P = {
     "gift_pay_luna": gift_value(E, planets["luna"], 4200.0, st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gift")),
     "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
     "run_fatigue_5": run_fatigue_mult(E, 5),
+    "record_bonus": [record_bonus(E, 1000.0, 0.0), record_bonus(E, 1000.0, 800.0), record_bonus(E, 700.0, 800.0)],
+    "world_of_stop": [world_of_stop({"id": "world_jardim", "type": "world"}), world_of_stop({"id": "heavy1", "type": "mission"})],
     "slot_dist": [slot_distance(E, planets["luna"], "simple0", 0.3), slot_distance(E, planets["luna"], "simple2", 0.9),
                   slot_distance(E, planets["luna"], "heavy", 0.5)],
     "rep_levels": [reputation_level(E, 0), reputation_level(E, 5), reputation_level(E, 14), reputation_level(E, 99)],

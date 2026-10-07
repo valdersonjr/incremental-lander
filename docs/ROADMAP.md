@@ -121,8 +121,9 @@
 - [x] 18.1 Conceitos (pixel-art): `art/previews/mundos/mundos.html` (5 cenas animadas + preto e branco); o usuário
       ficou com **todos**, na ordem Nuvens (correntes que sobem) → Bolhas (bolhas empurram; mar = splash) →
       Cogumelos (chapéu-mola) → Sorvete (chão escorregadio) → Jardim (vento lateral) (2026-10-07)
-- [ ] 18.2 Economia: planets[] dos 5 mundos, paradas `world` na Estrada, `contracts.record_bonus`, simulador
-      escolhendo o mundo com o bônus; meta renda/h 1,0–1,3× a Lua e a Lua continuar sendo jogada
+- [x] 18.2 Economia (v16): 5 planets `road: true` (g 1,15/2,4/3,2/4,0/4,9; pay calibrado para 1,15× a Lua com a
+      nave do fim), paradas `world_<id>` (24/44/66/88/110★), `record_bonus` 15% (1ª visita 40%); simulador com
+      recorde por mundo; MC: Lua 25–29% dos runs, nenhum mundo domina; `RoadText` reconhece parada de mundo (2026-10-07)
 - [ ] 18.3 Multimundo no código: mundos liberados, seletor (protótipo HTML antes), save v5 (recordes por mundo),
       bônus de recorde, parada `world` com festa, dados por mundo (world.json, ui_kit)
 - [ ] 18.4 Mecânica de cada mundo (base Hazards/HazardView do commit 4ec1ea1)

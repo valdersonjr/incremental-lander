@@ -242,6 +242,22 @@ static func road_can_buy(upgrade_id: String, reached: Array) -> bool:
 
 
 ## Parada da estrada pelo id ({} se nao existe).
+## v16 (mundos paralelos, padrao Hill Climb Racing 2): bonus em moedas por bater o recorde de dinheiro do run NUM
+## MUNDO. Primeira visita (sem recorde) = first_frac x dinheiro do run; bater a marca = frac x dinheiro do run.
+static func record_bonus(run_money: float, old_record: float) -> float:
+	var b: Dictionary = spec["contracts"].get("record_bonus", {})
+	if b.is_empty() or run_money <= 0.0:
+		return 0.0
+	if old_record <= 0.0:
+		return float(b.get("first_frac", 0.0)) * run_money
+	return float(b.get("frac", 0.0)) * run_money if run_money > old_record else 0.0
+
+
+## Mundo liberado por uma parada "world" da Estrada (id world_<planeta>); "" se a parada nao e de mundo.
+static func world_of_stop(stop: Dictionary) -> String:
+	return str(stop["id"]).substr(6) if str(stop.get("type", "")) == "world" else ""
+
+
 static func road_stop(stop_id: String) -> Dictionary:
 	for s: Dictionary in road():
 		if s["id"] == stop_id:
