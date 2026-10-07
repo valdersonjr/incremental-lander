@@ -1,6 +1,6 @@
 ## HUD do voo (arte: UiKit): gas (barra ciano -> ambar -> vermelho), velocidades com cor de seguranca,
-## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, combo;
-## resultado do pouso em aviso central (pagamento com plataforma x combo x carga, chamado pelo Main).
+## altitude, distancia ao alvo (seta aponta o lado; multiplicador da plataforma), creditos e entregas, selo de Reputacao;
+## resultado do pouso em aviso central (pagamento com plataforma x reputacao x carga, chamado pelo Main).
 ## Carga (Lua): linha com a figura da carga + o que importa agora (barra do sorvete derretendo; bolo deixa o
 ## V.VERT mais exigente; ratinho fica colorido quando resgatado; queijo rachado).
 class_name Hud
@@ -29,8 +29,8 @@ var _need_mark: ColorRect = null                # "Da pra chegar?" (Painel de bo
 @onready var _toast_title: Label = %ToastTitle
 @onready var _toast_text: Label = %ToastText
 @onready var _toast_extra: Label = %ToastExtra
-@onready var _combo_panel: Control = %ComboPanel
-@onready var _combo: Label = %Combo
+@onready var _rep_panel: Control = %RepPanel
+@onready var _rep: Label = %Rep
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -106,10 +106,15 @@ func _process(delta: float) -> void:
 		_dist_icon.flip_h = false
 	_credits.text = EconMath.fmt(GameState.amount("credits"))
 	_deliveries.text = "%d/%d" % [run.deliveries.size(), run.max_deliveries] if run != null else ""
-	var streak := run.streak if run != null else 0
-	_combo_panel.visible = streak > 0
-	if streak > 0:
-		_combo.text = "COMBO %d  %s" % [streak, UiKit.mult_text(EconMath.combo_mult(streak))]
+	_update_reputation(run.reputation if run != null else GameState.reputation)
+
+
+## Selo de Reputacao: aceso = a proxima entrega vale +bonus (houve pouso perfeito); apagado = pouse reto e macio.
+func _update_reputation(on: bool) -> void:
+	_rep_panel.visible = flight != null
+	_rep.text = "REPUTAÇÃO +%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
+	_rep.theme_type_variation = &"MoneyLabel" if on else &"DimLabel"
+	_rep_panel.modulate.a = 1.0 if on else 0.55
 
 
 ## "Da pra chegar?": marquinha na barra no gas que deve sobrar ao chegar pelo arco ideal (conta feita na decolagem;
@@ -191,16 +196,16 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	# pouso bom: o Main chama show_delivery() depois de calcular o pagamento
 
 
-## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, combo, carga).
-## entry = RunState.deliveries[-1]; streak = combo depois desta entrega.
-func show_delivery(entry: Dictionary, streak: int) -> void:
+## Aviso da entrega concluida: ganho, qualidade e o que multiplicou (plataforma, reputacao, carga).
+## entry = RunState.deliveries[-1]; rep_next = a proxima entrega tem o bonus da Reputacao (pouso perfeito agora).
+func show_delivery(entry: Dictionary, rep_next: bool) -> void:
 	var gain := float(entry["rewards"].get("credits", 0.0))
 	var text := "+%s   qualidade %d%%" % [EconMath.fmt(gain), int(float(entry["quality"]) * 100.0)]
 	var parts: Array[String] = []
 	if float(entry.get("mult", 1.0)) > 1.0:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))
-	if float(entry.get("combo", 1.0)) > 1.0:
-		parts.append("combo " + UiKit.mult_text(float(entry["combo"])))
+	if float(entry.get("rep", 1.0)) > 1.0:
+		parts.append("reputação +%d%%" % roundi((float(entry["rep"]) - 1.0) * 100.0))
 	if float(entry.get("gift_pay", 0.0)) > 0.0:
 		parts.append("presente +%s" % EconMath.fmt(float(entry["gift_pay"])))
 	var m: Dictionary = entry.get("mission", {})
@@ -210,15 +215,15 @@ func show_delivery(entry: Dictionary, streak: int) -> void:
 		var name := str(EconMath.mission_kind(str(m["kind"]))["name"])
 		parts.append(("%s %s" % [name, UiKit.mult_text(mm)]) if failed.is_empty()
 				else "%s %s" % [MISSION_FAIL.get(str(failed[0]), "falhou"), UiKit.mult_text(mm)])
-	if not bool(entry.get("good", true)):
-		parts.append("pouso duro: combo zerou")
-	elif streak >= 2:
-		parts.append("combo %d!" % streak)
+	if rep_next:
+		parts.append("POUSO PERFEITO! próxima +%d%%" % roundi(EconMath.reputation_bonus() * 100.0))
+	elif float(entry.get("rep", 1.0)) > 1.0:
+		parts.append("pouso não foi perfeito: próxima sem bônus")
 	_set_status("ENTREGA! " + text, &"GoodLabel")
 	_show_toast("ENTREGA!", text, &"GoodLabel")
 	_toast_extra.text = "  ·  ".join(parts)
 	_toast_extra.visible = not parts.is_empty()
-	_toast_extra.theme_type_variation = &"BadLabel" if not bool(entry.get("good", true)) else &"MoneyLabel"
+	_toast_extra.theme_type_variation = &"MoneyLabel"
 
 
 ## Pedido de confirmacao no rodape (ex.: "R de novo para reiniciar"); some sozinho depois de seconds.

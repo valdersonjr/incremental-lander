@@ -228,6 +228,7 @@ func _start_run() -> void:
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
 			GameState.missions_new)
+	_run.reputation = GameState.reputation                     # a Reputacao vem do run anterior
 	_force_offer_extras()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
@@ -316,6 +317,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		_run.crash(str(result["reason"]))
+		GameState.reputation = _run.reputation                 # bateu: a proxima entrega vem sem bonus
 		_end_run()
 		return
 	if int(result.get("leg", 0)) == 1:                         # taxi: passageiro a bordo, agora o trecho de volta
@@ -334,18 +336,20 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		dist = _taxi_first_m
 		gift += _taxi_gift_pay
 	var stars_before := _run.stars
-	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift)
+	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift,
+			bool(result.get("perfect", false)))
+	GameState.reputation = _run.reputation
 	GameState.add_stars(_run.stars - stars_before)
 	if _run.stars > stars_before:                              # estrela de missao: depois do "entregue"
 		get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
 	_note_record("best_delivery", float(rewards.get("credits", 0.0)))
 	_note_record("longest_hop", float(result["distance"]))
-	_note_record("best_combo", float(_run.streak))
+	_note_record("best_perfect", float(_run.perfect_streak))
 	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
-	_hud.show_delivery(_run.deliveries[-1], _run.streak)
-	if _run.streak >= 2:                                       # combo: estalo que sobe com o tamanho, depois da entrega
-		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % mini(_run.streak, 5)))
+	_hud.show_delivery(_run.deliveries[-1], _run.reputation)
+	if _run.reputation:                                        # pouso perfeito: estalo, depois da entrega
+		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % clampi(_run.perfect_streak + 1, 2, 5)))
 	_show_offers()
 
 
@@ -365,7 +369,7 @@ func _end_run() -> void:
 	var s := _run.summary()
 	s["fleet"] = fleet
 	s["records"] = _run_records.duplicate()
-	s["can_unlock"] = GameState.can_unlock_mission()
+	s["road_news"] = GameState.road_news().size()
 	_summary.show_summary(s)
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
@@ -420,13 +424,14 @@ func _apply_dev_args() -> void:
 		GameState.resources["credits"] = float(_args["dev_credits"])
 	if _args.has("dev_missions"):
 		GameState.mission_nodes.assign(str(_args["dev_missions"]).split(","))
-	if _args.has("dev_stars"):
+	if _args.has("dev_stars"):                                 # anda na Estrada sem festa (tudo ja visto)
 		GameState.stars = int(_args["dev_stars"])
+		GameState._check_road(true)
 
 
 ## Dev (verificacao/capturas): --dev_mission=kind:estrela (ex.: tow:2, passenger:3, double:heavy+soft) e
 ## --dev_dir=-1|1 forcam a missao e o lado de TODOS os pedidos do run (os que regeneram nao: so os iniciais).
-## --dev_missions=heavy1,soft1,... libera nos da arvore; --dev_stars=N da estrelas.
+## --dev_missions=heavy1,soft1,... libera nos da arvore; --dev_stars=N = total de estrelas (anda na Estrada).
 func _force_offer_extras() -> void:
 	if not OS.is_debug_build():
 		return

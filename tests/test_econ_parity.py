@@ -12,7 +12,7 @@ if not line:
     print(gd.stdout[-2000:], gd.stderr[-2000:]); sys.exit("ERRO: Godot nao imprimiu ECON_JSON")
 G = json.loads(line[len("ECON_JSON="):])
 
-levels = {"thrust": 30, "tank": 26, "efficiency": 12, "contracts": 50, "gear": 5, "fleet": 3, "autopilot": 4}
+levels = {"thrust": 30, "tank": 26, "efficiency": 12, "gear": 5, "fleet": 3, "autopilot": 4}
 st = ship_stats(E, levels)
 u = {x["id"]: x for x in E["upgrades"]}
 planets = {p["id"]: p for p in E["planets"]}
@@ -22,9 +22,9 @@ P = {
     "cost_fleet_2": {k: cost_at(s, 2) for k, s in u["fleet"]["cost"].items()},
     "stats": st,
     "pay_luna": contract_pay(E, planets["luna"], 3500.0, st) * (1 + C["quality_bonus"] * 0.8 ** C.get("quality_exp", 1)),
-    "pay_tight_combo": delivery_pay(E, planets["luna"], 4200.0, st, 0.7, "tight", 3),
-    "pay_narrow_combo9": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 9),
-    "pay_tow2_fail": delivery_pay(E, planets["luna"], 1200.0, st, 0.8, "tight", 2,
+    "pay_tight_rep": delivery_pay(E, planets["luna"], 4200.0, st, 0.7, "tight", 1),
+    "pay_narrow_norep": delivery_pay(E, planets["luna"], 900.0, st, 0.95, "narrow", 0),
+    "pay_tow2_fail": delivery_pay(E, planets["luna"], 1200.0, st, 0.8, "tight", 1,
                                   mission_mult(E, {"kind": "tow", "star": 2, "parts": [{"kind": "tow", "star": 2}]}, ["tow"])),
     "mission_passenger1": mission_mult(E, {"kind": "passenger", "star": 1, "parts": [{"kind": "passenger", "star": 1}]}),
     "mission_double": mission_mult(E, {"kind": "double", "star": 1, "parts": [{"kind": "heavy", "star": 3},
@@ -38,6 +38,9 @@ P = {
     "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
     "slot_dist": [slot_distance(E, planets["luna"], "simple0", 0.3), slot_distance(E, planets["luna"], "simple2", 0.9),
                   slot_distance(E, planets["luna"], "heavy", 0.5)],
+    "road_now": [s["id"] for s in road_reached_now(E, 9, {"start", "heavy1"})],
+    "road_buy": [road_can_buy(E, "fleet", set()), road_can_buy(E, "fleet", {"fleet"}),
+                 road_can_buy(E, "turbo", {"turbo"}), road_can_buy(E, "thrust", set())],
     "slots": mission_slots(E, {"simple": 1, "tow": 2, "heavy": 1}),
     "mission_kinds_luna": len(mission_kinds(E, "luna")),
     "dv_luna": hop_dv(planets["luna"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),

@@ -1,70 +1,71 @@
-## Previa visual do hangar. gdtool.py capture res://tests/visual/hangar_preview.tscn [-- --top]
-## Padrao: rolado ate o fim. --top: comeco. --late: meio de jogo (frota, recordes). --tab=1|2: aba PEDIDOS/AJUDAS.
-## --missions: parte da arvore de missoes liberada e estrelas para gastar.
-## --assists: ja tem parte da arvore. --menu: menu do jogo (Esc), como a Main abre.
-## --intro=tipo: libera o no ★1 desse tipo pela oficina (telinha "Novo amiguinho!").
-## --keys: simula navegacao por teclado (foco no 1o botao de compra, depois de uma compra) e tooltip de custo.
+## Previa visual da PROGRESSAO (v13). gdtool.py capture res://tests/visual/hangar_preview.tscn [-- opcoes]
+## --stars=N: total de estrelas (anda na estrada, sem festa). --late: meio de jogo (pecas em degraus, recordes,
+## moedas). --tab=1|2: AJUDAS/FROTA. --news=N: o jogador volta de um voo com N estrelas a mais (navezinha anda,
+## parada nova festeja). --sel=id: balao da parada. --bulk=10|0: seletor ×10/MAX. --hl=peca: peca brilhando.
+## --keys: navegacao por teclado (foco no 1o botao de compra, compra e mantem o foco). --menu: menu do jogo (Esc).
 extends Node
 
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
 
 
 func _ready() -> void:
-	print("PREVIEW_SAVE_ENABLED ", SaveManager.enabled)        # deve ser false: o SaveManager se desliga em tests/visual/
-	SaveManager.enabled = false                                # e, por garantia, a previa nunca grava o save real
+	print("PREVIEW_SAVE_ENABLED ", SaveManager.enabled)        # deve ser false: o SaveManager se desliga em tests/
+	SaveManager.enabled = false
 	WorldConfig.register_input()
 	var args := OS.get_cmdline_user_args()
+	var opt := {}
+	for a in args:
+		if a.begins_with("--") and "=" in a:
+			opt[a.get_slice("=", 0).trim_prefix("--")] = a.get_slice("=", 1)
 	GameState.resources["credits"] = 5000.0
-	if "--late" in args:                                       # meio de jogo: frota e recordes
-		GameState.resources = {"credits": 4.2e7}
-		GameState.levels = {"thrust": 42, "tank": 38, "efficiency": 35, "contracts": 30, "gear": 12,
-				"fleet": 5, "autopilot": 3}
-		GameState.records = {"best_delivery": 9.1e4, "longest_hop": 1.2e4, "best_combo": 5.0, "best_run": 4.4e5}
-	if "--missions" in args:                                   # arvore pela metade: liberadas, compraveis, bloqueadas
-		GameState.mission_nodes = ["heavy1", "soft1", "heavy2", "fast1", "passenger1"]
-		GameState.stars = 4
-	if "--assists" in args:                                    # arvore pela metade: comprada, desligada, compravel, bloqueada
-		GameState.levels.merge({"nav_color": 1, "nav_trail": 1, "land_shadow": 1})
-		GameState.set_assist("land_shadow", false)
+	if "--late" in args:
+		GameState.resources = {"credits": 4.2e5}
+		GameState.levels.merge({"thrust": 34, "tank": 21, "efficiency": 12, "gear": 9}, true)
+		GameState.records = {"best_delivery": 9.1e4, "longest_hop": 1.2e4, "best_perfect": 4.0, "best_run": 4.4e5}
+		GameState.reputation = true
+	var stars := int(opt.get("stars", "40" if "--late" in args else "0"))
+	var news := int(opt.get("news", "0"))
+	GameState.stars = maxi(0, stars - news)
+	GameState._check_road(true)
 	GameState.set_volume("Music", 0.75)
 	var layer := CanvasLayer.new()
 	add_child(layer)
 	var h: Hangar = HANGAR_SCENE.instantiate()
 	layer.add_child(h)
-	h.open()
-	for a in args:
-		if a.begins_with("--tab="):
-			h._set_tab(int(a.get_slice("=", 1)) as Hangar.Tab)
+	if opt.has("bulk"):
+		h._bulk = int(opt["bulk"])
+	h.open()                                                  # 1a abertura: guarda as estrelas vistas
+	if news > 0:                                              # volta do voo com estrelas novas
+		h.visible = false
+		GameState.add_stars(news)
+		h.open()
+	if opt.has("tab"):
+		h._set_tab(int(opt["tab"]) as Hangar.Tab)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	for a in args:
-		if a.begins_with("--intro="):                            # liberar pela oficina: abre "Novo amiguinho!"
-			GameState.stars = 9
-			GameState.unlock_mission(a.get_slice("=", 1) + "1")
-	if "--keys" in args:                                       # setas ate a 1a compra + Enter (compra e mantem o foco)
+	if opt.has("sel"):
+		h._toggle_balloon(str(opt["sel"]))
+	if opt.has("hl") and h._ship_view != null:
+		h._ship_view.highlight(str(opt["hl"]))
+	if "--keys" in args:                                       # foco no 1o botao de compra + Enter (compra e mantem)
 		h._keyboard_nav = true
 		var buy: Button = null
 		for b: Node in h.find_children("*", "Button", true, false):
 			if str(b.get_meta(&"focus_key", "")).begins_with("buy:") and not (b as Button).disabled:
 				buy = b
 				break
-		buy.grab_focus()
-		await get_tree().process_frame
-		buy.pressed.emit()
-		await get_tree().process_frame
-		await get_tree().process_frame
+		if buy != null:
+			buy.grab_focus()
+			await get_tree().process_frame
+			buy.pressed.emit()
+			await get_tree().process_frame
+			await get_tree().process_frame
 		var f := get_viewport().gui_get_focus_owner()
 		print("KEYS_FOCUS ", f.get_meta(&"focus_key", "?") if f != null else "nenhum")
-	if "--menu" in args:                                       # Esc no hangar: o hangar some e o menu abre
+	if "--menu" in args:                                       # Esc: a tela some e o menu do jogo abre
 		var menu: PauseMenu = preload("res://game/pause/pause_menu.tscn").instantiate()
 		layer.add_child(menu)
 		h.menu_requested.connect(func() -> void:
 			h.visible = false
 			menu.open(PauseMenu.Mode.HANGAR))
-		h._request_menu()
-		if "--confirm" in args:
-			menu._on_new_game()
-	if "--top" in args:
-		return
-	var scroll: ScrollContainer = h.find_child("Scroll", true, false)
-	scroll.scroll_vertical = 100000
+		h.menu_requested.emit()

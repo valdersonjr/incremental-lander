@@ -56,8 +56,9 @@ scripts/run/run_state.gd      # RunState (puro): ofertas (log-uniformes, regener
                               # take_offer (→ taken_tier), complete_delivery(d, q, gás, cargo_ok) via EconMath.delivery_pay;
                               # streak = combo de pousos bons; deliveries[-1] guarda mult/combo/carga p/ o HUD
                               # (EconMath.contract_pay), crash, can_continue, best_offer (demo), summary
-game/hud/hud.*                # (Fase 11) painel COMBO, "ALVO x m ×N", show_delivery(entry, streak) chamado pelo Main: aviso
-                              # com ganho + plataforma/combo/carga; terrain.gd escreve o multiplicador sob plataformas difíceis
+game/hud/hud.*                # (Fase 11/v13) selo REPUTAÇÃO +10% (%RepPanel: aceso/apagado), "ALVO x m ×N",
+                              # show_delivery(entry, rep_next) chamado pelo Main: ganho + plataforma/reputação/carga e
+                              # "POUSO PERFEITO! próxima +10%"; terrain.gd escreve o multiplicador sob plataformas difíceis
 game/run/offer_panel.*        # OfferPanel (2026-10-07, janela de conversa): %Dim escurece o mapa; %Chips = TODOS os tipos de
                               # EconMath.mission_kinds (bloqueado = silhueta, _peek_locked no hover); pedidos agrupados por
                               # tipo (_groups kind -> índices perto→longe, _dsel = distância marcada). %Window: %Stage (palco
@@ -72,12 +73,14 @@ scripts/ui/mission_text.gd    # MissionText: fala curta (balloon), pedido/regra 
 game/run/mission_intro.*      # MissionIntro (v15): "Novo amiguinho!" — a oficina abre ao liberar o nó ★1 de um tipo; show_kind(kind)
 game/run/run_summary.*        # RunSummary (Control modal: fundo escurecido + painel central): fim do run (motivo legível,
                               # entregas, qualidade média, ganhos em UiKit.stat_row); Enter/botão "IR AO HANGAR"
-autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, mission_unlocked, settings_changed
+autoload/events.gd            # Events: resources_changed, run_started, run_finished, upgrade_bought, stars_changed, road_reached (parada da Estrada), settings_changed
 autoload/game_state.gd        # GameState: recursos, níveis, current_planet (sempre "luna"), income_history, recordes,
                               # settle_run() (paga a frota ao fim do run); ship_stats(), buy_upgrade(), buy_upgrade_max(),
                               # upgrade_rows(), locked_upgrades() (via Purchases/EconMath); opções (volumes, teclas, ajudas);
-                              # missões (v12): stars, mission_nodes, missions_new, missions_unlocked(), add_stars(),
-                              # unlock_mission(id), can_unlock_mission(), tick_missions_new() (fim do run)
+                              # v13: stars = total ACUMULADO; add_stars() anda na Estrada (_check_road: ratinho → mission_nodes,
+                              # habilidade/ajuda → nível 1, Frota/Piloto → can_buy) e emite Events.road_reached; road_reached,
+                              # road_seen, road_news(), mark_road_seen(); reputation (bool, entre runs); can_buy(id);
+                              # missions_unlocked(), tick_missions_new() (fim do run)
 scripts/economy/fleet.gd      # Fleet (puro): average_income (últimos 5 runs), payout (EconMath.fleet_income_per_s)
 scripts/economy/purchases.gd  # Purchases (puro): can_afford, buy, buy_max, upgrade_rows, locked_upgrades (requires_upgrade:
                               # Piloto automático pede Frota), milestone_crossed, max_reach_m, can_fly, can_launch
@@ -108,10 +111,16 @@ game/title/save_slots.gd      # SaveSlots (VBox): 5 cartões compactos 250x28, u
                               # créditos e estrelas; em uso = moldura dourada. SEM apagar. PLAY (menu inicial): com jogo →
                               # slot_play_requested, vazio → new_game_requested. SAVE (menu do jogo): grava o jogo em uso
                               # no espaço (SaveManager.save_to_slot; por cima de OUTRO jogo pede 2º clique) → slot_saved.
-game/hangar/hangar.*          # Hangar em ABAS (Q/E): NAVE (oficina: nave no meio + cartões; Piloto automático com cadeado
-                              # até comprar Frota) | PEDIDOS (_add_missions: linha por tipo, cartões ★1-★3 com preço em
-                              # estrelas / TEM / cadeado) | AJUDAS (árvore do Painel de bordo). Cabeçalho: créditos + faixa de RECORDES
-                              # (%Records; some sem recorde). Esc = menu do jogo (PauseMenu). Aba com algo comprável fica dourada.
+game/hangar/hangar.*          # Hangar = tela PROGRESSÃO (v13; raiz Control: %Frame + %Balloon + %Toast + MissionIntro): cabeçalho
+                              # (abas, ×1/×10/MÁX, moedas, estrelas) | %Road (RoadView) | %Body por aba (Q/E): NAVE (ShipView +
+                              # 4 cartões de peça em degraus de 10, habilidades em cima, recordes embaixo) | AJUDAS (grade 4×2,
+                              # LIGADA/DESLIGADA ou "na estrada: N") | FROTA (cadeado até a parada; drones + Piloto). open():
+                              # a navezinha anda das estrelas vistas até as de agora e as paradas novas festejam (_show_next_news:
+                              # ratinho ★1 = MissionIntro, resto = toast + confete). Esc = fecha balão / menu do jogo.
+game/hangar/road_view.gd      # RoadView: Estrada das Estrelas (todas as paradas, linha que enche, navezinha, "faltam N", rolagem por
+                              # setas/roda/arrasto); rebuild(from_stars, recenter), stop_pressed(id), stop_anchor(), celebrate()
+game/hangar/ship_view.gd      # ShipView: lander 3x com peças que crescem por degrau (placeholder _draw até a arte da 16.5); highlight(id)
+scripts/ui/road_text.gd       # RoadText (puro): nome/figura/frase de cada parada e das peças; STAGE = 10; stage_of()
 game/flight/lander.gd         # Lander (CharacterBody2D): física própria; sinais took_off, landed(pad,q,info), crashed(reason,info);
                               # visual = AnimatedSprite2D %Visual (assets/sprites/lander_frames.tres: idle/thrust)
 assets/sprites/lander.*       # sprite futurista (pixel-art): lander.png (idle + thrust 4q), .json, lander_frames.tres
@@ -173,7 +182,7 @@ autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custo
                               # .bak), autosave do jogo em uso (slot) em eventos + ao fechar; user://settings.json = volumes
                               # + last_slot (globais); slot_summary(n), load_slot(n), new_game(n), delete_slot(n); desligado em --demo/--dev_*/--no_save e em cenas res://tests/visual/;
                               # new_game(); set_dir() p/ testes
-scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos), ids removidos ignorados
+scripts/save/save_data.gd     # SaveData (puro): serialize/deserialize com validação, migrações (v1→v2 2026-10-06: sai prestígio/mundos; v2→v3 2026-10-07: estrelas viram total = estrelas + 3 × nós; road_reached/road_seen/reputation; recorde best_perfect), ids removidos ignorados
 tests/unit/world/             # test_lander_physics, test_landing_rules, test_terrain_gen (cristas, tipos de plataforma)
 scripts/world/gifts.gd        # Gifts (puro, v10): place(pad_a, pad_b, ridge) ponto mais alto do meio do salto (world.json gifts.span);
                               # touches(pos, vel, gift) perto e devagar; rng_for(seed, pad) sorteador próprio. Flight: _setup_gift

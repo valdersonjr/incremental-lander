@@ -329,6 +329,8 @@ func _show_talk(talk: bool) -> void:
 	_cat_say.text = "Hmm... acho que a gasolina não dá!"
 	_accept.disabled = false
 	_total.text = "+" + EconMath.fmt(info["pay_typical"])
+	%RepTag.text = "com reputação +%d%%" % roundi(EconMath.reputation_bonus() * 100.0)
+	%RepTag.visible = _run.reputation                         # selo: a entrega vale +bonus (pouso perfeito antes)
 	_fill_columns()
 	_place_balloons()
 	_update_chip(_kind)
@@ -338,6 +340,7 @@ func _show_talk(talk: bool) -> void:
 func _set_gain_visible(on: bool) -> void:
 	for n: CanvasItem in [%Gain, %Coin, _total]:
 		n.visible = on
+	%RepTag.visible = on and _run != null and _run.reputation
 
 
 ## Balao do ratinho encostado nele (direita, meio da cabeca); balao do gatinho no alto, do lado do capacete.

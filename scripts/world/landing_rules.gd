@@ -38,3 +38,13 @@ static func quality(vy: float, vx: float, tilt: float, center_offset: float, tol
 			+ float(weights["tilt"]) * t_tilt + float(weights["center"]) * t_c
 	var total := float(weights["vy"]) + float(weights["vx"]) + float(weights["tilt"]) + float(weights["center"])
 	return clampf(q / total, 0.0, 1.0)
+
+
+## Pouso perfeito (Reputacao: a proxima entrega vale +bonus): reto e macio, pelas tolerancias BASE (sem o trem de
+## pouso, que so evita batida). landing = world.json > landing (perfect.vy_frac, perfect.tilt_frac).
+static func is_perfect(vy: float, tilt: float, landing: Dictionary) -> bool:
+	var p: Dictionary = landing.get("perfect", {})
+	if p.is_empty():
+		return false
+	return maxf(vy, 0.0) <= float(landing["max_vy"]) * float(p["vy_frac"]) \
+			and absf(tilt) <= float(landing["max_tilt"]) * float(p["tilt_frac"])

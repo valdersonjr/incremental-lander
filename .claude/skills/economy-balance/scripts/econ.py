@@ -334,8 +334,9 @@ def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
         * stats.get("pay_mult", 1.0)
 
 
-# --- Variedade das entregas (v7): plataformas com multiplicador, combo de pousos bons (cristais sairam na v9) ---
-# Espelho GDScript: EconMath.pad_tier / combo_mult / delivery_pay. Spec sem as chaves = v6 intacta.
+# --- Variedade das entregas (v7): plataformas com multiplicador (cristais sairam na v9) ---
+# v13: o combo virou Reputacao (contracts.reputation): pouso perfeito -> a proxima entrega vale +bonus (nao acumula).
+# Espelho GDScript: EconMath.pad_tier / reputation_mult / delivery_pay. Spec sem as chaves = v6 intacta.
 
 def pad_tier(E: dict, tier_id: str) -> dict:
     """Tipo de plataforma (contracts.pad_tiers): mult (pagamento), weight (chance na oferta),
@@ -346,22 +347,24 @@ def pad_tier(E: dict, tier_id: str) -> dict:
     return {"id": "normal", "mult": 1.0, "weight": 1.0, "q_drop": 0.0, "crash_mult": 1.0}
 
 
-def combo_mult(E: dict, streak: float) -> float:
-    """Multiplicador do combo: pousos bons seguidos no run (antes desta entrega)."""
-    c = E["contracts"].get("combo")
-    if not c:
+def reputation_mult(E: dict, active: float) -> float:
+    """Multiplicador da Reputacao (v13): o pouso anterior foi perfeito -> x(1 + bonus). active: 0/1 (no modelo
+    esperado, a chance de estar ativa). No jogo "perfeito" = reto e macio (world.json > landing.perfect); no modelo,
+    q >= reputation.model_q_min."""
+    r = E["contracts"].get("reputation")
+    if not r:
         return 1.0
-    return 1.0 + c["step"] * min(streak, c["max_steps"])
+    return 1.0 + r["bonus"] * min(1.0, max(0.0, float(active)))
 
 
 def delivery_pay(E: dict, planet: dict, d: float, stats: dict, q: float, tier_id: str = "normal",
-                 streak: float = 0, mission_m: float = 1.0) -> float:
-    """Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (o jogo usa a mesma
+                 rep: float = 0, mission_m: float = 1.0) -> float:
+    """Pagamento de uma entrega concluida: base x qualidade x plataforma x reputacao x carga (o jogo usa a mesma
     conta; mission_m = mission_mult(missao, falhas))."""
     C = E["contracts"]
     q = min(1.0, max(0.0, q))
     return contract_pay(E, planet, d, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
-        * pad_tier(E, tier_id)["mult"] * combo_mult(E, streak) * mission_m
+        * pad_tier(E, tier_id)["mult"] * reputation_mult(E, rep) * mission_m
 
 
 # Missoes (v12, so nos planetas de contracts.missions.planets). Espelho GDScript: EconMath.mission_*.
@@ -574,7 +577,7 @@ def _q_on_tier(q: float, tier: dict, skill: float) -> float:
 
 
 def _p_good(prof: Profile, tier: dict, q_min: float) -> float:
-    """Chance de um pouso contar para o combo (q >= q_min), com q ~ Normal(skill, skill_sd)."""
+    """Chance de um pouso ser perfeito para a Reputacao (q >= q_min), com q ~ Normal(skill, skill_sd)."""
     mu = _q_on_tier(prof.skill, tier, prof.skill)
     sd = max(prof.skill_sd, 1e-6)
     return 0.5 * (1 - math.erf((q_min - mu) / (sd * math.sqrt(2))))
@@ -625,8 +628,8 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
            boost: dict | None = None) -> RunResult:
     """Simula um run. Estrategia do piloto: dentre as entregas alcancaveis com o gas restante,
     pega a de maior pagamento esperado por gas (plataforma dificil paga mais, mas derruba a qualidade e
-    aumenta a batida de quem pilota pior). Combo: pousos bons seguidos (q >= combo.q_min) multiplicam o
-    pagamento.
+    aumenta a batida de quem pilota pior). Reputacao (v13): pouso perfeito (q >= model_q_min) da +bonus na
+    proxima entrega.
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
     pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita.
     missions = {kind: estrela} liberadas (v12; None = so Simples); boost = {kind: runs} recem-liberados."""
@@ -658,9 +661,9 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     cargo = C.get("cargo_mass", 0.0)
     arcade = E.get("physics", {}).get("mode", "arcade") == "arcade"
     eff = stats["efficiency"]
-    combo = C.get("combo")
-    q_min = combo["q_min"] if combo else 2.0
-    streak = 0.0                              # pousos bons seguidos (esperado: valor medio)
+    combo = C.get("reputation")                # Reputacao (v13): pouso perfeito -> proxima entrega +bonus
+    q_min = combo["model_q_min"] if combo else 2.0
+    streak = 0.0                              # Reputacao ativa (0/1; esperado: chance)
     cg_pay, cg_dv, cg_t = mission_expect(E, planet, prof, stats, missions, boost)
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     cg_dv *= 1.0 + gf_dv                      # buscar o presente custa um pouco de gas
@@ -698,19 +701,19 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
         gas -= best_gas
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
-        cm = combo_mult(E, streak)
+        cm = reputation_mult(E, streak)
         pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * cg_pay + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, best, stats, prof) * cg_t
         if expected:
             pay *= (1 - pc)
             if combo:
-                streak = _p_good(prof, tier, q_min) * (streak + 1)
+                streak = _p_good(prof, tier, q_min)
         elif rng.random() < pc:
             crashed = True
             break
         elif combo:
-            streak = streak + 1 if q >= q_min else 0
+            streak = 1.0 if q >= q_min else 0.0
         if log is not None:
             log.append((best, tier["id"], q, cm))
         for k, w in rewards_w.items():
@@ -796,8 +799,8 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     qbonus = C.get("quality_bonus", 0.5)
     qexp = C.get("quality_exp", 1.0)
     max_per_run = C.get("max_per_run", 10 ** 9)
-    combo = C.get("combo")
-    q_min = combo["q_min"] if combo else 2.0
+    combo = C.get("reputation")                # Reputacao (v13): pouso perfeito -> proxima entrega +bonus
+    q_min = combo["model_q_min"] if combo else 2.0
     tiers = C.get("pad_tiers") or [{"id": "normal", "mult": 1.0}]
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     rewards_w = planet.get("rewards", {"credits": 1.0})
@@ -837,7 +840,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     n = 0
     maxd = dist = 0.0
     crashed = False
-    streak = 0.0
+    streak = 0.0                              # Reputacao ativa (0/1; esperado: chance)
     while n < max_per_run:
         pick, best_score = None, 0.0
         for sl, it in items.items():
@@ -852,19 +855,19 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         gas -= g_need
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
-        cm = combo_mult(E, streak)
+        cm = reputation_mult(E, streak)
         pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, d, stats, prof) * ch["t"]
         if expected:
             pay *= (1 - pc)
             if combo:
-                streak = _p_good(prof, tier, q_min) * (streak + 1)
+                streak = _p_good(prof, tier, q_min)
         elif rng.random() < pc:
             crashed = True
             break
         elif combo:
-            streak = streak + 1 if q >= q_min else 0
+            streak = 1.0 if q >= q_min else 0.0
         if log is not None:
             log.append((d, tier["id"], q, cm, pick, ch["star"]))
         for k, w in rewards_w.items():
@@ -953,6 +956,27 @@ def _available(u: dict, lv: int, unlocked: set[str], shop: dict[str, int] | None
     return req is None or req in unlocked
 
 
+def road_spec(E: dict) -> list[dict]:
+    """Estrada das Estrelas (v13, progression.road): paradas em ordem, cada uma com `stars` (total ACUMULADO de
+    estrelas para chegar) e `type`: start | mission (no da arvore de missoes) | grant (upgrade de compra unica que
+    vem pronto: habilidade/ajuda) | unlock (upgrade que passa a poder ser comprado: Frota, Piloto) | final.
+    Espelho GDScript: EconMath.road / road_reached / road_can_buy."""
+    return (E.get("progression") or {}).get("road") or []
+
+
+def road_reached_now(E: dict, stars_total: float, reached: set) -> list[dict]:
+    """Paradas que o total de estrelas alcanca e ainda nao foram marcadas (na ordem da estrada)."""
+    return [s for s in road_spec(E) if s["id"] not in reached and stars_total >= s["stars"]]
+
+
+def road_can_buy(E: dict, upgrade_id: str, reached: set) -> bool:
+    """Com estrada: upgrade 'grant' nunca se compra (vem pronto); 'unlock' so depois da parada; o resto, sempre."""
+    for s in road_spec(E):
+        if s["id"] == upgrade_id:
+            return s["type"] == "unlock" and upgrade_id in reached
+    return True
+
+
 def fleet_mult(stats: dict) -> float:
     """Renda total / renda do piloto. Frota: cada drone repete as rotas do jogador com eficiencia
     `autopilot` (fracao da renda media do proprio jogador)."""
@@ -986,6 +1010,9 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     MS = mission_spec(E)
     stars = 0
     owned: set = set()
+    # estrada (v13, progression.road): estrelas ACUMULADAS (nao se gastam) liberam as paradas sozinhas
+    road = road_spec(E)
+    reached: set = set()
     mu = missions_unlocked(E, owned) if MS else None
     boost: dict = {}
 
@@ -1006,7 +1033,14 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             boost = {k: v - 1 for k, v in boost.items() if v > 1}
             stars += r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
             cost = MS.get("stars", {}).get("unlock_cost", 3)
-            for node in MS.get("nodes", []):
+            for stop in road_reached_now(E, stars, reached):
+                reached.add(stop["id"])
+                if stop["type"] == "mission":
+                    owned.add(stop["id"])
+                elif stop["type"] == "grant":
+                    levels[stop["id"]] = max(levels[stop["id"]], 1)
+                res.events.append({"t": t, "type": "road", "id": stop["id"], "gap_s": 0.0})
+            for node in ([] if road else MS.get("nodes", [])):
                 if stars < node.get("cost", cost):
                     break
                 if node_ok(E, node, owned):
@@ -1040,6 +1074,8 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             for u in E["upgrades"]:
                 lv = levels[u["id"]]
                 if not _available(u, lv, unlocked, shop, levels):
+                    continue
+                if road and not road_can_buy(E, u["id"], reached):
                     continue
                 cost = _upgrade_cost(u, lv)
                 # olha alguns niveis a frente: ganhos de alcance sao 'degraus' (1 nivel pode nao bastar

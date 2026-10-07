@@ -338,6 +338,8 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"gas_used": info["gas_used"],
 		"hop_time_s": info["flight_time_m"],
 		"quality": quality,
+		"perfect": not crashed and LandingRules.is_perfect(float(info.get("vy", 0.0)), float(info.get("tilt", 0.0)),
+				WorldConfig.load_config()["landing"]),
 		"tier": target_tier,
 		"dir": target_dir,
 		"mission": mission,

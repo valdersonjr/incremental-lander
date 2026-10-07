@@ -40,7 +40,7 @@ func _ready() -> void:
 		_load_prefs_and_slot()
 	Events.run_finished.connect(func(_s: Dictionary) -> void: request_save())
 	Events.upgrade_bought.connect(func(_i: String, _l: int) -> void: request_save())
-	Events.mission_unlocked.connect(func(_n: String) -> void: request_save())
+	Events.road_reached.connect(func(_n: String) -> void: request_save())
 
 
 func _notification(what: int) -> void:

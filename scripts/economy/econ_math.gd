@@ -178,26 +178,58 @@ static func draw_pad_tier(rng: RandomNumberGenerator) -> String:
 	return tiers[tiers.size() - 1]["id"]
 
 
-## Multiplicador do combo: pousos bons seguidos no run antes desta entrega (contracts.combo).
-static func combo_mult(streak: int) -> float:
-	var c: Dictionary = spec["contracts"].get("combo", {})
-	if c.is_empty():
+## Multiplicador da Reputacao (v13, contracts.reputation): o pouso anterior foi perfeito -> x(1 + bonus).
+## "Perfeito" no jogo = reto e macio (world.json > landing.perfect; LandingRules.is_perfect).
+static func reputation_mult(active: bool) -> float:
+	var r: Dictionary = spec["contracts"].get("reputation", {})
+	if r.is_empty() or not active:
 		return 1.0
-	return 1.0 + float(c["step"]) * mini(streak, int(c["max_steps"]))
+	return 1.0 + float(r["bonus"])
 
 
-## O pouso conta para o combo? (q >= combo.q_min)
-static func combo_counts(quality: float) -> bool:
-	var c: Dictionary = spec["contracts"].get("combo", {})
-	return not c.is_empty() and quality >= float(c["q_min"])
+## Bonus da Reputacao (0.10 = +10%), para mostrar no selo.
+static func reputation_bonus() -> float:
+	return float(spec["contracts"].get("reputation", {}).get("bonus", 0.0))
 
 
-## Pagamento de uma entrega concluida: base x qualidade x plataforma x combo x carga (mesma conta do simulador;
+## Pagamento de uma entrega concluida: base x qualidade x plataforma x reputacao x carga (mesma conta do simulador;
 ## mission_m = mission_mult(missao, falhas)).
 static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, quality: float,
-		tier_id: String = "normal", streak: int = 0, mission_m: float = 1.0) -> float:
-	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) * combo_mult(streak) \
-			* mission_m
+		tier_id: String = "normal", rep: bool = false, mission_m: float = 1.0) -> float:
+	return contract_pay(planet_id, distance, stats, quality) * float(pad_tier(tier_id)["mult"]) \
+			* reputation_mult(rep) * mission_m
+
+
+## Estrada das Estrelas (v13, progression.road): paradas em ordem {id, type, stars}; type = start | mission (no da
+## arvore de missoes) | grant (habilidade/ajuda que vem pronta) | unlock (Frota/Piloto passam a ser compraveis) |
+## final. stars = total ACUMULADO de estrelas para chegar (nao se gastam). Espelho de econ.road_spec.
+static func road() -> Array:
+	return spec.get("progression", {}).get("road", [])
+
+
+## Paradas que stars_total alcanca e ainda nao estao em reached (na ordem da estrada).
+static func road_reached_now(stars_total: int, reached: Array) -> Array:
+	var out: Array = []
+	for s: Dictionary in road():
+		if not reached.has(s["id"]) and stars_total >= int(s["stars"]):
+			out.append(s)
+	return out
+
+
+## Com estrada: 'grant' nunca se compra (vem pronto); 'unlock' so depois da parada; o resto, sempre.
+static func road_can_buy(upgrade_id: String, reached: Array) -> bool:
+	for s: Dictionary in road():
+		if s["id"] == upgrade_id:
+			return s["type"] == "unlock" and reached.has(upgrade_id)
+	return true
+
+
+## Parada da estrada pelo id ({} se nao existe).
+static func road_stop(stop_id: String) -> Dictionary:
+	for s: Dictionary in road():
+		if s["id"] == stop_id:
+			return s
+	return {}
 
 
 ## Presentes no alto do morro (v10): tipos do planeta (contracts.gifts.kinds); [] se o planeta nao tem.

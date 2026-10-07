@@ -75,10 +75,10 @@ func test_versao_de_save_mais_nova_nao_carrega() -> void:
 
 func test_recordes_ida_e_volta() -> void:
 	var st := _state()
-	st["records"] = {"best_delivery": 1500.0, "best_combo": 4.0, "inventado": 9.0}
+	st["records"] = {"best_delivery": 1500.0, "best_perfect": 4.0, "inventado": 9.0}
 	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
 	assert_almost(back["state"]["records"]["best_delivery"], 1500.0)
-	assert_almost(back["state"]["records"]["best_combo"], 4.0)
+	assert_almost(back["state"]["records"]["best_perfect"], 4.0)
 	assert_false(back["state"]["records"].has("inventado"))
 
 
@@ -99,7 +99,7 @@ func test_save_v1_com_prestigio_migra() -> void:
 	assert_eq(st["current_planet"], "luna")
 	assert_eq(st["runs_done"], 7)
 	assert_false(st.has("prestige_points"))
-	assert_eq(SaveData.serialize(st)["save_version"], 2)
+	assert_eq(SaveData.serialize(st)["save_version"], SaveData.SAVE_VERSION)
 
 
 func test_estrelas_e_missoes_ida_e_volta() -> void:
@@ -112,3 +112,28 @@ func test_estrelas_e_missoes_ida_e_volta() -> void:
 	assert_eq(back["state"]["stars"], 4)
 	assert_eq(back["state"]["mission_nodes"], ["heavy1", "soft1"])
 	assert_eq(back["state"]["missions_new"]["soft"], 2)
+
+
+func test_v2_vira_estrelas_acumuladas() -> void:
+	var raw := {"save_version": 2, "resources": {"credits": 10.0}, "levels": {"thrust": 3, "contracts": 9},
+			"stars": 2, "mission_nodes": ["heavy1", "soft1"], "runs_done": 1, "play_seconds": 5.0,
+			"records": {"best_combo": 4.0, "best_run": 99.0}}
+	var back := SaveData.deserialize(raw)
+	assert_true(back["ok"])
+	var cost := int(EconMath.mission_spec()["stars"]["unlock_cost"])
+	assert_eq(back["state"]["stars"], 2 + 2 * cost, "as estrelas gastas voltam para o total")
+	assert_false(back["state"]["levels"].has("contracts"), "upgrade Reputacao saiu")
+	assert_false(back["state"]["records"].has("best_combo"))
+	assert_false(back["state"]["reputation"])
+
+
+func test_estrada_e_reputacao_ida_e_volta() -> void:
+	var st := _state()
+	st["road_reached"] = ["start", "heavy1", "parada_inventada"]
+	st["road_seen"] = ["start"]
+	st["reputation"] = true
+	var back := SaveData.deserialize(JSON.parse_string(JSON.stringify(SaveData.serialize(st))))
+	assert_true(back["ok"])
+	assert_eq(back["state"]["road_reached"], ["start", "heavy1"])
+	assert_eq(back["state"]["road_seen"], ["start"])
+	assert_true(back["state"]["reputation"])

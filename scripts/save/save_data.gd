@@ -3,11 +3,13 @@
 class_name SaveData
 extends RefCounted
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 ## Migracoes (_migrate): versao -> funcao que recebe o dict e devolve a versao seguinte.
 ## v1 -> v2 (2026-10-06): sai prestigio, loja, outros mundos e Expedicao (so a Lua por enquanto).
+## v2 -> v3 (2026-10-07): Estrada das Estrelas — estrelas viram total ACUMULADO (as gastas em nos de missao voltam:
+## + unlock_cost por no); sai o upgrade Reputacao (filtro da spec) e o recorde de combo (vira pousos perfeitos).
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
-const RECORD_IDS := ["best_delivery", "longest_hop", "best_combo", "best_run"]
+const RECORD_IDS := ["best_delivery", "longest_hop", "best_perfect", "best_run"]
 
 
 ## Monta o dicionario do save a partir do estado do jogo.
@@ -22,6 +24,9 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"stars": int(state.get("stars", 0)),
 		"mission_nodes": state.get("mission_nodes", []).duplicate(),
 		"missions_new": state.get("missions_new", {}).duplicate(),
+		"road_reached": state.get("road_reached", []).duplicate(),
+		"road_seen": state.get("road_seen", []).duplicate(),
+		"reputation": bool(state.get("reputation", false)),
 		"runs_done": state["runs_done"],
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
@@ -52,6 +57,9 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"stars": maxi(0, int(_num(d.get("stars", 0)))),
 		"mission_nodes": [],
 		"missions_new": {},
+		"road_reached": _filter_ids(d.get("road_reached", []), _road_ids()),
+		"road_seen": _filter_ids(d.get("road_seen", []), _road_ids()),
+		"reputation": d.get("reputation", false) is bool and bool(d.get("reputation", false)),
 		"runs_done": maxi(0, int(_num(d.get("runs_done", 0)))),
 		"play_seconds": maxf(0.0, _num(d.get("play_seconds", 0.0))),
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
@@ -86,6 +94,8 @@ static func summary(state: Dictionary) -> Dictionary:
 		"play_seconds": float(state.get("play_seconds", 0.0)),
 		"stars": int(state.get("stars", 0)),
 		"nodes": (state.get("mission_nodes", []) as Array).size(),   # nos da arvore de missoes liberados
+		"road": (state.get("road_reached", []) as Array).size(),     # paradas da Estrada alcancadas
+		"road_total": EconMath.road().size(),
 	}
 
 
@@ -95,6 +105,8 @@ static func _migrate(from_version: int, d: Dictionary) -> Dictionary:
 	match from_version:
 		1:
 			return _from_v1(d)
+		2:
+			return _from_v2(d)
 	return d
 
 
@@ -104,6 +116,32 @@ static func _from_v1(d: Dictionary) -> Dictionary:
 		out.erase(k)
 	out["current_planet"] = "luna"
 	out["save_version"] = 2
+	return out
+
+
+static func _from_v2(d: Dictionary) -> Dictionary:
+	var out := d.duplicate(true)
+	var nodes: Variant = d.get("mission_nodes", [])
+	var spent := (nodes as Array).size() if nodes is Array else 0
+	var cost := int(EconMath.mission_spec().get("stars", {}).get("unlock_cost", 3))
+	out["stars"] = maxi(0, int(_num(d.get("stars", 0)))) + spent * cost
+	var rec: Variant = out.get("records", {})
+	if rec is Dictionary:
+		(rec as Dictionary).erase("best_combo")
+	out["save_version"] = 3
+	return out
+
+
+static func _road_ids() -> Array:
+	return EconMath.road().map(func(r: Dictionary) -> String: return r["id"])
+
+
+## Lista de ids de fora: so os que existem em allowed, sem repetir.
+static func _filter_ids(src: Variant, allowed: Array) -> Array:
+	var out: Array = []
+	for x: Variant in (src if src is Array else []):
+		if str(x) in allowed and not str(x) in out:
+			out.append(str(x))
 	return out
 
 

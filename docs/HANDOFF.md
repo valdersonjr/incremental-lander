@@ -4,6 +4,19 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
+- **PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07, ROADMAP 16.1–16.4)**. Pedido: "o jogador deveria
+  visualizar toda sua progressão desde o início"; o usuário escolheu, entre 3 protótipos HTML
+  (`art/previews/progressao/progressao.html`), a estrada por estrelas ("liberar igual um battlepass"). Spec v13:
+  `progression.road` (29 paradas, estrelas ACUMULADAS = rascunho), `contracts.reputation` (+10% na entrega seguinte a um
+  pouso perfeito; substitui o combo), sai o upgrade Reputação. Jogo: GameState (stars total, road_reached/road_seen,
+  reputation, can_buy), SaveData v3 (migra v2), LandingRules.is_perfect + `world.json > landing.perfect`, selo no HUD e no
+  "Você ganha", tela PROGRESSÃO (hangar reescrito: RoadView, ShipView, RoadText; abas NAVE/AJUDAS/FROTA; ×1/×10/MÁX;
+  festa das paradas novas). Verificado: check, 100 testes + 11 integrações, paridade 28 grupos, demo 2400 quadros sem
+  erro, capturas `hangar_preview` (--stars, --late, --news, --sel, --tab) e `flight_ui_preview -- --rep`.
+  **Próximo**: 16.5 arte (peças que crescem: hoje placeholder em `ShipView._draw`; ícones da estrada; selo) e sons
+  (parada alcançada, degrau, pouso perfeito: hoje usa unlock/milestone/combo_N) — precisam de aprovação do usuário;
+  depois 16.6 jogar e a fase de economia (sem o upgrade de Reputação a renda do meio/fim cai: paredes de até 32 min no
+  modelo; Frota/Piloto não comprados em 6 h).
 - **Janela de conversa na escolha da missão (2026-10-07, ROADMAP 15.8)**. Pedido: "o gatinho laranja astronauta
   conversando com o ratinho e não apenas uma nave parada"; maquete aprovada após ajustes (só o valor final embaixo,
   rótulos em vez de perguntas, botões só texto, ACEITAR MISSÃO, um balão + colunas, um rostinho por ratinho, fila com

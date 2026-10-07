@@ -90,30 +90,41 @@ func _process(_d: float) -> void:
 		28:
 			_check("tecla_1_nao_vaza", _main._flight.target_pad_id < 0)
 		31:
-			# missoes (v12): estrelas liberam no da arvore, tipo novo ganha destaque, jingle de liberar
+			# Estrada das Estrelas (v13): estrelas acumuladas liberam as paradas sozinhas, sem gastar
 			var stars0 := GameState.stars
 			var nodes0: Array = GameState.mission_nodes.duplicate()
+			var reached0: Array = GameState.road_reached.duplicate()
+			var seen0: Array = GameState.road_seen.duplicate()
+			var levels0: Dictionary = GameState.levels.duplicate()
 			GameState.stars = 0
 			GameState.mission_nodes = []
-			_check("sem_estrela_nao_libera", not GameState.unlock_mission("heavy1"))
-			GameState.add_stars(3)
-			_check("pode_liberar", GameState.can_unlock_mission())
-			_check("libera_com_3_estrelas", GameState.unlock_mission("heavy1") and GameState.stars == 0
-					and int(GameState.missions_unlocked().get("heavy", 0)) == 1)
+			GameState.road_reached = []
+			GameState.road_seen = []
+			GameState._check_road(true)
+			_check("estrada_comeca_no_mineiro", GameState.road_reached == ["start"])
+			var first := int(EconMath.road_stop("heavy1")["stars"])
+			GameState.add_stars(first)
+			_check("estrelas_nao_se_gastam", GameState.stars == first)
+			_check("parada_libera_ratinho", int(GameState.missions_unlocked().get("heavy", 0)) == 1)
 			_check("tipo_novo_em_destaque", int(GameState.missions_new.get("heavy", 0)) > 0)
-			_check("jingle_ao_liberar_missao", int(Sound.played.get("unlock", 0)) > 0)
-			GameState.add_stars(3)
-			_check("arvore_pede_2_tipos", not GameState.unlock_mission("passenger1"))
+			_check("jingle_ao_chegar_na_parada", int(Sound.played.get("unlock", 0)) > 0)
+			_check("novidade_para_mostrar", GameState.road_news().has("heavy1"))
+			GameState.add_stars(int(EconMath.road_stop("turbo")["stars"]) - GameState.stars)
+			_check("habilidade_vem_pronta", int(GameState.levels.get("turbo", 0)) == 1 and not GameState.can_buy("turbo"))
+			_check("frota_fechada_antes_da_parada", not GameState.can_buy("fleet"))
 			for i in 3:
 				GameState.tick_missions_new()
 			_check("destaque_some", not GameState.missions_new.has("heavy"))
 			GameState.stars = stars0
 			GameState.mission_nodes = nodes0
+			GameState.road_reached = reached0
+			GameState.road_seen = seen0
+			GameState.levels = levels0
 			# recordes: a primeira marca nao e "novo recorde"; superar depois e
 			GameState.records = {}
-			_check("primeira_marca_nao_anuncia", not GameState.note_record("best_combo", 2.0))
-			_check("superar_anuncia", GameState.note_record("best_combo", 3.0))
-			_check("pior_nao_anuncia", not GameState.note_record("best_combo", 1.0))
+			_check("primeira_marca_nao_anuncia", not GameState.note_record("best_perfect", 2.0))
+			_check("superar_anuncia", GameState.note_record("best_perfect", 3.0))
+			_check("pior_nao_anuncia", not GameState.note_record("best_perfect", 1.0))
 			# save ilegivel: guardado a parte, aviso para o jogador, nunca sobrescrito
 			var files := SaveManager.slot_files(2)
 			var f := FileAccess.open(files["path"], FileAccess.WRITE)

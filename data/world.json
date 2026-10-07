@@ -15,6 +15,11 @@
       "vx": 0.25,
       "tilt": 0.2,
       "center": 0.2
+    },
+    "perfect": {
+      "notes": "Pouso perfeito = Reputacao (+10% na proxima entrega; economy.json > contracts.reputation). 2026-10-07: reto (|inclinacao| <= tilt_frac x max_tilt) e macio (V.vert <= vy_frac x max_vy), sem o bonus do trem de pouso. Calibrar jogando.",
+      "vy_frac": 0.4,
+      "tilt_frac": 0.25
     }
   },
   "lander": {

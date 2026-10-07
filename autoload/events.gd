@@ -13,9 +13,9 @@ signal upgrade_bought(upgrade_id: String, level: int)
 ## Estrelas de missao mudaram (ganhou numa entrega ou gastou liberando).
 @warning_ignore("unused_signal")
 signal stars_changed(amount: int)
-## Liberou um no da arvore de missoes (economy.json contracts.missions.nodes).
+## Parada da Estrada das Estrelas alcancada agora (GameState._check_road).
 @warning_ignore("unused_signal")
-signal mission_unlocked(node_id: String)
+signal road_reached(stop_id: String)
 ## Opcoes mudaram (volumes, filtro CRT): quem mostra algo das opcoes se atualiza.
 @warning_ignore("unused_signal")
 signal settings_changed

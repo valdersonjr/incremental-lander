@@ -30,7 +30,10 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   compensa, mas exige gás num salto só.
 - **Variedade das entregas (v7, 2026-10-03)** — cada oferta é uma escolha de risco, não só de distância:
   - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
-  - **Combo**: cada pouso bom seguido (q ≥ 0,55) soma +10% no pagamento, até +50%; pouso ruim zera.
+  - **Reputação** (v13, substitui o Combo): **pouso perfeito** (nave reta e macia: inclinação ≤ 25% e V.vert ≤ 40% do
+    limite, `world.json > landing.perfect`) → a **próxima** entrega vale **+10%** (não acumula); outro pouso → sem bônus;
+    bater → perde a atual e a próxima. Fica guardada entre runs. Selo REPUTAÇÃO +10% no HUD (aceso/apagado) e
+    "com reputação +10%" no Você ganha.
   - **Presentes no alto do morro (v10, 2026-10-06)**: metade dos saltos tem um presente no ponto mais alto do relevo
     entre as plataformas. Encostar **devagar** pega (perto e < 6 m/s; não é pouso). **Galão de gás** devolve 30% do
     tanque na hora; **presentinho** vale 30% do pagamento-base, pago junto com a entrega (bater perde). Opcional: descer
@@ -109,23 +112,35 @@ deixar com história forte... a ideia era só algo passando de fundo mesmo").
   minerando, vila e parquinho dos ratinhos, caminhão de queijo na estrada. Não interage com o jogo.
 - Terreno da Lua: crosta de regolito com crateras sobre blocos de basalto (2026-10-02).
 
+## 5b. PROGRESSÃO — Estrada das Estrelas (v13, 2026-10-07)
+A tela entre runs (antes "Oficina") mostra **toda a progressão desde o início** (padrão Trophy Road / passe de batalha).
+- **Estrada da Lua** no topo: 29 paradas em ordem (Mineiro → ratinhos ★1–★3 e Dupla, Estabilizador, Turbo, 7 ajudas,
+  Frota, Piloto automático → "Lua completa!"). **Cada entrega dá 1 ⭐; as estrelas não se gastam**: andam com a
+  navezinha e cada parada libera sozinha o prêmio (ratinho = tipo de pedido; habilidade/ajuda = já vem pronta;
+  Frota/Piloto = passam a poder ser comprados). Próxima parada pulsa com "faltam N"; clicar abre balão (figura, o que
+  traz, quanto falta). Ao voltar do voo a navezinha anda e cada parada nova faz festa (ratinho ★1 = "Novo amiguinho!").
+  Estrelas por parada = **rascunho** (`economy.json > progression.road`).
+- **Moedas compram só as 4 peças da nave** (Motor, Gasolina, Eficiência, Resistência) em **degraus de 10** (I, II, III…:
+  10 bolinhas, festinha e a peça **cresce no desenho** da nave). Seletor ×1 / ×10 / MÁX.
+- Abas NAVE · AJUDAS (ligar/desligar; as que faltam mostram o lugar na estrada) · FROTA (cadeado até a parada). A aba
+  PEDIDOS saiu (os ratinhos estão na estrada).
+
 ## 6. Upgrades (créditos)
 | Upgrade | Efeito | Observação |
 |---|---|---|
 | Motor | +0,6 m/s² por nível | vence gravidades maiores, menos perda por gravidade |
 | Gasolina (tanque) | ×1,12 gás por nível | alcance |
 | Eficiência (bocais) | ×1,07 Δv por gás | alcance |
-| Reputação | ×1,1 pagamento | — |
 | Resistência (trem de pouso) | reduz batidas (retorno decrescente) | — |
-| Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | compra única (Lua em diante) |
-| Turbo (habilidade) | segurar Shift: empuxo ×2 | compra única |
-| Frota de drones | cada drone rende uma fração (8% → ~17% com o Piloto automático) da **sua** renda média | 8M créditos (v11); até 10 |
-| Piloto automático | melhora a fração da frota | 16M; pede 1 drone |
-| **Marcos** | a cada 25 níveis de Motor/Gasolina/Eficiência/Reputação: pagamento ×1,5 | estilo AdVenture Capitalist |
+| Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | vem pela Estrada (v13) |
+| Turbo (habilidade) | segurar Shift: empuxo ×2 | vem pela Estrada (v13) |
+| Frota de drones | cada drone rende uma fração (8% → ~17% com o Piloto automático) da **sua** renda média | 8M créditos (v11), liberada pela Estrada (v13); até 10 |
+| Piloto automático | melhora a fração da frota | 16M; liberado pela Estrada e pede 1 drone |
+| **Marcos** | a cada 25 níveis de Motor/Gasolina/Eficiência: pagamento ×1,5 (a alinhar aos degraus de 10 na fase de economia) | estilo AdVenture Capitalist |
 
 ## 6b. Painel de bordo — árvore de ajudas de voo (v9, 2026-10-05)
 Compras **de informação**, não de potência: mostram, não pilotam (o pouso continua na mão do jogador; o pagamento não
-muda). Compra única em créditos, cada uma pode ser desligada (aba AJUDAS da oficina).
+muda). Vêm prontas pela Estrada das Estrelas (v13; antes compra única em créditos); cada uma pode ser desligada (aba AJUDAS da PROGRESSÃO).
 | Galho | Ajudas (em ordem) |
 |---|---|
 | Onde ir | **Setinha** (grátis: seta em volta da nave aponta a plataforma) → Setinha colorida (80: azul longe, amarela, verde chegando + pulsa) → Rastro (800: pontinhos do arco ideal só à frente) → Rota completa (8K: o arco inteiro) |
@@ -135,7 +150,7 @@ muda). Compra única em créditos, cada uma pode ser desligada (aba AJUDAS da of
 ## 7. Prestígio e fase final — removidos (2026-10-06)
 O usuário pediu tirar o prestígio (Poeira Estelar, loja, recomeço) e a fase final (Expedição ao Quarto). A Frota e o
 Piloto automático continuam, liberados por créditos (§6). Recordes pessoais (maior entrega, salto mais longo, maior
-combo, run mais rico) ficam numa faixa no topo da oficina e como "NOVO RECORDE" no resumo do run.
+combo → pousos perfeitos seguidos, run mais rico) ficam embaixo da nave na PROGRESSÃO e como "NOVO RECORDE" no resumo do run.
 
 ## 9. Ritmo esperado (simulado, spec v11 — só a Lua)
 Primeira compra logo após o 1º run; Motor e Reputação chegam ao nível 80 em ~6–8 h; 1º drone ~2 h (engajado);

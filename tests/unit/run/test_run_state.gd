@@ -104,17 +104,30 @@ func test_oferta_aceita_leva_o_tipo_e_paga_o_multiplicador() -> void:
 	assert_eq(run.taken_tier, "normal", "volta ao normal depois da entrega")
 
 
-func test_combo_soma_em_pouso_bom_e_zera_em_pouso_duro() -> void:
+func test_reputacao_pouso_perfeito_vale_na_proxima() -> void:
 	var run := RunState.create("luna", stats, 2)
-	run.complete_delivery(500.0, 0.9, 20.0)
-	run.complete_delivery(500.0, 0.9, 20.0)
-	assert_eq(run.streak, 2)
-	var r := run.complete_delivery(500.0, 0.9, 20.0)
-	assert_almost(r["credits"], EconMath.contract_pay("luna", 500.0, stats, 0.9) * EconMath.combo_mult(2), 1e-6,
-			"terceira entrega paga o combo de 2 pousos bons")
-	run.complete_delivery(500.0, 0.2, 20.0)
-	assert_eq(run.streak, 0, "pouso duro zera")
-	assert_false(run.deliveries[-1]["good"])
+	var r0 := run.complete_delivery(500.0, 0.9, 20.0, [], 0.0, true)
+	assert_almost(r0["credits"], EconMath.contract_pay("luna", 500.0, stats, 0.9), 1e-6, "a propria entrega nao ganha")
+	assert_true(run.reputation, "pouso perfeito acende a Reputacao")
+	var r1 := run.complete_delivery(500.0, 0.9, 20.0, [], 0.0, false)
+	assert_almost(r1["credits"], EconMath.contract_pay("luna", 500.0, stats, 0.9) * (1.0 + EconMath.reputation_bonus()),
+			1e-6, "a proxima entrega vale +bonus")
+	assert_false(run.reputation, "pouso nao perfeito apaga")
+	var r2 := run.complete_delivery(500.0, 0.9, 20.0, [], 0.0, true)
+	assert_almost(r2["credits"], EconMath.contract_pay("luna", 500.0, stats, 0.9), 1e-6, "sem bonus depois de apagar")
+
+
+func test_reputacao_nao_acumula_e_batida_perde() -> void:
+	var run := RunState.create("luna", stats, 2)
+	run.reputation = true                                      # veio do run anterior
+	run.complete_delivery(500.0, 0.9, 20.0, [], 0.0, true)
+	var r := run.complete_delivery(500.0, 0.9, 20.0, [], 0.0, true)
+	assert_almost(r["credits"], EconMath.contract_pay("luna", 500.0, stats, 0.9) * (1.0 + EconMath.reputation_bonus()),
+			1e-6, "dois perfeitos seguidos: continua +bonus (nao acumula)")
+	assert_eq(run.perfect_streak, 2)
+	run.crash("vertical_rapido")
+	assert_false(run.reputation, "bateu: a proxima vem sem bonus")
+	assert_eq(run.perfect_streak, 0)
 
 
 func test_lua_tem_lados_e_so_missoes_liberadas() -> void:

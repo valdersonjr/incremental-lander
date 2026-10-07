@@ -60,7 +60,7 @@ func _ready() -> void:
 	if bus >= 0:
 		_duck_fx = AudioEffectAmplify.new()
 		AudioServer.add_bus_effect(bus, _duck_fx)
-	Events.mission_unlocked.connect(func(_n: String) -> void: jingle("unlock"))   # missao nova liberada
+	Events.road_reached.connect(func(_n: String) -> void: jingle("unlock"))      # parada nova na Estrada das Estrelas
 
 
 func _new_player(bus: StringName) -> AudioStreamPlayer:

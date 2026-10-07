@@ -30,3 +30,11 @@ func test_batidas() -> void:
 func test_trem_de_pouso_amplia_tolerancia() -> void:
 	var t4 := LandingRules.tolerances(landing, 4.0)
 	assert_almost(t4["max_vy"], tol["max_vy"] * 2.0, 1e-6, "gear 4 com expoente 0.5 = x2")
+
+
+func test_pouso_perfeito_reto_e_macio() -> void:
+	var land := {"max_vy": 7.0, "max_tilt": 0.35, "perfect": {"vy_frac": 0.4, "tilt_frac": 0.25}}
+	assert_true(LandingRules.is_perfect(2.0, 0.05, land))
+	assert_false(LandingRules.is_perfect(3.5, 0.0, land), "duro demais")
+	assert_false(LandingRules.is_perfect(1.0, 0.2, land), "torto demais")
+	assert_false(LandingRules.is_perfect(1.0, 0.0, {"max_vy": 7.0, "max_tilt": 0.35}), "sem regra = nunca")

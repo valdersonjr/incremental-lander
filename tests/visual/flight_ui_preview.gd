@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -8,6 +8,8 @@ const MAIN := preload("res://game/main.tscn")
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	if "--rep" in args:                                        # Reputacao acesa (pouso perfeito no run anterior)
+		GameState.reputation = true
 	if "--sandbox" in args:                                    # sessao de sandbox (nave forte)
 		Sandbox.begin("luna", true)
 	if "--missions" in args:                                   # todos os ratinhos liberados (cartao com estrelas)
@@ -20,9 +22,10 @@ func _ready() -> void:
 	var hud := main.find_child("Hud", true, false) as Hud
 	if "--crashed" in args:
 		hud._on_delivery_finished({"crashed": true, "reason": "vertical_rapido", "quality": 0.0, "gas_used": 54.9})
-	if "--delivered" in args:                                  # aviso de entrega com plataforma e combo
-		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "combo": 1.2,
-				"good": true}, 3)
+	if "--delivered" in args:                                  # aviso de entrega com plataforma e Reputacao
+		main._run.reputation = true
+		hud.show_delivery({"rewards": {"credits": 721.0}, "quality": 0.86, "mult": 2.2, "rep": 1.1,
+				"perfect": true}, true)
 	var offers := main.find_child("OfferPanel", true, false) as OfferPanel
 	for a in args:                                             # --select=slot: janela do ratinho desse pedido
 		if a.begins_with("--select="):                         # (simple2 = mineiro, longe; plataforma estreita)

@@ -7,8 +7,11 @@ var levels: Dictionary = {}
 var current_planet := "luna"          # so a Lua por enquanto (os outros mundos voltam depois)
 var runs_done := 0
 var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (base da renda da frota)
-var stars := 0                        # estrelas de missao para gastar (1 por entrega; contracts.missions.stars)
-var mission_nodes: Array = []         # nos da arvore de missoes ja liberados (ids)
+var stars := 0                        # estrelas ACUMULADAS (1 por entrega; nao se gastam): andam na Estrada (v13)
+var mission_nodes: Array = []         # nos da arvore de missoes ja liberados (ids; vem da Estrada)
+var road_reached: Array = []          # paradas da Estrada das Estrelas ja alcancadas (ids; EconMath.road)
+var road_seen: Array = []             # paradas que o jogador ja viu festejar na PROGRESSAO
+var reputation := false               # Reputacao: a proxima entrega vale +bonus (houve pouso perfeito antes)
 var missions_new: Dictionary = {}     # tipo recem-liberado -> runs em que ainda aparece mais (new_boost)
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
@@ -21,7 +24,7 @@ const ASSIST_FREE := "nav_arrow"
 const RECORDS := {
 	"best_delivery": ["maior entrega", "credits"],
 	"longest_hop": ["salto mais longo (m)", "distance"],
-	"best_combo": ["maior combo", "quality"],
+	"best_perfect": ["pousos perfeitos seguidos", "quality"],
 	"best_run": ["run mais rico", "expedition"],
 }
 
@@ -50,9 +53,13 @@ func reset() -> void:
 	stars = 0
 	mission_nodes = []
 	missions_new = {}
+	road_reached = []
+	road_seen = []
+	reputation = false
 	runs_done = 0
 	play_seconds = 0.0
 	records = {}
+	_check_road(true)
 
 
 ## Quantidade de um recurso.
@@ -74,6 +81,8 @@ func ship_stats() -> Dictionary:
 
 ## Compra 1 nivel de um upgrade (regras em Purchases/EconMath). Retorna true se comprou.
 func buy_upgrade(upgrade_id: String) -> bool:
+	if not can_buy(upgrade_id):
+		return false
 	var before := resources.duplicate()
 	if not Purchases.buy(resources, levels, upgrade_id):
 		return false
@@ -84,6 +93,8 @@ func buy_upgrade(upgrade_id: String) -> bool:
 
 ## Compra o maximo de niveis possivel. Retorna quantos.
 func buy_upgrade_max(upgrade_id: String) -> int:
+	if not can_buy(upgrade_id):
+		return 0
 	var before := resources.duplicate()
 	var n := Purchases.buy_max(resources, levels, upgrade_id)
 	if n > 0:
@@ -113,37 +124,51 @@ func missions_unlocked() -> Dictionary:
 	return EconMath.missions_unlocked(mission_nodes)
 
 
-## Soma estrelas ganhas (entregas do run).
+## A Estrada deixa comprar este upgrade? (habilidades/ajudas vem prontas; Frota/Piloto so depois da parada)
+func can_buy(upgrade_id: String) -> bool:
+	return EconMath.road_can_buy(upgrade_id, road_reached)
+
+
+## Soma estrelas ganhas (entregas do run) e anda na Estrada.
 func add_stars(n: int) -> void:
 	if n == 0:
 		return
 	stars += n
 	Events.stars_changed.emit(stars)
+	_check_road()
 
 
-## Libera um no da arvore de missoes com estrelas. Retorna true se liberou.
-func unlock_mission(node_id: String) -> bool:
-	for node: Dictionary in EconMath.mission_spec().get("nodes", []):
-		if node["id"] != node_id:
-			continue
-		var cost := EconMath.mission_node_cost(node)
-		if stars < cost or not EconMath.mission_node_ok(node, mission_nodes):
-			return false
-		stars -= cost
-		mission_nodes.append(node_id)
-		missions_new[node["kind"]] = int(EconMath.mission_spec().get("new_boost", {}).get("runs", 0))
-		Events.stars_changed.emit(stars)
-		Events.mission_unlocked.emit(node_id)
-		return true
-	return false
+## Marca as paradas da Estrada que o total de estrelas ja alcanca e entrega o premio de cada uma: ratinho (no da
+## arvore de missoes), habilidade/ajuda (nivel 1), Frota/Piloto (passam a poder ser comprados). quiet = sem festa
+## (jogo novo, save carregado): a parada ja conta como vista.
+func _check_road(quiet: bool = false) -> void:
+	for stop: Dictionary in EconMath.road_reached_now(stars, road_reached):
+		var id := str(stop["id"])
+		road_reached.append(id)
+		match str(stop["type"]):
+			"mission":
+				if not mission_nodes.has(id):
+					mission_nodes.append(id)
+				for node: Dictionary in EconMath.mission_spec().get("nodes", []):
+					if node["id"] == id:
+						missions_new[node["kind"]] = int(EconMath.mission_spec().get("new_boost", {}).get("runs", 0))
+			"grant":
+				levels[id] = maxi(int(levels.get(id, 0)), 1)
+		if quiet or stop["type"] == "start":
+			road_seen.append(id)
+		else:
+			Events.road_reached.emit(id)
 
 
-## Da para liberar algum no agora? (aviso na aba PEDIDOS e no resumo do run)
-func can_unlock_mission() -> bool:
-	for node: Dictionary in EconMath.mission_spec().get("nodes", []):
-		if stars >= EconMath.mission_node_cost(node) and EconMath.mission_node_ok(node, mission_nodes):
-			return true
-	return false
+## Paradas alcancadas que o jogador ainda nao viu na PROGRESSAO (em ordem).
+func road_news() -> Array:
+	return road_reached.filter(func(id: String) -> bool: return not road_seen.has(id))
+
+
+## A parada ja foi mostrada ao jogador.
+func mark_road_seen(id: String) -> void:
+	if not road_seen.has(id):
+		road_seen.append(id)
 
 
 ## Fim de um run: os tipos recem-liberados perdem 1 run de destaque.
@@ -180,7 +205,7 @@ func note_record(key: String, value: float) -> bool:
 func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "current_planet": current_planet,
 			"income_history": income_history, "stars": stars, "mission_nodes": mission_nodes,
-			"missions_new": missions_new, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
+			"missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "reputation": reputation, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -192,10 +217,14 @@ func apply_save_state(st: Dictionary) -> void:
 	stars = int(st.get("stars", 0))
 	mission_nodes = st.get("mission_nodes", [])
 	missions_new = st.get("missions_new", {})
+	road_reached = st.get("road_reached", [])
+	road_seen = st.get("road_seen", [])
+	reputation = bool(st.get("reputation", false))
 	runs_done = st["runs_done"]
 	play_seconds = st["play_seconds"]
 	settings = st["settings"]
 	records = st.get("records", {})
+	_check_road(true)                                          # save antigo/migrado: o que as estrelas ja alcancam
 	apply_settings()
 	for res: String in resources:
 		Events.resources_changed.emit(res, resources[res])

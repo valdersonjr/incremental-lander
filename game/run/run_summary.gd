@@ -37,13 +37,15 @@ func show_summary(summary: Dictionary) -> void:
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
 				float(fleet[res])), &"MoneyLabel"))
-	if int(summary.get("stars", 0)) > 0:                       # estrelas de missao (gastas na aba PEDIDOS)
+	if int(summary.get("stars", 0)) > 0:                       # estrelas: andam na Estrada da PROGRESSAO
 		var row := UiKit.stat_row("", "estrelas", "+%d" % int(summary["stars"]), &"MoneyLabel")
 		(row.get_child(0) as TextureRect).texture = UiKit.kid("star_on")
 		(row.get_child(0) as TextureRect).expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_rows.add_child(row)
-	if bool(summary.get("can_unlock", false)):
-		var hint := UiKit.stat_row("", "missão nova para liberar em PEDIDOS!", "!", &"GoodLabel")
+	if int(summary.get("road_news", 0)) > 0:                    # premio novo na Estrada das Estrelas
+		var n := int(summary["road_news"])
+		var hint := UiKit.stat_row("", "prêmio novo na estrada!" if n == 1 else "%d prêmios novos na estrada!" % n,
+				"!", &"GoodLabel")
 		(hint.get_child(0) as TextureRect).texture = UiKit.kid("star_on")
 		(hint.get_child(0) as TextureRect).expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_rows.add_child(hint)
