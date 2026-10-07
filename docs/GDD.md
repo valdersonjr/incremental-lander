@@ -23,8 +23,8 @@ Pilares:
 pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até o gás acabar (ou bater)
 → resumo do run → [Hangar/loja] comprar upgrades → …
 ```
-- **Bata seu recorde (v15, 2026-10-07)**: o run **não tem teto de entregas**. Termina quando o gás não alcança
-  nenhuma entrega ou em batida (o que já foi ganho fica). A nave "cansa": cada missão do run gasta **1,7×** o gás da
+- **Bata seu recorde (v15, 2026-10-07)**: o run **não tem teto de entregas**. Termina só quando o **tanque esvazia de
+  verdade** (ou em batida; o que já foi ganho fica): pedido que parece longe demais fica em vermelho, mas pode ser tentado. A nave "cansa": cada missão do run gasta **1,7×** o gás da
   anterior (`contracts.run_fatigue`; o galão devolve gás ÷ o mesmo fator) — o run sempre acaba, e Gasolina/Eficiência
   viram "mais entregas por run". A meta é do jogador: bater os próprios recordes (dinheiro do run em destaque).
 - Entregas **se renovam**: a cada entrega feita, uma nova oferta aparece (o gás é sempre o limite).

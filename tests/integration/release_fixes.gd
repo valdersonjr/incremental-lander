@@ -73,6 +73,11 @@ func _process(_d: float) -> void:
 			var l: Lander = get_meta(&"lander")
 			_check("alarme_de_gas_toca", l._alarm.playing)
 			l.state = Lander.State.LANDED
+			var gas_before := l.gas                            # pouco gas (nenhum pedido "alcancavel"): o run continua
+			l.gas = 3.0
+			_main._show_offers()
+			_check("gas_pouco_nao_encerra", not _main._run.over and _main._offers.visible)
+			l.gas = gas_before
 			l.gas = float(l.params["tank"])
 			# relogio do run para com o jogo pausado
 			_t0 = _main._run_time

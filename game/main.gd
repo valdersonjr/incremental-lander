@@ -10,6 +10,8 @@ const SUMMARY_SCENE := preload("res://game/run/run_summary.tscn")
 const HANGAR_SCENE := preload("res://game/hangar/hangar.tscn")
 const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
 const PAUSE_SCENE := preload("res://game/pause/pause_menu.tscn")
+## Tanque "vazio" para encerrar o run na escolha de pedido (menos que isso nao tira a nave do chao).
+const GAS_EMPTY := 0.5
 
 var _args: Dictionary = {}
 var _demo := false
@@ -279,8 +281,10 @@ func _start_run() -> void:
 
 func _show_offers() -> void:
 	var gas := _flight.lander.gas
-	if not _run.over and not _run.can_continue(gas):
-		_run.finish("sem_gas" if not _run.deliveries.is_empty() else "sem_alcance")
+	# o run so acaba com o tanque vazio de verdade (ou na batida): pedido que parece longe demais fica em vermelho no
+	# cartao, mas o jogador pode tentar (pilotar bem / pegar o galao no caminho). Gas acabou no voo -> Flight.stranded.
+	if not _run.over and gas <= GAS_EMPTY:
+		_run.finish("sem_gas")
 	if _run.over:
 		_end_run()
 		return
