@@ -96,6 +96,8 @@ func _exit_tree() -> void:
 	_duck_fx = null
 	_cache.clear()
 	UiKit.clear_cache()
+	CargoArt.clear_cache()
+	MinigameArt.clear_cache()
 
 
 ## Musica de fundo (loop) com crossfade; "" silencia. A mesma que ja toca continua de onde estava.

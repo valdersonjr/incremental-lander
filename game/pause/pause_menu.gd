@@ -3,7 +3,7 @@
 ## as entregas feitas ja foram pagas) + CONTINUAR.
 ## HANGAR (Esc/Opções no hangar; a Main esconde o hangar): "MENU", volumes + controles + Menu inicial + Novo jogo
 ## (2 cliques, Esc cancela) + VOLTAR AO HANGAR. Nos dois modos, Salvar abre a lista dos jogos salvos (SaveSlots SAVE)
-## para gravar o jogo num dos espacos (por cima de outro com 2 cliques). No sandbox: "Sair do sandbox" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
+## para gravar o jogo num dos espacos (por cima de outro com 2 cliques). No sandbox: "Sair do modo livre" no lugar do menu inicial e sem Novo jogo. So apresentacao/navegacao: emite sinais, a Main decide o fluxo.
 ## Roda com PROCESS_MODE_ALWAYS.
 class_name PauseMenu
 extends Control
@@ -18,23 +18,28 @@ enum Mode { FLIGHT, HANGAR }
 
 ## Acoes remapeaveis (world.json > remappable) com o texto do menu; as fixas vem em CONTROLS_FIXED.
 const KEY_TITLES := {
-	"thrust": "propulsor",
+	"thrust": "motor (subir)",
 	"rotate_left": "girar à esquerda",
 	"rotate_right": "girar à direita",
-	"restart": "reiniciar o run (2x no voo)",
-	"end_run": "encerrar o run (2x, na escolha)",
-	"stabilize": "estabilizador (habilidade)",
-	"turbo": "turbo (habilidade)",
+	"restart": "recomeçar a viagem (2 vezes)",
+	"end_run": "terminar a viagem (2 vezes)",
+	"stabilize": "estabilizador",
+	"turbo": "turbo",
 }
 const CONTROLS_FIXED := [
-	["1-9, setas + Enter ou clique", "escolher entrega"],
-	["controle: A/RT, analógico", "Start: menu"],
+	["números 1 a 9 ou clique", "escolher entrega"],
+	["controle de videogame", "também funciona"],
 ]
+## Abas do menu (uma secao por vez: menos coisa na tela de uma vez so).
+enum Tab { SOUND, CONTROLS, GAME }
+const TAB_NAMES := {Tab.SOUND: "SOM E IMAGEM", Tab.CONTROLS: "CONTROLES", Tab.GAME: "JOGO"}
 
 var mode := Mode.FLIGHT
 var _confirm_new_game := false
 ## Lista dos espacos para Salvar (aberta no lugar das colunas).
 var _slots: SaveSlots = null
+var _tab := Tab.SOUND
+var _tab_buttons: Dictionary = {}           # Tab -> Button
 
 
 func _ready() -> void:
@@ -57,6 +62,7 @@ func _ready() -> void:
 		_show_new_game())
 	%SavesView.add_child(_slots)
 	%SavesView.move_child(_slots, 1)
+	_build_tabs()
 	%RestoreKeys.pressed.connect(func() -> void:
 		Sound.ui("click")
 		GameState.reset_keys()
@@ -94,18 +100,19 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	_fill_keys()
 	var hangar := mode == Mode.HANGAR
 	%Title.text = "MENU" if hangar else "PAUSA"
-	%Continue.text = "VOLTAR AO HANGAR  [Esc]" if hangar else "CONTINUAR  [Esc]"
+	%Continue.text = "VOLTAR À NAVE" if hangar else "CONTINUAR"
 	var sandbox := Sandbox.active()                            # no sandbox: sair dele; nunca apagar o jogo salvo
 	if sandbox:
 		%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)"
 	else:
 		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Ao menu inicial (entregas feitas ficam)"
-	%MenuButton.text = "Sair do sandbox" if sandbox else "Menu inicial"
+	%MenuButton.text = "Sair do modo livre" if sandbox else "Menu inicial"
 	%NewGameRow.visible = hangar and not sandbox                # apagar o jogo so com calma, no hangar
 	%SaveRow.visible = not sandbox                              # o sandbox nunca grava
 	%SaveLabel.text = "Gravar o jogo (agora no Jogo %d)" % SaveManager.slot
 	_close_saves(false)
 	_show_new_game()
+	_set_tab(Tab.SOUND, false)
 	visible = true
 	if not hangar:
 		get_tree().paused = true
@@ -158,6 +165,7 @@ func _open_saves() -> void:
 	%SavesTitle.theme_type_variation = &"SectionLabel"
 	%Columns.visible = false
 	%Continue.visible = false
+	(_tab_buttons[Tab.SOUND] as Button).get_parent().visible = false
 	%SavesView.visible = true
 	_slots.fill()
 
@@ -168,6 +176,8 @@ func _close_saves(sound: bool = true) -> void:
 	%SavesView.visible = false
 	%Columns.visible = true
 	%Continue.visible = true
+	if _tab_buttons.size() > 0:
+		(_tab_buttons[Tab.SOUND] as Button).get_parent().visible = true
 	%SaveLabel.text = "Gravar o jogo (agora no Jogo %d)" % SaveManager.slot
 	if sound:
 		%SaveButton.grab_focus()
@@ -187,3 +197,38 @@ func _on_new_game() -> void:
 func _show_new_game() -> void:
 	%NewGameLabel.text = "Recomeçar o Jogo %d do zero" % SaveManager.slot
 	%NewGame.text = "Apagar? Clique de novo" if _confirm_new_game else "Novo jogo"
+
+
+## Barra de abas sob o titulo (SOM E IMAGEM / CONTROLES / JOGO); os titulos de secao viram as abas.
+func _build_tabs() -> void:
+	var bar := HBoxContainer.new()
+	bar.name = "Tabs"
+	bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	bar.add_theme_constant_override(&"separation", 4)
+	for t: Tab in TAB_NAMES:
+		var b := Button.new()
+		b.text = TAB_NAMES[t]
+		b.custom_minimum_size = Vector2(96, 0)
+		b.pressed.connect(func() -> void: _set_tab(t))
+		bar.add_child(b)
+		_tab_buttons[t] = b
+	%Title.get_parent().add_child(bar)
+	%Title.get_parent().move_child(bar, %Title.get_index() + 1)
+	for n: String in ["VolumeTitle", "ControlsTitle", "GameTitle"]:
+		(%Columns.find_child(n) as Control).visible = false
+
+
+## Mostra so a secao da aba (a outra coluna some; a janela encolhe).
+func _set_tab(t: Tab, sound: bool = true) -> void:
+	if sound:
+		Sound.ui("click")
+	_tab = t
+	for k: Tab in _tab_buttons:
+		(_tab_buttons[k] as Button).theme_type_variation = &"PrimaryButton" if k == t else &""
+	var left := %Columns.get_node("Left") as Control
+	left.visible = t != Tab.CONTROLS
+	%Volumes.visible = t == Tab.SOUND
+	%Game.visible = t == Tab.GAME
+	(%Columns.get_node("Right") as Control).visible = t == Tab.CONTROLS
+	if sound:
+		(_tab_buttons[t] as Button).grab_focus()

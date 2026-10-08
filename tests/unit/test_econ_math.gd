@@ -8,8 +8,8 @@ func before_each() -> void:
 
 func test_formatacao_de_numeros() -> void:
 	assert_eq(EconMath.fmt(999), "999")
-	assert_eq(EconMath.fmt(1234), "1.23K")
-	assert_eq(EconMath.fmt(1.5e15), "1.50Qa")
+	assert_eq(EconMath.fmt(1234), "1,23K")
+	assert_eq(EconMath.fmt(1.5e15), "1,50Qa")
 
 
 func test_custo_cresce_com_nivel() -> void:

@@ -20,13 +20,6 @@ signal sandbox_requested(planet_id: String, strong: bool)
 
 enum Screen { MENU, SAVES, OPTIONS, SANDBOX }
 
-const HINTS := {
-	Screen.MENU: "setas: escolher  ·  Enter: confirmar",
-	Screen.SAVES: "setas: escolher  ·  Enter: confirmar  ·  Esc: voltar",
-	Screen.OPTIONS: "setas: escolher  ·  Enter: -/+  ·  Esc: voltar",
-	Screen.SANDBOX: "setas: escolher  ·  Enter: confirmar  ·  Esc: voltar",
-}
-
 var _screen := Screen.MENU
 ## Lista dos jogos salvos (criada ao abrir a tela pela 1a vez).
 var _slots: SaveSlots = null
@@ -80,7 +73,6 @@ func _set_screen(s: Screen) -> void:
 	_saves.visible = s == Screen.SAVES
 	_options.visible = s == Screen.OPTIONS
 	_sandbox.visible = s == Screen.SANDBOX
-	%Hint.text = HINTS[s]
 	match s:
 		Screen.MENU:
 			_refresh_menu()
@@ -165,7 +157,7 @@ func _fill_sandbox(focus_key: String = "sb:start") -> void:
 	_sandbox.add_child(_choice_row("Nave", [["base", "Básica"], ["strong", "Forte"]], "strong" if _sb_strong else "base",
 			func(v: String) -> void: _sb_strong = v == "strong"))
 	var start := Button.new()
-	start.text = "COMEÇAR SANDBOX"
+	start.text = "COMEÇAR"
 	start.theme_type_variation = &"PrimaryButton"
 	start.set_meta(&"focus_key", "sb:start")
 	start.pressed.connect(func() -> void:

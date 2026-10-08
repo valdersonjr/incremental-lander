@@ -96,6 +96,7 @@ var _bg_origin := 0.0                              # deslocamento do cenario de 
 
 
 func _ready() -> void:
+	UiKit.outline(lander.get_node("Visual") as CanvasItem)      # contorno branco: a nave nao some nos cenarios carregados
 	_assist_view = AssistView.new()
 	_assist_view.flight = self
 	add_child(_assist_view)
@@ -938,7 +939,10 @@ func _tick_claw() -> void:
 		var wet_s := float(Minigames.by_star(cfg.get("wet_s", [0.6]), star))
 		var k := clampf(_wet_t / wet_s, 0.0, 1.0)              # aviso: o bau pisca de amarelo a vermelho enquanto molha
 		var blink := 1.0 if int(_wet_t * 12.0) % 2 == 0 else 0.0
-		_tow_sprite.modulate = Color.WHITE if k <= 0.0 else Color(1.0, 1.0 - 0.5 * k * blink - 0.2 * k, 0.6 - 0.6 * k)
+		if k <= 0.0 or blink == 0.0:                           # piscar em silhueta ambar -> vermelha (cores da paleta)
+			_tow_sprite.material = null
+		else:
+			UiKit.silhouette(_tow_sprite, UiKit.color("amber") if k < 0.6 else UiKit.color("red"))
 		if _wet_t >= wet_s:
 			chest_wet = true
 			_mission_failed("tow", "", _tow.pos)

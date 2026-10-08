@@ -16,14 +16,15 @@ const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos"
 ## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
 const CRASH_TEXT := {"mar": "caiu no mar (splash!)", "atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
 		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado"}
-## Escurecimento atras de janelas modais (resumo, final).
-const DIM_ALPHA := 0.6
+## Estados de interface dentro da paleta (bloqueado, silhueta, escurecer): ver set_locked/silhouette/dim_rect.
+const FX_SHADER := preload("res://game/screen/palette_fx.gdshader")
 
 static var _meta: Dictionary = {}
 static var _themes: Dictionary = {}
 static var _icons: Dictionary = {}
 static var _kids: Dictionary = {}
 static var _kids_meta: Dictionary = {}
+static var _fx: Dictionary = {}                 # materiais do palette_fx por modo+cor (compartilhados)
 
 
 ## Solta os caches estaticos (chamado na saida do jogo; senao o Godot acusa recursos vivos no fim).
@@ -32,6 +33,7 @@ static func clear_cache() -> void:
 	_icons.clear()
 	_kids.clear()
 	_kids_meta.clear()
+	_fx.clear()
 	_meta.clear()
 
 
@@ -90,7 +92,7 @@ static func theme_for(world: String) -> Theme:
 	t.set_constant(&"shadow_offset_y", &"Label", 1)
 	_label_var(t, &"TitleLabel", color("title", world), TITLE_SIZE)
 	_label_var(t, &"SectionLabel", color("accent", world))
-	_label_var(t, &"DimLabel", color("lilac_grey"))
+	_label_var(t, &"DimLabel", color("steel"))           # steel: contraste 5,4:1 no painel (lilac_grey dava 2,8)
 	_label_var(t, &"ValueLabel", color("white"))
 	_label_var(t, &"MoneyLabel", color("gold"))
 	_label_var(t, &"BigMoneyLabel", color("gold"), TITLE_SIZE)     # numero principal (placar de recordes)
@@ -112,7 +114,7 @@ static func theme_for(world: String) -> Theme:
 	t.set_color(&"font_hover_color", &"Button", color("white"))
 	t.set_color(&"font_pressed_color", &"Button", color("mist"))
 	t.set_color(&"font_focus_color", &"Button", color("white"))
-	t.set_color(&"font_disabled_color", &"Button", color("slate"))
+	t.set_color(&"font_disabled_color", &"Button", color("steel"))     # slate sumia no fundo do desabilitado (1,7:1)
 	t.set_color(&"font_shadow_color", &"Button", color("ink"))
 	t.set_constant(&"shadow_offset_x", &"Button", 1)
 	t.set_constant(&"shadow_offset_y", &"Button", 1)
@@ -127,8 +129,8 @@ static func theme_for(world: String) -> Theme:
 	t.set_color(&"font_focus_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_pressed_color", &"PrimaryButton", color("ink"))
 	t.set_color(&"font_shadow_color", &"PrimaryButton", Color(0, 0, 0, 0))
-	t.set_color(&"font_disabled_color", &"PrimaryButton", color("slate"))
-	# aceitar missao (janela de conversa do pedido): botao principal recolorido em verde, texto branco
+	t.set_color(&"font_disabled_color", &"PrimaryButton", color("steel"))
+	# partir (VOAR, DECOLAR, ACEITAR MISSAO): botao principal recolorido em verde, texto branco
 	t.set_type_variation(&"GoButton", &"Button")
 	var go := wd + "button_go.png" if ResourceLoader.exists(wd + "button_go.png") else DIR + "luna/button_go.png"
 	var go_hover := go.replace("button_go.png", "button_go_hover.png")
@@ -136,10 +138,12 @@ static func theme_for(world: String) -> Theme:
 	t.set_stylebox(&"hover", &"GoButton", _box(go_hover, 6, m))
 	t.set_stylebox(&"pressed", &"GoButton", _box(go, 6, m + Vector4(0, 1, 0, -1)))
 	t.set_stylebox(&"focus", &"GoButton", _focus_box(color("white")))
-	# acao destrutiva (apagar progresso, recomecar): botao comum com texto vermelho
+	# acao destrutiva (apagar progresso, recomecar): botao vinho (art/src/ui/button_danger.py), texto branco
 	t.set_type_variation(&"DangerButton", &"Button")
-	for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color"]:
-		t.set_color(c, &"DangerButton", color("coral"))
+	var danger := DIR + "luna/button_danger.png"
+	t.set_stylebox(&"normal", &"DangerButton", _box(danger, 6, m))
+	t.set_stylebox(&"hover", &"DangerButton", _box(DIR + "luna/button_danger_hover.png", 6, m))
+	t.set_stylebox(&"pressed", &"DangerButton", _box(danger, 6, m + Vector4(0, 1, 0, -1)))
 	# barras
 	t.set_stylebox(&"background", &"ProgressBar", _box(DIR + "bar_bg.png", 3, Vector4.ZERO))
 	t.set_stylebox(&"fill", &"ProgressBar", _box(wd + "bar_fill.png", 3, Vector4.ZERO))
@@ -272,7 +276,7 @@ static func toggle_row(title: String, tooltip: String, focus_key: String, getter
 
 ## Linha "Filtro CRT" (efeito de TV de tubo).
 static func crt_row() -> HBoxContainer:
-	return toggle_row("Filtro CRT", "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa", "crt",
+	return toggle_row("Efeito TV antiga", "efeito de TV de tubo (linhas e brilho); desligue se preferir a imagem limpa", "crt",
 			GameState.crt_enabled, GameState.set_crt)
 
 
@@ -365,6 +369,41 @@ static func pulse(item: CanvasItem, strength: float = 1.7, seconds: float = 0.35
 	item.modulate = Color(strength, strength, strength)
 	item.create_tween().tween_property(item, "modulate", Color.WHITE, seconds).set_trans(Tween.TRANS_QUAD) \
 			.set_ease(Tween.EASE_OUT)
+
+
+## Estado "bloqueado" dentro da paleta (shader palette_fx, modo rampa fria) no item e em todos os filhos ja criados.
+## Substitui o modulate cinza (que gerava cores fora da Resurrect 64). on = false volta ao normal.
+static func set_locked(item: CanvasItem, on: bool = true) -> void:
+	item.material = _fx_material(1, Color.BLACK) if on else null
+	for c in item.find_children("*", "CanvasItem", true, false):
+		(c as CanvasItem).use_parent_material = on
+
+
+## Silhueta de uma cor so da paleta (ex.: ratinho ainda nao liberado).
+static func silhouette(item: CanvasItem, fill: Color) -> void:
+	item.material = _fx_material(2, fill)
+
+
+## Contorno externo de 1 px (cor da paleta) num sprite com margem transparente: o heroi nao some no cenario.
+static func outline(item: CanvasItem, color_name: String = "white") -> void:
+	item.material = _fx_material(4, color(color_name))
+
+
+## Escurecimento atras de janelas: xadrez de 1 px em ink (sem semitransparencia).
+static func dim_rect(rect: CanvasItem) -> void:
+	rect.material = _fx_material(3, Color.BLACK)
+
+
+static func _fx_material(mode: int, fill: Color) -> ShaderMaterial:
+	var key := "%d:%s" % [mode, fill.to_html(false)]
+	if _fx.has(key):
+		return _fx[key]
+	var m := ShaderMaterial.new()
+	_fx[key] = m
+	m.shader = FX_SHADER
+	m.set_shader_parameter(&"mode", mode)
+	m.set_shader_parameter(&"fill", fill)
+	return m
 
 
 ## Multiplicador para a tela: 1.5 -> "×1,5", 2.0 -> "×2" (virgula decimal, como o resto da interface).

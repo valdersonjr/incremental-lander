@@ -86,6 +86,7 @@ func _process(_d: float) -> void:
 			_check("esc_retoma", not menu.visible and not get_tree().paused and not hangar.visible)
 			_key(KEY_ESCAPE)
 		120:
+			menu._set_tab(PauseMenu.Tab.GAME, false)           # o menu abre na aba SOM E IMAGEM; JOGO tem o Menu inicial
 			var mb := menu.find_child("MenuButton", true, false) as Button
 			_check("voo_tem_menu_inicial", mb.is_visible_in_tree()
 					and not (menu.find_child("NewGameRow", true, false) as Control).visible)

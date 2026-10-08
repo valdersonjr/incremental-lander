@@ -1,12 +1,22 @@
-## Nave da PROGRESSAO (v13): o lander grande com as pecas que CRESCEM a cada degrau de 10 niveis (chama do Motor,
-## tanque da Gasolina, bocal da Eficiencia, pes da Resistencia). Placeholder em _draw com cores Resurrect 64 ate a
-## arte final (Fase 16.5, skill pixel-art). highlight(id) faz a peca brilhar (mouse sobre o cartao).
+## Nave da tela NAVE: a nave "pôster" do titulo (assets/sprites/title_lander.png, 80x70, mesma escala de pixel do
+## resto do jogo: 1 pixel de arte = 1 pixel da tela) com as pecas que CRESCEM a cada degrau de 10 niveis (chama do
+## Motor, tanque da Gasolina, bocal da Eficiencia, sapatas da Resistencia). Pecas em _draw com cores Resurrect 64 e
+## tamanhos inteiros (auditoria de UX 2026-10-08: antes era o lander de voo ampliado 3x, outra escala e outro desenho).
+## highlight(id) faz a peca brilhar (mouse sobre o cartao).
 class_name ShipView
 extends Control
 
-const SCALE := 3                        # pixels de tela por pixel de arte (inteiro)
-const PAD_L := 10                       # espaco a esquerda (art px) para o tanque crescer
+const W := 80                           # quadro da nave pôster (title_lander)
+const H := 70
+const PAD_L := 14                       # espaco a esquerda para o tanque crescer
+const PAD_B := 26                       # espaco embaixo para a chama
 const NOZZLE_COLORS := ["steel", "ice", "aqua", "violet", "lavender", "gold", "coral", "white"]
+## Geometria da nave pôster (art/src/title/title_concepts.py big_lander): bocal, sapatas e casco.
+const NOZZLE := Vector2i(40, 42)        # centro x, topo y do bocal
+const FEET := [12, 69]                  # centros x das sapatas
+const FOOT_Y := 59
+const HULL_Y := 36                      # meio do disco (onde o tanque encosta)
+const HULL_X := 6                       # ponta esquerda do disco
 
 var levels: Dictionary = {}             # niveis das pecas (GameState.levels)
 var hl := ""                            # peca em destaque
@@ -15,11 +25,11 @@ var _flame_t := 0.0
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2((32 + PAD_L * 2) * SCALE, 40 * SCALE)
+	custom_minimum_size = Vector2(W + PAD_L * 2, H + PAD_B)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_tex = AtlasTexture.new()
-	_tex.atlas = load("res://assets/sprites/lander.png")
-	_tex.region = Rect2(0, 0, 32, 32)
+	_tex.atlas = load("res://assets/sprites/title_lander.png")
+	_tex.region = Rect2(0, 0, W, H)
 
 
 func _process(delta: float) -> void:
@@ -46,44 +56,44 @@ func _stage(id: String) -> int:
 
 
 func _draw() -> void:
-	var o := Vector2(roundf((size.x - (32 + PAD_L * 2) * SCALE) * 0.5) + PAD_L * SCALE, 0)
+	var o := Vector2(floorf((size.x - W) * 0.5), 0)
 	var m := _stage("thrust")
 	var t := _stage("tank")
 	var e := _stage("efficiency")
 	var g := _stage("gear")
 	var ink := UiKit.color("ink")
-	# tanque (Gasolina): capsula do lado esquerdo, mais comprida a cada degrau
-	var tw := 3 + int(t * 1.2)
-	var th := 4 + t / 2
-	var tank := Rect2(o + Vector2((3 - tw) * SCALE, (18 - th / 2) * SCALE), Vector2(tw * SCALE, th * SCALE))
-	draw_rect(tank.grow(1), ink)
-	draw_rect(tank, UiKit.color("aqua"))
-	for i in range(1, tw):
-		if i % 2 == 0:
-			draw_rect(Rect2(tank.position + Vector2(i * SCALE, SCALE), Vector2(SCALE, (th - 2) * SCALE)), UiKit.color("ice"))
-	_hl(tank, "tank")
-	# chama (Motor): maior a cada degrau, tremendo
-	var fsz := (8 + m * 2) * SCALE * (1.0 + 0.06 * sin(_flame_t * 40.0))
+	# chama (Motor): figura 24 px; dobra (2x inteiro) a partir do degrau 6; treme 1 px
 	var fl := UiKit.kid("flame_s" if m < 3 else "flame_b")
-	var fr := Rect2(o + Vector2(16 * SCALE - fsz * 0.5, 22 * SCALE), Vector2(fsz, fsz))
+	var fs := 24 * (2 if m >= 6 else 1)
+	var shake := 1.0 if int(_flame_t * 20.0) % 2 == 0 else 0.0
+	var fr := Rect2(o + Vector2(NOZZLE.x - fs / 2, NOZZLE.y + 4 + shake), Vector2(fs, fs))
 	draw_texture_rect(fl, fr, false)
 	_hl(fr, "thrust")
-	draw_texture_rect(_tex, Rect2(o, Vector2(32, 32) * SCALE), false)
+	draw_texture_rect(_tex, Rect2(o, Vector2(W, H)), false)
+	# tanque (Gasolina): capsula encostada na ponta esquerda do disco, mais comprida a cada degrau
+	var tw := 4 + t * 2
+	var th := 5 + mini(t, 6) / 2 * 2
+	var tank := Rect2(o + Vector2(HULL_X - tw, HULL_Y - th / 2), Vector2(tw, th))
+	draw_rect(tank.grow(1), ink)
+	draw_rect(tank, UiKit.color("aqua"))
+	draw_rect(Rect2(tank.position, Vector2(tw, 1)), UiKit.color("ice"))
+	_hl(tank, "tank")
 	# bocal (Eficiencia): mais largo e de cor nova a cada degrau
-	var nw := 4 + e
-	var noz := Rect2(o + Vector2((16 - nw / 2.0) * SCALE, 21 * SCALE), Vector2(nw * SCALE, 2 * SCALE))
+	var nw := 14 + e * 2
+	var noz := Rect2(o + Vector2(NOZZLE.x - nw / 2, NOZZLE.y), Vector2(nw, 3))
 	draw_rect(noz.grow(1), ink)
 	draw_rect(noz, UiKit.color(NOZZLE_COLORS[mini(e, NOZZLE_COLORS.size() - 1)]))
 	_hl(noz, "efficiency")
-	# pes (Resistencia): sapatas mais largas a cada degrau
-	var fw := 5 + g * 3
-	for cx: float in [5.5, 26.5]:
-		var foot := Rect2(o + Vector2((cx - fw / 2.0) * SCALE, 25 * SCALE), Vector2(fw * SCALE, 2 * SCALE))
+	# sapatas (Resistencia): mais largas a cada degrau
+	var fw := 10 + g * 2
+	for cx: int in FEET:
+		var foot := Rect2(o + Vector2(cx - fw / 2, FOOT_Y), Vector2(fw, 3))
 		draw_rect(foot.grow(1), ink)
 		draw_rect(foot, UiKit.color("steel"))
+		draw_rect(Rect2(foot.position, Vector2(fw, 1)), UiKit.color("mist"))
 		_hl(foot, "gear")
 
 
 func _hl(r: Rect2, id: String) -> void:
 	if hl == id:
-		draw_rect(r.grow(3), UiKit.color("gold"), false, 2.0)
+		draw_rect(r.grow(2), UiKit.color("gold"), false, 1.0)

@@ -24,10 +24,10 @@ const ASSIST_FREE := "nav_arrow"
 ## Recordes pessoais (estatistica, nao economia; v15 "bata seu recorde": todos medidos num run, RunState.record_values):
 ## id -> [nome para o jogador, icone 12 px, figura 24 px do cartao do resumo]. A ordem e a da tela (dinheiro primeiro).
 const RECORDS := {
-	"run_money": ["dinheiro num run", "credits", "coin"],
-	"run_deliveries": ["entregas num run", "expedition", "pin"],
-	"run_distance": ["distância voada num run", "distance", "arrow"],
-	"run_perfect": ["pousos perfeitos num run", "quality", "check"],
+	"run_money": ["dinheiro numa viagem", "credits", "coin"],
+	"run_deliveries": ["entregas numa viagem", "expedition", "rat"],
+	"run_distance": ["distância voada numa viagem", "distance", "arrow"],
+	"run_perfect": ["pousos perfeitos numa viagem", "quality", "check"],
 	"best_delivery": ["maior entrega", "credits", "coins"],
 }
 

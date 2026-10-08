@@ -9,6 +9,12 @@ static var _meta: Dictionary = {}
 static var _cache: Dictionary = {}
 
 
+## Solta o cache estatico na saida (senao o Godot acusa "resources still in use at exit").
+static func clear_cache() -> void:
+	_cache.clear()
+	_meta.clear()
+
+
 static func meta() -> Dictionary:
 	if _meta.is_empty():
 		_meta = JSON.parse_string(FileAccess.get_file_as_string(DIR + "minigame_props.json"))

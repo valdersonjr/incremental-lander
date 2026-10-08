@@ -94,8 +94,8 @@ func _build_card() -> void:
 	right.add_theme_constant_override(&"separation", 6)
 	row.add_child(right)
 	_fly = Button.new()
-	_fly.theme_type_variation = &"PrimaryButton"
-	_fly.text = "VOAR!  [Enter]"
+	_fly.theme_type_variation = &"GoButton"                 # verde = partir (VOAR, DECOLAR, ACEITAR MISSAO)
+	_fly.text = "VOAR!"
 	_fly.custom_minimum_size = Vector2(120, 30)
 	_fly.pressed.connect(func() -> void: _go())
 	right.add_child(_fly)
@@ -179,6 +179,11 @@ func _build() -> void:
 		_ids.append(str(p["id"]))
 	var open_ids := GameState.worlds()
 	var pos := node_positions(_ids.size())
+	var next_locked := ""                                     # so o proximo mundo fechado explica o cadeado
+	for id in _ids:
+		if not id in open_ids:
+			next_locked = id
+			break
 	for i in _ids.size():
 		var id := _ids[i]
 		var is_open := id in open_ids
@@ -200,7 +205,7 @@ func _build() -> void:
 		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name.theme_type_variation = &"ValueLabel" if is_open else &"DimLabel"
 		box.add_child(name)
-		box.add_child(_info_row(id, is_open))
+		box.add_child(_info_row(id, is_open, id == next_locked))
 		add_child(box)
 		box.position = pos[i] - Vector2(48, BADGE)
 		box.gui_input.connect(_on_node_input.bind(id))
@@ -210,7 +215,7 @@ func _build() -> void:
 
 
 ## Linha de baixo do mundo: trofeu + recorde | "NOVO! +40%" | cadeado + estrelas que a parada pede.
-func _info_row(id: String, is_open: bool) -> HBoxContainer:
+func _info_row(id: String, is_open: bool, explain_lock: bool = false) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 2)
@@ -225,11 +230,16 @@ func _info_row(id: String, is_open: bool) -> HBoxContainer:
 		lock.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		lock.custom_minimum_size = Vector2(12, 12)
 		row.add_child(lock)
-		l.text = "complete o anterior"
-		l.theme_type_variation = &"DimLabel"
-		row.add_child(l)
+		ic.free()                                              # nos nao usados: liberar (senao vazam na saida)
+		if explain_lock:                                       # os outros fechados: so o cadeado (menos ruido)
+			l.text = "complete o anterior"
+			l.theme_type_variation = &"DimLabel"
+			row.add_child(l)
+		else:
+			l.free()
 		return row
 	if GameState.world_done(id):
+		ic.free()
 		l.text = "completo!"
 		l.theme_type_variation = &"MoneyLabel"
 		row.add_child(l)
@@ -241,6 +251,7 @@ func _info_row(id: String, is_open: bool) -> HBoxContainer:
 		l.text = EconMath.fmt(rec)
 		l.theme_type_variation = &"MoneyLabel"
 	else:
+		ic.free()
 		var first := float((EconMath.spec["contracts"].get("record_bonus", {}) as Dictionary).get("first_frac", 0.0))
 		l.text = "NOVO! +%d%%" % roundi(first * 100.0)
 		l.theme_type_variation = &"GoodLabel"

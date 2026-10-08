@@ -126,7 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var flying := _flight != null and _flight.lander.state == Lander.State.FLYING and _run != null and not _run.over
 		if flying and _restart_armed <= 0.0 and not _demo:
 			_restart_armed = CONFIRM_SECONDS
-			_hud.confirm_hint("R de novo para reiniciar o run (a entrega em voo se perde)", CONFIRM_SECONDS)
+			_hud.confirm_hint("R de novo para recomeçar a viagem (a entrega em voo se perde)", CONFIRM_SECONDS)
 		else:
 			_restart_armed = 0.0
 			_start_run()

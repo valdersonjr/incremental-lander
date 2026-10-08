@@ -34,7 +34,6 @@ stretch_mode = 3
 
 [node name="GasTitle" type="Label" parent="Stats/VBox/GasRow"]
 layout_mode = 2
-theme_type_variation = &"DimLabel"
 text = "GÁS"
 
 [node name="GasBar" type="ProgressBar" parent="Stats/VBox/GasRow"]
@@ -59,8 +58,7 @@ layout_mode = 2
 [node name="VyTitle" type="Label" parent="Stats/VBox/VyRow"]
 custom_minimum_size = Vector2(46, 0)
 layout_mode = 2
-theme_type_variation = &"DimLabel"
-text = "V.VERT"
+text = "DESCIDA"
 
 [node name="Vy" type="Label" parent="Stats/VBox/VyRow"]
 unique_name_in_owner = true
@@ -72,8 +70,7 @@ layout_mode = 2
 [node name="VxTitle" type="Label" parent="Stats/VBox/VxRow"]
 custom_minimum_size = Vector2(46, 0)
 layout_mode = 2
-theme_type_variation = &"DimLabel"
-text = "V.HOR"
+text = "DE LADO"
 
 [node name="Vx" type="Label" parent="Stats/VBox/VxRow"]
 unique_name_in_owner = true
@@ -85,8 +82,7 @@ layout_mode = 2
 [node name="AltTitle" type="Label" parent="Stats/VBox/AltRow"]
 custom_minimum_size = Vector2(46, 0)
 layout_mode = 2
-theme_type_variation = &"DimLabel"
-text = "ALT"
+text = "ALTURA"
 
 [node name="Alt" type="Label" parent="Stats/VBox/AltRow"]
 unique_name_in_owner = true
@@ -138,7 +134,7 @@ theme_type_variation = &"DimLabel"
 
 [node name="Money" type="PanelContainer" parent="."]
 layout_mode = 0
-offset_left = 450.0
+offset_left = 420.0
 offset_top = 6.0
 offset_right = 634.0
 offset_bottom = 30.0

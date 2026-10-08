@@ -1664,7 +1664,7 @@ SUFFIXES = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"]
 
 
 def fmt(x: float, style: str = "suffix", digits: int = 3) -> str:
-    """suffix: 1.23K ... 4.56Dc, depois letras aa, ab... | sci: 1.23e45 | eng: 123e42.
+    """suffix: 1,23K ... 4,56Dc, depois letras aa, ab... | sci: 1.23e45 | eng: 123e42.
     Abaixo de 1000 mostra inteiro (ou 1 casa se < 10 e fracionario)."""
     if x != x:
         return "NaN"
@@ -1673,7 +1673,7 @@ def fmt(x: float, style: str = "suffix", digits: int = 3) -> str:
     neg = x < 0
     x = abs(x)
     if x < 1000:
-        s = f"{x:.1f}" if (x < 10 and x != int(x)) else f"{int(x)}"
+        s = f"{x:.1f}".replace(".", ",") if (x < 10 and x != int(x)) else f"{int(x)}"
         return ("-" if neg else "") + s
     e3 = int(math.floor(math.log10(x) / 3))
     if style == "sci":
@@ -1690,7 +1690,7 @@ def fmt(x: float, style: str = "suffix", digits: int = 3) -> str:
             k = e3 - len(SUFFIXES)
             suf = chr(97 + (k // 26) % 26) + chr(97 + k % 26)
         s = f"{m:.{max(0, digits - len(str(int(m))))}f}{suf}"
-    return ("-" if neg else "") + s
+    return ("-" if neg else "") + s.replace(".", ",")      # pt-BR: virgula decimal (igual ao jogo)
 
 
 def fmt_time(seconds: float) -> str:

@@ -118,9 +118,7 @@ func _process(delta: float) -> void:
 		if flight.target_tier != "normal":
 			_dist.text += "  " + UiKit.mult_text(float(EconMath.pad_tier(flight.target_tier)["mult"]))
 		_dist_icon.flip_h = dx < 0.0                           # a seta aponta para o lado da plataforma
-	else:
-		_dist.text = "escolha uma entrega"
-		_dist_icon.flip_h = false
+	_dist.get_parent().visible = flight.target_pad_id >= 0   # sem alvo a janela de missao ja esta aberta: sem dica repetida
 	_update_score()
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
@@ -132,8 +130,9 @@ func set_records(start: Dictionary) -> void:
 	for key: String in _rec_best:
 		var rec := float(_rec_start.get(key, 0.0))
 		var l: Label = _rec_best[key]
-		l.text = GameState.record_text(key, rec) if key == "run_money" else "/" + GameState.record_text(key, rec)
-		l.visible = rec > 0.0
+		l.text = GameState.record_text(key, rec)
+		if key != "run_money":
+			l.get_parent().visible = rec > 0.0
 	(_rec_best["run_money"] as Label).get_parent().visible = float(_rec_start.get("run_money", 0.0)) > 0.0
 
 
@@ -178,7 +177,7 @@ func _build_score() -> void:
 		if key == "run_money":
 			continue
 		var chip := HBoxContainer.new()
-		chip.add_theme_constant_override(&"separation", 2)
+		chip.add_theme_constant_override(&"separation", 4)
 		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var ic := TextureRect.new()
 		ic.texture = UiKit.icon(str(GameState.RECORDS[key][1]))
@@ -189,9 +188,17 @@ func _build_score() -> void:
 		var v := Label.new()
 		v.theme_type_variation = &"ValueLabel"
 		chip.add_child(v)
+		var best_box := HBoxContainer.new()                     # recorde = trofeuzinho + numero (nao "/8": parecia fracao)
+		best_box.add_theme_constant_override(&"separation", 1)
+		var cup := TextureRect.new()
+		cup.texture = UiKit.icon("trophy")
+		cup.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		cup.custom_minimum_size = Vector2(12, 12)
+		best_box.add_child(cup)
 		var r := Label.new()
 		r.theme_type_variation = &"DimLabel"
-		chip.add_child(r)
+		best_box.add_child(r)
+		chip.add_child(best_box)
 		_rec_value[key] = v
 		_rec_best[key] = r
 		grid.add_child(chip)
@@ -330,7 +337,9 @@ func taxi_step(step: int) -> void:
 
 
 func _set_speed(label: Label, value: float, limit: float) -> void:
-	label.text = "%.1f m/s" % value
+	label.text = ("%.1f m/s" % value).replace(".", ",")
+	if value > limit:
+		label.text += " !"                                   # forma alem da cor (daltonismo): rapido demais
 	label.theme_type_variation = &"GoodLabel" if value <= limit * 0.6 else (&"MoneyLabel" if value <= limit
 			else &"BadLabel")
 
@@ -384,7 +393,7 @@ func confirm_hint(text: String, seconds: float) -> void:
 
 ## Rodape em repouso: so a marca do sandbox. As teclas ficam no menu do Esc (CONTROLES), nao na tela.
 func _idle_status() -> String:
-	return "SANDBOX" if Sandbox.active() else ""
+	return "MODO LIVRE" if Sandbox.active() else ""
 
 
 ## Rodape (resultado do ultimo pouso ou marca do sandbox) (painel fino no Footer, da largura do texto; some se vazio).

@@ -104,7 +104,8 @@ func _card(n: int, s: Dictionary) -> Button:
 	box.add_theme_constant_override(&"separation", 6)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(box)
-	box.add_child(_label("Jogo %d" % n, &"GoodLabel" if current else &"ValueLabel"))
+	var name_lbl := _label("Jogo %d" % n, &"GoodLabel" if current else &"ValueLabel")
+	box.add_child(_backed(name_lbl) if s["ok"] else name_lbl)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -113,10 +114,16 @@ func _card(n: int, s: Dictionary) -> Button:
 		box.add_child(_label("Gravar por cima? Clique de novo", &"BadLabel"))
 	elif _confirm_delete == n:
 		box.add_child(_label("Apagar? Clique no X de novo", &"BadLabel"))
+	elif s["ok"] and float(s["play_seconds"]) < 60.0 and float(s["credits"]) <= 0.0 and int(s["stars"]) <= 0:
+		box.add_child(_backed(_label("começou agora", &"ValueLabel")))   # "0m00s 0 0" parecia um jogo de verdade
 	elif s["ok"]:
-		box.add_child(_stat("clock", _fmt_time(float(s["play_seconds"])), &"ValueLabel"))
-		box.add_child(_stat("coin", EconMath.fmt(float(s["credits"])), &"MoneyLabel"))
-		box.add_child(_stat("star_on", str(int(s["stars"])), &"MoneyLabel"))
+		var stats := HBoxContainer.new()                       # numeros sobre um fundo ink: legiveis em cima do mapa
+		stats.add_theme_constant_override(&"separation", 6)
+		stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stats.add_child(_stat("clock", _fmt_time(float(s["play_seconds"])), &"ValueLabel"))
+		stats.add_child(_stat("coin", EconMath.fmt(float(s["credits"])), &"MoneyLabel"))
+		stats.add_child(_stat("star_on", str(int(s["stars"])), &"MoneyLabel"))
+		box.add_child(_backed(stats))
 	elif s["exists"]:
 		box.add_child(_label("save ilegível", &"BadLabel"))
 	else:
@@ -217,6 +224,21 @@ func _stat(icon: String, text: String, variation: StringName) -> HBoxContainer:
 	row.add_child(pic)
 	row.add_child(_label(text, variation))
 	return row
+
+
+## Fundo ink liso atras do texto que fica sobre a faixa do mapa (contraste garantido em qualquer mundo).
+func _backed(item: Control) -> PanelContainer:
+	var p := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = UiKit.color("ink")
+	sb.set_content_margin_all(1)
+	sb.content_margin_left = 3
+	sb.content_margin_right = 3
+	p.add_theme_stylebox_override(&"panel", sb)
+	p.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_child(item)
+	return p
 
 
 func _label(text: String, variation: StringName) -> Label:

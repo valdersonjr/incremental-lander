@@ -177,6 +177,14 @@
       4 m/s); Nuvens (fila 14, volta ao cair, correntes com intenção); Lua (queijinho, trilha ≤ +120 m); economia v18
       (crédito parcial, estrela da Lua pelos queijinhos, bônus dos Cogumelos, takeoff_twr); placar em figuras, seta para
       item fora da tela, selo de minijogo completo; sons boing/bump/sheep/pass (aguardando aprovação ouvindo)
+- [x] 18.5c Auditoria de UX/UI e direção de arte (2026-10-08) aplicada: vírgula decimal em todo número (`fmt` nos
+      dois espelhos); sem dicas de tecla nos botões e no rodapé; tela "NAVE" com um nome só (aba PEÇAS, "VOLTAR À
+      NAVE"); "Modo livre" no lugar de Sandbox; níveis em algarismo comum; HUD com DESCIDA/DE LADO/ALTURA, recorde com
+      troféu (não "/8") e "!" quando rápido demais; resumo com figura da categoria + troféu; DimLabel steel (5,4:1) e
+      texto desabilitado legível; botão de perigo vinho; verde = partir (VOAR, DECOLAR, ACEITAR); pausa em abas;
+      estados bloqueado/silhueta/escurecer na paleta (`palette_fx.gdshader`); Mapa só explica o próximo cadeado;
+      plataformas grande/média/pequena e "longe: falta gás"; jogos salvos com fundo ink no texto e "começou agora";
+      contorno branco no lander; nave pôster 1x na tela NAVE; vazamentos de nós na saída corrigidos
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

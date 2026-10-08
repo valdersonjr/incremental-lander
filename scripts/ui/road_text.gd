@@ -27,7 +27,8 @@ const PARTS := ["thrust", "tank", "efficiency", "gear"]
 const PART_ICON := {"thrust": "thrust", "tank": "tank", "efficiency": "efficiency", "gear": "gear"}
 const PART_DOES := {"thrust": "sobe mais fácil", "tank": "voa mais longe", "efficiency": "gasta menos gás",
 		"gear": "pousa mais forte"}
-const ROMAN := ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
+## Nome do degrau da peca (algarismo comum: crianca de 6 anos nao le romano).
+const STAGE_NAMES := ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 ## Niveis por degrau das pecas (festinha e a peca cresce no desenho a cada degrau).
 const STAGE := 10
 

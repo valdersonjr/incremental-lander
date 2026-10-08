@@ -13,6 +13,12 @@ static var _meta: Dictionary = {}
 static var _cache: Dictionary = {}
 
 
+## Solta o cache estatico na saida (senao o Godot acusa "resources still in use at exit").
+static func clear_cache() -> void:
+	_cache.clear()
+	_meta.clear()
+
+
 ## Textura (AtlasTexture) da celula name; null se o atlas nao tem esse nome.
 static func tex(name: String) -> AtlasTexture:
 	if _cache.has(name):

@@ -29,7 +29,6 @@ func show_summary(summary: Dictionary) -> void:
 		_rows.remove_child(c)
 		c.queue_free()
 	_add_records(summary.get("rec_values", {}), summary.get("rec_start", {}))
-	var names := {"credits": "créditos"}
 	var bonus := float(summary.get("record_bonus", 0.0))
 	if bonus > 0.0:                                            # bonus de recorde do mundo (v16)
 		var first := float((summary.get("rec_start", {}) as Dictionary).get("run_money", 0.0)) <= 0.0
@@ -38,7 +37,7 @@ func show_summary(summary: Dictionary) -> void:
 		_rows.add_child(brow)
 	var fleet: Dictionary = summary.get("fleet", {})
 	for res: String in fleet:
-		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
+		_rows.add_child(UiKit.stat_row("fleet", "drones trouxeram", "+" + EconMath.fmt(
 				float(fleet[res])), &"MoneyLabel"))
 	var mg: Array = summary.get("minigames", [0, 0])
 	if int(mg[1]) > 0:                                         # selo dos minijogos feitos por inteiro (auditoria T4)
@@ -108,15 +107,22 @@ func _add_records(values: Dictionary, start: Dictionary) -> void:
 		card.tooltip_text = str(GameState.RECORDS[key][0])
 		var box := VBoxContainer.new()
 		box.add_theme_constant_override(&"separation", 0)
-		var fig := _figure(UiKit.kid("trophy" if beaten else str(GameState.RECORDS[key][2])))
+		var fig := _figure(UiKit.kid(str(GameState.RECORDS[key][2])))   # sempre a figura da categoria (o trofeu vai embaixo)
 		fig.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		box.add_child(fig)
 		var val := _label(GameState.record_text(key, v), &"MoneyLabel" if beaten else &"ValueLabel")
 		val.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		box.add_child(val)
-		var cap := _label("NOVO!" if beaten else ("rec. " + GameState.record_text(key, r) if r > 0.0 else " "),
-				&"MoneyLabel" if beaten else &"DimLabel")
-		cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		var cap := HBoxContainer.new()                         # trofeuzinho + "NOVO!" ou o recorde antigo
+		cap.alignment = BoxContainer.ALIGNMENT_CENTER
+		cap.add_theme_constant_override(&"separation", 2)
+		if beaten or r > 0.0:
+			var cup := TextureRect.new()
+			cup.texture = UiKit.icon("trophy")
+			cup.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+			cap.add_child(cup)
+		cap.add_child(_label("NOVO!" if beaten else (GameState.record_text(key, r) if r > 0.0 else " "),
+				&"MoneyLabel" if beaten else &"DimLabel"))
 		box.add_child(cap)
 		card.add_child(box)
 		cards.add_child(card)

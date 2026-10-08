@@ -236,7 +236,7 @@ func _make_stop(stop: Dictionary, reached: bool, is_next: bool) -> Control:
 	pic.position = bubble.position
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if not reached and not is_next:
-		pic.modulate = Color(0.7, 0.7, 0.78)
+		UiKit.set_locked(pic)
 	box.add_child(pic)
 	var star := RoadText.stop_star(stop)
 	if star > 0:                                               # estrelinhas da dificuldade do ratinho

@@ -4,6 +4,16 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Auditoria de UX/UI aplicada (ROADMAP 18.5c)**: 20 achados; lista e decisões em `docs/DECISIONS.md` (vírgula
+  decimal, NAVE em todo lugar, verde = partir, estados na paleta via `palette_fx.gdshader`, pausa em abas, HUD sem
+  abreviações, recordes com troféu, nave pôster 1x na tela NAVE, contorno branco no lander). Verificado: check, 111
+  testes + integrações (esc_flow/sandbox_flow atualizados), paridade 43, demo 2400 quadros, capturas de todas as telas
+  (`pause_preview` ganhou `--tab=controls|game`).
+  **Para o usuário aprovar vendo**: botão vinho de "Novo jogo", contorno branco do lander, nave pôster na tela NAVE
+  (menor que a antiga 3x, mas na escala do resto), cinza-frio dos bloqueados.
+  **Ficou de fora (decisão sua)**: Estrada duplicada no Mapa e na tela NAVE (a da NAVE ancora balões e festas; tirar
+  pede redesenho); faixa escura da planície em vales (ajuste de arte/parallax); som tocando na saída das capturas
+  (vazamento de áudio do motor, já ignorado no `test`).
 - **Apagar jogo salvo no menu inicial** (X ao lado de cada jogo, 2 cliques) e título do resumo pelo motivo
   ("ACABOU O GÁS!"...). Verificado: check, 111 testes, integração `slots_flow` (apagar, Esc, jogo em uso), capturas
   `title_preview -- --saves [--delete]` e `summary_preview [-- --crash]`.

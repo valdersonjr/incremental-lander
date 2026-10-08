@@ -1,6 +1,11 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/pause/pause_menu.gd" id="1_pause"]
+[ext_resource type="Shader" path="res://game/screen/palette_fx.gdshader" id="fx_dim"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_dim"]
+shader = ExtResource("fx_dim")
+shader_parameter/mode = 3
 
 [node name="PauseMenu" type="Control"]
 process_mode = 3
@@ -19,7 +24,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.180392, 0.133333, 0.184314, 0.6)
+material = SubResource("ShaderMaterial_dim")
+color = Color(0.180392, 0.133333, 0.184314, 1)
 
 [node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
@@ -186,4 +192,4 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
-text = "CONTINUAR  [Esc]"
+text = "CONTINUAR"

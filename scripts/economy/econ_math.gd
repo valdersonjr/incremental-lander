@@ -639,7 +639,7 @@ static func fmt(x: float, style: String = "suffix", digits: int = 3) -> String:
 	x = absf(x)
 	var s := ""
 	if x < 1000.0:
-		s = ("%.1f" % x) if (x < 10.0 and x != floor(x)) else str(int(x))
+		s = ("%.1f" % x).replace(".", ",") if (x < 10.0 and x != floor(x)) else str(int(x))
 		return ("-" if neg else "") + s
 	var e3 := _exp10(x) / 3                                    # mesmo que floor(log10(x) / 3) do Python
 	if style == "sci":
@@ -657,7 +657,7 @@ static func fmt(x: float, style: String = "suffix", digits: int = 3) -> String:
 			var k := e3 - SUFFIXES.size()
 			suf = char(97 + (k / 26) % 26) + char(97 + k % 26)
 		s = ("%." + str(dec) + "f") % m + suf
-	return ("-" if neg else "") + s
+	return ("-" if neg else "") + s.replace(".", ",")         # pt-BR: virgula decimal (igual ao econ.py)
 
 
 ## floor(log10(x)) exato nas potencias de 10 (log(x)/log(10) da 5.9999.. em 1e6 e virava "1000K").

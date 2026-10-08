@@ -173,6 +173,9 @@ export_presets.cfg            # macOS (universal, .zip), Windows (x86_64, pck em
 scripts/ui/ui_kit.gd          # UiKit: theme_for(mundo) (inclui foco, DangerButton, tooltip, scrollbar), icon(nome), icon_label,
                               # color, volume_row(bus), toggle_row (crt_row, shake_row, fullscreen_row), key_row(ação)
                               # (remapear: clica e aperta a tecla; Esc desiste), stat_row, pulse (brilho), crash_text
+                              # Estados na paleta (2026-10-08): set_locked(item) (rampa fria, propaga aos filhos),
+                              # silhouette(item, cor), dim_rect(rect) (xadrez ink atrás de janelas), outline(item) (contorno
+                              # 1 px) — todos via game/screen/palette_fx.gdshader; GoButton = partir, DangerButton = vinho
 game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, altitude, distância ao alvo, %Score = placar de recordes (v15:
                               # _build_score/set_records(início do run)/_update_score; dourado + pulso + "NOVO RECORDE!"), mensagem;
                               # seta do alvo vira para o lado da plataforma; %Toast central "ENTREGA!"/"BATEU!" (2,5 s)

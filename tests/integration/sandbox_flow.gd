@@ -67,7 +67,7 @@ func _process(_d: float) -> void:
 			_check("disco_intacto", is_equal_approx(_disk_credits(), 123.0))
 			_key(KEY_ESCAPE)
 		40:
-			_check("menu_sair", menu.visible and (menu.find_child("MenuButton", true, false) as Button).text == "Sair do sandbox")
+			_check("menu_sair", menu.visible and (menu.find_child("MenuButton", true, false) as Button).text == "Sair do modo livre")
 			_check("sem_novo_jogo", not (menu.find_child("NewGameRow", true, false) as Control).visible)
 			(menu.find_child("MenuButton", true, false) as Button).pressed.emit()
 		50:

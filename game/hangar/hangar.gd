@@ -18,7 +18,7 @@ signal menu_requested
 enum Tab { SHIP, REPUTATION, ASSISTS, FLEET }
 
 const MISSION_INTRO := preload("res://game/run/mission_intro.tscn")
-const TAB_INFO := [[Tab.SHIP, "NAVE", "thrust"], [Tab.REPUTATION, "REPUTAÇÃO", "kid:heart_on"],
+const TAB_INFO := [[Tab.SHIP, "PEÇAS", "thrust"], [Tab.REPUTATION, "REPUTAÇÃO", "kid:heart_on"],
 		[Tab.ASSISTS, "AJUDAS", "distance"], [Tab.FLEET, "FROTA", "fleet"]]
 const CARD_W := 184
 const BULK := [[1, "×1"], [10, "×10"], [0, "MÁX"]]          # 0 = maximo possivel
@@ -85,13 +85,13 @@ func refresh() -> void:
 	var focus_key := _focused_key()
 	var planet := GameState.current_planet
 	theme = UiKit.theme_for(planet)                            # a cor da tela acompanha o mundo atual
-	_planet.text = _planet_name(planet) + ("  ·  SANDBOX" if Sandbox.active() else "")
+	_planet.text = _planet_name(planet) + ("  ·  MODO LIVRE" if Sandbox.active() else "")
 	_fill_tabs()
 	_fill_bulk()
 	_fill_resources()
 	var launchable := Purchases.can_launch(planet, GameState.ship_stats())
 	_launch.disabled = not launchable
-	_launch.text = "DECOLAR!  [Enter]" if launchable else "nave fraca: melhore Motor e Gasolina"
+	_launch.text = "DECOLAR!" if launchable else "nave fraca: melhore Motor e Gasolina"
 	_clear(_body)
 	_ship_view = null
 	match _tab:
@@ -182,7 +182,7 @@ func _fill_tabs() -> void:
 			for c: StringName in [&"font_color", &"font_hover_color", &"font_pressed_color"]:
 				b.add_theme_color_override(c, UiKit.color("gold"))
 		if locked:
-			b.modulate = Color(0.75, 0.75, 0.82)
+			UiKit.set_locked(b)
 		b.pressed.connect(func() -> void: _set_tab(t))
 		_tabs.add_child(b)
 
@@ -297,7 +297,7 @@ func _can_afford(id: String) -> bool:
 
 
 ## Cartao de peca: figura + nome e degrau (I, II...) + o que melhora | 10 bolinhas do degrau | botao de preco |
-## "faltam N: Motor III". Passar o mouse faz a peca brilhar na nave.
+## "mais N para Motor 3". Passar o mouse faz a peca brilhar na nave.
 func _part_card(id: String) -> PanelContainer:
 	var u := EconMath._find("upgrades", id)
 	var lv := int(GameState.levels.get(id, 0))
@@ -337,7 +337,7 @@ func _part_card(id: String) -> PanelContainer:
 	names.add_theme_constant_override(&"separation", 0)
 	top.add_child(names)
 	var title := Label.new()
-	title.text = "%s %s" % [u["name"], RoadText.ROMAN[mini(st, RoadText.ROMAN.size() - 1)]]
+	title.text = "%s %s" % [u["name"], RoadText.STAGE_NAMES[mini(st, RoadText.STAGE_NAMES.size() - 1)]]
 	names.add_child(title)
 	var does := Label.new()
 	does.text = RoadText.PART_DOES[id]
@@ -374,7 +374,7 @@ func _part_card(id: String) -> PanelContainer:
 	if maxed:
 		nxt.text = "peça completa!"
 	elif st + 1 < stages:
-		nxt.text = "faltam %d: %s %s" % [RoadText.STAGE - in_st, u["name"], RoadText.ROMAN[st + 1]]
+		nxt.text = "mais %d para %s %s" % [RoadText.STAGE - in_st, u["name"], RoadText.STAGE_NAMES[st + 1]]
 	else:
 		nxt.text = "faltam %d para completar" % (mx - lv)
 	box.add_child(nxt)
@@ -421,7 +421,7 @@ func _buy_part(id: String, n: int) -> void:
 	if stage_up:
 		var name := str(EconMath._find("upgrades", id)["name"])
 		_show_toast(UiKit.icon(RoadText.PART_ICON[id]), "degrau novo!", "%s completa!" % name if after >= mx
-				else "%s %s!" % [name, RoadText.ROMAN[mini(after / RoadText.STAGE, RoadText.ROMAN.size() - 1)]])
+				else "%s %s!" % [name, RoadText.STAGE_NAMES[mini(after / RoadText.STAGE, RoadText.STAGE_NAMES.size() - 1)]])
 
 
 ## Habilidades (Estabilizador, Turbo): vem prontas pela estrada. Tem: a tecla que usa. Nao tem: cadeado + estrelas.
@@ -445,8 +445,19 @@ func _ability_row() -> HBoxContainer:
 			b.tooltip_text += "\nsegure %s no voo" % key_txt
 		else:
 			var stop := EconMath.road_stop(id)
-			b.text = "%s  %d" % [u["name"], int(stop.get("stars", 0))]
-			b.modulate = Color(0.7, 0.7, 0.78)
+			b.text = "%s %d    " % [u["name"], int(stop.get("stars", 0))]   # bloqueado: "Turbo 7 *"; espacos = lugar da estrela
+			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+			var star := _kid_rect("star_on", 12)
+			star.anchor_left = 1.0
+			star.anchor_right = 1.0
+			star.anchor_top = 0.5
+			star.anchor_bottom = 0.5
+			star.offset_left = -17.0
+			star.offset_right = -5.0
+			star.offset_top = -6.0
+			star.offset_bottom = 6.0
+			b.add_child(star)
+			UiKit.set_locked(b)
 			b.tooltip_text += "\nvem na estrada com %d estrelas" % int(stop.get("stars", 0))
 			b.pressed.connect(func() -> void: _toggle_balloon(id))
 		row.add_child(b)
@@ -454,7 +465,7 @@ func _ability_row() -> HBoxContainer:
 
 
 ## Recordes pessoais numa linha (icone + valor; nome no tooltip). null se ainda nao ha recorde.
-func _records_row() -> HBoxContainer:
+func _records_row() -> VBoxContainer:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 6)
@@ -473,7 +484,18 @@ func _records_row() -> HBoxContainer:
 		item.tooltip_text = "recorde: " + str(info[0])
 		item.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(item)
-	return row if row.get_child_count() > 0 else null
+	if row.get_child_count() <= 1:                             # so o trofeu: ainda sem recorde
+		row.free()
+		return null
+	var col := VBoxContainer.new()                             # rotulo em cima (sem alargar a coluna do meio)
+	col.add_theme_constant_override(&"separation", 0)
+	var title := Label.new()                                   # a linha de icones sozinha nao dizia o que era
+	title.text = "seus recordes"
+	title.theme_type_variation = &"DimLabel"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(title)
+	col.add_child(row)
+	return col
 
 
 # --- aba REPUTACAO (v14) ----------------------------------------------------------------------------------------
@@ -539,8 +561,7 @@ func _rep_card(kind: String, open: bool) -> PanelContainer:
 	var info := Label.new()
 	info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if not open:
-		face.modulate = Color(0, 0, 0, 0.6)
-		card.modulate = Color(0.7, 0.7, 0.78)
+		UiKit.silhouette(face, Color("#3e3546"))
 		info.text = "na estrada: %d" % int(EconMath.road_stop(kind + "1").get("stars", 0))
 		info.theme_type_variation = &"DimLabel"
 		right.add_child(info)
@@ -597,10 +618,6 @@ func _assist_card(id: String) -> PanelContainer:
 	card.set_meta(&"row_key", "up:" + id)
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.tooltip_text = str(RoadText.ASSIST_TIP.get(id, ""))
-	if not owned:
-		card.modulate = Color(0.62, 0.62, 0.7)
-	elif not on:
-		card.modulate = Color(0.8, 0.8, 0.85)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override(&"separation", 1)
 	card.add_child(box)
@@ -612,6 +629,8 @@ func _assist_card(id: String) -> PanelContainer:
 	var pic := AssistIcon.new(id)
 	pic.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(pic)
+	if not (owned and on):                                     # desligada/bloqueada: figura na rampa fria (paleta)
+		UiKit.set_locked(pic)
 	var tip := Label.new()
 	tip.text = str(RoadText.ASSIST_SHORT.get(id, ""))
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD
@@ -642,7 +661,7 @@ func _assist_card(id: String) -> PanelContainer:
 		l.text = "na estrada: %d" % int(stop.get("stars", 0))
 		l.theme_type_variation = &"MoneyLabel"
 		lock.add_child(l)
-		lock.add_child(_kid_rect("star_on", 10))
+		lock.add_child(_kid_rect("star_on", 12))
 		box.add_child(lock)
 		card.gui_input.connect(func(ev: InputEvent) -> void:
 			if ev is InputEventMouseButton and ev.pressed and ev.button_index == MOUSE_BUTTON_LEFT:
@@ -669,7 +688,7 @@ func _add_fleet() -> void:
 		top.add_child(_fleet_card("fleet", "drone", "Drone %d/10" % n, "faz entregas sozinho e traz moedas"))
 		var ap := _fleet_card("autopilot", "drone_coin", "Piloto automático", "os drones trazem mais moedas")
 		if not (GameState.road_reached.has("autopilot") and n > 0):
-			ap.modulate = Color(0.62, 0.62, 0.7)
+			UiKit.set_locked(ap)
 		top.add_child(ap)
 	else:
 		var msg := VBoxContainer.new()
@@ -697,7 +716,7 @@ func _add_fleet() -> void:
 		d.size = Vector2(24, 24)
 		holder.add_child(d)
 		if i >= n:
-			d.modulate = Color(0, 0, 0, 0.35)
+			UiKit.silhouette(d, Color("#3e3546"))                  # vaga vazia: sombra do drone
 		else:
 			var tw := d.create_tween().set_loops()
 			tw.tween_property(d, "position:y", -2.0, 0.7 + 0.05 * i).set_trans(Tween.TRANS_SINE)
@@ -1006,5 +1025,5 @@ func _num(v: float) -> String:
 	if v >= 1000.0:
 		return EconMath.fmt(v)
 	if v < 10.0:
-		return "%.2f" % v
-	return str(int(v)) if is_equal_approx(v, roundf(v)) else "%.1f" % v
+		return ("%.2f" % v).replace(".", ",")
+	return str(int(v)) if is_equal_approx(v, roundf(v)) else ("%.1f" % v).replace(".", ",")

@@ -18,6 +18,8 @@ signal end_requested
 const TIERS := ["normal", "narrow", "tight"]
 ## Nomes das distancias de um ratinho, do mais perto ao mais longe (2 opcoes = perto/longe).
 const DIST_NAMES := ["perto", "médio", "longe"]
+## Tamanho da plataforma em palavra de crianca ("estreita" e "apertada" pareciam a mesma coisa).
+const TIER_NAMES := {"normal": "grande", "narrow": "média", "tight": "pequena"}
 const CHIP := Vector2(35, 50)
 const OPTION := Vector2(124, 17)
 const CUT_COIN := Rect2(6, 9, 12, 12)
@@ -168,7 +170,7 @@ func _process(delta: float) -> void:
 		return
 	if end_armed > 0.0:
 		end_armed -= delta
-		_set_hint("E de novo para encerrar o run (o que você ganhou fica)", &"MoneyLabel")
+		_set_hint("E de novo para terminar a viagem (o que você ganhou fica)", &"MoneyLabel")
 	elif hint_flash > 0.0:
 		hint_flash -= delta
 		_set_hint("ACEITE UMA MISSÃO PRIMEIRO!", &"BadLabel" if fmod(hint_flash, 0.4) > 0.2 else &"MoneyLabel")
@@ -219,7 +221,7 @@ func _build_chips() -> void:
 			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			tr.texture = TalkArt.face(kind) if part == "face" else UiKit.kid("pin" if open else "pin_off")
 			if part == "face" and not open:                    # ainda nao liberado: silhueta sem cor
-				tr.modulate = Color(UiKit.color("purple"), 1.0) * Color(0.55, 0.5, 0.65)
+				UiKit.silhouette(tr, Color("#6b3e75"))
 			pin.add_child(tr)
 		var prize := Label.new()
 		prize.name = "Prize"
@@ -242,7 +244,8 @@ func _build_chips() -> void:
 ## Premio do pedido marcado no rostinho (cinza se o gas nao chega; vazio se ainda nao liberado).
 func _update_chip(kind: String) -> void:
 	var prize := _chips[kind].get_node("Box/Prize") as Label
-	if not _groups.has(kind):
+	prize.visible = _groups.has(kind) and _groups.size() > 1  # um ratinho so: o premio ja esta em "Voce ganha"
+	if not prize.visible:
 		prize.text = ""
 		return
 	var g: Array = _groups[kind]
@@ -289,10 +292,10 @@ func _show_talk(talk: bool) -> void:
 		_pics.remove_child(c)
 		c.queue_free()
 	if _peek != "":                                            # bloqueado: silhueta + aviso
-		_mouse.modulate = Color(0.25, 0.2, 0.3)
+		UiKit.silhouette(_mouse, Color("#3e3546"))
 		_mouse.play(&"idle")
 		_ask.text = "Ainda não liberado!"
-		_rule.text = "Junte estrelas na oficina."
+		_rule.text = "Junte estrelas para liberar."
 		_cat.play(&"idle")
 		_cat_balloon.visible = false
 		_columns.modulate.a = 0.0                              # some sem mudar o tamanho da janela
@@ -300,7 +303,7 @@ func _show_talk(talk: bool) -> void:
 		_set_gain_visible(false)
 		_place_balloons()
 		return
-	_mouse.modulate = Color.WHITE
+	_mouse.material = null
 	_columns.modulate.a = 1.0
 	_set_gain_visible(true)
 	var i := selected_offer()
@@ -394,7 +397,7 @@ func _fill_columns() -> void:
 		_add_column("Distância", opts)
 	var opts_t: Array = []
 	for t: String in TIERS:
-		opts_t.append({"key": "tier:" + t, "text": str(EconMath.pad_tier(t)["name"]), "on": t == info["tier"], "ok": true,
+		opts_t.append({"key": "tier:" + t, "text": str(TIER_NAMES.get(t, EconMath.pad_tier(t)["name"])), "on": t == info["tier"], "ok": true,
 				"do": _choose.bind(t, int(info["mission"]["star"]))})
 	_add_column("Tamanho da plataforma", opts_t)
 	var stars: Array[int] = _run.stars_for(i)
@@ -442,9 +445,10 @@ func _add_column(title: String, opts: Array) -> void:
 			b.add_child(row)
 		else:
 			b.text = str(o["text"])
-			if not o["ok"]:                                    # o gas pode nao dar: vermelho (legivel aceso ou nao)
+			if not o["ok"]:                                    # o gas pode nao dar: diz o motivo, em cor de alerta legivel
+				b.text += ": falta gás"
 				for c: StringName in [&"font_color", &"font_hover_color", &"font_focus_color", &"font_pressed_color"]:
-					b.add_theme_color_override(c, UiKit.color("crimson") if o["on"] else UiKit.color("lilac_grey"))
+					b.add_theme_color_override(c, UiKit.color("crimson") if o["on"] else UiKit.color("peach"))
 		b.pressed.connect(o["do"])
 		col.add_child(b)
 		_option_buttons[o["key"]] = b
