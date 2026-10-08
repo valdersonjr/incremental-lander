@@ -40,9 +40,10 @@ layout_mode = 2
 theme_override_constants/separation = 3
 
 [node name="Title" type="Label" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"TitleLabel"
-text = "FIM DO RUN"
+text = "ACABOU O GÁS!"
 horizontal_alignment = 1
 
 [node name="Reason" type="Label" parent="Center/Panel/VBox"]

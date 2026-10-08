@@ -8,6 +8,7 @@ signal continue_requested
 ## Segundos ate o botao ganhar foco (Espaco do propulsor nao fecha o resumo sem querer; Enter vale na hora).
 const FOCUS_DELAY := 0.4
 
+@onready var _title: Label = %Title
 @onready var _reason: Label = %Reason
 @onready var _rows: VBoxContainer = %Rows
 @onready var _continue: Button = %Continue
@@ -20,7 +21,9 @@ func _ready() -> void:
 
 func show_summary(summary: Dictionary) -> void:
 	var reason := str(summary["reason"])
+	_title.text = _title_text(reason)
 	_reason.text = _reason_text(reason)
+	_reason.visible = not _reason.text.is_empty()
 	_reason.theme_type_variation = &"BadLabel" if reason.begins_with("batida") else &"DimLabel"
 	for c in _rows.get_children():
 		_rows.remove_child(c)
@@ -144,9 +147,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		continue_requested.emit()
 
 
+## Titulo da janela conforme o motivo do fim (o comum e o gas acabar).
+func _title_text(reason: String) -> String:
+	if reason.begins_with("batida"):
+		return "A NAVE BATEU!"
+	return {"sem_gas": "ACABOU O GÁS!", "encerrado": "FIM DA VIAGEM",
+			"sem_alcance": "O GÁS NÃO DÁ!"}.get(reason, "ACABOU O GÁS!")
+
+
+## Detalhe sob o titulo (vazio quando o titulo ja diz tudo).
 func _reason_text(reason: String) -> String:
 	if reason.begins_with("batida"):
-		return "a nave bateu: " + UiKit.crash_text(reason.get_slice(":", 1))
-	return {"sem_gas": "acabou o gás", "encerrado": "run encerrado",
+		return UiKit.crash_text(reason.get_slice(":", 1))
+	return {"sem_gas": "", "encerrado": "",
 			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave"}.get(
 			reason, reason)
