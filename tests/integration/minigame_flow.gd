@@ -147,7 +147,7 @@ func _ready() -> void:
 	bo._tick_minigame()
 	_check("bolhas_garra_pega_o_bau", bo.chest_got and bo._tow.mass > 0.5 and bo.minigame_got == 1)
 	bo._tow.pos = Vector2((float(bo._water["x0"]) + float(bo._water["x1"])) * 0.5, float(bo._water["y"]) + 20.0)
-	for i in 60:
+	for i in 90:                                               # wet_s da ★2 = 1,1 s
 		bo._tow.pos.y = float(bo._water["y"]) + 20.0
 		bo._tick_minigame()
 	_check("bolhas_bau_no_mar_molha", bo.chest_wet and bo.failed.has("tow"))

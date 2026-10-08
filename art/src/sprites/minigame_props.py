@@ -167,12 +167,49 @@ def puff() -> Canvas:
     return k
 
 
+def seed() -> Canvas:
+    """Semente de dente-de-leao (Jardim, 7x9): guarda-chuva de fiapos brancos + sementinha. Efeito: sem contorno.
+    Viaja com o vento (auditoria 2026-10-07: o vento era invisivel)."""
+    k = Canvas(7, 9)
+    k.paint([".w.w.w.",
+             "w.www.w",
+             ".wwwww.",
+             "...w...",
+             "...l...",
+             "...l...",
+             "...l...",
+             "...h...",
+             "...c..."], {"w": "white", "l": "lilac_grey", "h": "honey", "c": "copper"})
+    return k
+
+
+def cheese() -> Canvas:
+    """Queijinho da trilha da Lua (13x11): cunha com face de cima clara e furos redondos 2x2 (o que diz "queijo"),
+    cores do montinho de queijo da Lua."""
+    k = Canvas(13, 11)
+    k.paint(["..........L.",
+             "........LLLG",
+             "......LLLGGG",
+             "....LLLGGGGG",
+             "..LLLGGGGGGG",
+             "LLGGGGGGGGGG",
+             "GGGGGGGGGGGA",
+             "GGGGGGGGGGAA",
+             "AAAAAAAAAAAA"], {"L": "lemon", "G": "gold", "A": "amber"}, x=0, y=1)
+    for x, y in ((2, 7), (6, 6), (9, 4), (8, 8)):
+        k.rect(x, y, 2, 2, "amber")
+        k.px(x + 1, y + 1, "copper")
+    k.outline("ink")
+    return k
+
+
 def build() -> dict:
     items = {
         "sheep0": sheep(0), "sheep1": sheep(1), "chest": chest(), "chest_open": chest(True), "hook": hook(),
         "cap56": cap(56), "cap44": cap(44), "cap36": cap(36),
         "bloom_top": bloom("pink", "rose", True), "bloom_bot": bloom("violet", "purple", False),
         "bubble3": bubble(3), "bubble2": bubble(2), "puff": puff(),
+        "seed": seed(), "cheese": cheese(),
     }
     return items
 

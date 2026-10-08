@@ -253,6 +253,17 @@ static func _add_basin(ridge: PackedVector2Array, a: Dictionary, b: Dictionary, 
 			break
 		if absf(dx) < w:
 			ridge[j].y += depth * (0.5 + 0.5 * cos(PI * dx / w))
+	var floor_m := float(shape.get("basin_floor_m", 0.0))
+	if floor_m <= 0.0:
+		return
+	# fundo minimo (Bolhas: o mar precisa de vale): no meio a cratera chega a floor_m abaixo da ponta mais alta
+	var floor_y := maxf(height_at(ridge, float(a["x"])), height_at(ridge, float(b["x"]))) + WorldConfig.m_to_px(floor_m)
+	for j in range(_first_at_or_after(ridge, mid - w), ridge.size()):
+		var dx := ridge[j].x - mid
+		if dx >= w:
+			break
+		if absf(dx) < w:
+			ridge[j].y = maxf(ridge[j].y, lerpf(ridge[j].y, floor_y, 0.5 + 0.5 * cos(PI * dx / w)))
 
 
 ## Pico (lift > 0) ou vale (lift < 0) em volta da plataforma: topo plano + encostas com side_slope. No nivel (lift 0):

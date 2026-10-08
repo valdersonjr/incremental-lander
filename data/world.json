@@ -773,11 +773,15 @@
       "stem_half_m": 7.0,
       "wind_mps2": [
         1.5,
-        2.5,
-        3.5
+        2.3,
+        2.8
       ],
       "wind_period_s": 5.0,
-      "bump_back": 0.5
+      "bump_back": 0.5,
+      "bump_calm_s": 0.3,
+      "seeds": 16,
+      "seed_px_per_mps2": 20.0,
+      "audit_notes": "2026-10-07 auditoria: vento visivel (sementes andam a vento x seed_px_per_mps2 px/s), ★3 3,5 -> 2,8 (pressoes empilhadas), sem vento por bump_calm_s depois de bater; o vao nunca e cortado pelo chao (sobe inteiro)."
     },
     "bolhas": {
       "name": "Garra do baú",
@@ -787,7 +791,19 @@
       "hook_mass": 0.15,
       "grab_m": 10.0,
       "water_below_m": 18.0,
-      "wet_s": 0.6,
+      "wet_s": [
+        1.6,
+        1.1,
+        0.8
+      ],
+      "rope_m": 30.0,
+      "basin_floor_m": 50.0,
+      "chest_depth_m": [
+        6.0,
+        14.0,
+        24.0
+      ],
+      "audit_notes": "2026-10-07 auditoria: a corda curta da ★1 (18 m, missions.tow) obrigava a pairar a ~14 m do mar = estrela mais facil era a mais dificil. Agora corda rope_m igual em todas e a dificuldade vem da profundidade do bau (chest_depth_m, no ponto mais fundo do vale; vale raso = o mar sobe ate a plataforma mais baixa) e do tempo para tirar da agua (wet_s, com o bau piscando amarelo -> vermelho).",
       "bubbles": {
         "count": [
           2,

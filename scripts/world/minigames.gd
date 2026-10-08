@@ -85,6 +85,20 @@ static func wind_at(t: float, strength: float, period_s: float) -> float:
 	return strength * sin(TAU * t / maxf(period_s, 0.1))
 
 
+## Bolhas: x (px) do ponto mais fundo do relevo entre x0 e x1 (passo de 4 px; empate = o mais perto do meio).
+static func deepest_x(ridge: PackedVector2Array, x0: float, x1: float) -> float:
+	var best := (x0 + x1) * 0.5
+	var best_y := TerrainGen.height_at(ridge, best)
+	var x := x0
+	while x <= x1:
+		var y := TerrainGen.height_at(ridge, x)
+		if y > best_y + 0.5:
+			best = x
+			best_y = y
+		x += 4.0
+	return best
+
+
 ## A nave (centro, px) encostou no queijinho?
 static func touches(pos_px: Vector2, coin_px: Vector2, radius_px: float) -> bool:
 	return pos_px.distance_to(coin_px) <= radius_px
