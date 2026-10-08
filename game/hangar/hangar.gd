@@ -512,6 +512,7 @@ func _rep_card(kind: String, open: bool) -> PanelContainer:
 	row.add_theme_constant_override(&"separation", 5)
 	card.add_child(row)
 	var face := _kid_rect("rat_" + kind, 24)
+	face.texture = TalkArt.face(kind)
 	row.add_child(face)
 	var mid := VBoxContainer.new()
 	mid.add_theme_constant_override(&"separation", 0)
@@ -799,7 +800,7 @@ func _toggle_balloon(stop_id: String) -> void:
 	pic.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if str(stop["type"]) == "mission":                         # o ratinho de corpo inteiro
 		var kind := str(RoadText._node(stop_id)["kind"])
-		var frames: SpriteFrames = load("res://assets/sprites/talk_mouse_%s_frames.tres" % kind)
+		var frames := TalkArt.frames(kind, GameState.current_planet)
 		pic.texture = frames.get_frame_texture(&"idle", 0)
 	else:
 		pic.texture = RoadText.stop_icon(stop)

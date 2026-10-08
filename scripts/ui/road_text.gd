@@ -65,7 +65,7 @@ static func stop_icon(stop: Dictionary) -> Texture2D:
 		"final":
 			return UiKit.kid("star_on")
 		"mission":
-			return UiKit.kid("rat_" + str(_node(id)["kind"]))
+			return TalkArt.face(str(_node(id)["kind"]))
 		"landscape":
 			return UiKit.kid(id)
 		"complete":

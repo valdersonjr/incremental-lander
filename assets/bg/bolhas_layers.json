@@ -1,0 +1,54 @@
+{
+  "notes": "Gerado por art/src/bg/world_scene.py (pixel-art, estilo fofo, Mar das Bolhas). Posi\u00e7\u00f5es em px na tela 640x360.",
+  "horizon": 262,
+  "planet_pos": [
+    400,
+    68
+  ],
+  "far_y": 0,
+  "mid_y": 0,
+  "plain_y": 267,
+  "deep_color": "#9e4539",
+  "strip_depth": 26,
+  "body_texture": "res://assets/tiles/bolhas_body.png",
+  "depth_texture": "res://assets/tiles/bolhas_depth.png",
+  "depth_depth": 176,
+  "strip_width": 128,
+  "face_slope": 0.15,
+  "rock_cell": [
+    16,
+    8
+  ],
+  "rock_base_row": 6,
+  "rock_count": 6,
+  "rock_widths": [
+    4,
+    5,
+    6,
+    8,
+    11,
+    7
+  ],
+  "anim": {
+    "sky": {
+      "frames": 6,
+      "ms": 220
+    },
+    "mid": {
+      "frames": 4,
+      "ms": 140
+    },
+    "plain": {
+      "frames": 4,
+      "ms": 140
+    },
+    "clouds": {
+      "frames": 4,
+      "ms": 300
+    }
+  },
+  "clouds": {
+    "y": 0,
+    "speed": 3
+  }
+}

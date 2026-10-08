@@ -36,7 +36,7 @@ func _ready() -> void:
 
 ## Apresenta o tipo de missao kind (heavy, soft, fast, passenger, tow, double).
 func show_kind(kind: String) -> void:
-	_face.texture = UiKit.kid("rat_" + kind)
+	_face.texture = TalkArt.face(kind)
 	_say.text = MissionText.balloon({"kind": kind, "star": 1, "parts": [{"kind": kind, "star": 1}]})
 	_name.text = str(EconMath.mission_kind(kind)["name"])
 	var pics: Array = PICS.get(kind, ["box", ""])

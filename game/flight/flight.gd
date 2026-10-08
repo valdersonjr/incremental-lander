@@ -58,7 +58,8 @@ var chest_wet := false                              # Bolhas: o bau molhou (falh
 var _chest_pos := Vector2.ZERO
 var _chest_sprite: Sprite2D = null
 var _water := {}                                    # Bolhas: {x0, x1, y} (px)
-var _water_node: ColorRect = null
+var _water_node: Node2D = null
+var _bubble_sprites: Array[Sprite2D] = []
 var _bubbles: Array = []                            # Bolhas: colunas {x, half}
 var _wet_t := 0.0
 var _wind_t := 0.0
@@ -454,10 +455,8 @@ func _setup_minigame() -> void:
 		var pad: Dictionary = terrain.pads[target_pad_id]
 		lander.ice_pad_id = target_pad_id
 		lander.ice_vx_mult = float(cfg.get("ice_vx_mult", 4.0))
-		var ice := ColorRect.new()                             # a pista de gelo inteira (placeholder ate a arte)
-		ice.color = Color("#8ff8e2")
-		ice.position = Vector2(float(pad["x"]) - float(pad["half_width"]), float(pad["y"]) - 3.0)
-		ice.size = Vector2(float(pad["half_width"]) * 2.0, 3.0)
+		var ice := MinigameArt.tiled("ice", Rect2(float(pad["x"]) - float(pad["half_width"]), float(pad["y"]) - 4.0,
+				float(pad["half_width"]) * 2.0, 4.0))               # a pista de gelo inteira
 		add_child(ice)
 		_rings.append(ice)
 		var r := WorldConfig.m_to_px(float((cfg["ring_m"] as Dictionary).get(target_tier, 46.0)))
@@ -479,7 +478,7 @@ func _setup_minigame() -> void:
 		for x: float in Minigames.spread_x(a, b, n):
 			var p := Vector2(x, TerrainGen.height_at(terrain.ridge, x) - WorldConfig.m_to_px(rng.randf_range(hv[0], hv[1])))
 			var sp := Sprite2D.new()
-			sp.texture = UiKit.kid("bunny")
+			sp.texture = MinigameArt.tex("sheep%d" % (_sheep.size() % 2))
 			sp.position = p
 			add_child(sp)
 			move_child(sp, lander.get_index())
@@ -491,20 +490,21 @@ func _setup_minigame() -> void:
 			x += (rng.randf() - 0.5) * half
 			_updrafts.append({"x": x, "half": half})
 			var gy := TerrainGen.height_at(terrain.ridge, x)
-			for k in 3:                                          # linhas de ar subindo (placeholder ate a arte)
-				var ln := Line2D.new()
-				ln.width = 1.0
-				ln.default_color = Color("#eaaded")
-				var lx := x + (k - 1) * half * 0.6
-				var top := gy - WorldConfig.m_to_px(float(up["height_m"]))
-				var y := gy - 4.0
-				while y > top:
-					ln.add_point(Vector2(lx, y))
-					ln.add_point(Vector2(lx, y - 6.0))
-					y -= 18.0
-				add_child(ln)
-				move_child(ln, lander.get_index())
-				_updraft_lines.append(ln)
+			var top := gy - WorldConfig.m_to_px(float(up["height_m"]))
+			var y := gy - 10.0
+			var k := 0
+			while y > top:                                       # lufadas de vento subindo (sobem no _tick_sheep)
+				var puff := Sprite2D.new()
+				puff.texture = MinigameArt.tex("puff")
+				puff.position = Vector2(x + (float(k % 3) - 1.0) * half * 0.5, y)
+				puff.set_meta("x0", puff.position.x)
+				puff.set_meta("bottom", gy - 10.0)
+				puff.set_meta("top", top)
+				add_child(puff)
+				move_child(puff, lander.get_index())
+				_updraft_lines.append(puff)
+				y -= 34.0
+				k += 1
 
 
 ## Cogumelos: chapeus-mola em escada entre as plataformas (placeholder desenhado ate a arte).
@@ -520,25 +520,12 @@ func _setup_caps(cfg: Dictionary, star: int) -> void:
 		var gy := TerrainGen.height_at(terrain.ridge, x)
 		var cy := gy - top_h * (0.6 + 0.4 * float(i + 1) / float(n))   # escada subindo ate o alvo
 		var node := Node2D.new()
-		var stem := ColorRect.new()
-		stem.color = Color("#fdcbb0")
-		stem.position = Vector2(x - 4.0, cy)
-		stem.size = Vector2(8.0, gy - cy)
-		node.add_child(stem)
-		var cap := Polygon2D.new()
-		var pts := PackedVector2Array()
-		for k in 13:
-			var t := PI * float(k) / 12.0
-			pts.append(Vector2(x - cos(t) * half, cy - sin(t) * half * 0.5))
-		cap.polygon = pts
-		cap.color = Color("#e83b3b")
+		node.add_child(MinigameArt.tiled("stalk", Rect2(x - 4.0, cy - 2.0, 8.0, gy - cy + 6.0)))
+		var cap := Sprite2D.new()
+		cap.texture = MinigameArt.tex(MinigameArt.cap_for(half * 2.0))
+		cap.centered = false
+		cap.position = Vector2(roundf(x - cap.texture.get_width() * 0.5), cy - cap.texture.get_height() + 2.0)
 		node.add_child(cap)
-		for d in [-0.5, 0.0, 0.5]:
-			var dot := ColorRect.new()
-			dot.color = Color("#ffffff")
-			dot.position = Vector2(x + d * half - 2.0, cy - half * 0.3 - 2.0)
-			dot.size = Vector2(4, 4)
-			node.add_child(dot)
 		add_child(node)
 		move_child(node, lander.get_index())
 		_caps.append({"x": x, "y": cy, "half": half, "node": node})
@@ -560,19 +547,13 @@ func _setup_stems(cfg: Dictionary, star: int) -> void:
 		var top := cy - gap * 0.5
 		var bot := minf(cy + gap * 0.5, gy - 10.0)
 		var node := Node2D.new()
-		for seg: Array in [[top - 1200.0, top], [bot, gy]]:
-			var r := ColorRect.new()
-			r.color = Color("#239063")
-			r.position = Vector2(x - half, float(seg[0]))
-			r.size = Vector2(half * 2.0, maxf(0.0, float(seg[1]) - float(seg[0])))
-			node.add_child(r)
-		for edge: Array in [[top, "#ed8099"], [bot, "#a884f3"]]:   # flor na borda do vao
-			var fl := Polygon2D.new()
-			var pts := PackedVector2Array()
-			for k in 10:
-				pts.append(Vector2(x, float(edge[0])) + Vector2.from_angle(TAU * k / 10.0) * half * 1.8)
-			fl.polygon = pts
-			fl.color = Color(str(edge[1]))
+		for seg: Array in [[top - 1200.0, top], [bot, gy + 4.0]]:
+			var h := maxf(0.0, float(seg[1]) - float(seg[0]))
+			node.add_child(MinigameArt.tiled("stem", Rect2(roundf(x - half), float(seg[0]), half * 2.0, h)))
+		for edge: Array in [[top, "bloom_top", 4.0], [bot, "bloom_bot", -4.0]]:   # flor na borda do vao
+			var fl := Sprite2D.new()
+			fl.texture = MinigameArt.tex(str(edge[1]))
+			fl.position = Vector2(roundf(x), float(edge[0]) + float(edge[2]))
 			node.add_child(fl)
 		add_child(node)
 		move_child(node, lander.get_index())
@@ -590,23 +571,38 @@ func _setup_claw(cfg: Dictionary, star: int) -> void:
 	var x1 := maxf(float(a["x"]), float(b["x"])) - float(b["half_width"])
 	var wy := maxf(float(a["y"]), float(b["y"])) + WorldConfig.m_to_px(float(cfg.get("water_below_m", 18.0)))
 	_water = {"x0": x0, "x1": x1, "y": wy}
-	_water_node = ColorRect.new()
-	_water_node.color = Color("#0b8a8f")
-	_water_node.position = Vector2(x0, wy)
-	_water_node.size = Vector2(maxf(0.0, x1 - x0), 2000.0)
+	_water_node = Node2D.new()
+	var top := MinigameArt.tiled("sea", Rect2(x0, wy - 2.0, maxf(0.0, x1 - x0), 12.0))
+	_water_node.add_child(top)
+	var deep := ColorRect.new()
+	deep.color = Color(str(MinigameArt.meta()["sea_deep"]))
+	deep.position = Vector2(x0, wy + 10.0)
+	deep.size = Vector2(maxf(0.0, x1 - x0), 2000.0)
+	_water_node.add_child(deep)
 	add_child(_water_node)
 	move_child(_water_node, terrain.get_index())               # atras do relevo: o mar so aparece nos vales
 	var cx := (float(a["x"]) + float(b["x"])) * 0.5
 	_chest_pos = Vector2(cx, minf(TerrainGen.height_at(terrain.ridge, cx), wy + 30.0) - 6.0)
 	_chest_sprite = Sprite2D.new()
-	_chest_sprite.texture = CargoArt.tex("gift")
+	_chest_sprite.texture = MinigameArt.tex("chest")
 	_chest_sprite.position = _chest_pos
 	add_child(_chest_sprite)
 	var bub: Dictionary = cfg["bubbles"]
 	var half := WorldConfig.m_to_px(float(bub["width_m"])) * 0.5
 	var n := int(Minigames.by_star(bub["count"], star))
+	var reach := WorldConfig.m_to_px(float(bub["height_m"]))
 	for i in n:
-		_bubbles.append({"x": lerpf(x0, x1, float(i + 1) / float(n + 1)), "half": half})
+		var bx := lerpf(x0, x1, float(i + 1) / float(n + 1))
+		_bubbles.append({"x": bx, "half": half})
+		for j in 6:                                            # bolhinhas subindo (anda no _tick_claw)
+			var bs := Sprite2D.new()
+			bs.texture = MinigameArt.tex("bubble3" if j % 2 else "bubble2")
+			bs.position = Vector2(bx + (float(j % 3) - 1.0) * half * 0.5, wy - reach * float(j) / 6.0)
+			bs.set_meta("x0", bs.position.x)
+			bs.set_meta("bottom", wy + 6.0)
+			bs.set_meta("top", wy - reach)
+			add_child(bs)
+			_bubble_sprites.append(bs)
 	chest_got = false
 	chest_wet = false
 	_wet_t = 0.0
@@ -622,6 +618,10 @@ func _clear_minigame() -> void:
 	_water_node = null
 	_water = {}
 	_bubbles.clear()
+	for b: Sprite2D in _bubble_sprites:
+		if is_instance_valid(b):
+			b.queue_free()
+	_bubble_sprites.clear()
 	for c: Dictionary in _stems:
 		if is_instance_valid(c["node"]):
 			(c["node"] as Node).queue_free()
@@ -683,6 +683,8 @@ func _tick_minigame() -> void:
 ## Nuvens: pega carneirinhos ao encostar (entram na fila), a fila segue a nave, encostar no chao perde o ultimo;
 ## dentro de uma corrente de ar a nave e empurrada para cima.
 func _tick_sheep() -> void:
+	_rise(_updraft_lines, 40.0)
+	_anim_sheep()
 	var cfg := Minigames.spec(planet_id)
 	var flying := lander.state == Lander.State.FLYING
 	var gy := TerrainGen.height_at(terrain.ridge, lander.global_position.x)
@@ -796,6 +798,7 @@ func _tick_stems() -> void:
 func _tick_claw() -> void:
 	if _water.is_empty():
 		return
+	_rise(_bubble_sprites, 30.0)
 	var cfg := Minigames.spec(planet_id)
 	var flying := lander.state == Lander.State.FLYING
 	var over_sea := lander.global_position.x > float(_water["x0"]) and lander.global_position.x < float(_water["x1"])
@@ -820,7 +823,7 @@ func _tick_claw() -> void:
 		var lv: Array = WorldConfig.load_config()["missions"]["tow"]["levels"]
 		_tow.mass = float(lv[clampi(int(mission.get("star", 1)), 1, lv.size()) - 1]["mass"])
 		_tow.radius_px = WorldConfig.m_to_px(float(WorldConfig.load_config()["missions"]["tow"]["radius_m"]))
-		_tow_sprite.texture = CargoArt.tex("gift")
+		_tow_sprite.texture = MinigameArt.tex("chest")
 		_chest_sprite.hide()
 		minigame_got = 1
 		Sound.sfx("crystal_3")
@@ -832,6 +835,29 @@ func _tick_claw() -> void:
 			chest_wet = true
 			_mission_failed("tow", "", _tow.pos)
 			_float_text("molhou!", _tow.pos + Vector2(0, -14))
+
+
+## Carneirinhos pulando (2 quadros), de frente para a nave quando estao na fila.
+func _anim_sheep() -> void:
+	var fr := int(Time.get_ticks_msec() / 250) % 2
+	for c: Dictionary in _sheep:
+		var sp := c["sprite"] as Sprite2D
+		if is_instance_valid(sp):
+			sp.texture = MinigameArt.tex("sheep%d" % fr)
+			sp.flip_h = bool(c["got"]) and lander.global_position.x > sp.position.x
+
+
+## Sobe as figurinhas (bolhas, lufadas) em laco entre as metas "bottom" e "top", balancando de lado.
+func _rise(nodes: Array, speed: float) -> void:
+	var dt := get_physics_process_delta_time()
+	for n: Variant in nodes:
+		var s := n as Node2D
+		if s == null or not is_instance_valid(s):
+			continue
+		var y := s.position.y - speed * dt
+		if y < float(s.get_meta("top")):
+			y = float(s.get_meta("bottom"))
+		s.position = Vector2(float(s.get_meta("x0")) + sin(y * 0.08) * 2.0, y)
 
 
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
@@ -944,7 +970,7 @@ func _setup_mission() -> void:
 		if planet_id == "bolhas":                              # v17: a corda comeca com a garra vazia (leve)
 			_tow.mass = float(Minigames.spec("bolhas").get("hook_mass", 0.15))
 			_tow.radius_px = 3.0
-			_tow_sprite.texture = UiKit.icon("gear")
+			_tow_sprite.texture = MinigameArt.tex("hook")
 		add_child(_tow_sprite)
 		_sync_tow_view()
 	if _rescue_star() > 0:

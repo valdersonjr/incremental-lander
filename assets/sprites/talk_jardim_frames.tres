@@ -1,0 +1,84 @@
+[gd_resource type="SpriteFrames" load_steps=11 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/talk_jardim.png" id="1_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
+atlas = ExtResource("1_tex")
+region = Rect2(55, 0, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3"]
+atlas = ExtResource("1_tex")
+region = Rect2(110, 0, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 70, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5"]
+atlas = ExtResource("1_tex")
+region = Rect2(55, 70, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6"]
+atlas = ExtResource("1_tex")
+region = Rect2(110, 70, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7"]
+atlas = ExtResource("1_tex")
+region = Rect2(165, 70, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 140, 55, 70)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_9"]
+atlas = ExtResource("1_tex")
+region = Rect2(55, 140, 55, 70)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 8.333,
+"texture": SubResource("AtlasTexture_1")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 6.667,
+"texture": SubResource("AtlasTexture_3")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 8.333
+}, {
+"frames": [{
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_4")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_5")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_6")
+}, {
+"duration": 2.143,
+"texture": SubResource("AtlasTexture_7")
+}],
+"loop": true,
+"name": &"talk",
+"speed": 7.143
+}, {
+"frames": [{
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_8")
+}, {
+"duration": 1.000,
+"texture": SubResource("AtlasTexture_9")
+}],
+"loop": true,
+"name": &"happy",
+"speed": 6.250
+}]

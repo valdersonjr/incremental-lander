@@ -72,6 +72,7 @@ size_flags_horizontal = 4
 mouse_filter = 2
 
 [node name="Bg" type="TextureRect" parent="Window/VBox/Stage"]
+unique_name_in_owner = true
 layout_mode = 0
 offset_right = 408.0
 offset_bottom = 112.0

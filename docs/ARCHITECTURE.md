@@ -304,3 +304,11 @@ game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember;
   (falhou = `fail_mult`). Testes: `tests/unit/world/test_minigames.gd`, integração `minigame_flow`; prévia
   `tests/visual/minigame_preview.tscn -- --world=<id>`; dev `--dev_world=<id>`.
 
+## Arte por mundo (Fase 18.5)
+- Fundo/terreno: `assets/bg/<mundo>_layers.json` + camadas (Backdrop/TerrainArt já carregam por id; sem `war`).
+- Minijogos: `MinigameArt` (`scripts/world/minigame_art.gd`) — `tex(nome)` do atlas `minigame_props`, `tiled(nome, rect)`
+  para talo/caule/mar/gelo, `cap_for(largura)`. `Flight._rise` anima bolhas e lufadas; `_anim_sheep` os carneirinhos.
+- Conversa: `TalkArt` (`scripts/ui/talk_art.gd`) — `frames(kind, planeta)` (Lua = ratinho do tipo; outros = morador
+  `talk_<mundo>`), `stage`, `ground`, `face(kind)` (rostinho 24x24; usado no HUD, painel, intro, hangar, Estrada).
+- Mapa: `WorldMap.planet_texture` recorta `assets/ui/map_planets.png` (open/locked/done, 60 px em 1x).
+

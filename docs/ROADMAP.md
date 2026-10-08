@@ -165,6 +165,13 @@
       (`minigames.bolhas.hook_mass`) e pega o baú ao encostar (vira carga com o peso da estrela); baú no mar por 0,6 s =
       molhou (Cabo falhou); nave no mar = splash; colunas de bolhas empurram nave e carga; mar atrás do relevo (só nos
       vales); chegou sem o baú = paga menos (2026-10-07). **18.4 completa: os 6 minijogos no voo** (figuras provisórias)
+- [x] 18.5 Arte visual dos 5 mundos (pixel-art, 2026-10-07): cenários com o kit da Lua por tema
+      (`art/src/bg/world_scene.py` → `assets/bg/<mundo>_*`, chão/pedras próprios), figuras dos minijogos
+      (`minigame_props.py`: carneirinho, chapéus-mola, caule + flores, mar, gelo, bolhas, baú, garra, lufada),
+      moradores de corpo inteiro na conversa + palco por mundo (`world_npcs.py`, `TalkArt`), rostinhos 24x24
+      (`kids npc_<mundo>`), planetinhas do Mapa em 1x (`map_planets.py`). Página de aprovação
+      `art/previews/mundos_arte/index.html` — **aguardando o usuário ver/jogar**
+- [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;
       sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito

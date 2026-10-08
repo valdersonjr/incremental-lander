@@ -525,7 +525,20 @@ NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on"
          "flame_s", "flame_b", "bar_s", "bar_b", "drop_b", "drop_s", "coin", "pad_s", "pad_b", "rock", "drone",
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
     + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
-    + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"] + ["land_" + n for n in LAND_PROFILES]
+    + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"] + ["land_" + n for n in LAND_PROFILES] \
+    + ["npc_" + w for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")]
+
+NPC_CROP = {"nuvens": (4, 1), "cogumelos": (4, 3), "sorvete": (4, 0), "jardim": (4, 0), "bolhas": (5, 8)}
+
+
+def npc_face(world: str) -> Canvas:
+    """Rostinho 24x24 do morador do mundo (Fase 18.5): recorte da cabeça do corpo inteiro (world_npcs.py, k=0.75)."""
+    sys.path.insert(0, "art/src/sprites")
+    import world_npcs as wn
+    m = wn.Npc(world, 0.75)
+    c = m.draw("happy") if world != "bolhas" else m.draw()
+    x, y = NPC_CROP[world]
+    return c.crop(x, y, CELL, CELL)
 
 
 def build() -> Canvas:
@@ -538,7 +551,8 @@ def build() -> Canvas:
         + [rep_badge.shield(True), rep_badge.shield(False)] \
         + [heart(True), heart(False)] \
         + [trophy()] \
-        + [landscape(n) for n in LAND_PROFILES]                     # paisagens do relevo na Estrada (2026-10-07)
+        + [landscape(n) for n in LAND_PROFILES] \
+        + [npc_face(w) for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")]   # moradores (Fase 18.5)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

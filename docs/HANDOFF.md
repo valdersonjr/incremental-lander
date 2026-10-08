@@ -9,9 +9,10 @@
   e save v6 por mundo. **18.3d ✅** hub: o jogo abre no Mapa (cartão do mundo
   com a Estrada, VOAR/NAVE, viagem animada ao completar). **18.4 ✅** os 6 minijogos no voo (Lua trilha · Nuvens fila +
   correntes · Cogumelos chapéu-mola · Sorvete curling · Jardim caules + vento · Bolhas garra + mar + bolhas), com testes
-  (`minigame_flow`) e prévia (`minigame_preview -- --world=<id>`). **Próximo**: o usuário jogar os mundos (sandbox libera
-  todos); 18.5 arte por mundo (cenário, moradores — hoje ratinhos/coelhinho provisórios —, carga, planetas do mapa) e
-  18.6 som, ambos com aprovação. Pendências: PROGRESSÃO ainda mostra a Estrada (duplicada com o cartão do Mapa); nave
+  (`minigame_flow`) e prévia (`minigame_preview -- --world=<id>`). **18.5 ✅** arte visual dos 5 mundos (cenários, figuras
+  dos minijogos, moradores + palcos da conversa, rostinhos, planetinhas do Mapa) — página
+  `art/previews/mundos_arte/index.html`, aguardando aprovação. **Próximo**: ajustes de arte pelo retorno do usuário;
+  18.6 som (o usuário pediu para ver depois). Pendências: PROGRESSÃO ainda mostra a Estrada (duplicada com o cartão do Mapa); nave
   fraca num mundo de gravidade alta não decola (avisar no Mapa); calibração do tempo de run do modelo.
 - **Fase 18 — Mundos novos (2026-10-07)**: plano aprovado (mundos paralelos, recordes por mundo + bônus de recorde,
   Estrada única com parada `world`, seletor). **18.1 ✅** o usuário ficou com os 5 conceitos de

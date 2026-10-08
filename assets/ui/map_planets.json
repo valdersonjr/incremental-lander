@@ -1,0 +1,29 @@
+{
+ "notes": "Gerado por art/src/ui/map_planets.py (pixel-art).",
+ "cell": 60,
+ "center": [
+  30,
+  33
+ ],
+ "radius": 22,
+ "names": [
+  "luna_open",
+  "luna_locked",
+  "luna_done",
+  "nuvens_open",
+  "nuvens_locked",
+  "nuvens_done",
+  "cogumelos_open",
+  "cogumelos_locked",
+  "cogumelos_done",
+  "sorvete_open",
+  "sorvete_locked",
+  "sorvete_done",
+  "jardim_open",
+  "jardim_locked",
+  "jardim_done",
+  "bolhas_open",
+  "bolhas_locked",
+  "bolhas_done"
+ ]
+}

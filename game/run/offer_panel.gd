@@ -68,8 +68,7 @@ var _talk_left := 0.0
 func _ready() -> void:
 	_board_y = _board.position.y
 	_dim.color = Color(UiKit.color("ink"), 0.55)
-	(%Ground as ColorRect).color = UiKit.color("amber")
-	(%GroundTop as ColorRect).color = UiKit.color("gold")
+	_apply_world()
 	_dots.color = UiKit.color("peach")
 	(%Line as ColorRect).color = UiKit.color("purple")
 	(%Coin as TextureRect).texture = _cut("coin", CUT_COIN)
@@ -89,7 +88,16 @@ func _ready() -> void:
 
 
 ## Mostra os pedidos do run com o gas que resta.
+## Palco e chao da conversa do mundo atual (Fase 18.5: cada mundo tem o seu).
+func _apply_world() -> void:
+	var g := TalkArt.ground(GameState.current_planet)
+	(%Ground as ColorRect).color = UiKit.color(str(g[0]))
+	(%GroundTop as ColorRect).color = UiKit.color(str(g[1]))
+	(%Bg as TextureRect).texture = TalkArt.stage(GameState.current_planet)
+
+
 func show_offers(run: RunState, gas_left: float) -> void:
+	_apply_world()
 	_run = run
 	_gas_left = gas_left
 	_accepting = false
@@ -209,7 +217,7 @@ func _build_chips() -> void:
 			var tr := TextureRect.new()
 			tr.name = part.capitalize()
 			tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			tr.texture = UiKit.kid("rat_" + kind if part == "face" else ("pin" if open else "pin_off"))
+			tr.texture = TalkArt.face(kind) if part == "face" else UiKit.kid("pin" if open else "pin_off")
 			if part == "face" and not open:                    # ainda nao liberado: silhueta sem cor
 				tr.modulate = Color(UiKit.color("purple"), 1.0) * Color(0.55, 0.5, 0.65)
 			pin.add_child(tr)
@@ -272,7 +280,7 @@ func _show_talk(talk: bool) -> void:
 	var kind := _peek if _peek != "" else _kind
 	if kind == "":
 		return
-	_mouse.sprite_frames = load("res://assets/sprites/talk_mouse_%s_frames.tres" % kind) as SpriteFrames
+	_mouse.sprite_frames = TalkArt.frames(kind, GameState.current_planet)
 	var fr := _mouse.sprite_frames.get_frame_texture(&"idle", 0)
 	_mouse.position = Vector2(408.0 - 30.0 - fr.get_width(), 112.0 - 6.0 - fr.get_height())
 	var cfr := _cat.sprite_frames.get_frame_texture(&"idle", 0)

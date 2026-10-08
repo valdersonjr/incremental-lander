@@ -10,7 +10,7 @@ signal fly_requested(planet_id: String)
 signal ship_requested
 signal menu_requested
 
-const BADGE := 24                                   # planetinha em pixel (arte da pecinha), mostrado em 2x
+const BADGE := 30                                   # meia celula do planetinha (assets/ui/map_planets.png, 60 px em 1x)
 const STARS := 46
 
 var _ids: Array[String] = []
@@ -250,36 +250,18 @@ func _info_row(id: String, is_open: bool) -> HBoxContainer:
 
 ## Planetinha 24x24 em pixel (ceu em cima, chao ondulado embaixo, pintinhas, contorno ink) nas cores
 ## world.json > terrain.planets.<id>.map; cinza quando fechado. (Placeholder ate a arte da 18.5.)
-static func planet_texture(id: String, locked: bool, done: bool = false) -> ImageTexture:
-	var cfg: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(id, {})
-	var cols: Array = cfg.get("map", ["#fca790", "#f68181", "#f9c22b"])
-	var img := Image.create(BADGE, BADGE, false, Image.FORMAT_RGBA8)
-	for y in BADGE:
-		for x in BADGE:
-			var d := Vector2(x + 0.5 - 12.0, y + 0.5 - 12.0).length()
-			if d > 10.5:
-				if done and d <= 12.0 and d > 11.0:              # mundo completo: anel dourado
-					img.set_pixel(x, y, Color("#f9c22b") if (x + y) % 2 == 0 else Color("#fbff86"))
-				continue
-			var c := Color(str(cols[0] if y < 10 else cols[1]))
-			var gy := 14 + roundi(sin(x / 3.5) * 1.5)
-			if y >= gy:
-				c = Color(str(cols[2]))
-				if (x * 7 + y * 3) % 11 == 0:
-					c = Color(str(cols[0]))
-			if d > 9.6:
-				c = Color("#2e222f")
-			elif locked:
-				var v := c.get_luminance()
-				c = Color(v, v, v)
-			img.set_pixel(x, y, c)
-	if done:                                                    # bandeirinha no alto
-		for y in range(0, 8):
-			img.set_pixel(18, y, Color("#2e222f"))
-		for y in range(0, 3):
-			for x in range(19, 23):
-				img.set_pixel(x, y, Color("#e83b3b"))
-	return ImageTexture.create_from_image(img)
+static func planet_texture(id: String, locked: bool, done: bool = false) -> Texture2D:
+	var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://assets/ui/map_planets.json"))
+	var names: Array = meta["names"]
+	var tag := "locked" if locked else ("done" if done else "open")
+	var i := names.find("%s_%s" % [id, tag])
+	if i < 0:
+		i = names.find("luna_" + tag)
+	var cell := int(meta["cell"])
+	var at := AtlasTexture.new()
+	at.atlas = load("res://assets/ui/map_planets.png")
+	at.region = Rect2(i * cell, 0, cell, cell)
+	return at
 
 
 static func _star_icon(px: int) -> TextureRect:

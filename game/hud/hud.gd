@@ -231,7 +231,7 @@ func _update_reputation(kind: String) -> void:
 	if kind == "":
 		return
 	var lv := GameState.rep_level(kind)
-	_badge.texture = UiKit.kid("rat_" + kind)
+	_badge.texture = TalkArt.face(kind)
 	for i in _hearts.size():
 		_hearts[i].texture = UiKit.kid("heart_on" if i < lv else "heart_off")
 	_rep.text = "+%d%%" % roundi((EconMath.reputation_mult(lv) - 1.0) * 100.0) if lv > 0 else ""
