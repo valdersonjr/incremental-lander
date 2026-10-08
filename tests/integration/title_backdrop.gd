@@ -45,13 +45,13 @@ func _process(_d: float) -> void:
 			title._set_screen(TitleScreen.Screen.MENU)
 			title.play_requested.emit()
 		30:
-			_check("jogar_hangar_com_mundo", hangar.visible and _main._flight != null)
+			_check("jogar_abre_o_mapa", _main._world_map.visible and not hangar.visible)
 			_main._show_title()
 		40:
 			_check("voltar_desmonta_mundo", title.visible and _main._flight == null)
 			title.sandbox_requested.emit("luna", true)
 		50:
-			_check("sandbox_hangar_com_mundo", hangar.visible and _main._flight != null)
+			_check("sandbox_abre_o_mapa", _main._world_map.visible and Sandbox.active())
 			print("TITLE_BACKDROP_LOG ", " | ".join(_log))
 			print("TITLE_BACKDROP_TEST ", "OK" if _ok else "FALHOU")
 			get_tree().quit()

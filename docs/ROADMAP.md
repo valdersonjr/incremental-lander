@@ -137,7 +137,11 @@
 - [x] 18.3c Economia v17 + estado por mundo: Estrada por mundo (`progression.roads`), pedido-assinatura
       (`planets[].mission`), `GameState.world_stars/stars_in/world_done/worlds` (mundo completo abre o próximo), save v6,
       `RunState` só com os 3 pedidos do mundo, `RoadText` com a parada `complete`; testes e integrações atualizados (2026-10-07)
-- [ ] 18.3d Hub: jogo abre no Mapa; cartão do mundo com a Estrada dele + VOAR/NAVE; PROGRESSÃO vira NAVE; viagem animada
+- [x] 18.3d Hub: Jogar/novo jogo/sandbox/fim do run abrem o **Mapa das estrelas** (tela principal); cartão do mundo com a
+      Estrada dele (`RoadView`), recorde/estrelas e VOAR/NAVE; mundo completo = anel + bandeira; viagem animada ao
+      completar (`WorldMap.open(travel_from)`); Esc na NAVE volta ao Mapa, Esc no Mapa abre o menu; sandbox com tudo
+      liberado; resumo "CONTINUAR"; integrações adaptadas; prévia `world_map_preview [-- --all | --travel]` (2026-10-07).
+      Pendente: a PROGRESSÃO ainda mostra a Estrada do mundo (duplicada com o cartão)
 - [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
       Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 

@@ -23,7 +23,8 @@ var _offers: OfferPanel = null
 var _summary: RunSummary = null
 var _fade: ColorRect = null                # tela escura entre missoes (cada missao tem o seu mapa)
 var _hangar: Hangar = null
-var _world_map: WorldMap = null                 # Mapa das estrelas (v16): escolher o mundo antes de decolar
+var _world_map: WorldMap = null                 # Mapa das estrelas (v17: tela principal, cartao do mundo)
+var _worlds_before := 0                         # mundos liberados no inicio do run (completar um = viagem no Mapa)
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
 ## Segundos reais do run em andamento, sem pausa (o relogio para com o jogo pausado ou a janela sem foco): a frota
@@ -54,11 +55,11 @@ func _ready() -> void:
 	_hangar = HANGAR_SCENE.instantiate()
 	_gui.add_child(_hangar)
 	_hangar.visible = false
-	_hangar.launch_requested.connect(_on_hangar_launch)
+	_hangar.launch_requested.connect(_on_launch_requested)   # DECOLAR na NAVE = voar no mundo escolhido no Mapa
 	_world_map = WorldMap.new()
 	_world_map.name = "WorldMap"
 	_world_map.fly_requested.connect(_on_world_chosen)
-	_world_map.closed.connect(func() -> void: _hangar.open())
+	_world_map.ship_requested.connect(_open_hangar)
 	_gui.add_child(_world_map)
 	_hangar.title_requested.connect(_show_title)
 	_title = TITLE_SCENE.instantiate()
@@ -70,30 +71,32 @@ func _ready() -> void:
 		_on_title_play())
 	_title.new_game_requested.connect(func(slot: int) -> void:
 		SaveManager.new_game(slot)
-		_start_run())
+		_title.visible = false
+		_open_map())
 	_title.sandbox_requested.connect(func(planet_id: String, strong: bool) -> void:
 		Sandbox.begin(planet_id, strong)
 		_title.visible = false
-		_open_hangar())                                        # o hangar monta o mundo escolhido atras
+		_open_map())                                           # v17: o Mapa com tudo liberado, no mundo escolhido
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
 		get_tree().quit())
 	_pause = PAUSE_SCENE.instantiate()
 	_gui.add_child(_pause)
-	# menu do jogo a partir do hangar: o hangar some e o menu abre sobre o mundo escurecido
-	_hangar.menu_requested.connect(func() -> void:
-		_hangar.visible = false
+	# v17: o Mapa e a tela principal. Esc na NAVE volta ao Mapa; Esc no Mapa abre o menu do jogo; fechar o menu volta
+	# ao Mapa.
+	_hangar.menu_requested.connect(func() -> void: _open_map())
+	_world_map.menu_requested.connect(func() -> void:
 		_gui.move_child(_pause, -1)
 		_pause.open(PauseMenu.Mode.HANGAR))
 	_pause.closed.connect(func() -> void:
 		if _pause.mode == PauseMenu.Mode.HANGAR:
-			_back_to_hangar())
+			_open_map())
 	_pause.title_requested.connect(func() -> void:
 		SaveManager.request_save()
 		_show_title())
 	_pause.new_game_requested.connect(func() -> void:
 		SaveManager.new_game()
-		_back_to_hangar())
+		_open_map())
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
 	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_")):
 		_start_run()
@@ -189,13 +192,26 @@ func _build_hangar_world() -> void:
 	Sound.ambience(GameState.current_planet)
 
 
-## Continuar: com progresso vai ao hangar (gastar o que ganhou); sem progresso, decola o primeiro run.
+## Jogar: o jogo abre no Mapa das estrelas (v17), com o mundo escolhido por ultimo.
 func _on_title_play() -> void:
 	_title.visible = false
-	if TitleScreen.has_progress():
-		_open_hangar()
-	else:
-		_start_run()
+	_open_map()
+
+
+## Mapa das estrelas (tela principal): esconde o resto; travel_from = mundo que acabou de ficar completo (viagem).
+func _open_map(travel_from: String = "") -> void:
+	if Sandbox.active():
+		Sandbox.top_up()
+	for c: Control in [_hud, _offers, _summary, _hangar]:
+		if c != null and is_instance_valid(c):
+			c.visible = false
+	_clear_run()
+	_world_map.theme = UiKit.theme_for(GameState.current_planet)
+	_gui.move_child(_world_map, -1)
+	_gui.move_child(_pause, -1)
+	_world_map.open(travel_from)
+	Sound.music("title")
+	Sound.ambience(GameState.current_planet)
 
 
 ## Recordes do run ate agora (a cada entrega: bater a nave depois nao perde a marca).
@@ -240,6 +256,8 @@ func _start_run() -> void:
 	_abandon_run()                                             # R no meio do run: o que foi ganho fecha a conta antes
 	_hangar.visible = false
 	_title.visible = false
+	_world_map.visible = false
+	_worlds_before = GameState.worlds().size()
 	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
@@ -415,25 +433,22 @@ func _end_run() -> void:
 		_on_continue()
 
 
-## Fim do run -> hangar (comprar upgrades) -> decolar novo run.
+## Fim do run -> Mapa (v17; viagem se o mundo ficou completo). Demo: hangar (compra) -> decola de novo.
 func _on_continue() -> void:
 	_summary.visible = false
 	_hud.visible = false
+	if not _demo:
+		var opened := GameState.worlds()
+		var travel := ""
+		if opened.size() > _worlds_before and _worlds_before > 0:
+			travel = opened[_worlds_before - 1]
+			GameState.select_world(opened[_worlds_before])        # o mundo novo ja escolhido
+		_open_map(travel)
+		return
 	_open_hangar()
 	if _demo:
 		_demo_shop()
 		await get_tree().create_timer(float(_args.get("hangar_wait", 0.5))).timeout
-		_on_launch_requested()
-
-
-## DECOLAR na PROGRESSAO: com mais de um mundo liberado abre o Mapa das estrelas; so a Lua = decola direto.
-func _on_hangar_launch() -> void:
-	if GameState.worlds().size() > 1:
-		_hangar.visible = false
-		_world_map.theme = _hangar.theme
-		_gui.move_child(_world_map, -1)
-		_world_map.open()
-	else:
 		_on_launch_requested()
 
 

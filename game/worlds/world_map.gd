@@ -1,12 +1,14 @@
-## Mapa das estrelas (v16, variante C aprovada em art/previews/seletor/seletor.html): os mundos num caminho pontilhado,
-## a navezinha no mundo escolhido e o botao "VOAR EM ...". Mundo aberto mostra o recorde de dinheiro (trofeu) ou
-## "NOVO! +40%" (ainda nao visitado: 1a visita paga bonus); fechado mostra cadeado + estrelas da parada da Estrada.
-## Setas/clique escolhem, Enter/botao voa (fly_requested), Esc fecha (closed).
+## Mapa das estrelas = TELA PRINCIPAL do jogo (v17, hub aprovado em art/previews/hub/hub.html): os mundos num caminho
+## pontilhado, a navezinha no mundo escolhido e, embaixo, o CARTAO DO MUNDO (nome, recorde ou "NOVO! +40%", a Estrada
+## daquele mundo e os botoes VOAR / NAVE). Mundo completo = anel dourado + bandeirinha; fechado = cinza + cadeado
+## ("complete o anterior"). open(travel_from) faz a viagem: a navezinha anda do mundo completo ate o novo.
+## Setas/clique escolhem; Enter/VOAR voa (fly_requested); NAVE abre a PROGRESSAO (ship_requested); Esc = menu.
 class_name WorldMap
 extends Control
 
 signal fly_requested(planet_id: String)
-signal closed
+signal ship_requested
+signal menu_requested
 
 const BADGE := 24                                   # planetinha em pixel (arte da pecinha), mostrado em 2x
 const STARS := 46
@@ -16,8 +18,14 @@ var _nodes: Dictionary = {}                          # id -> {"box": VBoxContain
 var _sel := ""
 var _lander: TextureRect
 var _fly: Button
+var _ship: Button
 var _stars_label: Label
+var _card_name: Label
+var _card_info: Label
+var _road: RoadView
+var _toast: Label
 var _bob := 0.0
+var _traveling := false
 
 
 func _ready() -> void:
@@ -37,13 +45,14 @@ func _ready() -> void:
 	_stars_label.theme_type_variation = &"MoneyLabel"
 	stars_row.add_child(_stars_label)
 	add_child(stars_row)
-	_fly = Button.new()
-	_fly.theme_type_variation = &"PrimaryButton"
-	_fly.custom_minimum_size = Vector2(240, 18)
-	_fly.position = Vector2(200, 330)
-	_fly.size = Vector2(240, 18)
-	_fly.pressed.connect(func() -> void: _go())
-	add_child(_fly)
+	_build_card()
+	_toast = Label.new()
+	_toast.theme_type_variation = &"MoneyLabel"
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.position = Vector2(0, 30)
+	_toast.size = Vector2(640, 14)
+	_toast.visible = false
+	add_child(_toast)
 	_lander = TextureRect.new()
 	var at := AtlasTexture.new()
 	at.atlas = load("res://assets/sprites/lander.png")
@@ -53,13 +62,103 @@ func _ready() -> void:
 	add_child(_lander)
 
 
-## Abre o mapa com o mundo atual escolhido.
-func open() -> void:
+## Cartao do mundo (embaixo): nome + recorde/NOVO, a Estrada do mundo e os botoes VOAR / NAVE.
+func _build_card() -> void:
+	var card := PanelContainer.new()
+	card.position = Vector2(6, 226)
+	card.size = Vector2(628, 128)
+	card.custom_minimum_size = Vector2(628, 128)
+	add_child(card)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 6)
+	card.add_child(row)
+	var left := VBoxContainer.new()
+	left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_theme_constant_override(&"separation", 0)
+	row.add_child(left)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override(&"separation", 6)
+	_card_name = Label.new()
+	_card_name.theme_type_variation = &"MoneyLabel"
+	head.add_child(_card_name)
+	_card_info = Label.new()
+	_card_info.theme_type_variation = &"DimLabel"
+	head.add_child(_card_info)
+	left.add_child(head)
+	_road = RoadView.new()
+	_road.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left.add_child(_road)
+	var right := VBoxContainer.new()
+	right.custom_minimum_size = Vector2(120, 0)
+	right.alignment = BoxContainer.ALIGNMENT_CENTER
+	right.add_theme_constant_override(&"separation", 6)
+	row.add_child(right)
+	_fly = Button.new()
+	_fly.theme_type_variation = &"PrimaryButton"
+	_fly.text = "VOAR!  [Enter]"
+	_fly.custom_minimum_size = Vector2(120, 30)
+	_fly.pressed.connect(func() -> void: _go())
+	right.add_child(_fly)
+	_ship = Button.new()
+	_ship.text = "NAVE"
+	_ship.custom_minimum_size = Vector2(120, 20)
+	_ship.pressed.connect(func() -> void:
+		Sound.ui("click")
+		visible = false
+		ship_requested.emit())
+	right.add_child(_ship)
+
+
+## Abre o mapa com o mundo atual escolhido. travel_from = mundo que acabou de ficar completo: a navezinha viaja dele
+## ate o mundo novo (ja escolhido) e o aviso "X completo! Y abriu!" aparece.
+func open(travel_from: String = "") -> void:
 	_build()
-	_select(GameState.current_planet if GameState.current_planet in _ids else "luna")
 	visible = true
 	_stars_label.text = "%d" % GameState.stars
+	var cur := GameState.current_planet if GameState.current_planet in GameState.worlds() else "luna"
+	if travel_from != "" and _nodes.has(travel_from):
+		_travel(travel_from, cur)
+	else:
+		_select(cur, false)
+	_celebrate_news()
 	_fly.grab_focus()
+
+
+## Viagem (mundo completo): a navezinha sai do mundo completo e voa pelo pontilhado ate o novo.
+func _travel(from_id: String, to_id: String) -> void:
+	_traveling = true
+	_select(to_id, false)
+	var a: Vector2 = (_nodes[from_id]["box"] as Control).position + Vector2(64, -18)
+	var b: Vector2 = (_nodes[to_id]["box"] as Control).position + Vector2(64, -18)
+	_lander.position = a
+	_toast.text = "%s completo! %s abriu!" % [_planet_name(from_id), _planet_name(to_id)]
+	_toast.visible = true
+	var tw := create_tween()
+	tw.tween_interval(0.5)
+	tw.tween_property(_lander, "position", b, 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_callback(func() -> void:
+		_traveling = false
+		UiKit.pulse(_nodes[to_id]["badge"], 1.8, 0.5)
+		Sound.jingle("goal"))
+	tw.tween_interval(2.5)
+	tw.tween_callback(func() -> void: _toast.visible = false)
+
+
+## Paradas novas da Estrada do mundo aparecem com festa no cartao (e ficam vistas).
+func _celebrate_news() -> void:
+	var news: Array = GameState.road_news().filter(func(id: String) -> bool:
+		return EconMath.road(GameState.current_planet).any(func(st: Dictionary) -> bool: return st["id"] == id))
+	for id: String in news:
+		GameState.mark_road_seen(id)
+	if news.is_empty():
+		return
+	_road.rebuild(-1, true)
+	_road.celebrate(str(news[-1]))
+	Sound.jingle("unlock")
+
+
+func _planet_name(id: String) -> String:
+	return str(EconMath._find("planets", id).get("name", id))
 
 
 ## Posicoes dos mundos no caminho (zigue-zague da esquerda-baixo para a direita-alto), em px da tela 640x360.
@@ -67,7 +166,7 @@ static func node_positions(n: int) -> Array[Vector2]:
 	var out: Array[Vector2] = []
 	for i in n:
 		var t := float(i) / maxf(1.0, n - 1)
-		out.append(Vector2(70.0 + t * 500.0, 250.0 - t * 110.0 + (-35.0 if i % 2 == 1 else 15.0)))
+		out.append(Vector2(70.0 + t * 500.0, 150.0 - t * 80.0 + (-26.0 if i % 2 == 1 else 10.0)))
 	return out
 
 
@@ -89,7 +188,7 @@ func _build() -> void:
 		box.custom_minimum_size = Vector2(96, 0)
 		box.mouse_filter = Control.MOUSE_FILTER_STOP
 		var badge := TextureRect.new()
-		badge.texture = planet_texture(id, not is_open)
+		badge.texture = planet_texture(id, not is_open, GameState.world_done(id))
 		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		badge.custom_minimum_size = Vector2(BADGE * 2, BADGE * 2)
 		badge.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -126,10 +225,14 @@ func _info_row(id: String, is_open: bool) -> HBoxContainer:
 		lock.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		lock.custom_minimum_size = Vector2(12, 12)
 		row.add_child(lock)
-		l.text = "%d" % int(EconMath.road_stop("world_" + id).get("stars", 0))
+		l.text = "complete o anterior"
 		l.theme_type_variation = &"DimLabel"
 		row.add_child(l)
-		row.add_child(_star_icon(10))
+		return row
+	if GameState.world_done(id):
+		l.text = "completo!"
+		l.theme_type_variation = &"MoneyLabel"
+		row.add_child(l)
 		return row
 	var rec := float(GameState.world_records(id).get("run_money", 0.0))
 	if rec > 0.0:
@@ -147,7 +250,7 @@ func _info_row(id: String, is_open: bool) -> HBoxContainer:
 
 ## Planetinha 24x24 em pixel (ceu em cima, chao ondulado embaixo, pintinhas, contorno ink) nas cores
 ## world.json > terrain.planets.<id>.map; cinza quando fechado. (Placeholder ate a arte da 18.5.)
-static func planet_texture(id: String, locked: bool) -> ImageTexture:
+static func planet_texture(id: String, locked: bool, done: bool = false) -> ImageTexture:
 	var cfg: Dictionary = WorldConfig.load_config()["terrain"]["planets"].get(id, {})
 	var cols: Array = cfg.get("map", ["#fca790", "#f68181", "#f9c22b"])
 	var img := Image.create(BADGE, BADGE, false, Image.FORMAT_RGBA8)
@@ -155,6 +258,8 @@ static func planet_texture(id: String, locked: bool) -> ImageTexture:
 		for x in BADGE:
 			var d := Vector2(x + 0.5 - 12.0, y + 0.5 - 12.0).length()
 			if d > 10.5:
+				if done and d <= 12.0 and d > 11.0:              # mundo completo: anel dourado
+					img.set_pixel(x, y, Color("#f9c22b") if (x + y) % 2 == 0 else Color("#fbff86"))
 				continue
 			var c := Color(str(cols[0] if y < 10 else cols[1]))
 			var gy := 14 + roundi(sin(x / 3.5) * 1.5)
@@ -168,6 +273,12 @@ static func planet_texture(id: String, locked: bool) -> ImageTexture:
 				var v := c.get_luminance()
 				c = Color(v, v, v)
 			img.set_pixel(x, y, c)
+	if done:                                                    # bandeirinha no alto
+		for y in range(0, 8):
+			img.set_pixel(18, y, Color("#2e222f"))
+		for y in range(0, 3):
+			for x in range(19, 23):
+				img.set_pixel(x, y, Color("#e83b3b"))
 	return ImageTexture.create_from_image(img)
 
 
@@ -181,15 +292,23 @@ static func _star_icon(px: int) -> TextureRect:
 	return st
 
 
-func _select(id: String) -> void:
+func _select(id: String, click: bool = true) -> void:
 	_sel = id
+	GameState.select_world(id)
+	_card_name.text = _planet_name(id)
+	var rec := float(GameState.world_records(id).get("run_money", 0.0))
+	var road := EconMath.road(id)
+	var total := int(road[-1]["stars"]) if not road.is_empty() else 0
+	_card_info.text = ("recorde %s · " % EconMath.fmt(rec) if rec > 0.0 else "NOVO! · ") + \
+			("completo!" if GameState.world_done(id) else "%d/%d estrelas" % [mini(GameState.stars_in(id), total), total])
+	_road.rebuild(-1, true)
 	for k: String in _nodes:
 		var n: Dictionary = _nodes[k]
 		(n["badge"] as Control).scale = Vector2.ONE * (1.15 if k == id else 1.0)
 		if k in GameState.worlds():
 			(n["name"] as Label).theme_type_variation = &"MoneyLabel" if k == id else &"ValueLabel"
-	_fly.text = "VOAR EM %s!  [Enter]" % str(EconMath._find("planets", id).get("name", id)).to_upper()
-	Sound.ui("click")
+	if click:
+		Sound.ui("click")
 
 
 func _on_node_input(event: InputEvent, id: String) -> void:
@@ -216,7 +335,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		visible = false
-		closed.emit()
+		menu_requested.emit()
 	elif event.is_action_pressed(&"confirm") or event.is_action_pressed(&"ui_accept"):
 		get_viewport().set_input_as_handled()
 		_go()
@@ -229,7 +348,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	if not visible or not _nodes.has(_sel):
+	if not visible or not _nodes.has(_sel) or _traveling:
 		return
 	_bob += delta
 	var box: Control = _nodes[_sel]["box"]

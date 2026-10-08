@@ -15,7 +15,7 @@ var _ok := true
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	SaveManager.set_dir("user://itest_esc")
-	GameState.runs_done = 1                                    # com progresso: Continuar leva ao hangar
+	GameState.runs_done = 1                                    # com progresso (v17: Jogar sempre leva ao Mapa)
 	_main = MAIN.instantiate()
 	_main.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(_main)
@@ -39,12 +39,13 @@ func _process(_d: float) -> void:
 	_f += 1
 	var title: TitleScreen = _main._title
 	var hangar: Hangar = _main._hangar
+	var map: WorldMap = _main._world_map                      # v17: o Mapa e a tela principal
 	var menu: PauseMenu = _main._pause
 	match _f:
 		10:
 			title.play_requested.emit()                        # Continuar
 		20:
-			_check("hangar", hangar.visible)
+			_check("jogar_abre_o_mapa", map.visible and not hangar.visible)
 			_key(KEY_ESCAPE)
 		30:
 			var crt := get_tree().root.get_node("Crt") as CanvasLayer
@@ -54,14 +55,20 @@ func _process(_d: float) -> void:
 			toggle.pressed.emit()
 			_check("crt_desliga_pelo_menu", not crt.visible and toggle.text == "Desligado")
 			toggle.pressed.emit()
-			_check("esc_no_hangar_abre_menu", menu.visible and not hangar.visible and menu.mode == PauseMenu.Mode.HANGAR)
+			_check("esc_no_mapa_abre_menu", menu.visible and not map.visible and menu.mode == PauseMenu.Mode.HANGAR)
 			_check("menu_nao_pausa", not get_tree().paused)
 			_key(KEY_R)
 		40:
 			_check("r_nao_decola", menu.visible and _main._hud == null)
 			_key(KEY_ESCAPE)
 		50:
-			_check("esc_volta_ao_hangar", hangar.visible and not menu.visible)
+			_check("esc_volta_ao_mapa", map.visible and not menu.visible)
+			map._ship.pressed.emit()                           # NAVE abre a PROGRESSAO; Esc nela volta ao Mapa
+		55:
+			_check("nave_abre_progressao", hangar.visible and not map.visible)
+			_key(KEY_ESCAPE)
+		58:
+			_check("esc_na_nave_volta_ao_mapa", map.visible and not hangar.visible)
 			_key(KEY_ESCAPE)
 		60:
 			(menu.find_child("MenuButton", true, false) as Button).pressed.emit()
@@ -69,7 +76,7 @@ func _process(_d: float) -> void:
 			_check("menu_inicial", title.visible and not hangar.visible and not menu.visible)
 			title.play_requested.emit()
 		80:
-			hangar.launch_requested.emit()
+			map._go()                                          # VOAR no cartao do mundo
 		90:
 			_key(KEY_ESCAPE)
 		100:

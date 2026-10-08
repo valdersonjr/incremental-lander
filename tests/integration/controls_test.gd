@@ -66,6 +66,14 @@ func _physics_process(_delta: float) -> void:
 		_title_ok = true
 		_log.append("menu inicial: Enter em Jogar iniciou o run")
 		_frames = 0
+	var map := _main.find_child("WorldMap", true, false) as WorldMap
+	if map != null and map.visible:                            # v17: Jogar abre o Mapa -> Enter voa no mundo escolhido
+		if _frames == 8:
+			_key(KEY_ENTER, true)
+		elif _frames == 10:
+			_key(KEY_ENTER, false)
+			_frames = 0
+		return
 	var l := _lander()
 	if l == null:
 		return

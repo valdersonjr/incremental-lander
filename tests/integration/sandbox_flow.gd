@@ -56,8 +56,8 @@ func _process(_d: float) -> void:
 		10:
 			title.sandbox_requested.emit("luna", true)
 		20:
-			_check("hangar", hangar.visible and Sandbox.active())
-			_check("mundo", GameState.current_planet == "luna")
+			_check("mapa", _main._world_map.visible and Sandbox.active())
+			_check("mundo", GameState.current_planet == "luna" and GameState.worlds().size() == EconMath.spec["planets"].size())
 			_check("recursos", GameState.amount("credits") >= 1e14)
 			_check("nave_forte", int(GameState.levels.get("thrust", 0)) == 42)
 			_check("sem_telemetria", not Telemetry.enabled)
@@ -78,7 +78,7 @@ func _process(_d: float) -> void:
 			_check("disco_ainda_intacto", is_equal_approx(_disk_credits(), 123.0))
 			title.sandbox_requested.emit("luna", false)
 		60:
-			_check("nave_basica", int(GameState.levels.get("thrust", 0)) == 0 and hangar.visible)
+			_check("nave_basica", int(GameState.levels.get("thrust", 0)) == 0 and _main._world_map.visible)
 			_main._show_title()
 		70:
 			_check("saiu_de_novo", not Sandbox.active() and GameState.runs_done == 5)

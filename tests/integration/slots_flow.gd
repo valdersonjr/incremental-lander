@@ -17,13 +17,14 @@ func _ready() -> void:
 	await _frames(3)
 	var title := main.find_child("TitleScreen", true, false) as TitleScreen
 	var hangar := main.find_child("Hangar", true, false) as Hangar
+	var map := main.find_child("WorldMap", true, false) as WorldMap
 	if not title.visible:
 		fails.append("o jogo nao abriu no menu inicial")
 	# novo jogo no espaco 2
 	title.new_game_requested.emit(2)
 	await _frames(3)
-	if SaveManager.slot != 2 or title.visible or main.find_child("OfferPanel", true, false) == null:
-		fails.append("novo jogo no espaco 2 nao decolou (slot=%d)" % SaveManager.slot)
+	if SaveManager.slot != 2 or title.visible or not map.visible:
+		fails.append("novo jogo no espaco 2 deveria abrir o Mapa (slot=%d)" % SaveManager.slot)
 	GameState.runs_done = 5
 	GameState.resources["credits"] = 321.0
 	GameState.stars = 4
@@ -50,8 +51,8 @@ func _ready() -> void:
 	# jogo 1 vazio: decola um run novo; o jogo 2 continua salvo
 	title.slot_play_requested.emit(1)
 	await _frames(3)
-	if SaveManager.slot != 1 or GameState.runs_done != 0 or hangar.visible:
-		fails.append("jogo 1 vazio deveria decolar do zero (slot=%d runs=%d)" % [SaveManager.slot, GameState.runs_done])
+	if SaveManager.slot != 1 or GameState.runs_done != 0 or not map.visible:
+		fails.append("jogo 1 vazio deveria abrir o Mapa do zero (slot=%d runs=%d)" % [SaveManager.slot, GameState.runs_done])
 	if int(SaveManager.slot_summary(2)["runs"]) != 5:
 		fails.append("trocar de jogo mexeu no jogo 2: %s" % SaveManager.slot_summary(2))
 	# jogo 2 com progresso: vai ao hangar com o progresso dele
@@ -59,9 +60,9 @@ func _ready() -> void:
 	await _frames(3)
 	title.slot_play_requested.emit(2)
 	await _frames(3)
-	if SaveManager.slot != 2 or not hangar.visible or not is_equal_approx(GameState.amount("credits"), 321.0):
-		fails.append("jogo 2 deveria abrir no hangar com 321 cr (slot=%d hangar=%s cr=%s)" % [SaveManager.slot,
-				hangar.visible, GameState.amount("credits")])
+	if SaveManager.slot != 2 or not map.visible or not is_equal_approx(GameState.amount("credits"), 321.0):
+		fails.append("jogo 2 deveria abrir o Mapa com 321 cr (slot=%d mapa=%s cr=%s)" % [SaveManager.slot,
+				map.visible, GameState.amount("credits")])
 	# Salvar no menu do jogo: grava o jogo 2 no espaco 4 (vazio: 1 clique) e passa a usar o 4
 	var pause := main.find_child("PauseMenu", true, false) as PauseMenu
 	pause.open(PauseMenu.Mode.HANGAR)

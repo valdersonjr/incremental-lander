@@ -31,6 +31,12 @@ static func begin(planet_id: String, strong: bool) -> void:
 		var lv: Dictionary = cfg["strong_levels"]
 		for id: String in lv:
 			GameState.levels[id] = int(lv[id])
+	for p: Dictionary in EconMath.spec["planets"]:             # v17: todos os mundos completos (tudo liberado)
+		var road := EconMath.road(str(p["id"]))
+		if not road.is_empty():
+			GameState.world_stars[str(p["id"])] = int(road[-1]["stars"])
+	GameState._check_road(true)
+	GameState.current_planet = planet_id
 	top_up()
 
 

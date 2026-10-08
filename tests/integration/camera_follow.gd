@@ -31,6 +31,8 @@ func _process(_d: float) -> void:
 			for b: Node in title.find_children("*", "Button", true, false):
 				if b.get_meta(&"slot", 0) == 2:
 					(b as Button).pressed.emit()
+		25:
+			_main._world_map._go()                             # v17: jogo novo abre no Mapa -> VOAR
 		40:
 			_main._offers.offer_chosen.emit(0)
 		200:

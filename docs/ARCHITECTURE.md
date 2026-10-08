@@ -284,7 +284,11 @@ game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember;
   `world_records(planeta="")`, `note_record` grava no mundo atual.
 - `game/worlds/world_map.gd` (`WorldMap`, montado em código): `open()`, sinais `fly_requested(id)` / `closed`;
   `planet_texture(id, locked)` desenha o planetinha 24 px com `world.json > terrain.planets.<id>.map` (placeholder até a arte).
-- `Main._on_hangar_launch`: 2+ mundos → mapa; `_on_world_chosen` → `select_world` + run. `_end_run` paga
+- v17: `Main._open_map(travel_from)` é a tela principal (Jogar, novo jogo, sandbox, fim do run, Esc da NAVE, fechar o
+  menu); `_on_world_chosen` → `select_world` + run; `_worlds_before` detecta mundo completo no run → viagem no Mapa.
+- `WorldMap`: cartão do mundo (`RoadView` da Estrada do mundo, VOAR/NAVE), sinais `fly_requested`/`ship_requested`/
+  `menu_requested`, `open(travel_from)`, `_celebrate_news` (paradas novas da Estrada).
+- `GameState`: `world_stars`, `stars_in(planet)`, `world_done`, `worlds()` (anterior completo), `_check_road` por mundo. `_end_run` paga
   `EconMath.record_bonus(dinheiro do run, recorde do mundo no início)`; `summary.record_bonus` aparece no resumo.
 - Mundo sem arte: backdrop vazio, céu = `terrain.planets.<id>.sky`, chão placeholder `fill/surface`, tema da Lua.
 

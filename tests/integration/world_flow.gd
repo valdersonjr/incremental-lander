@@ -59,10 +59,10 @@ func _process(_d: float) -> void:
 			_main._title.visible = false
 			_main._open_hangar()
 		8:
-			_main._hangar.launch_requested.emit()
+			_main._on_title_play()                             # v17: Jogar abre o Mapa (tela principal)
 		10:
 			var map: WorldMap = _main._world_map
-			_check("decolar_abre_mapa", map.visible)
+			_check("jogar_abre_mapa", map.visible)
 			map._select("nuvens")
 			map._go()
 		14:

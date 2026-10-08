@@ -65,4 +65,4 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
 theme_type_variation = &"PrimaryButton"
-text = "IR AO HANGAR  [Enter]"
+text = "CONTINUAR  [Enter]"
