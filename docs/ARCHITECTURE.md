@@ -292,3 +292,15 @@ game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember;
   `EconMath.record_bonus(dinheiro do run, recorde do mundo no início)`; `summary.record_bonus` aparece no resumo.
 - Mundo sem arte: backdrop vazio, céu = `terrain.planets.<id>.sky`, chão placeholder `fill/surface`, tema da Lua.
 
+## Minijogos do voo (v17, Fase 18.4)
+- Dados: `data/world.json > minigames.<mundo>` (verbo, fala `ask/say`, números por estrela). Lógica pura:
+  `scripts/world/minigames.gd` (`Minigames`: `spec`, `by_star`, `trail_points`, `spread_x`, `follow_point`, `in_updraft`,
+  `hits_cap`, `bounce_vy`, `curling_quality`, `slide_step`, `hits_stem`, `wind_at`, `touches`).
+- `Flight._setup_minigame/_tick_minigame/_clear_minigame` por mundo: Lua `_trail` · Nuvens `_sheep/_tail/_history/_updrafts`
+  (`_tick_sheep`) · Cogumelos `_caps` (`_tick_caps`) · Sorvete pista `rink` + `_rings` + deslize (`_start_slide/_tick_slide`,
+  `Lander.ice_pad_id`) · Jardim `_stems` + vento (`_tick_stems`) · Bolhas garra (`CargoTow` leve), `_water`, `_bubbles`
+  (`_tick_claw`). Ambiente via `Lander.env_accel`. Placar `minigame_text()`, verbo `minigame_verb()` → `Hud.show_verb`.
+- Pagamento: Lua `EconMath.minigame_pay` (bônus por queijinho, `planets[].mission_bonus`); os outros usam a regra do pedido
+  (falhou = `fail_mult`). Testes: `tests/unit/world/test_minigames.gd`, integração `minigame_flow`; prévia
+  `tests/visual/minigame_preview.tscn -- --world=<id>`; dev `--dev_world=<id>`.
+

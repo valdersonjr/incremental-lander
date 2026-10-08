@@ -137,5 +137,28 @@ func _ready() -> void:
 	_check("jardim_faltou_vao_paga_menos", j.failed.has("heavy"))
 	_check("verbo_do_jardim", j.minigame_verb() == "Passe!")
 	j.queue_free()
+	await get_tree().process_frame
+	# Bolhas: garra do bau (maquina de garra) + mar + bolhas
+	var t2 := {"kind": "tow", "star": 2, "parts": [{"kind": "tow", "star": 2}]}
+	var bo := _flight("bolhas", t2, 900.0)
+	_check("bolhas_bau_mar_e_bolhas", bo._chest_sprite != null and not bo._water.is_empty() and bo._bubbles.size() == 2)
+	_check("bolhas_garra_comeca_leve", bo._tow.mass < 0.3)
+	bo._tow.pos = bo._chest_pos
+	bo._tick_minigame()
+	_check("bolhas_garra_pega_o_bau", bo.chest_got and bo._tow.mass > 0.5 and bo.minigame_got == 1)
+	bo._tow.pos = Vector2((float(bo._water["x0"]) + float(bo._water["x1"])) * 0.5, float(bo._water["y"]) + 20.0)
+	for i in 60:
+		bo._tow.pos.y = float(bo._water["y"]) + 20.0
+		bo._tick_minigame()
+	_check("bolhas_bau_no_mar_molha", bo.chest_wet and bo.failed.has("tow"))
+	var bx: float = float(bo._bubbles[0]["x"])
+	bo.lander.global_position = Vector2(bx, float(bo._water["y"]) - 30.0)
+	bo._tick_minigame()
+	_check("bolhas_empurram_para_cima", bo.lander.env_accel.y < 0.0)
+	bo.lander.global_position = Vector2(bx, float(bo._water["y"]) + 5.0)
+	bo._tick_minigame()
+	_check("bolhas_cair_no_mar_e_splash", bo.lander.state == Lander.State.CRASHED)
+	_check("verbo_das_bolhas", bo.minigame_verb() == "Pesque!")
+	bo.queue_free()
 	print("MINIGAME_TEST " + ("OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails)))
 	get_tree().quit(0 if _fails.is_empty() else 1)

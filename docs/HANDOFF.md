@@ -7,8 +7,12 @@
 - **Fase 18 virou "viagem com minijogos" (2026-10-07)**: plano em `docs/DECISIONS.md`; protótipo jogável aprovado
   (`art/previews/minijogos/minijogos.html`). **18.3c ✅** economia v17 (Estrada por mundo, pedido-assinatura) + estado
   e save v6 por mundo. **18.3d ✅** hub: o jogo abre no Mapa (cartão do mundo
-  com a Estrada, VOAR/NAVE, viagem animada ao completar). **Próximo**: 18.4 minijogos no voo, um mundo por vez (Lua
-  trilha primeiro); depois arte e som de cada mundo.
+  com a Estrada, VOAR/NAVE, viagem animada ao completar). **18.4 ✅** os 6 minijogos no voo (Lua trilha · Nuvens fila +
+  correntes · Cogumelos chapéu-mola · Sorvete curling · Jardim caules + vento · Bolhas garra + mar + bolhas), com testes
+  (`minigame_flow`) e prévia (`minigame_preview -- --world=<id>`). **Próximo**: o usuário jogar os mundos (sandbox libera
+  todos); 18.5 arte por mundo (cenário, moradores — hoje ratinhos/coelhinho provisórios —, carga, planetas do mapa) e
+  18.6 som, ambos com aprovação. Pendências: PROGRESSÃO ainda mostra a Estrada (duplicada com o cartão do Mapa); nave
+  fraca num mundo de gravidade alta não decola (avisar no Mapa); calibração do tempo de run do modelo.
 - **Fase 18 — Mundos novos (2026-10-07)**: plano aprovado (mundos paralelos, recordes por mundo + bônus de recorde,
   Estrada única com parada `world`, seletor). **18.1 ✅** o usuário ficou com os 5 conceitos de
   `art/previews/mundos/mundos.html` (git-ignorado): Nuvens → Bolhas → Cogumelos → Sorvete → Jardim.

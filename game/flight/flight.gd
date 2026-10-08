@@ -53,6 +53,14 @@ var _updraft_lines: Array[Node] = []
 var _caps: Array[Dictionary] = []                   # Cogumelos: chapeus-mola {x, y, half, node}
 var _rings: Array[Node] = []                        # Sorvete: anéis do alvo
 var _stems: Array[Dictionary] = []                  # Jardim: caules {x, half, gap_top, gap_bot, passed, bumped, node}
+var chest_got := false                              # Bolhas: o bau esta na garra
+var chest_wet := false                              # Bolhas: o bau molhou (falhou a regra)
+var _chest_pos := Vector2.ZERO
+var _chest_sprite: Sprite2D = null
+var _water := {}                                    # Bolhas: {x0, x1, y} (px)
+var _water_node: ColorRect = null
+var _bubbles: Array = []                            # Bolhas: colunas {x, half}
+var _wet_t := 0.0
 var _wind_t := 0.0
 var sliding := false                                # Sorvete: deslizando no gelo depois do pouso
 var _slide_v := 0.0                                 # m/s
@@ -438,6 +446,8 @@ func _setup_minigame() -> void:
 		minigame_total = n
 	elif planet_id == "cogumelos":                             # cogumelos-mola (Doodle Jump) + ovinho (Pouso suave)
 		_setup_caps(cfg, star)
+	elif planet_id == "bolhas":                                # garra do bau (maquina de garra) + mar + bolhas
+		_setup_claw(cfg, star)
 	elif planet_id == "jardim":                                # caules das flores (Flappy Bird) + vento + mel pesado
 		_setup_stems(cfg, star)
 	elif planet_id == "sorvete":                               # curling: aneis no meio da pista de gelo
@@ -572,7 +582,46 @@ func _setup_stems(cfg: Dictionary, star: int) -> void:
 	_wind_t = 0.0
 
 
+## Bolhas: faixa de mar entre as plataformas, o bau no meio (no fundo raso) e colunas de bolhas.
+func _setup_claw(cfg: Dictionary, star: int) -> void:
+	var a: Dictionary = terrain.pads[current_pad_id]
+	var b: Dictionary = terrain.pads[target_pad_id]
+	var x0 := minf(float(a["x"]), float(b["x"])) + float(a["half_width"])
+	var x1 := maxf(float(a["x"]), float(b["x"])) - float(b["half_width"])
+	var wy := maxf(float(a["y"]), float(b["y"])) + WorldConfig.m_to_px(float(cfg.get("water_below_m", 18.0)))
+	_water = {"x0": x0, "x1": x1, "y": wy}
+	_water_node = ColorRect.new()
+	_water_node.color = Color("#0b8a8f")
+	_water_node.position = Vector2(x0, wy)
+	_water_node.size = Vector2(maxf(0.0, x1 - x0), 2000.0)
+	add_child(_water_node)
+	move_child(_water_node, terrain.get_index())               # atras do relevo: o mar so aparece nos vales
+	var cx := (float(a["x"]) + float(b["x"])) * 0.5
+	_chest_pos = Vector2(cx, minf(TerrainGen.height_at(terrain.ridge, cx), wy + 30.0) - 6.0)
+	_chest_sprite = Sprite2D.new()
+	_chest_sprite.texture = CargoArt.tex("gift")
+	_chest_sprite.position = _chest_pos
+	add_child(_chest_sprite)
+	var bub: Dictionary = cfg["bubbles"]
+	var half := WorldConfig.m_to_px(float(bub["width_m"])) * 0.5
+	var n := int(Minigames.by_star(bub["count"], star))
+	for i in n:
+		_bubbles.append({"x": lerpf(x0, x1, float(i + 1) / float(n + 1)), "half": half})
+	chest_got = false
+	chest_wet = false
+	_wet_t = 0.0
+	minigame_total = 1
+
+
 func _clear_minigame() -> void:
+	if _chest_sprite != null and is_instance_valid(_chest_sprite):
+		_chest_sprite.queue_free()
+	_chest_sprite = null
+	if _water_node != null and is_instance_valid(_water_node):
+		_water_node.queue_free()
+	_water_node = null
+	_water = {}
+	_bubbles.clear()
 	for c: Dictionary in _stems:
 		if is_instance_valid(c["node"]):
 			(c["node"] as Node).queue_free()
@@ -616,6 +665,9 @@ func _tick_minigame() -> void:
 		return
 	if planet_id == "jardim":
 		_tick_stems()
+		return
+	if planet_id == "bolhas":
+		_tick_claw()
 		return
 	if _trail.is_empty() or lander.state != Lander.State.FLYING:
 		return
@@ -739,6 +791,49 @@ func _tick_stems() -> void:
 				Sound.sfx("crystal_2")
 
 
+## Bolhas: a garra pega o bau ao encostar (vira a carga com o peso da estrela); o bau no mar por wet_s = molhou;
+## a nave no mar = splash (batida); bolhas empurram nave e carga para cima.
+func _tick_claw() -> void:
+	if _water.is_empty():
+		return
+	var cfg := Minigames.spec(planet_id)
+	var flying := lander.state == Lander.State.FLYING
+	var over_sea := lander.global_position.x > float(_water["x0"]) and lander.global_position.x < float(_water["x1"])
+	if flying and over_sea and lander.global_position.y > float(_water["y"]):
+		lander.crash_now("mar")                                # splash
+		return
+	var bub: Dictionary = cfg["bubbles"]
+	var star := maxi(1, int(mission.get("star", 1)))
+	var acc := float(Minigames.by_star(bub["accel"], star))
+	var reach := WorldConfig.m_to_px(float(bub["height_m"]))
+	var in_bub := func(p: Vector2) -> bool:
+		return p.y > float(_water["y"]) - reach and _bubbles.any(func(c: Dictionary) -> bool:
+			return absf(p.x - float(c["x"])) <= float(c["half"]))
+	lander.env_accel = Vector2(0.0, -acc) if flying and in_bub.call(lander.global_position) else Vector2.ZERO
+	if _tow == null:
+		return
+	var dt_m := get_physics_process_delta_time() * float(WorldConfig.load_config()["time_scale"])
+	if in_bub.call(_tow.pos):
+		_tow.vel.y -= acc * dt_m
+	if not chest_got and _tow.pos.distance_to(_chest_pos) <= WorldConfig.m_to_px(float(cfg.get("grab_m", 10.0))):
+		chest_got = true                                       # pegou: o bau vira a carga do cabo
+		var lv: Array = WorldConfig.load_config()["missions"]["tow"]["levels"]
+		_tow.mass = float(lv[clampi(int(mission.get("star", 1)), 1, lv.size()) - 1]["mass"])
+		_tow.radius_px = WorldConfig.m_to_px(float(WorldConfig.load_config()["missions"]["tow"]["radius_m"]))
+		_tow_sprite.texture = CargoArt.tex("gift")
+		_chest_sprite.hide()
+		minigame_got = 1
+		Sound.sfx("crystal_3")
+	if chest_got and not chest_wet:
+		var wet: bool = _tow.pos.x > float(_water["x0"]) and _tow.pos.x < float(_water["x1"]) \
+				and _tow.pos.y > float(_water["y"])
+		_wet_t = _wet_t + get_physics_process_delta_time() if wet else 0.0
+		if _wet_t >= float(cfg.get("wet_s", 0.6)):
+			chest_wet = true
+			_mission_failed("tow", "", _tow.pos)
+			_float_text("molhou!", _tow.pos + Vector2(0, -14))
+
+
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
 func minigame_text() -> String:
 	if minigame_total <= 0:
@@ -749,6 +844,8 @@ func minigame_text() -> String:
 		return "deslizando..." if sliding else "deslize até o alvo"
 	if planet_id == "jardim":
 		return "vãos %d/%d" % [minigame_got, minigame_total]
+	if planet_id == "bolhas":
+		return ("molhou!" if chest_wet else "baú na garra!") if chest_got else "pegue o baú"
 	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
 
 
@@ -844,6 +941,10 @@ func _setup_mission() -> void:
 		move_child(_rope, lander.get_index())                  # atras da nave
 		_tow_sprite = Sprite2D.new()
 		_tow_sprite.texture = CargoArt.tex("wheel")
+		if planet_id == "bolhas":                              # v17: a corda comeca com a garra vazia (leve)
+			_tow.mass = float(Minigames.spec("bolhas").get("hook_mass", 0.15))
+			_tow.radius_px = 3.0
+			_tow_sprite.texture = UiKit.icon("gear")
 		add_child(_tow_sprite)
 		_sync_tow_view()
 	if _rescue_star() > 0:
@@ -897,6 +998,8 @@ func _tick_mission(delta: float) -> void:
 				float(lander.params.get("gravity", 1.62)), terrain.ridge, flying)
 		if flying:
 			lander.vel_m += dv
+		if planet_id == "bolhas" and not chest_got:
+			_tow.damaged = false                               # garra vazia batendo no fundo nao estraga nada
 		if _tow.damaged and not failed.has("tow"):
 			_mission_failed("tow", "wheel_cracked", _tow.pos)
 		_sync_tow_view()
@@ -963,6 +1066,8 @@ func _judge_mission(info: Dictionary, quality: float) -> void:
 		failed.append("passenger")
 	if planet_id == "nuvens" and minigame_total > 0 and minigame_got < minigame_total and not failed.has("passenger"):
 		failed.append("passenger")                             # chegou sem todos os carneirinhos: paga menos
+	if planet_id == "bolhas" and minigame_total > 0 and not chest_got and not failed.has("tow"):
+		failed.append("tow")                                   # chegou sem o bau: paga menos
 	if planet_id == "jardim" and minigame_total > 0 and minigame_got < minigame_total and not failed.has("heavy"):
 		failed.append("heavy")                                 # bateu ou pulou caule: o mel paga menos
 	if taxi_stage == 1:

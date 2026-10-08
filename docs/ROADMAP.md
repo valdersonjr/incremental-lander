@@ -161,56 +161,10 @@
 - [x] 18.4e Jardim — caules das flores (Flappy Bird) + vento + mel pesado: `minigames.jardim` (2/4/6 caules, vão de
       120/95/75 m no arco ideal), vento lateral que vai e volta (`Minigames.wind_at`), bater no caule empurra de volta sem
       explodir e o caule não conta (`hits_stem`), faltou vão = Pesada paga menos (2026-10-07)
-- [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
-      Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
-
-## Fase 17 — Bata seu recorde + paisagens (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`
-> Pedido do usuário: o run como meta imposta (teto de 6 entregas) não combina; "competir com ele mesmo": tanque cheio,
-> quantas missões conseguir, guardar dinheiro/distância/entregas e evoluir a nave para bater recordes (padrão Hill Climb
-> Racing / Learn to Fly). E "o relevo é muito igual": receita nova a cada missão. Plano aprovado em 2026-10-07.
-- [x] 17.1 Run sem teto (economy-balance + godot-dev): sai `max_per_run`; `contracts.run_fatigue` 1,7 (gás do salto ×
-      1,7^n; galão devolve gás / 1,7^n) garante que o run acaba; `econ.py`/`EconMath.run_fatigue_mult`, paridade 31;
-      `RunState.fatigue()` (gás estimado), `Flight.set_fatigue` (eficiência da missão), HUD de entregas sem "/6";
-      testes (sem teto; run sempre acaba). MC 3×3 6 h: entregas/run ~2 no começo → ~15 no fim; Gasolina/Eficiência
-      compradas (nív. ~50/~34; antes ~14/~7) (2026-10-07)
-- [x] 17.2 Recordes (godot-dev + pixel-art): `RunState.record_values` (dinheiro, entregas, distância, perfeitos, maior
-      entrega); `GameState.RECORDS`/`record_text`; save v4 (migra best_run/best_perfect/longest_hop); HUD placar A
-      (`Hud._build_score`/`set_records`), resumo "troféus" (`RunSummary._add_records`), troféu nos 2 atlas
-      (`ui_kit.py`/`kids_ui.py`); prévias `flight_ui_preview -- --records`, `summary_preview [-- --first]` (2026-10-07).
-      Pendente: som próprio de recorde (hoje: jingle milestone)
-- [x] 17.3 Paisagens (godot-dev + pixel-art + economy-balance): 7 receitas em `world.json > terrain.landscapes`
-      (`TerrainGen.landscape`/`pick_landscape`, ruído ridged, degraus, desnível ±, alvo em mesa/vale, 0–3 morros,
-      crateras); `Flight.landscapes` (do `GameState.landscapes()`); 5 paradas `landscape` na Estrada (economy.json,
-      rascunho) + ícones `land_*` no atlas kids; fundo segue o chão (`background.ground_follow`); plataforma no nível
-      sem parede colada; prévia `landscape_preview [-- --near] [--seed=N]`; testes (8 seeds × 7 paisagens) (2026-10-07).
-      Δv: o modelo da economia não usa o relevo (arco ideal); conferir jogando/telemetria
-
-## Fase 16 — PROGRESSÃO: Estrada das Estrelas + Reputação (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
-> Pedido do usuário: ver toda a progressão desde o início ("incita a querer chegar lá"). Escolheu, entre 3 protótipos
-> HTML, a **Estrada das Estrelas** (padrão Trophy Road / passe de batalha). Protótipo: `art/previews/progressao/`.
-> Regras em `docs/DECISIONS.md` (2026-10-07). **Economia fina depois, de acordo com a jogabilidade**: nesta fase os
-> números novos são provisórios (marcados "rascunho" na spec), só o suficiente para jogar.
-- [x] 16.1 Spec + espelho (economy-balance): `progression.road` em `economy.json` (paradas em ordem: Mineiro, ratinhos
-      ★1–★3 e Dupla, Estabilizador, Turbo, 7 ajudas, Frota, Piloto automático, "Lua completa"; estrelas provisórias da
-      curva do protótipo); `contracts.reputation` (+10%, substitui `combo`); sai o upgrade `contracts` (Reputação por
-      moedas) e os marcos dele; `econ.py` + `econ_math.gd` (estrelas acumuladas liberam paradas; reputação) +
-      `test_econ_parity.py`; `screen()` só para ver que nada quebrou (sem rebalancear); CHANGELOG + versão
-- [x] 16.2 Estado e save (godot-dev): `GameState.stars` vira **total acumulado** (não se gasta);
-      `road_reached` (ids) libera sozinho (ratinho → nó de missão; habilidade/ajuda → nível 1; Frota/Piloto → podem ser
-      comprados); `reputation_ready` (bool, guardado entre runs); migração do save v2→v3 (total = estrelas + 3 × nós
-      liberados; o que já foi comprado continua); testes unitários do save e da estrada
-- [x] 16.3 Reputação no voo (godot-dev): pouso perfeito = inclinação ≤ 25% de `max_tilt` e V.vert ≤ 40% de `max_vy`
-      (`data/world.json > landing.perfect`, calibrável) → próxima entrega +10%; outro pouso → sem; batida → perde a atual
-      e a próxima; o painel COMBO do HUD vira o **selo de Reputação** (aceso/apagado + aviso "Pouso perfeito! próxima
-      +10%"); "Você ganha" da escolha de missão mostra o selo; recorde "maior combo" sai (ou vira "pousos perfeitos
-      seguidos"); testes de RunState
-- [x] 16.4 Tela PROGRESSÃO (godot-dev): o hangar renomeado; **Estrada da Lua** no topo (rolagem por setas/roda/arrasto
-      e teclado, nave na posição, próximo prêmio pulsando com "faltam N", balão ao clicar); aba NAVE = nave grande + 4
-      cartões de peça em degraus de 10 (bolinhas, "Motor II!" com festinha, peça que brilha ao passar o mouse);
-      Estabilizador/Turbo ganhos acima da nave; seletor ×1/×10/MÁX; aba AJUDAS (ligar/desligar; cadeado com "na
-      estrada: N⭐"); aba FROTA (cadeado até a parada; pista de drones + Piloto automático); aba PEDIDOS sai;
-      aviso "Na estrada: novo prêmio!" ao voltar do voo (substitui o MissionIntro de nó comprado); prévias
-      `hangar_preview` (`--stars`, `--news`, `--sel`, `--tab`, `--late`) e integrações atualizadas (2026-10-07)
+- [x] 18.4f Bolhas — garra do baú (máquina de garra/pescaria) + mar + bolhas: a corda começa com a garra leve
+      (`minigames.bolhas.hook_mass`) e pega o baú ao encostar (vira carga com o peso da estrela); baú no mar por 0,6 s =
+      molhou (Cabo falhou); nave no mar = splash; colunas de bolhas empurram nave e carga; mar atrás do relevo (só nos
+      vales); chegou sem o baú = paga menos (2026-10-07). **18.4 completa: os 6 minijogos no voo** (figuras provisórias)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;
       sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito

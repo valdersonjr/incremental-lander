@@ -14,7 +14,7 @@ const TITLE_SIZE := 22
 const VOLUME_STEP := 0.1
 const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
 ## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
-const CRASH_TEXT := {"atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
+const CRASH_TEXT := {"mar": "caiu no mar (splash!)", "atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
 		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado"}
 ## Escurecimento atras de janelas modais (resumo, final).
 const DIM_ALPHA := 0.6

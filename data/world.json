@@ -778,6 +778,30 @@
       ],
       "wind_period_s": 5.0,
       "bump_back": 0.5
+    },
+    "bolhas": {
+      "name": "Garra do baú",
+      "verb": "Pesque!",
+      "ask": "Pesca o meu baú do tesouro?",
+      "say": "Pegue o baú com a garra e não deixe molhar!",
+      "hook_mass": 0.15,
+      "grab_m": 10.0,
+      "water_below_m": 18.0,
+      "wet_s": 0.6,
+      "bubbles": {
+        "count": [
+          2,
+          2,
+          3
+        ],
+        "width_m": 30.0,
+        "accel": [
+          3.0,
+          3.5,
+          5.0
+        ],
+        "height_m": 140.0
+      }
     }
   }
 }
