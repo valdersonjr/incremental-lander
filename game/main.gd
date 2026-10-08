@@ -41,6 +41,8 @@ var _taxi_gift_pay := 0.0
 ## mesmo salto de novo com ele) e se o salto e o 1o do jogo (ja aceito, relevo baixo, sem minijogo).
 var _hop_gas := 0.0
 var _first_hop := false
+var _retries := 0                                  # tentativas repetidas do salto atual (aprendiz)
+var _no_auto_hop := false                          # o aprendiz desistiu do 1o salto: escolhe no cartao
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -271,6 +273,7 @@ func _start_run() -> void:
 	_world_map.visible = false
 	_worlds_before = GameState.worlds().size()
 	_first_hop = false
+	_no_auto_hop = false
 	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
@@ -329,7 +332,11 @@ func _show_offers() -> void:
 	if _run.over:
 		_end_run()
 		return
-	if GameState.first_hop() and _run.deliveries.is_empty() and not _demo:   # 1o salto do jogo: ja aceito (C1)
+	if GameState.apprentice() and not _demo and not _run.can_continue(gas):   # aprendiz sem saida: acaba o run
+		_run.finish("sem_gas")
+		_end_run()
+		return
+	if GameState.first_hop() and _run.deliveries.is_empty() and not _demo and not _no_auto_hop:   # 1o salto (C1)
 		var first := _first_simple_offer()
 		if first >= 0:
 			_first_hop = true
@@ -365,6 +372,7 @@ func _on_offer_chosen(index: int) -> void:
 	_offers.visible = false
 	var m := _run.taken_mission
 	_hop_gas = _flight.lander.gas
+	_retries = 0
 	_flight.gentle = _first_hop
 	_flight.minigame_on = (GameState.shows_minigame() or _demo) and not _first_hop
 	_flight.apprentice = GameState.apprentice() and not _demo
@@ -464,9 +472,13 @@ func _on_stranded() -> void:
 
 
 ## Aprendiz (world.json > onboarding): a batida (ou o gas que acabou) nao acaba o run. A tela escurece, a nave volta
-## para a partida do MESMO salto com o gas do comeco dele, e o aviso diz o jeito de acertar.
+## para a partida do MESMO salto com o gas do comeco dele, e o aviso diz o jeito de acertar. Depois de retries_per_hop
+## repeticoes (ou sem gas) o salto nao repete mais: a nave volta para a partida e o cartao abre para escolher outra
+## missao (missao dificil demais nunca prende o jogador).
 func _retry_hop(reason: String) -> void:
-	Telemetry.event("retry", reason)
+	_retries += 1
+	var give_up := reason == "sem_gas" or _retries > int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
+	Telemetry.event("give_up" if give_up else "retry", reason)
 	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
 	var flight := _flight
 	var tw := _fade.create_tween()
@@ -475,8 +487,16 @@ func _retry_hop(reason: String) -> void:
 	await tw.finished
 	if flight != _flight or _run == null or _run.over:         # o run acabou/recomecou durante a tela escura
 		return
-	_flight.retry_mission(_hop_gas)
-	_hud.show_retry(reason)
+	if give_up:
+		_retries = 0
+		_first_hop = false
+		_no_auto_hop = true
+		_flight.reset_to_start(_hop_gas)
+		_hud.show_other_mission()
+		_show_offers()
+	else:
+		_flight.retry_mission(_hop_gas)
+		_hud.show_retry(reason)
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 

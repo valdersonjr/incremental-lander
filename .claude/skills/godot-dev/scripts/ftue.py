@@ -37,7 +37,7 @@ def funnels(rows: list[dict]) -> list[dict]:
                     cur["runs_before_buy"] = int(r["runs"])
         if "delivery" not in cur["first"]:
             cur["crashes"] += ev == "crash"
-            cur["retries"] += ev == "retry"
+            cur["retries"] += ev in ("retry", "give_up")
             cur["rests"] += ev == "rest"
     return out
 

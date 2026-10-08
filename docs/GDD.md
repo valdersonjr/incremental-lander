@@ -169,7 +169,9 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
 - **Jogo novo começa voando**: o 1º salto já vem aceito (perto, 160 m; plataforma normal; chão quase plano; sem
   minijogo) e o aviso grande diz "Pouse! na plataforma do outro lado". O Mapa e a escolha de missão vêm depois.
 - **Aprendiz** (menos de 5 entregas no jogo): bater ou ficar sem gás **não acaba o run**. A nave volta para a partida
-  do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Pousar devagar e reto
+  do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Depois de 2 repetições
+  (ou sem gás) o salto não repete mais: a nave volta para a partida e o cartão abre ("OUTRA MISSÃO!") — missão difícil
+  demais nunca prende o jogador; sem nenhum pedido ao alcance, o run acaba. Pousar devagar e reto
   fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
 - **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
   no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave

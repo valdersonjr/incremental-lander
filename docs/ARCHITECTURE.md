@@ -248,7 +248,8 @@ Planejados (`godot-dev`):
 - `Main`: jogo novo (menu ou pausa) → `_start_run()` direto; `_show_offers` no 1º salto aceita sozinho o pedido mais
   perto (`_first_simple_offer`, distância `first_hop.distance_m`); `_on_offer_chosen` liga `Flight.gentle/minigame_on/
   apprentice` e guarda `_hop_gas`; batida/`stranded` do aprendiz → `_retry_hop` (tela escura → `Flight.retry_mission`
-  → `Hud.show_retry`); `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
+  → `Hud.show_retry`; passou de `retries_per_hop` ou sem gás → `Flight.reset_to_start` + `Hud.show_other_mission` +
+  cartão de novo, sem o 1º salto automático); aprendiz sem pedido alcançável → fim do run; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
 - `Flight.retry_mission(gas)` repete o último `begin_mission` (mesma seed); `gentle` = relevo baixo sem crista nem
   paisagem; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).
 - `Coach` (`game/flight/coach.gd`, filho do Flight, z 5): teclinhas desenhadas (motor parado na partida; girar no ar)

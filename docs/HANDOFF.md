@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Bug do loop do aprendiz corrigido** (relato do usuário jogando um save novo): missão difícil demais prendia o
+  jogador (a batida repetia o mesmo salto para sempre). Agora: no máximo 2 repetições (`retries_per_hop`), depois volta
+  ao cartão com o gás do começo do salto ("OUTRA MISSÃO!"); sem pedido ao alcance, o run acaba. Verificado: check,
+  111 testes, integrações (onboarding_flow cobre o caso; acelerado com `Engine.time_scale` 4 para caber nos 600 quadros).
 - **Auditoria dos primeiros minutos APLICADA (ROADMAP 18.5e)**: "conserte todos pela ordem que preferir". Jogo novo
   começa voando no 1º salto já aceito (perto, chão quase plano, sem minijogo, "Pouse!"); aprendiz (< 5 entregas) não
   perde o run na batida (repete o salto com o gás dele) e pousa devagar fora da plataforma sem bater; Coach sem texto

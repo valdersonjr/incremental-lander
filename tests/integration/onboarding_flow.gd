@@ -1,7 +1,7 @@
 ## Teste de integracao dos PRIMEIROS MINUTOS (auditoria FTUE, 2026-10-08; world.json > onboarding), numa pasta propria
 ## (user://itest_onboarding). Jogo novo comeca voando no 1o salto ja aceito (perto, relevo baixo, sem minijogo) ->
 ## aprendiz bate e tenta o mesmo salto de novo (run continua, gas do comeco do salto) -> pouso devagar fora da
-## plataforma para no chao -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
+## plataforma para no chao -> falhou o limite de tentativas: volta ao cartao de missoes -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
 ## "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
 extends Node
 
@@ -11,7 +11,8 @@ var _fails: Array[String] = []
 
 
 func _ready() -> void:
-	SaveManager.enabled = true
+	Engine.time_scale = 4.0                                    # explosoes/telas escuras/descidas 4x (cabe nos 600 quadros
+	SaveManager.enabled = true                                 # do gdtool test; a fisica roda os mesmos passos)
 	SaveManager.set_dir("user://itest_onboarding")
 	for n in range(1, SaveManager.SLOTS + 1):
 		SaveManager.delete_slot(n)
@@ -35,7 +36,7 @@ func _ready() -> void:
 	flight.lander.state = Lander.State.FLYING
 	flight.lander.gas = gas0 * 0.5
 	flight.lander.crash_now("vertical_rapido")
-	await _frames(150)                                         # explosao + tela escura + nave descendo de novo
+	await _until(func() -> bool: return main._retries == 1 and flight.lander.visible)   # explosao + tela escura
 	_check(not main._run.over, "aprendiz: batida nao deveria acabar o run")
 	_check(main._flight == flight and flight.lander.visible, "aprendiz: a nave volta")
 	_check(is_equal_approx(flight.lander.gas, gas0), "aprendiz: gas do comeco do salto (%.1f / %.1f)" % [
@@ -52,9 +53,24 @@ func _ready() -> void:
 	l.global_position = Vector2(x, TerrainGen.height_at(flight.terrain.ridge, x) - 12.0)
 	var crashed := [false]
 	l.crashed.connect(func(_r: String, _i: Dictionary) -> void: crashed[0] = true)
-	await _frames(120)
+	await _until(func() -> bool: return crashed[0] or l.state != Lander.State.FLYING)
 	_check(not crashed[0] and l.state == Lander.State.LANDED, "pouso devagar fora: parou no chao (estado %s)" % [
 			Lander.State.keys()[l.state]])
+	# bug do loop (2026-10-08): o aprendiz que falha o mesmo salto de novo e de novo volta ao cartao de missoes
+	var tries := int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
+	for k in tries:                                            # 1a batida ja foi; mais `tries` = passou do limite
+		await _wait_ready(main)
+		flight.lander.state = Lander.State.FLYING
+		var before: int = main._retries
+		flight.lander.crash_now("fora_da_plataforma")
+		await _until(func() -> bool: return main._offers.visible or (main._retries > before and flight.lander.visible))
+	_check(not main._run.over and main._offers.visible, "depois das tentativas: cartao de missoes (nao repete mais)")
+	_check(is_equal_approx(flight.lander.gas, gas0) and flight.lander.visible
+			and flight.lander.state == Lander.State.LANDED, "de volta na partida com o gas do comeco do salto")
+	_check(flight.target_pad_id < 0, "sem alvo enquanto escolhe")
+	main._on_offer_chosen(0)                                   # escolheu outra: voa normalmente
+	await _wait_ready(main)
+	_check(main._retries == 0 and not main._run.over, "missao nova zera as tentativas")
 	# fim do run com dinheiro para uma peca: CONTINUAR vai para a NAVE (1a visita: so PECAS, x1)
 	GameState.resources["credits"] = 100.0
 	main._run.finish("sem_gas")
@@ -78,8 +94,9 @@ func _ready() -> void:
 	await _wait_ready(main)
 	main._flight.lander.state = Lander.State.FLYING
 	main._flight.lander.crash_now("vertical_rapido")
-	await _frames(90)
+	await _until(func() -> bool: return main._run.over)
 	_check(main._run.over, "veterano: batida acaba o run")
+	Engine.time_scale = 1.0
 	print("ONBOARDING_TEST ", "OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails))
 	get_tree().quit()
 
@@ -91,6 +108,14 @@ func _wait_ready(main: Node) -> void:
 		var f: Flight = main._flight
 		if f != null and f.lander.can_takeoff and not f.lander.arriving and f.target_pad_id >= 0 \
 				and f.lander.state == Lander.State.LANDED:
+			return
+
+
+## Espera ate cond() ficar verdadeira (no maximo limit quadros).
+func _until(cond: Callable, limit: int = 240) -> void:
+	for i in limit:
+		await get_tree().process_frame
+		if cond.call():
 			return
 
 

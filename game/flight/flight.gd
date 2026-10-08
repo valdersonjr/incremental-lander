@@ -206,6 +206,20 @@ func retry_mission(gas: float) -> void:
 			_last_mission[5])
 
 
+## Aprendiz que nao conseguiu o salto: nave nova parada na partida do mapa atual, com o gas do comeco do salto e sem
+## alvo (o cartao de missoes abre por cima; a missao escolhida gera o mapa novo).
+func reset_to_start(gas: float) -> void:
+	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	set_fatigue(fatigue)
+	lander.gas = gas
+	lander.visible = true
+	lander.can_takeoff = false
+	current_pad_id = 0
+	target_pad_id = -1
+	terrain.target_pad_id = -1
+	_place_on_start_pad()
+
+
 ## Cansaco do run (v15, RunState.fatigue): a missao gasta fatigue x o gas normal (motor igual, eficiencia / fatigue);
 ## o galao devolve gas / fatigue. O Main chama antes de cada begin_mission.
 func set_fatigue(f: float) -> void:

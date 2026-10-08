@@ -338,6 +338,12 @@ func show_verb(verb: String, text: String = "") -> void:
 		_show_toast(verb, text, &"MoneyLabel")
 
 
+## Aprendiz: o salto nao deu depois das tentativas; o cartao abre para escolher outra missao.
+func show_other_mission() -> void:
+	_show_toast("OUTRA MISSÃO!", "essa ficou difícil: escolha uma mais perto", &"MoneyLabel")
+	_set_status(_idle_status())
+
+
 ## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Aviso animador + o jeito de acertar.
 func show_retry(reason: String) -> void:
 	_show_toast("TENTE DE NOVO!", UiKit.crash_tip(reason), &"MoneyLabel")
