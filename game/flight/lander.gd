@@ -13,6 +13,8 @@ enum State {LANDED, FLYING, CRASHED}
 
 var state: State = State.LANDED
 var vel_m := Vector2.ZERO               # velocidade em m/s do modelo
+var ice_pad_id := -1                    # v17 Sorvete: plataforma de gelo (pousar de lado vale: tolera max_vx x ice_vx_mult)
+var ice_vx_mult := 1.0
 var gas := 0.0
 var params: Dictionary = {}             # gravity, thrust, efficiency, drag, tank, gear, planet_drag
 var pads: Array[Dictionary] = []
@@ -220,6 +222,8 @@ func _on_touch() -> void:
 	var pad := TerrainGen.pad_at(pads, global_position.x)
 	var on_pad := not pad.is_empty() and absf(global_position.x - float(pad["x"])) <= float(pad["half_width"]) - half * 0.5
 	var tol := LandingRules.tolerances(cfg["landing"], float(params["gear"]))
+	if on_pad and int(pad["id"]) == ice_pad_id:                # curling: chegar deslizando de lado e o jeito certo
+		tol["max_vx"] = float(tol["max_vx"]) * ice_vx_mult
 	var inf := info()
 	var reason := LandingRules.crash_reason(inf["vy"], inf["vx"], inf["tilt"], on_pad, tol)
 	if reason == "":

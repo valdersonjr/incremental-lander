@@ -51,6 +51,10 @@ var _history := PackedVector2Array()                # Nuvens: posicoes recentes 
 var _updrafts: Array = []                           # Nuvens: colunas de corrente {x, half}
 var _updraft_lines: Array[Node] = []
 var _caps: Array[Dictionary] = []                   # Cogumelos: chapeus-mola {x, y, half, node}
+var _rings: Array[Node] = []                        # Sorvete: anéis do alvo
+var sliding := false                                # Sorvete: deslizando no gelo depois do pouso
+var _slide_v := 0.0                                 # m/s
+var _slide_info: Dictionary = {}
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -228,8 +232,9 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_miss
 	mission = p_mission if not p_mission.is_empty() else EconMath.simple_mission()
 	taxi_stage = stage
 	failed = failed_before.duplicate()
-	_pad_positions_m.append(target_position_m(distance_m, target_dir, tier))
-	_pad_tiers.append(tier)
+	var phys := str(Minigames.spec(planet_id).get("rink_tier", tier)) if taxi_stage <= 1 else tier   # Sorvete: pista
+	_pad_positions_m.append(target_position_m(distance_m, target_dir, phys))
+	_pad_tiers.append(phys)
 	target_pad_id = _pad_positions_m.size() - 1
 	_rebuild_terrain()
 	lander.pads = terrain.pads
@@ -333,15 +338,21 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 	var max_vy := float(WorldConfig.load_config()["landing"]["max_vy"])
 	shake(float(WorldConfig.load_config()["camera"]["land_shake"]) * clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	current_pad_id = int(pad["id"])
-	if current_pad_id == target_pad_id:
-		_judge_mission(info, quality)
-		Sound.sfx("delivered")
-		lander.can_takeoff = false
-		target_pad_id = -1
-		terrain.target_pad_id = -1
-		_finish(false, quality, "", info)
+	if current_pad_id == target_pad_id and planet_id == "sorvete" and not _rings.is_empty():
+		_start_slide(info)                                     # curling: a entrega so fecha quando a nave para
+	elif current_pad_id == target_pad_id:
+		_complete_landing(pad, quality, info)
 	elif lander.gas <= 0.001:
 		stranded.emit()
+
+
+func _complete_landing(_pad: Dictionary, quality: float, info: Dictionary) -> void:
+	_judge_mission(info, quality)
+	Sound.sfx("delivered")
+	lander.can_takeoff = false
+	target_pad_id = -1
+	terrain.target_pad_id = -1
+	_finish(false, quality, "", info)
 
 
 func _on_lander_crashed(reason: String, info: Dictionary) -> void:
@@ -425,6 +436,25 @@ func _setup_minigame() -> void:
 		minigame_total = n
 	elif planet_id == "cogumelos":                             # cogumelos-mola (Doodle Jump) + ovinho (Pouso suave)
 		_setup_caps(cfg, star)
+	elif planet_id == "sorvete":                               # curling: aneis no meio da pista de gelo
+		var pad: Dictionary = terrain.pads[target_pad_id]
+		lander.ice_pad_id = target_pad_id
+		lander.ice_vx_mult = float(cfg.get("ice_vx_mult", 4.0))
+		var ice := ColorRect.new()                             # a pista de gelo inteira (placeholder ate a arte)
+		ice.color = Color("#8ff8e2")
+		ice.position = Vector2(float(pad["x"]) - float(pad["half_width"]), float(pad["y"]) - 3.0)
+		ice.size = Vector2(float(pad["half_width"]) * 2.0, 3.0)
+		add_child(ice)
+		_rings.append(ice)
+		var r := WorldConfig.m_to_px(float((cfg["ring_m"] as Dictionary).get(target_tier, 46.0)))
+		for ring: Array in [[r, "#e83b3b"], [r * 0.66, "#ffffff"], [r * 0.33, "#4d9be6"]]:
+			var bar := ColorRect.new()
+			bar.color = Color(str(ring[1]))
+			bar.position = Vector2(float(pad["x"]) - float(ring[0]), float(pad["y"]) - 2.0)
+			bar.size = Vector2(float(ring[0]) * 2.0, 3.0)
+			add_child(bar)
+			_rings.append(bar)
+		minigame_total = 1
 	elif planet_id == "nuvens":                                # fila de carneirinhos (Snake) + correntes
 		var a: Dictionary = terrain.pads[current_pad_id]
 		var b: Dictionary = terrain.pads[target_pad_id]
@@ -502,6 +532,12 @@ func _setup_caps(cfg: Dictionary, star: int) -> void:
 
 
 func _clear_minigame() -> void:
+	for n: Node in _rings:
+		if is_instance_valid(n):
+			n.queue_free()
+	_rings.clear()
+	sliding = false
+	lander.ice_pad_id = -1
 	for c: Dictionary in _caps:
 		if is_instance_valid(c["node"]):
 			(c["node"] as Node).queue_free()
@@ -529,6 +565,9 @@ func _tick_minigame() -> void:
 		return
 	if planet_id == "cogumelos":
 		_tick_caps()
+		return
+	if planet_id == "sorvete":
+		_tick_slide()
 		return
 	if _trail.is_empty() or lander.state != Lander.State.FLYING:
 		return
@@ -593,12 +632,45 @@ func _tick_caps() -> void:
 			break
 
 
+## Sorvete: depois do pouso a nave desliza no gelo; quando para, a qualidade e a distancia ao centro do alvo.
+func _start_slide(info: Dictionary) -> void:
+	var cfg := Minigames.spec(planet_id)
+	sliding = true
+	_slide_info = info
+	var vx := float(info.get("vx", 0.0))
+	_slide_v = signf(vx if vx != 0.0 else float(target_dir)) * maxf(absf(vx), float(cfg.get("min_slide_mps", 5.0)))
+	lander.can_takeoff = false
+
+
+func _tick_slide() -> void:
+	if not sliding:
+		return
+	var cfg := Minigames.spec(planet_id)
+	var dt_m := get_physics_process_delta_time() * float(WorldConfig.load_config()["time_scale"])
+	var pad: Dictionary = terrain.pads[target_pad_id]
+	var nx := lander.global_position.x + WorldConfig.m_to_px(_slide_v * dt_m)
+	var lim := float(pad["half_width"]) - 6.0
+	nx = clampf(nx, float(pad["x"]) - lim, float(pad["x"]) + lim)      # a borda da pista segura a nave
+	lander.global_position.x = nx
+	_slide_v = Minigames.slide_step(_slide_v, float(cfg.get("friction_mps2", 5.0)), dt_m)
+	if absf(_slide_v) <= float(cfg.get("stop_mps", 0.6)) or absf(nx - float(pad["x"])) >= lim:
+		sliding = false
+		var dist := WorldConfig.px_to_m(absf(nx - float(pad["x"])))
+		var q := Minigames.curling_quality(dist, float((cfg["ring_m"] as Dictionary).get(target_tier, 46.0)))
+		minigame_got = 1 if q > 0.0 else 0
+		_float_text("no miolo!" if q > 0.66 else ("no alvo!" if q > 0.0 else "fora do alvo"),
+				lander.global_position + Vector2(0, -26))
+		_complete_landing(pad, q, _slide_info)
+
+
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
 func minigame_text() -> String:
 	if minigame_total <= 0:
 		return ""
 	if planet_id == "cogumelos":
 		return "quiques %d" % minigame_got
+	if planet_id == "sorvete":
+		return "deslizando..." if sliding else "deslize até o alvo"
 	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
 
 

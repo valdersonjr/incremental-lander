@@ -90,5 +90,32 @@ func _ready() -> void:
 	_check("cogumelos_pouso_forte_racha_o_ovo", c.failed.has("soft"))
 	_check("verbo_dos_cogumelos", c.minigame_verb() == "Quique!")
 	c.queue_free()
+	await get_tree().process_frame
+	# Sorvete: curling na pista de gelo (a plataforma escolhida vira o tamanho dos aneis)
+	var f2 := {"kind": "fast", "star": 2, "parts": [{"kind": "fast", "star": 2}]}
+	var sv: Flight = FLIGHT_SCENE.instantiate()
+	add_child(sv)
+	sv.start("sorvete", 7, EconMath.ship_stats({"thrust": 30, "tank": 20, "efficiency": 10}), false)
+	sv.begin_mission(11, 900.0, "narrow", 1, f2)
+	var rink: Dictionary = sv.terrain.pads[sv.target_pad_id]
+	_check("sorvete_pista_larga", WorldConfig.px_to_m(float(rink["half_width"]) * 2.0) > 150.0)
+	_check("sorvete_paga_a_plataforma_escolhida", sv.target_tier == "narrow" and sv._rings.size() == 4)
+	var got: Array = []
+	sv.delivery_finished.connect(func(r: Dictionary) -> void: got.append(r))
+	sv.lander.global_position = Vector2(float(rink["x"]) - 120.0, float(rink["y"]) - 8.0)
+	sv._on_lander_landed(rink, 0.9, {"vy": 1.0, "vx": 6.0, "tilt": 0.0, "gas_used": 5.0, "flight_time_m": 4.0})
+	_check("sorvete_pousar_comeca_a_deslizar", sv.sliding and got.is_empty())
+	var x0 := sv.lander.global_position.x
+	for i in 3000:
+		if not sv.sliding:
+			break
+		sv._tick_minigame()
+	_check("sorvete_desliza_e_para", not sv.sliding and sv.lander.global_position.x > x0 and got.size() == 1)
+	_check("sorvete_qualidade_pela_distancia", got.size() == 1 and float(got[0]["quality"]) >= 0.0
+			and float(got[0]["quality"]) <= 1.0)
+	_check("curling_centro_vale_mais", Minigames.curling_quality(2.0, 32.0) > Minigames.curling_quality(20.0, 32.0)
+			and Minigames.curling_quality(40.0, 32.0) == 0.0)
+	_check("verbo_do_sorvete", sv.minigame_verb() == "Deslize!")
+	sv.queue_free()
 	print("MINIGAME_TEST " + ("OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails)))
 	get_tree().quit(0 if _fails.is_empty() else 1)

@@ -154,6 +154,10 @@
 - [x] 18.4c Cogumelos — chapéus-mola (Doodle Jump) + ovinho: `minigames.cogumelos` (1/3/3 chapéus em escada), caindo
       no chapéu a nave quica (`Minigames.hits_cap/bounce_vy`), placar de quiques; o ovinho é o Pouso suave que já existia;
       cogumelo desenhado provisório (2026-10-07)
+- [x] 18.4d Sorvete — curling no gelo: alvo vira pista larga (`pad_tiers.rink` 220 m); a plataforma escolhida vira o
+      tamanho dos anéis (normal 46 / estreita 32 / apertada 20 m, e continua multiplicando o pagamento); pousar de lado vale
+      (`Lander.ice_pad_id/ice_vx_mult`); depois do pouso a nave desliza (`Minigames.slide_step`, atrito 0,6) e a qualidade
+      é a distância ao centro (`curling_quality`); relógio da Rápida segue; prévia `minigame_preview -- --world=<id>` (2026-10-07)
 - [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
       Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 

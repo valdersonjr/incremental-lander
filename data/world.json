@@ -135,6 +135,10 @@
       "tight": {
         "width_m": 28.0,
         "lift_m": 48.0
+      },
+      "rink": {
+        "width_m": 220.0,
+        "lift_m": 0.0
       }
     },
     "crest": {
@@ -734,6 +738,22 @@
       "bounce_mps": 11.0,
       "ask": "Leva meu ovinho lá pra casa no alto?",
       "say": "Quique nos cogumelos e pouse bem devagar!"
+    },
+    "sorvete": {
+      "name": "Curling no gelo",
+      "verb": "Deslize!",
+      "ask": "Leva meu picolé antes de derreter?",
+      "say": "Pouse no gelo e deslize até o alvo!",
+      "rink_tier": "rink",
+      "ring_m": {
+        "normal": 46.0,
+        "narrow": 32.0,
+        "tight": 20.0
+      },
+      "friction_mps2": 0.6,
+      "min_slide_mps": 6.0,
+      "stop_mps": 0.4,
+      "ice_vx_mult": 4.0
     }
   }
 }

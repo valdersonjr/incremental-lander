@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/visual/minigame_preview.gd" id="1_mgp"]
+
+[node name="MinigamePreview" type="Node"]
+script = ExtResource("1_mgp")

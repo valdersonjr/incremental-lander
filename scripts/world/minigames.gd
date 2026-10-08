@@ -63,6 +63,17 @@ static func bounce_vy(vy_mps: float, bounce_mps: float) -> float:
 	return -maxf(vy_mps * 0.95, bounce_mps)
 
 
+## Sorvete (curling): qualidade pela distancia (m) ate o centro do alvo; fora do anel = 0.
+static func curling_quality(dist_m: float, ring_m: float) -> float:
+	return clampf(1.0 - dist_m / maxf(ring_m, 0.001), 0.0, 1.0)
+
+
+## Sorvete: velocidade (m/s) depois de dt (s do modelo) de atrito no gelo (para em 0, nunca troca de lado).
+static func slide_step(v_mps: float, friction: float, dt_m: float) -> float:
+	var nv := absf(v_mps) - friction * dt_m
+	return signf(v_mps) * nv if nv > 0.0 else 0.0
+
+
 ## A nave (centro, px) encostou no queijinho?
 static func touches(pos_px: Vector2, coin_px: Vector2, radius_px: float) -> bool:
 	return pos_px.distance_to(coin_px) <= radius_px
