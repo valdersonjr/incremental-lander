@@ -4,6 +4,19 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Auditoria dos primeiros minutos APLICADA (ROADMAP 18.5e)**: "conserte todos pela ordem que preferir". Jogo novo
+  começa voando no 1º salto já aceito (perto, chão quase plano, sem minijogo, "Pouse!"); aprendiz (< 5 entregas) não
+  perde o run na batida (repete o salto com o gás dele) e pousa devagar fora da plataforma sem bater; Coach sem texto
+  (teclinha do motor/girar só quando falta, some no 1º uso) + medidor de descida; revelação por etapas; CONTINUAR → NAVE
+  quando dá para comprar; Mapa com moedas e "!"; resumo diz como acertar; telemetria de sessão (`session.csv`,
+  `godot-dev/scripts/ftue.py`); perfil `novice` no simulador (1ª compra mediana ~5 min; sem o aprendiz o pior caso ia a
+  ~9,5 min). Detalhes: GDD §8, ARCHITECTURE "Primeiros minutos", DECISIONS 2026-10-08. Verificado: check (99), 111
+  testes, 15 integrações (nova `onboarding_flow`; controls_test/release_fixes/slots_flow no fluxo novo), paridade 43,
+  demo 2400 quadros, capturas `flight_ui_preview -- --no_title --new [--meter]` e `world_map_preview`.
+  **Para o usuário**: jogar um jogo novo e aprovar (teclinha e medidor são placeholder em `_draw`; arte/som só se
+  quiser); rodar o teste com crianças (`docs/PLAYTEST_KIDS.md`) e o funil. Ficou como estava: janela de missão (M2,
+  maquete aprovada). Decidido sem perguntar: teclinha do motor não conta como "dica óbvia"; aprendiz = 5 entregas.
+  **Próximo**: retorno do usuário jogando; depois 18.6 som por mundo.
 - **Auditoria dos primeiros minutos / FTUE (ROADMAP 18.5d)**. Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg.
   Veredito: o gancho visual é forte, mas o 1º minuto ensina pouco e pune muito. Jogo novo abre Mapa → conversa da
   missão antes do 1º toque no motor; ninguém mostra como pilotar; batida no 1º salto acaba o run com 0 moedas

@@ -163,8 +163,27 @@ grande com a barra até o recorde (troféu) e os outros quatro como "valor/recor
 avisa "NOVO RECORDE!". No fim do run (variante "troféus"): dinheiro grande + cartões que viram troféu com "NOVO!".
 Na PROGRESSÃO, a faixa de recordes (troféu + os 5 números) fica embaixo da nave.
 
+## 8. Primeiros minutos (auditoria FTUE, 2026-10-08)
+Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg (pesquisa: Andersen 2012, Passalacqua 2020, SDT, Hodent,
+Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world.json > onboarding` (não é economia).
+- **Jogo novo começa voando**: o 1º salto já vem aceito (perto, 160 m; plataforma normal; chão quase plano; sem
+  minijogo) e o aviso grande diz "Pouse! na plataforma do outro lado". O Mapa e a escolha de missão vêm depois.
+- **Aprendiz** (menos de 5 entregas no jogo): bater ou ficar sem gás **não acaba o run**. A nave volta para a partida
+  do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Pousar devagar e reto
+  fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
+- **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
+  no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave
+  perto do chão (verde/amarelo/vermelho, todo jogador).
+- **Uma coisa nova de cada vez**: minijogo a partir da 2ª entrega; placar de recordes depois do 1º run; corações de
+  reputação, abas REPUTAÇÃO/FROTA depois do aprendiz; AJUDAS quando a Estrada dá a 1ª; ×10/MÁX depois de 5 níveis.
+- **Caminho curto até a compra**: fim do run com dinheiro para uma peça → CONTINUAR abre a NAVE (a peça pulsa);
+  aprendiz sem compra → voa de novo; senão o Mapa, que mostra as moedas e "!" na NAVE quando dá para comprar.
+- **Batida que ensina**: o resumo diz o que deu errado e como acertar ("segure o motor perto do chão…").
+- **Metas** (medir com `session.csv` + `godot-dev/scripts/ftue.py`): decolar ≤ 10 s, 1ª entrega ≤ 60 s, ≥ 70% dos
+  novatos entregam no 1º run, 1ª compra ≤ 4 min, criança de 6 anos joga 10 min sem ajuda (`docs/PLAYTEST_KIDS.md`).
+
 ## 9. Ritmo esperado (simulado, spec v11 — só a Lua)
-Primeira compra logo após o 1º run; Motor e Reputação chegam ao nível 80 em ~6–8 h; 1º drone ~2 h (engajado);
+Primeira compra logo após o 1º run (novato simulado, 2026-10-08: mediana ~5 min com a regra do aprendiz; §8); Motor e Reputação chegam ao nível 80 em ~6–8 h; 1º drone ~2 h (engajado);
 pior espera entre compras ~11–12 min na 1ª hora (≈ 1 run do modelo, que ainda dura ~9 min: calibração pendente).
 Script: `balance/sims/2026-10-06-v11-moon-only.py`.
 

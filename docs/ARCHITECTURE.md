@@ -182,7 +182,10 @@ game/hud/hud.tscn/.gd         # Hud: gás, V.VERT/V.HOR com cor de segurança, a
 autoload/telemetry.gd         # Telemetry (só no build de depuração/editor, ou com --telemetry; > 5 MB vira _old):
                               # user://telemetry/deliveries.csv (formato da economy-balance + coluna pilot
                               # human/demo + tier; demo só grava com --telemetry; cabeçalho antigo → deliveries_old[N].csv,
-                              # nunca sobrescreve)
+                              # nunca sobrescreve). Telemetry.event(nome, detalhe) → user://telemetry/session.csv (funil do
+                              # começo: boot, new_game, load, title, map, run_start, offers, mission, takeoff, delivery, crash,
+                              # retry, rest, run_end, nave, buy, tip, close; fora em demo/tests/--dev_*/--no_save);
+                              # leitor: .claude/skills/godot-dev/scripts/ftue.py
 autoload/save_manager.gd      # SaveManager: pasta própria (project.godot custom_user_dir_name = IncrementalLander; na 1ª vez
                               # copia saves/opções/telemetria de Godot/app_userdata/Incremental Lander, sem sobrescrever);
                               # save ILEGÍVEL (danificado/versão futura) nunca é sobrescrito: guardado como
@@ -237,6 +240,24 @@ Planejados (`godot-dev`):
 - `SaveManager` — salvar/carregar com versão da spec (`meta.version`) e migração.
 - `Telemetry` — grava CSV de entregas/runs para calibrar o modelo (`economy-balance`).
 - (o papel do `AudioManager` ficou com `Sound` + `Lander`).
+
+## Primeiros minutos (auditoria FTUE, 2026-10-08; world.json > onboarding)
+- `GameState.apprentice()` (estrelas < apprentice_stars), `first_hop()` (0 estrelas), `shows_minigame/records/
+  reputation/bulk()` (revelação por etapas), `tips` + `tip_done/learn_tip` (salvo; campo opcional do save v6),
+  `can_afford_any()` (alguma peça da aba PEÇAS).
+- `Main`: jogo novo (menu ou pausa) → `_start_run()` direto; `_show_offers` no 1º salto aceita sozinho o pedido mais
+  perto (`_first_simple_offer`, distância `first_hop.distance_m`); `_on_offer_chosen` liga `Flight.gentle/minigame_on/
+  apprentice` e guarda `_hop_gas`; batida/`stranded` do aprendiz → `_retry_hop` (tela escura → `Flight.retry_mission`
+  → `Hud.show_retry`); `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
+- `Flight.retry_mission(gas)` repete o último `begin_mission` (mesma seed); `gentle` = relevo baixo sem crista nem
+  paisagem; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).
+- `Coach` (`game/flight/coach.gd`, filho do Flight, z 5): teclinhas desenhadas (motor parado na partida; girar no ar)
+  e medidor de descida perto do chão. Placeholder em `_draw` (cores Resurrect 64).
+- HUD: placar sem a grade de recordes no 1º run, corações só depois do aprendiz, `show_verb(verbo, texto)`,
+  `show_retry(motivo)`; `UiKit.crash_tip`. NAVE: `_visible_tabs()` e ×10/MÁX por `shows_bulk`. Mapa: moedas, "NAVE  !"
+  e "Novo amiguinho!" (`MissionIntro`) quando a Estrada libera um ratinho. Ofertas: aprendiz não vê "falta gás".
+- Prévia: `flight_ui_preview` é veterano por padrão; `--new` = jogador novo, `--meter` = caindo perto do chão.
+  Integração: `tests/integration/onboarding_flow`.
 
 ## Regras de fluxo (auditoria de lançamento, 2026-10-03)
 - `Main._abandon_run()`: R, voltar ao título ou trocar de jogo no meio do run fecham a conta como um fim normal
