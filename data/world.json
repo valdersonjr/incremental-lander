@@ -707,7 +707,14 @@
         30.0,
         110.0
       ],
-      "follow_frames": 9,
+      "follow_frames": 14,
+      "updraft_sheep": [
+        0,
+        0,
+        1
+      ],
+      "updraft_clear_m": 30.0,
+      "audit_notes": "2026-10-07 auditoria: fila mais longa (9 -> 14 quadros: a cauda encosta no relevo na descida se o jogador nao planejar); carneirinho que cai volta para o lugar (recuperacao); na ★3 um carneirinho fica DENTRO de uma corrente de proposito, os outros a 30 m dela.",
       "updrafts": {
         "count": 2,
         "width_m": 46.0,

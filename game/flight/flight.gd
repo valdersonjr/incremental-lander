@@ -494,7 +494,14 @@ func _setup_minigame() -> void:
 		var hv: Array = cfg["hover_m"]
 		var rng := RandomNumberGenerator.new()
 		rng.seed = _seed * 13 + 5
-		for x: float in Minigames.spread_x(a, b, n):
+		var up: Dictionary = cfg["updrafts"]
+		var half := WorldConfig.m_to_px(float(up["width_m"])) * 0.5
+		for x: float in Minigames.spread_x(a, b, int(up["count"])):
+			_updrafts.append({"x": x + (rng.randf() - 0.5) * half, "half": half})
+		var xs := Minigames.sheep_xs(Minigames.spread_x(a, b, n), _updrafts,
+				WorldConfig.m_to_px(float(cfg.get("updraft_clear_m", 0.0))),
+				int(Minigames.by_star(cfg.get("updraft_sheep", [0]), star)), float(a["x"]), float(b["x"]))
+		for x: float in xs:
 			var p := Vector2(x, TerrainGen.height_at(terrain.ridge, x) - WorldConfig.m_to_px(rng.randf_range(hv[0], hv[1])))
 			var sp := Sprite2D.new()
 			sp.texture = MinigameArt.tex("sheep%d" % (_sheep.size() % 2))
@@ -503,11 +510,8 @@ func _setup_minigame() -> void:
 			move_child(sp, lander.get_index())
 			_sheep.append({"pos": p, "sprite": sp, "got": false})
 		minigame_total = n
-		var up: Dictionary = cfg["updrafts"]
-		var half := WorldConfig.m_to_px(float(up["width_m"])) * 0.5
-		for x: float in Minigames.spread_x(a, b, int(up["count"])):
-			x += (rng.randf() - 0.5) * half
-			_updrafts.append({"x": x, "half": half})
+		for u: Dictionary in _updrafts:
+			var x := float(u["x"])
 			var gy := TerrainGen.height_at(terrain.ridge, x)
 			var top := gy - WorldConfig.m_to_px(float(up["height_m"]))
 			var y := gy - 10.0
@@ -757,7 +761,10 @@ func _tick_sheep() -> void:
 		if lp.y >= TerrainGen.height_at(terrain.ridge, lp.x) - 2.0:
 			_tail.pop_back()
 			minigame_got -= 1
-			(last["sprite"] as Sprite2D).hide()
+			last["got"] = false                                # volta pulando para o lugar dele (da para buscar de novo)
+			var sp := last["sprite"] as Sprite2D
+			var tw := sp.create_tween()
+			tw.tween_property(sp, "position", last["pos"] as Vector2, 0.6).set_trans(Tween.TRANS_QUAD)
 			_float_text("caiu!", lp + Vector2(0, -12))
 
 

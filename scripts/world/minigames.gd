@@ -35,6 +35,66 @@ static func spread_x(a: Dictionary, b: Dictionary, n: int) -> Array[float]:
 	return out
 
 
+## Nuvens: x (px) dos carneirinhos: os want primeiros do meio ficam DENTRO de uma corrente (no centro da mais
+## perto); os outros ficam a pelo menos half + clear dela (empurrados para o lado mais perto, sem sair de a..b).
+static func sheep_xs(xs: Array[float], columns: Array, clear: float, want: int, xa: float, xb: float) -> Array[float]:
+	var out: Array[float] = xs.duplicate()
+	var lo := minf(xa, xb)
+	var hi := maxf(xa, xb)
+	var order: Array[int] = []                                 # do meio para as pontas
+	for i in out.size():
+		order.append(i)
+	var mid := (out.size() - 1) * 0.5
+	order.sort_custom(func(i: int, j: int) -> bool: return absf(i - mid) < absf(j - mid))
+	var used: Array[int] = []
+	for i: int in order:
+		if columns.is_empty():
+			break
+		var ci := _nearest_column(out[i], columns, used if used.size() < columns.size() else [])
+		var c: Dictionary = columns[ci]
+		if used.size() < want:
+			out[i] = float(c["x"])
+			used.append(ci)
+			continue
+		var fx := free_x(out[i], columns, clear, lo, hi)
+		out[i] = fx if not is_nan(fx) else free_x(out[i], columns, 0.0, lo, hi)
+		if is_nan(out[i]):
+			out[i] = xs[i]
+	return out
+
+
+## Ponto de lo..hi mais perto de x que fica a pelo menos half + clear de toda corrente (NAN se nao houver).
+static func free_x(x: float, columns: Array, clear: float, lo: float, hi: float) -> float:
+	var blocked: Array[Vector2] = []
+	for c: Dictionary in columns:
+		var need := float(c["half"]) + clear + 0.5
+		blocked.append(Vector2(float(c["x"]) - need, float(c["x"]) + need))
+	blocked.sort_custom(func(u: Vector2, v: Vector2) -> bool: return u.x < v.x)
+	var best := NAN
+	var cur := lo
+	for seg: Vector2 in blocked + [Vector2(hi, hi)]:
+		var e := minf(seg.x, hi)
+		if e >= cur:                                           # trecho livre cur..e
+			var cand := clampf(x, cur, e)
+			if is_nan(best) or absf(cand - x) < absf(best - x):
+				best = cand
+		cur = maxf(cur, seg.y)
+	return best
+
+
+static func _nearest_column(x: float, columns: Array, skip: Array) -> int:
+	var best := 0
+	var bd := INF
+	for k in columns.size():
+		if k in skip:
+			continue
+		var d := absf(x - float(columns[k]["x"]))
+		if d < bd:
+			bd = d
+			best = k
+	return best
+
+
 ## Nuvens (Snake): posicao do i-esimo da fila no historico de posicoes da nave (mais recente primeiro).
 static func follow_point(history: PackedVector2Array, i: int, step: int) -> Vector2:
 	if history.is_empty():

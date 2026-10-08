@@ -64,6 +64,7 @@ func _ready() -> void:
 		n._history.insert(0, Vector2(gx, TerrainGen.height_at(n.terrain.ridge, gx) + 10.0))
 	n._tick_minigame()
 	_check("nuvens_encostar_no_chao_perde_o_ultimo", n._tail.size() == 1 and n.minigame_got == 1)
+	_check("nuvens_caiu_volta_para_buscar", not last["got"])
 	var u: Dictionary = n._updrafts[0]
 	n.lander.global_position = Vector2(float(u["x"]), TerrainGen.height_at(n.terrain.ridge, float(u["x"])) - 60.0)
 	n._tick_minigame()
