@@ -69,7 +69,8 @@ var _seeds: Array[Sprite2D] = []                    # Jardim: sementes de dente-
 var sliding := false                                # Sorvete: deslizando no gelo depois do pouso
 var _slide_v := 0.0                                 # m/s
 var _slide_info: Dictionary = {}
-var _ghost: Node2D = null                           # Sorvete: marca de onde a nave vai parar se tocar agora
+var _ghost: Node2D = null
+var _pointer: Sprite2D = null                       # seta na borda da tela para o proximo item do minijogo                           # Sorvete: marca de onde a nave vai parar se tocar agora
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -108,6 +109,7 @@ func _physics_process(delta: float) -> void:
 	_tick_mission(delta)
 	_tick_gift()
 	_tick_minigame()
+	_update_pointer()
 	_extend_terrain_if_near_edge()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
@@ -981,19 +983,65 @@ func minigame_partial() -> Dictionary:
 	return {}
 
 
-## Texto do placar do minijogo para o HUD ("" sem minijogo).
+## Placar do minijogo para o HUD ("" sem minijogo): figura (minigame_icon) + "n/N"; estados em palavra curta.
 func minigame_text() -> String:
 	if minigame_total <= 0:
 		return ""
-	if planet_id == "cogumelos":
-		return "quiques %d/%d" % [minigame_got, minigame_total]
 	if planet_id == "sorvete":
 		return "deslizando..." if sliding else "deslize até o alvo"
-	if planet_id == "jardim":
-		return "vãos %d/%d" % [minigame_got, minigame_total]
 	if planet_id == "bolhas":
 		return ("molhou!" if chest_wet else "baú na garra!") if chest_got else "pegue o baú"
-	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
+	return "%d/%d" % [minigame_got, minigame_total]
+
+
+## Figura do item do minijogo (atlas MinigameArt) para o placar do HUD ("" = usa o icone padrao).
+func minigame_icon() -> String:
+	return {"luna": "cheese", "nuvens": "sheep0", "cogumelos": "cap36", "jardim": "bloom_top", "bolhas": "chest"}.get(
+			planet_id, "")
+
+
+## Posicao (px do mundo) do proximo item do minijogo ainda nao feito, ou Vector2.INF se nao ha: Lua/Nuvens = o mais
+## perto nao pego; Cogumelos = o proximo chapeu nao quicado; Jardim = o vao do proximo caule; Bolhas = o bau.
+func minigame_next_target() -> Vector2:
+	if not _water.is_empty():
+		return Vector2.INF if chest_got else _chest_pos
+	var cands: Array[Vector2] = []
+	for c: Dictionary in _trail + _sheep:
+		if not c["got"]:
+			cands.append(c["pos"] as Vector2)
+	for c: Dictionary in _caps:
+		if not c["hit"]:
+			cands.append(Vector2(float(c["x"]), float(c["y"])))
+	for st: Dictionary in _stems:
+		if not st["passed"]:
+			cands.append(Vector2(float(st["x"]), (float(st["gap_top"]) + float(st["gap_bot"])) * 0.5))
+	var p := lander.global_position
+	var best := Vector2.INF
+	for q: Vector2 in cands:
+		if best == Vector2.INF or p.distance_to(q) < p.distance_to(best):
+			best = q
+	return best
+
+
+## Seta na borda da tela apontando o proximo item do minijogo quando ele esta fora da vista (so voando).
+func _update_pointer() -> void:
+	var t := minigame_next_target() if lander.state == Lander.State.FLYING and target_pad_id >= 0 else Vector2.INF
+	var c := camera.get_screen_center_position()
+	var half := get_viewport_rect().size * 0.5 - Vector2(18, 18)
+	var rel := t - c
+	if t == Vector2.INF or (absf(rel.x) <= half.x + 10.0 and absf(rel.y) <= half.y + 10.0):
+		if _pointer != null:
+			_pointer.hide()
+		return
+	if _pointer == null:
+		_pointer = Sprite2D.new()
+		_pointer.texture = UiKit.kid("arrow")
+		_pointer.scale = Vector2(0.75, 0.75)
+		add_child(_pointer)
+	var k := minf(half.x / maxf(absf(rel.x), 0.001), half.y / maxf(absf(rel.y), 0.001))
+	_pointer.global_position = (c + rel * minf(k, 1.0)).round()
+	_pointer.rotation = rel.angle()
+	_pointer.show()
 
 
 ## Verbo do minijogo do mundo (WarioWare): mostrado pelo HUD quando a missao comeca.

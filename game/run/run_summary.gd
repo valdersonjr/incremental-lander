@@ -37,6 +37,11 @@ func show_summary(summary: Dictionary) -> void:
 	for res: String in fleet:
 		_rows.add_child(UiKit.stat_row("fleet", "frota de drones (%s)" % names.get(res, res), "+" + EconMath.fmt(
 				float(fleet[res])), &"MoneyLabel"))
+	var mg: Array = summary.get("minigames", [0, 0])
+	if int(mg[1]) > 0:                                         # selo dos minijogos feitos por inteiro (auditoria T4)
+		var mrow := UiKit.stat_row("trophy", "minijogos completos", "%d/%d" % [int(mg[0]), int(mg[1])],
+				&"GoodLabel" if int(mg[0]) == int(mg[1]) else &"MoneyLabel")
+		_rows.add_child(mrow)
 	if int(summary.get("stars", 0)) > 0:                       # estrelas: andam na Estrada da PROGRESSAO
 		var row := UiKit.stat_row("", "estrelas", "+%d" % int(summary["stars"]), &"MoneyLabel")
 		(row.get_child(0) as TextureRect).texture = UiKit.kid("star_on")

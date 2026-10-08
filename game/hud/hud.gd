@@ -271,7 +271,8 @@ func _update_mission() -> void:
 	var mini := flight.minigame_text() if flight.target_pad_id >= 0 else ""
 	if mini != "":                                             # v17: placar do minijogo do mundo
 		_cargo_row.visible = true
-		_cargo_icon.texture = UiKit.icon("credits")
+		var ic := flight.minigame_icon()
+		_cargo_icon.texture = MinigameArt.tex(ic) if ic != "" else UiKit.icon("credits")
 		_cargo_bar.visible = true
 		_cargo_bar.value = 100.0 * flight.minigame_got / maxf(1.0, flight.minigame_total)
 		_cargo_bar.theme_type_variation = &"XpBar"
@@ -361,6 +362,9 @@ func show_delivery(entry: Dictionary) -> void:
 		var name := str(EconMath.mission_kind(str(m["kind"]))["name"])
 		parts.append(("%s %s" % [name, UiKit.mult_text(mm)]) if failed.is_empty()
 				else "%s %s" % [MISSION_FAIL.get(str(failed[0]), "falhou"), UiKit.mult_text(mm)])
+	var mg: Array = entry.get("minigame", [0, 0])
+	if int(mg[1]) > 0 and int(mg[0]) >= int(mg[1]):           # selo do minijogo feito por inteiro (auditoria T4)
+		parts.append("MINIJOGO COMPLETO!")
 	if bool(entry.get("perfect", false)):
 		parts.append("POUSO PERFEITO!")
 	if int(entry.get("rep_pts", 0)) > 0:

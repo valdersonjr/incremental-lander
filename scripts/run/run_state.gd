@@ -27,6 +27,8 @@ var taken_tier := "normal"                # tipo da plataforma da entrega em and
 var taken_dir := 1                        # lado da entrega em andamento
 var taken_mission: Dictionary = {}        # missao da entrega em andamento
 var stars := 0                            # estrelas ganhas neste run (contracts.missions.stars.per_delivery)
+var minigames_played := 0                 # entregas com minijogo neste run (auditoria T4: selo no resumo)
+var minigames_full := 0                   # ... e quantas com o minijogo feito por inteiro
 var unlocked: Dictionary = {"simple": 1}  # missoes liberadas pelo jogador ({kind: estrela})
 var boost: Dictionary = {}                # missoes recem-liberadas ({kind: runs}) aparecem mais
 var deliveries: Array[Dictionary] = []
@@ -216,7 +218,7 @@ func take_offer(index: int) -> float:
 ## Taxi: distance = 1o trecho; o 2o (leg2 x distance) tambem paga. Ganha estrelas (stars.per_delivery).
 ## Detalhes da conta ficam em deliveries[-1] (base, mult, rep, missao) para o HUD mostrar.
 func complete_delivery(distance: float, quality: float, gas_used: float, failed: Array = [],
-		gift_pay: float = 0.0, perfect: bool = false, partial: Dictionary = {}) -> Dictionary:
+		gift_pay: float = 0.0, perfect: bool = false, partial: Dictionary = {}, minigame: Array = [0, 0]) -> Dictionary:
 	var kind := str(taken_mission.get("kind", "simple"))
 	var rep := EconMath.reputation_mult(rep_level(kind))
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
@@ -230,7 +232,10 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	deliveries.append({"distance": distance, "quality": quality, "gas_used": gas_used, "rewards": rewards,
 			"tier": taken_tier, "mult": mult, "rep": rep,
 			"perfect": perfect, "mission": taken_mission, "failed": failed.duplicate(), "mission_mult": mm,
-			"gift_pay": gift_pay})
+			"gift_pay": gift_pay, "minigame": minigame.duplicate()})
+	if int(minigame[1]) > 0:                                   # selo do resumo: minijogos feitos por inteiro
+		minigames_played += 1
+		minigames_full += 1 if int(minigame[0]) >= int(minigame[1]) else 0
 	var pts := EconMath.reputation_points(failed.is_empty(), perfect)   # regra cumprida; pouso perfeito vale mais
 	rep_points[kind] = int(rep_points.get(kind, 0)) + pts
 	deliveries[-1]["rep_kind"] = kind
@@ -285,6 +290,7 @@ func summary() -> Dictionary:
 		"avg_quality": q_total / maxf(1.0, deliveries.size()),
 		"earned": earned,
 		"stars": stars,
+		"minigames": [minigames_full, minigames_played],
 		"reason": end_reason,
 	}
 

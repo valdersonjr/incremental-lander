@@ -33,7 +33,14 @@ func _ready() -> void:
 		f.lander.global_position = c["pos"]
 		f._tick_minigame()
 	_check("lua_pega_ao_encostar", f.minigame_got == got_before + 3)
-	_check("lua_placar_no_hud", f.minigame_text() == "queijinhos 3/%d" % f.minigame_total)
+	_check("lua_placar_no_hud", f.minigame_text() == "3/%d" % f.minigame_total and f.minigame_icon() == "cheese")
+	f.lander.global_position = (f._trail[-1]["pos"] as Vector2) + Vector2(-900.0, 0.0)   # trilha fora da tela
+	f.camera.global_position = f.lander.global_position
+	f.camera.force_update_scroll()
+	await get_tree().process_frame
+	f._update_pointer()
+	_check("lua_seta_aponta_item_fora_da_tela", f._pointer != null and f._pointer.visible
+			and absf(f._pointer.global_position.x - f.lander.global_position.x) > 250.0)
 	var res: Array = []
 	f.delivery_finished.connect(func(r: Dictionary) -> void: res.append(r))
 	f._finish(false, 0.9, "", {"gas_used": 10.0, "flight_time_m": 5.0})
@@ -93,7 +100,7 @@ func _ready() -> void:
 	c.lander.vel_m = Vector2(0.0, 6.0)                         # 2o quique no mesmo chapeu: quica, mas nao conta
 	c._tick_minigame()
 	_check("cogumelos_chapeu_conta_uma_vez", c.lander.vel_m.y < 0.0 and c.minigame_got == 1 and c.minigame_extra == 2.0)
-	_check("cogumelos_placar_n_de_N", c.minigame_text() == "quiques 1/3")
+	_check("cogumelos_placar_n_de_N", c.minigame_text() == "1/3")
 	c._judge_mission({"vy": 99.0}, 0.9)
 	_check("cogumelos_pouso_forte_racha_o_ovo", c.failed.has("soft"))
 	_check("verbo_dos_cogumelos", c.minigame_verb() == "Quique!")
