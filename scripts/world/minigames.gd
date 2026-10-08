@@ -58,6 +58,12 @@ static func hits_cap(feet_px: Vector2, vy_mps: float, cap: Dictionary) -> bool:
 			and feet_px.y >= float(cap["y"]) - 3.0 and feet_px.y <= float(cap["y"]) + 8.0
 
 
+## Cogumelos: y (px) do chapeu i de n numa escada que sobe da partida (ya) ate above px acima do alvo (yb) no ultimo;
+## nunca a menos de clear px do chao local gy.
+static func cap_y(ya: float, yb: float, i: int, n: int, above: float, gy: float, clear: float) -> float:
+	return minf(lerpf(ya, yb, float(i + 1) / float(n)) - above, gy - clear)
+
+
 ## Velocidade (m/s, para cima = negativa) depois de quicar: pelo menos bounce_mps, ou quase a mesma da queda.
 static func bounce_vy(vy_mps: float, bounce_mps: float) -> float:
 	return -maxf(vy_mps * 0.95, bounce_mps)

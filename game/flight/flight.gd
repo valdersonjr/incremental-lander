@@ -520,12 +520,13 @@ func _setup_caps(cfg: Dictionary, star: int) -> void:
 	var b: Dictionary = terrain.pads[target_pad_id]
 	var n := int(Minigames.by_star(cfg["caps"], star))
 	var half := WorldConfig.m_to_px(float(Minigames.by_star(cfg["cap_half_m"], star)))
-	var top_h := WorldConfig.m_to_px(float(Minigames.by_star(cfg["cap_height_m"], star)))
+	var above := WorldConfig.m_to_px(float(Minigames.by_star(cfg["cap_above_target_m"], star)))
+	var clear := WorldConfig.m_to_px(float(cfg.get("cap_min_clear_m", 20.0)))
 	var xs := Minigames.spread_x(a, b, n)
 	for i in n:
 		var x: float = xs[i]
 		var gy := TerrainGen.height_at(terrain.ridge, x)
-		var cy := gy - top_h * (0.6 + 0.4 * float(i + 1) / float(n))   # escada subindo ate o alvo
+		var cy := Minigames.cap_y(float(a["y"]), float(b["y"]), i, n, above, gy, clear)   # escada ate acima do alvo
 		var node := Node2D.new()
 		node.add_child(MinigameArt.tiled("stalk", Rect2(x - 4.0, cy - 2.0, 8.0, gy - cy + 6.0)))
 		var cap := Sprite2D.new()
@@ -535,7 +536,7 @@ func _setup_caps(cfg: Dictionary, star: int) -> void:
 		node.add_child(cap)
 		add_child(node)
 		move_child(node, lander.get_index())
-		_caps.append({"x": x, "y": cy, "half": half, "node": node})
+		_caps.append({"x": x, "y": cy, "half": half, "node": node, "hit": false})
 	minigame_total = n
 
 
@@ -757,7 +758,10 @@ func _tick_caps() -> void:
 	for c: Dictionary in _caps:
 		if Minigames.hits_cap(feet, lander.vel_m.y, c):
 			lander.vel_m.y = Minigames.bounce_vy(lander.vel_m.y, float(cfg.get("bounce_mps", 10.0)))
-			minigame_got = mini(minigame_got + 1, 99)
+			minigame_extra += 1.0                              # quiques totais (telemetria)
+			if not c["hit"]:                                   # cada chapeu conta uma vez no placar
+				c["hit"] = true
+				minigame_got += 1
 			Sound.sfx("landing")
 			UiKit.pulse(c["node"], 1.6, 0.25)
 			break
@@ -921,7 +925,7 @@ func minigame_text() -> String:
 	if minigame_total <= 0:
 		return ""
 	if planet_id == "cogumelos":
-		return "quiques %d" % minigame_got
+		return "quiques %d/%d" % [minigame_got, minigame_total]
 	if planet_id == "sorvete":
 		return "deslizando..." if sliding else "deslize até o alvo"
 	if planet_id == "jardim":

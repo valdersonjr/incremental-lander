@@ -730,11 +730,12 @@
         22.0,
         18.0
       ],
-      "cap_height_m": [
-        45.0,
-        75.0,
-        105.0
+      "cap_above_target_m": [
+        25.0,
+        30.0,
+        40.0
       ],
+      "cap_min_clear_m": 20.0,
       "bounce_mps": 11.0,
       "ask": "Leva meu ovinho lá pra casa no alto?",
       "say": "Quique nos cogumelos e pouse bem devagar!"

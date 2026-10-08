@@ -86,6 +86,11 @@ func _ready() -> void:
 	c.lander.vel_m = Vector2(0, -4.0)                          # subindo nao quica
 	c._tick_minigame()
 	_check("cogumelos_subindo_nao_quica", c.minigame_got == 1)
+	c.lander.global_position = Vector2(float(cap["x"]), float(cap["y"]) - feet_off + 2.0)
+	c.lander.vel_m = Vector2(0.0, 6.0)                         # 2o quique no mesmo chapeu: quica, mas nao conta
+	c._tick_minigame()
+	_check("cogumelos_chapeu_conta_uma_vez", c.lander.vel_m.y < 0.0 and c.minigame_got == 1 and c.minigame_extra == 2.0)
+	_check("cogumelos_placar_n_de_N", c.minigame_text() == "quiques 1/3")
 	c._judge_mission({"vy": 99.0}, 0.9)
 	_check("cogumelos_pouso_forte_racha_o_ovo", c.failed.has("soft"))
 	_check("verbo_dos_cogumelos", c.minigame_verb() == "Quique!")
