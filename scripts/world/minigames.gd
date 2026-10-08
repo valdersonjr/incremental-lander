@@ -74,6 +74,17 @@ static func slide_step(v_mps: float, friction: float, dt_m: float) -> float:
 	return signf(v_mps) * nv if nv > 0.0 else 0.0
 
 
+## Jardim (Flappy Bird): a nave (px) bate no caule {x, half, gap_top, gap_bot}? (dentro da faixa do caule e fora do vao)
+static func hits_stem(pos_px: Vector2, stem: Dictionary) -> bool:
+	return absf(pos_px.x - float(stem["x"])) <= float(stem["half"]) \
+			and (pos_px.y < float(stem["gap_top"]) or pos_px.y > float(stem["gap_bot"]))
+
+
+## Jardim: vento lateral (m/s2) no tempo t (s): vai e volta, forca da estrela.
+static func wind_at(t: float, strength: float, period_s: float) -> float:
+	return strength * sin(TAU * t / maxf(period_s, 0.1))
+
+
 ## A nave (centro, px) encostou no queijinho?
 static func touches(pos_px: Vector2, coin_px: Vector2, radius_px: float) -> bool:
 	return pos_px.distance_to(coin_px) <= radius_px

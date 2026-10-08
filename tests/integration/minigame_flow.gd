@@ -117,5 +117,25 @@ func _ready() -> void:
 			and Minigames.curling_quality(40.0, 32.0) == 0.0)
 	_check("verbo_do_sorvete", sv.minigame_verb() == "Deslize!")
 	sv.queue_free()
+	await get_tree().process_frame
+	# Jardim: caules (Flappy Bird) + vento + mel pesado
+	var h2 := {"kind": "heavy", "star": 2, "parts": [{"kind": "heavy", "star": 2}]}
+	var j := _flight("jardim", h2, 900.0)
+	_check("jardim_4_caules", j._stems.size() == 4)
+	var st: Dictionary = j._stems[0]
+	var mid := (float(st["gap_top"]) + float(st["gap_bot"])) * 0.5
+	j.lander.global_position = Vector2(float(st["x"]) + float(st["half"]) + 3.0, mid)
+	j._tick_minigame()
+	_check("jardim_passar_pelo_vao_conta", st["passed"] and j.minigame_got == 1)
+	var st2: Dictionary = j._stems[1]
+	j.lander.vel_m = Vector2(10.0, 0.0)
+	j.lander.global_position = Vector2(float(st2["x"]), float(st2["gap_top"]) - 20.0)
+	j._tick_minigame()
+	_check("jardim_bater_empurra_de_volta", j.lander.vel_m.x < 0.0 and st2["bumped"] and j.lander.state == Lander.State.FLYING)
+	_check("jardim_vento_empurra_de_lado", absf(Minigames.wind_at(1.25, 2.0, 5.0)) > 1.9)
+	j._judge_mission({"vy": 1.0}, 0.9)
+	_check("jardim_faltou_vao_paga_menos", j.failed.has("heavy"))
+	_check("verbo_do_jardim", j.minigame_verb() == "Passe!")
+	j.queue_free()
 	print("MINIGAME_TEST " + ("OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails)))
 	get_tree().quit(0 if _fails.is_empty() else 1)

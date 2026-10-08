@@ -158,6 +158,9 @@
       tamanho dos anéis (normal 46 / estreita 32 / apertada 20 m, e continua multiplicando o pagamento); pousar de lado vale
       (`Lander.ice_pad_id/ice_vx_mult`); depois do pouso a nave desliza (`Minigames.slide_step`, atrito 0,6) e a qualidade
       é a distância ao centro (`curling_quality`); relógio da Rápida segue; prévia `minigame_preview -- --world=<id>` (2026-10-07)
+- [x] 18.4e Jardim — caules das flores (Flappy Bird) + vento + mel pesado: `minigames.jardim` (2/4/6 caules, vão de
+      120/95/75 m no arco ideal), vento lateral que vai e volta (`Minigames.wind_at`), bater no caule empurra de volta sem
+      explodir e o caule não conta (`hits_stem`), faltou vão = Pesada paga menos (2026-10-07)
 - [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
       Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 

@@ -25,6 +25,10 @@ func _ready() -> void:
 	var pad: Dictionary = f.terrain.pads[f.target_pad_id]
 	f.lander.global_position = Vector2(float(pad["x"]) - float(pad["half_width"]) * 0.8, float(pad["y"]) - 12.0)
 	f.lander.vel_m = Vector2(9.0, 1.0)
+	if world == "jardim" and not f._stems.is_empty():           # antes do 1o caule, na altura do vao
+		var st: Dictionary = f._stems[0]
+		f.lander.global_position = Vector2(float(st["x"]) - 60.0, (float(st["gap_top"]) + float(st["gap_bot"])) * 0.5)
+		f.lander.vel_m = Vector2(14.0, -3.0)
 	f.lander.rotation = 0.0
 	f.lander.state = Lander.State.FLYING
 	f.camera.global_position = f.lander.global_position

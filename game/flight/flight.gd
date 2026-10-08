@@ -52,6 +52,8 @@ var _updrafts: Array = []                           # Nuvens: colunas de corrent
 var _updraft_lines: Array[Node] = []
 var _caps: Array[Dictionary] = []                   # Cogumelos: chapeus-mola {x, y, half, node}
 var _rings: Array[Node] = []                        # Sorvete: anéis do alvo
+var _stems: Array[Dictionary] = []                  # Jardim: caules {x, half, gap_top, gap_bot, passed, bumped, node}
+var _wind_t := 0.0
 var sliding := false                                # Sorvete: deslizando no gelo depois do pouso
 var _slide_v := 0.0                                 # m/s
 var _slide_info: Dictionary = {}
@@ -436,6 +438,8 @@ func _setup_minigame() -> void:
 		minigame_total = n
 	elif planet_id == "cogumelos":                             # cogumelos-mola (Doodle Jump) + ovinho (Pouso suave)
 		_setup_caps(cfg, star)
+	elif planet_id == "jardim":                                # caules das flores (Flappy Bird) + vento + mel pesado
+		_setup_stems(cfg, star)
 	elif planet_id == "sorvete":                               # curling: aneis no meio da pista de gelo
 		var pad: Dictionary = terrain.pads[target_pad_id]
 		lander.ice_pad_id = target_pad_id
@@ -531,7 +535,48 @@ func _setup_caps(cfg: Dictionary, star: int) -> void:
 	minigame_total = n
 
 
+## Jardim: N caules entre as plataformas, o vao no arco ideal (quem voa o arco passa).
+func _setup_stems(cfg: Dictionary, star: int) -> void:
+	var a: Dictionary = terrain.pads[current_pad_id]
+	var b: Dictionary = terrain.pads[target_pad_id]
+	var n := int(Minigames.by_star(cfg["stems"], star))
+	var gap := WorldConfig.m_to_px(float(Minigames.by_star(cfg["gap_m"], star)))
+	var half := WorldConfig.m_to_px(float(cfg.get("stem_half_m", 7.0)))
+	var arc := Assists.arc(a, b, 40)
+	for x: float in Minigames.spread_x(a, b, n):
+		var u := clampf((x - float(a["x"])) / (float(b["x"]) - float(a["x"])), 0.0, 1.0)
+		var cy := arc[roundi(u * 40.0)].y
+		var gy := TerrainGen.height_at(terrain.ridge, x)
+		var top := cy - gap * 0.5
+		var bot := minf(cy + gap * 0.5, gy - 10.0)
+		var node := Node2D.new()
+		for seg: Array in [[top - 1200.0, top], [bot, gy]]:
+			var r := ColorRect.new()
+			r.color = Color("#239063")
+			r.position = Vector2(x - half, float(seg[0]))
+			r.size = Vector2(half * 2.0, maxf(0.0, float(seg[1]) - float(seg[0])))
+			node.add_child(r)
+		for edge: Array in [[top, "#ed8099"], [bot, "#a884f3"]]:   # flor na borda do vao
+			var fl := Polygon2D.new()
+			var pts := PackedVector2Array()
+			for k in 10:
+				pts.append(Vector2(x, float(edge[0])) + Vector2.from_angle(TAU * k / 10.0) * half * 1.8)
+			fl.polygon = pts
+			fl.color = Color(str(edge[1]))
+			node.add_child(fl)
+		add_child(node)
+		move_child(node, lander.get_index())
+		_stems.append({"x": x, "half": half, "gap_top": top, "gap_bot": bot, "passed": false, "bumped": false,
+				"node": node})
+	minigame_total = n
+	_wind_t = 0.0
+
+
 func _clear_minigame() -> void:
+	for c: Dictionary in _stems:
+		if is_instance_valid(c["node"]):
+			(c["node"] as Node).queue_free()
+	_stems.clear()
 	for n: Node in _rings:
 		if is_instance_valid(n):
 			n.queue_free()
@@ -568,6 +613,9 @@ func _tick_minigame() -> void:
 		return
 	if planet_id == "sorvete":
 		_tick_slide()
+		return
+	if planet_id == "jardim":
+		_tick_stems()
 		return
 	if _trail.is_empty() or lander.state != Lander.State.FLYING:
 		return
@@ -663,6 +711,34 @@ func _tick_slide() -> void:
 		_complete_landing(pad, q, _slide_info)
 
 
+## Jardim: vento de dente-de-leao empurra de lado; bater num caule empurra de volta (sem explodir) e o caule nao
+## conta; passar o caule pelo vao conta.
+func _tick_stems() -> void:
+	var cfg := Minigames.spec(planet_id)
+	var flying := lander.state == Lander.State.FLYING
+	if not flying or _stems.is_empty():
+		lander.env_accel = Vector2.ZERO
+		return
+	_wind_t += get_physics_process_delta_time()
+	var star := maxi(1, int(mission.get("star", 1)))
+	lander.env_accel = Vector2(Minigames.wind_at(_wind_t, float(Minigames.by_star(cfg["wind_mps2"], star)),
+			float(cfg.get("wind_period_s", 5.0))), 0.0)
+	var dir := 1.0 if float(terrain.pads[target_pad_id]["x"]) >= float(terrain.pads[current_pad_id]["x"]) else -1.0
+	for st: Dictionary in _stems:
+		if Minigames.hits_stem(lander.global_position, st):
+			if not st["bumped"]:
+				st["bumped"] = true
+				_float_text("ai! o caule", lander.global_position + Vector2(0, -20))
+				Sound.sfx("landing")
+			lander.vel_m.x = -dir * maxf(absf(lander.vel_m.x) * float(cfg.get("bump_back", 0.5)), 2.0)
+			lander.global_position.x = float(st["x"]) - dir * (float(st["half"]) + 2.0)
+		elif not st["passed"] and (lander.global_position.x - float(st["x"])) * dir > float(st["half"]):
+			st["passed"] = true
+			if not st["bumped"]:
+				minigame_got += 1
+				Sound.sfx("crystal_2")
+
+
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
 func minigame_text() -> String:
 	if minigame_total <= 0:
@@ -671,6 +747,8 @@ func minigame_text() -> String:
 		return "quiques %d" % minigame_got
 	if planet_id == "sorvete":
 		return "deslizando..." if sliding else "deslize até o alvo"
+	if planet_id == "jardim":
+		return "vãos %d/%d" % [minigame_got, minigame_total]
 	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
 
 
@@ -885,6 +963,8 @@ func _judge_mission(info: Dictionary, quality: float) -> void:
 		failed.append("passenger")
 	if planet_id == "nuvens" and minigame_total > 0 and minigame_got < minigame_total and not failed.has("passenger"):
 		failed.append("passenger")                             # chegou sem todos os carneirinhos: paga menos
+	if planet_id == "jardim" and minigame_total > 0 and minigame_got < minigame_total and not failed.has("heavy"):
+		failed.append("heavy")                                 # bateu ou pulou caule: o mel paga menos
 	if taxi_stage == 1:
 		if quality < float(mcfg["passenger"]["board_q"]):
 			_mission_failed("passenger", "", lander.global_position)

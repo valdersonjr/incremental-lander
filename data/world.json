@@ -754,6 +754,30 @@
       "min_slide_mps": 6.0,
       "stop_mps": 0.4,
       "ice_vx_mult": 4.0
+    },
+    "jardim": {
+      "name": "Caules das flores",
+      "verb": "Passe!",
+      "ask": "Leva meu pote de mel pra colmeia?",
+      "say": "Passe entre os caules das flores!",
+      "stems": [
+        2,
+        4,
+        6
+      ],
+      "gap_m": [
+        120.0,
+        95.0,
+        75.0
+      ],
+      "stem_half_m": 7.0,
+      "wind_mps2": [
+        1.5,
+        2.5,
+        3.5
+      ],
+      "wind_period_s": 5.0,
+      "bump_back": 0.5
     }
   }
 }
