@@ -37,6 +37,10 @@ var _rec_start: Dictionary = {}                 # recordes no inicio do run (o H
 ## Taxi (Passageiro 2-3): distancia do 1o trecho e presente pego nele (pagos ao fim do 2o trecho).
 var _taxi_first_m := 0.0
 var _taxi_gift_pay := 0.0
+## Primeiros minutos (world.json > onboarding): gas no comeco do salto em andamento (o aprendiz que bate tenta o
+## mesmo salto de novo com ele) e se o salto e o 1o do jogo (ja aceito, relevo baixo, sem minijogo).
+var _hop_gas := 0.0
+var _first_hop := false
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -68,17 +72,21 @@ func _ready() -> void:
 	_title.play_requested.connect(_on_title_play)
 	_title.slot_play_requested.connect(func(slot: int) -> void:
 		SaveManager.load_slot(slot)
+		Telemetry.event("load")
 		_on_title_play())
+	# jogo novo comeca VOANDO (auditoria dos primeiros minutos C1): o Mapa e a escolha de missao vem depois
 	_title.new_game_requested.connect(func(slot: int) -> void:
 		SaveManager.new_game(slot)
+		Telemetry.event("new_game")
 		_title.visible = false
-		_open_map())
+		_start_run())
 	_title.sandbox_requested.connect(func(planet_id: String, strong: bool) -> void:
 		Sandbox.begin(planet_id, strong)
 		_title.visible = false
 		_open_map())                                           # v17: o Mapa com tudo liberado, no mundo escolhido
 	_title.quit_requested.connect(func() -> void:
 		SaveManager.save_game()
+		Telemetry.event("close")
 		get_tree().quit())
 	_pause = PAUSE_SCENE.instantiate()
 	_gui.add_child(_pause)
@@ -96,7 +104,8 @@ func _ready() -> void:
 		_show_title())
 	_pause.new_game_requested.connect(func() -> void:
 		SaveManager.new_game()
-		_open_map())
+		Telemetry.event("new_game")
+		_start_run())
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
 	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_")):
 		_start_run()
@@ -165,6 +174,7 @@ func _open_hangar() -> void:
 	for c: Control in [_hud, _offers, _summary]:
 		if c != null and is_instance_valid(c):
 			c.visible = false
+	Telemetry.event("nave")
 	_hangar.open()
 	Sound.music("title")                                       # hangar = menu: a mesma musica calma do titulo
 	Sound.ambience(GameState.current_planet)
@@ -178,6 +188,7 @@ func _show_title() -> void:
 	_hangar.visible = false
 	_clear_run()
 	_gui.move_child(_title, -1)
+	Telemetry.event("title")
 	_title.open()
 	Sound.music("title")
 	Sound.ambience("luna")                                     # a cena do titulo e a Lua de queijo
@@ -207,6 +218,7 @@ func _open_map(travel_from: String = "") -> void:
 			c.visible = false
 	_clear_run()
 	_world_map.theme = UiKit.theme_for(GameState.current_planet)
+	Telemetry.event("map")
 	_gui.move_child(_world_map, -1)
 	_gui.move_child(_pause, -1)
 	_world_map.open(travel_from)
@@ -258,6 +270,7 @@ func _start_run() -> void:
 	_title.visible = false
 	_world_map.visible = false
 	_worlds_before = GameState.worlds().size()
+	_first_hop = false
 	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
@@ -292,6 +305,8 @@ func _start_run() -> void:
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
+	_flight.rested.connect(func(_i: Dictionary) -> void: Telemetry.event("rest"))
+	_flight.lander.took_off.connect(func() -> void: Telemetry.event("takeoff"))
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
 	_summary.continue_requested.connect(_on_continue)
@@ -301,6 +316,7 @@ func _start_run() -> void:
 	_rec_start = GameState.world_records().duplicate()
 	_hud.set_records(_rec_start)
 	Events.run_started.emit(GameState.current_planet)
+	Telemetry.event("run_start", GameState.current_planet)
 	_show_offers()
 
 
@@ -313,6 +329,13 @@ func _show_offers() -> void:
 	if _run.over:
 		_end_run()
 		return
+	if GameState.first_hop() and _run.deliveries.is_empty() and not _demo:   # 1o salto do jogo: ja aceito (C1)
+		var first := _first_simple_offer()
+		if first >= 0:
+			_first_hop = true
+			_on_offer_chosen(first)
+			return
+	Telemetry.event("offers")
 	_offers.show_offers(_run, gas)
 	if _demo:
 		await get_tree().create_timer(0.5).timeout
@@ -324,11 +347,28 @@ func _show_offers() -> void:
 			_on_offer_chosen(i)
 
 
+## Pedido mais perto do mineiro (Simples, normal) para o 1o salto do jogo; -1 se nao ha.
+func _first_simple_offer() -> int:
+	for i in _run.offers.size():                               # ofertas ja vem ordenadas por distancia
+		if str(_run.offer_mission[i]["kind"]) == "simple":
+			return i
+	return -1
+
+
 func _on_offer_chosen(index: int) -> void:
-	Sound.ui("click")
+	if not _first_hop:
+		Sound.ui("click")
 	var d := _run.take_offer(index)
+	if _first_hop:                                             # perto e na plataforma normal (a maior)
+		d = float(WorldConfig.load_config()["onboarding"]["first_hop"]["distance_m"])
+		_run.taken_tier = "normal"
 	_offers.visible = false
 	var m := _run.taken_mission
+	_hop_gas = _flight.lander.gas
+	_flight.gentle = _first_hop
+	_flight.minigame_on = (GameState.shows_minigame() or _demo) and not _first_hop
+	_flight.apprentice = GameState.apprentice() and not _demo
+	Telemetry.event("mission", "%s:%d" % [str(m.get("kind", "simple")), int(d)])
 	# cada missao tem o seu mapa: a tela escurece, o mapa novo nasce e a nave desce do ceu ate a partida
 	var fade_s := float(WorldConfig.load_config()["missions"]["arrival"]["fade_s"])
 	var flight := _flight
@@ -345,8 +385,16 @@ func _on_offer_chosen(index: int) -> void:
 		_flight.begin_mission(seed_value, d, pickup, _run.taken_dir, m, 1)
 	else:
 		_flight.begin_mission(seed_value, d, _run.taken_tier, _run.taken_dir, m)
-	_hud.show_verb(_flight.minigame_verb())                    # v17: verbo do minijogo do mundo
+	_show_goal()
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
+
+
+## Aviso grande do comeco do salto: o verbo do minijogo com o que fazer (A5); sem minijogo, "Pouse!".
+func _show_goal() -> void:
+	if _flight.minigame_total > 0:
+		_hud.show_verb(_flight.minigame_verb(), str(Minigames.spec(GameState.current_planet).get("say", "")))
+	else:
+		_hud.show_verb("Pouse!", "na plataforma do outro lado")
 
 
 func _on_end_requested() -> void:
@@ -357,9 +405,14 @@ func _on_end_requested() -> void:
 func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
+		Telemetry.event("crash", str(result["reason"]))
+		if GameState.apprentice() and not _demo:                 # aprendiz: tenta o mesmo salto de novo (C2)
+			_retry_hop(str(result["reason"]))
+			return
 		_run.crash(str(result["reason"]))
 		_end_run()
 		return
+	_first_hop = false
 	if int(result.get("leg", 0)) == 1:                         # taxi: passageiro a bordo, agora o trecho de volta
 		var d1 := float(result["distance"])
 		_taxi_gift_pay = float(result.get("gift_pay", 0.0))
@@ -375,6 +428,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	if int(result.get("leg", 0)) == 2:                         # taxi: paga os 2 trechos pela distancia do 1o
 		dist = _taxi_first_m
 		gift += _taxi_gift_pay
+	Telemetry.event("delivery", "%.2f" % float(result["quality"]))
 	var stars_before := _run.stars
 	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift,
 			bool(result.get("perfect", false)), result.get("partial", {}), result.get("minigame", [0, 0]))
@@ -401,8 +455,29 @@ func _on_delivery_finished(result: Dictionary) -> void:
 
 
 func _on_stranded() -> void:
+	if GameState.apprentice() and not _demo and _run != null and not _run.over:
+		Telemetry.event("crash", "sem_gas")
+		_retry_hop("sem_gas")
+		return
 	_run.finish("sem_gas")
 	_end_run()
+
+
+## Aprendiz (world.json > onboarding): a batida (ou o gas que acabou) nao acaba o run. A tela escurece, a nave volta
+## para a partida do MESMO salto com o gas do comeco dele, e o aviso diz o jeito de acertar.
+func _retry_hop(reason: String) -> void:
+	Telemetry.event("retry", reason)
+	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
+	var flight := _flight
+	var tw := _fade.create_tween()
+	tw.tween_interval(0.5)                                     # o "BATEU!" aparece um instante
+	tw.tween_property(_fade, "modulate:a", 1.0, fade_s)
+	await tw.finished
+	if flight != _flight or _run == null or _run.over:         # o run acabou/recomecou durante a tela escura
+		return
+	_flight.retry_mission(_hop_gas)
+	_hud.show_retry(reason)
+	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 
 func _end_run() -> void:
@@ -426,6 +501,7 @@ func _end_run() -> void:
 	s["records"] = _run_records.duplicate()
 	s["road_news"] = GameState.road_news().size()
 	_summary.show_summary(s)
+	Telemetry.event("run_end", str(s["reason"]))
 	GameState.runs_done += 1
 	Events.run_finished.emit(s)
 	_log("RUN_SUMMARY ", JSON.stringify(s))
@@ -434,7 +510,8 @@ func _end_run() -> void:
 		_on_continue()
 
 
-## Fim do run -> Mapa (v17; viagem se o mundo ficou completo). Demo: hangar (compra) -> decola de novo.
+## Fim do run (auditoria dos primeiros minutos A1): mundo completo -> Mapa com a viagem; da para comprar uma peca ->
+## NAVE (a peca que da pulsa); aprendiz sem compra -> voa de novo; senao o Mapa. Demo: hangar (compra) -> decola.
 func _on_continue() -> void:
 	_summary.visible = false
 	_hud.visible = false
@@ -444,7 +521,12 @@ func _on_continue() -> void:
 		if opened.size() > _worlds_before and _worlds_before > 0:
 			travel = opened[_worlds_before - 1]
 			GameState.select_world(opened[_worlds_before])        # o mundo novo ja escolhido
-		_open_map(travel)
+		if travel == "" and GameState.can_afford_any() and not Sandbox.active():
+			_open_hangar()
+		elif travel == "" and GameState.apprentice():
+			_on_launch_requested()
+		else:
+			_open_map(travel)
 		return
 	_open_hangar()
 	if _demo:

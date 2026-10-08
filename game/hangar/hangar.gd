@@ -162,10 +162,30 @@ func _fill_resources() -> void:
 		UiKit.pulse(_resources, 1.5)
 
 
+## Abas que ja tem uso (auditoria dos primeiros minutos M3: a 1a visita mostra so PECAS): REPUTACAO e FROTA depois
+## do comeco do jogo, AJUDAS quando a Estrada deu a 1a ajuda.
+func _visible_tabs() -> Array[Tab]:
+	var out: Array[Tab] = [Tab.SHIP]
+	if GameState.shows_reputation():
+		out.append(Tab.REPUTATION)
+	if RoadText.ASSIST_TIP.keys().any(func(id: String) -> bool: return GameState.road_reached.has(id)) \
+			or GameState.shows_reputation():
+		out.append(Tab.ASSISTS)
+	if GameState.shows_reputation():
+		out.append(Tab.FLEET)
+	return out
+
+
 func _fill_tabs() -> void:
 	_clear(_tabs)
+	var shown := _visible_tabs()
+	if not _tab in shown:
+		_tab = Tab.SHIP
+	_tabs.visible = shown.size() > 1
 	for info: Array in TAB_INFO:
 		var t: Tab = info[0]
+		if not t in shown:
+			continue
 		var b := Button.new()
 		b.focus_mode = Control.FOCUS_NONE
 		b.custom_minimum_size = Vector2(0, 15)
@@ -190,7 +210,9 @@ func _fill_tabs() -> void:
 ## ×1 / ×10 / MAX: quantos niveis cada botao de peca compra (×10 = ate o fim do degrau).
 func _fill_bulk() -> void:
 	_clear(_bulk_box)
-	_bulk_box.visible = _tab == Tab.SHIP
+	if not GameState.shows_bulk():                            # comeco do jogo: so x1 (M3)
+		_bulk = 1
+	_bulk_box.visible = _tab == Tab.SHIP and GameState.shows_bulk()
 	for info: Array in BULK:
 		var b := Button.new()
 		b.text = str(info[1])
@@ -217,7 +239,7 @@ func _set_tab(t: Tab) -> void:
 
 
 func _cycle_tab(step: int) -> void:
-	var order: Array[Tab] = [Tab.SHIP, Tab.REPUTATION, Tab.ASSISTS, Tab.FLEET]
+	var order := _visible_tabs()
 	var i := order.find(_tab)
 	_set_tab(order[posmod((0 if i < 0 else i) + step, order.size())])
 

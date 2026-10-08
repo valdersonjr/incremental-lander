@@ -7,6 +7,8 @@ extends CharacterBody2D
 signal took_off
 signal landed(pad: Dictionary, quality: float, info: Dictionary)
 signal crashed(reason: String, info: Dictionary)
+## Aprendiz (ground_rest): tocou o chao fora de uma plataforma devagar e reto -> parou ali (decola de novo).
+signal rested(info: Dictionary)
 
 enum State {LANDED, FLYING, CRASHED}
 
@@ -29,6 +31,7 @@ var can_takeoff := true                 # falso enquanto nao ha entrega escolhid
 var arriving := false                   # descendo do ceu ate a partida (Flight._arrive): chama acesa, sem fisica
 var flight_time_m := 0.0                # segundos do modelo desde a decolagem
 var gas_at_takeoff := 0.0
+var ground_rest := false                # aprendiz (world.json > onboarding): pouso devagar fora da plataforma nao bate
 
 const THRUST_START := preload("res://assets/audio/sfx/thruster_start.wav")
 const THRUST_STOP := preload("res://assets/audio/sfx/thruster_stop.wav")
@@ -226,6 +229,13 @@ func _on_touch() -> void:
 		tol["max_vx"] = float(tol["max_vx"]) * ice_vx_mult
 	var inf := info()
 	var reason := LandingRules.crash_reason(inf["vy"], inf["vx"], inf["tilt"], on_pad, tol)
+	if reason == "fora_da_plataforma" and ground_rest \
+			and LandingRules.crash_reason(inf["vy"], inf["vx"], inf["tilt"], true, tol) == "":
+		state = State.LANDED                                   # aprendiz: parou no chao, sem batida
+		vel_m = Vector2.ZERO
+		thrusting = false
+		rested.emit(inf)
+		return
 	if reason == "":
 		var offset := (global_position.x - float(pad["x"])) / float(pad["half_width"])
 		var q := LandingRules.quality(inf["vy"], inf["vx"], inf["tilt"], offset, tol, cfg["landing"]["weights"])

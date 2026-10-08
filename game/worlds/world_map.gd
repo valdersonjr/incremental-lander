@@ -10,6 +10,7 @@ signal fly_requested(planet_id: String)
 signal ship_requested
 signal menu_requested
 
+const MISSION_INTRO := preload("res://game/run/mission_intro.tscn")
 const BADGE := 30                                   # meia celula do planetinha (assets/ui/map_planets.png, 60 px em 1x)
 const STARS := 46
 
@@ -20,6 +21,8 @@ var _lander: TextureRect
 var _fly: Button
 var _ship: Button
 var _stars_label: Label
+var _coins_label: Label                              # moedas (auditoria dos primeiros minutos A1: dava para comprar?)
+var _intro: MissionIntro = null                      # "Novo amiguinho!" quando a Estrada libera um ratinho (M4)
 var _card_name: Label
 var _card_info: Label
 var _road: RoadView
@@ -45,6 +48,17 @@ func _ready() -> void:
 	_stars_label.theme_type_variation = &"MoneyLabel"
 	stars_row.add_child(_stars_label)
 	add_child(stars_row)
+	var coins_row := HBoxContainer.new()
+	coins_row.add_theme_constant_override(&"separation", 2)
+	coins_row.position = Vector2(500, 8)
+	var coin := TextureRect.new()
+	coin.texture = UiKit.icon("credits")
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	coins_row.add_child(coin)
+	_coins_label = Label.new()
+	_coins_label.theme_type_variation = &"MoneyLabel"
+	coins_row.add_child(_coins_label)
+	add_child(coins_row)
 	_build_card()
 	_toast = Label.new()
 	_toast.theme_type_variation = &"MoneyLabel"
@@ -115,6 +129,11 @@ func open(travel_from: String = "") -> void:
 	_build()
 	visible = true
 	_stars_label.text = "%d" % GameState.stars
+	_coins_label.text = EconMath.fmt(GameState.amount("credits"))
+	var shop := GameState.can_afford_any() and not Sandbox.active()
+	_ship.text = "NAVE  !" if shop else "NAVE"             # da para comprar uma peca: chama atencao (A1)
+	if shop:
+		UiKit.pulse(_ship, 1.3, 0.4)
 	var cur := GameState.current_planet if GameState.current_planet in GameState.worlds() else "luna"
 	if travel_from != "" and _nodes.has(travel_from):
 		_travel(travel_from, cur)
@@ -155,6 +174,16 @@ func _celebrate_news() -> void:
 	_road.rebuild(-1, true)
 	_road.celebrate(str(news[-1]))
 	Sound.jingle("unlock")
+	for id: String in news:                                    # ratinho novo: "Novo amiguinho!" aqui mesmo (a NAVE
+		var stop := EconMath.road_stop(id)                     # nao ve mais a parada: ja ficou vista)
+		if not stop.is_empty() and str(stop["type"]) == "mission" and RoadText.stop_star(stop) == 1:
+			if _intro == null:
+				_intro = MISSION_INTRO.instantiate()
+				add_child(_intro)
+				_intro.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+				_intro.closed.connect(func() -> void: _fly.grab_focus())
+			_intro.show_kind(str(RoadText._node(id)["kind"]))
+			break
 
 
 func _planet_name(id: String) -> String:

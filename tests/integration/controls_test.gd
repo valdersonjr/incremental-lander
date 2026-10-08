@@ -21,6 +21,12 @@ var _pause_y := 0.0
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS                    # o teste continua rodando com o jogo pausado
 	SaveManager.set_dir("user://itest_controls")
+	SaveManager.enabled = true                                 # jogo 1 = veterano (5 estrelas): Jogar -> Mapa ->
+	for n in range(1, SaveManager.SLOTS + 1):                  # ofertas na tela (o jogo novo comeca voando)
+		SaveManager.delete_slot(n)
+	SaveManager.new_game(1)
+	GameState.stars = 5
+	SaveManager.save_game()
 	_main = MAIN.instantiate()
 	_main.process_mode = Node.PROCESS_MODE_PAUSABLE            # o jogo pausa como no executavel (o teste nao)
 	add_child(_main)

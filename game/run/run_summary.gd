@@ -1,5 +1,5 @@
-## Resumo do fim do run (arte: UiKit), janela modal sobre o voo escurecido. Enter ou o botao levam ao hangar
-## (a Main abre o hangar; de la sai o proximo run).
+## Resumo do fim do run (arte: UiKit), janela modal sobre o voo escurecido. Enter ou o botao continuam (a Main decide:
+## NAVE se da para comprar alguma peca, voo de novo para o aprendiz, senao o Mapa).
 class_name RunSummary
 extends Control
 
@@ -163,8 +163,10 @@ func _title_text(reason: String) -> String:
 
 ## Detalhe sob o titulo (vazio quando o titulo ja diz tudo).
 func _reason_text(reason: String) -> String:
-	if reason.begins_with("batida"):
-		return UiKit.crash_text(reason.get_slice(":", 1))
+	if reason.begins_with("batida"):                       # o que deu errado + o jeito de acertar (auditoria A4)
+		var why := reason.get_slice(":", 1)
+		var tip := UiKit.crash_tip(why)
+		return UiKit.crash_text(why) + ("\n" + tip if tip != "" else "")
 	return {"sem_gas": "", "encerrado": "",
 			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave"}.get(
 			reason, reason)

@@ -17,8 +17,11 @@ var missions_new: Dictionary = {}     # tipo recem-liberado -> runs em que ainda
 var play_seconds := 0.0               # tempo de jogo acumulado
 var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junto
 var records: Dictionary = {}          # recordes pessoais POR MUNDO (v16): planeta -> {RECORDS id -> maior valor}
+var tips: Array = []                  # dicas sem texto ja aprendidas (Coach: "thrust", "rotate"); nunca voltam
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
+## Dicas sem texto do comeco (Coach): motor e girar.
+const TIPS := ["thrust", "rotate"]
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
 const ASSIST_FREE := "nav_arrow"
 ## Recordes pessoais (estatistica, nao economia; v15 "bata seu recorde": todos medidos num run, RunState.record_values):
@@ -63,6 +66,7 @@ func reset() -> void:
 	runs_done = 0
 	play_seconds = 0.0
 	records = {}
+	tips = []
 	_check_road(true)
 
 
@@ -286,7 +290,7 @@ func select_world(planet: String) -> bool:
 func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "current_planet": current_planet,
 			"income_history": income_history, "stars": stars, "mission_nodes": mission_nodes,
-			"world_stars": world_stars, "missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "rep_points": rep_points, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
+			"world_stars": world_stars, "missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "rep_points": rep_points, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records, "tips": tips}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -306,10 +310,66 @@ func apply_save_state(st: Dictionary) -> void:
 	play_seconds = st["play_seconds"]
 	settings = st["settings"]
 	records = st.get("records", {})
+	tips = st.get("tips", [])
 	_check_road(true)                                          # save antigo/migrado: o que as estrelas ja alcancam
 	apply_settings()
 	for res: String in resources:
 		Events.resources_changed.emit(res, resources[res])
+
+
+# ---------------------------------------------------------------- primeiros minutos (world.json > onboarding)
+## Regras do comeco do jogo (auditoria dos primeiros minutos, 2026-10-08).
+func onboarding() -> Dictionary:
+	return WorldConfig.load_config().get("onboarding", {})
+
+
+## Aprendiz: ainda nao fez apprentice_stars entregas (1 estrela por entrega). Batida nao acaba o run, pouso devagar
+## fora da plataforma nao bate, pedidos fora do alcance ficam escondidos. Fora no sandbox.
+func apprentice() -> bool:
+	return not Sandbox.active() and stars < int(onboarding().get("apprentice_stars", 0))
+
+
+## 1o salto do jogo (nenhuma entrega ainda): ja aceito, perto, relevo baixo e sem minijogo.
+func first_hop() -> bool:
+	return not Sandbox.active() and stars == 0
+
+
+## Revelacao por etapas: minijogo, placar de recordes, reputacao e x10/MAX aparecem depois do comeco.
+func shows_minigame() -> bool:
+	return Sandbox.active() or stars >= int(onboarding().get("minigame_from_stars", 0))
+
+
+func shows_records() -> bool:
+	return Sandbox.active() or runs_done >= int(onboarding().get("records_from_runs", 0))
+
+
+func shows_reputation() -> bool:
+	return Sandbox.active() or stars >= int(onboarding().get("reputation_from_stars", 0))
+
+
+func shows_bulk() -> bool:
+	var n := 0
+	for id: String in levels:
+		n += int(levels[id])
+	return Sandbox.active() or n >= int(onboarding().get("bulk_from_levels", 0))
+
+
+## Dica sem texto ja aprendida (o jogador usou o comando)?
+func tip_done(id: String) -> bool:
+	return id in tips
+
+
+func learn_tip(id: String) -> void:
+	if id in TIPS and not id in tips:
+		tips.append(id)
+
+
+## Alguma peca da NAVE (aba PECAS) da para comprar agora (Mapa: "!" na NAVE; fim do run: vai direto para a NAVE).
+func can_afford_any() -> bool:
+	for r: Dictionary in upgrade_rows():
+		if r["affordable"] and str(r["id"]) in RoadText.PARTS and can_buy(str(r["id"])):
+			return true
+	return false
 
 
 ## Volume 0..1 de um bus (padrao 1).

@@ -121,6 +121,11 @@ func show_offers(run: RunState, gas_left: float) -> void:
 		var lc: Array = last_choice.get(kind, [])
 		var g: Array = _groups[kind]
 		_dsel[kind] = clampi(int(lc[2]) if lc.size() > 2 else 0, 0, g.size() - 1)
+		if GameState.apprentice() and not run.offer_info(int(g[_dsel[kind]]), gas_left)["reachable"]:
+			for d in g.size():                                 # aprendiz: comeca num pedido que o gas alcanca (M1)
+				if run.offer_info(int(g[d]), gas_left)["reachable"]:
+					_dsel[kind] = d
+					break
 		if lc.size() >= 2:
 			for i: int in g:
 				run.set_choice(i, str(lc[0]), int(lc[1]))
@@ -392,6 +397,8 @@ func _fill_columns() -> void:
 		for d in g.size():
 			var name: String = DIST_NAMES[0 if d == 0 else (DIST_NAMES.size() - 1 if d == g.size() - 1 else 1)]
 			var ok: bool = _run.offer_info(int(g[d]), _gas_left)["reachable"]
+			if not ok and d != int(_dsel[_kind]) and GameState.apprentice():
+				continue                                       # aprendiz nao ve "falta gas" (auditoria M1)
 			opts.append({"key": "dist:%d" % d, "text": name, "on": d == int(_dsel[_kind]), "ok": ok,
 					"do": _choose_dist.bind(d)})
 		_add_column("Distância", opts)

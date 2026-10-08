@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao]] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -8,6 +8,8 @@ const MAIN := preload("res://game/main.tscn")
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
+	if not "--new" in args:                                    # veterano (o cartao de missoes); --new = jogador novo
+		GameState.stars = maxi(GameState.stars, int(WorldConfig.load_config()["onboarding"]["apprentice_stars"]))
 	if "--rep" in args:                                        # reputacao com o mineiro no nivel 2
 		GameState.rep_points = {"simple": int(EconMath.reputation_levels()[1]["points"])}
 	if "--sandbox" in args:                                    # sessao de sandbox (nave forte)
@@ -45,6 +47,14 @@ func _ready() -> void:
 				offers._choose("narrow", offers._run.stars_for(i).back())
 		elif a.begins_with("--peek="):                         # --peek=kind: ratinho ainda nao liberado sob o mouse
 			offers._peek_locked(a.get_slice("=", 1))
+	if "--meter" in args:                                      # (com --new) descendo rapido perto do chao: medidor
+		await get_tree().create_timer(2.5).timeout             # fim da descida do ceu ate a partida
+		var fl: Flight = main._flight
+		var x := float(fl.terrain.pads[0]["x"]) + 120.0
+		fl.lander.state = Lander.State.FLYING
+		fl.lander.global_position = Vector2(x, TerrainGen.height_at(fl.terrain.ridge, x) - 140.0)
+		fl.lander.vel_m = Vector2(0.0, 4.0)
+		fl.lander.reset_physics_interpolation()
 	if "--accept" in args:                                     # joinha + comemoracao (sem partir)
 		offers._on_accept()
 	if "--no_offers" in args:                                  # so o mapa (fundo das maquetes da janela de conversa)

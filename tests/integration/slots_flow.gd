@@ -1,5 +1,5 @@
 ## Teste de integracao dos JOGOS SALVOS pelo fluxo do jogo (Main + menu inicial), numa pasta propria
-## (user://itest_slots), nunca o save real. Novo jogo no espaco 2 -> menu -> jogo 1 (vazio: decola) -> menu ->
+## (user://itest_slots), nunca o save real. Novo jogo no espaco 2 (comeca voando) -> menu -> jogo 1 (vazio: decola) -> menu ->
 ## jogo 2 (com progresso: hangar). Imprime SLOTS_TEST OK ou FALHOU.
 extends Node
 
@@ -23,8 +23,9 @@ func _ready() -> void:
 	# novo jogo no espaco 2
 	title.new_game_requested.emit(2)
 	await _frames(3)
-	if SaveManager.slot != 2 or title.visible or not map.visible:
-		fails.append("novo jogo no espaco 2 deveria abrir o Mapa (slot=%d)" % SaveManager.slot)
+	# jogo novo comeca voando (auditoria dos primeiros minutos C1): o 1o salto ja aceito, sem Mapa
+	if SaveManager.slot != 2 or title.visible or map.visible or main._run == null or main._offers.visible:
+		fails.append("novo jogo no espaco 2 deveria comecar voando (slot=%d mapa=%s)" % [SaveManager.slot, map.visible])
 	GameState.runs_done = 5
 	GameState.resources["credits"] = 321.0
 	GameState.stars = 4

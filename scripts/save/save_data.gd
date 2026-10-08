@@ -14,6 +14,8 @@ const SAVE_VERSION := 6
 ## current_planet passa a ser guardado de verdade (mundo liberado; senao "luna").
 ## v5 -> v6 (2026-10-07): minijogos — uma Estrada por mundo; as estrelas que existiam vao para a Lua (world_stars);
 ## paradas world_* somem (filtro da Estrada).
+## Dicas aprendidas (2026-10-08, campo opcional sem mudar a versao: save sem ele = nenhuma dica vista), filtradas
+## por GameState.TIPS.
 ## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
 const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
@@ -39,6 +41,7 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
 		"records": state.get("records", {}).duplicate(),
+		"tips": state.get("tips", []).duplicate(),
 	}
 
 
@@ -73,6 +76,7 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
 		"records": {},
 		"world_stars": {},
+		"tips": _filter_ids(d.get("tips", []), ["thrust", "rotate"]),
 	}
 	var planet_ids: Array = EconMath.spec["planets"].map(func(p: Dictionary) -> String: return p["id"])
 	var recs: Variant = d.get("records", {})

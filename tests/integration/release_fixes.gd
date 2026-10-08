@@ -52,6 +52,7 @@ func _process(_d: float) -> void:
 			_check("espaco_fora_do_ui_accept", not InputMap.event_is_action(space, &"ui_accept"))
 			_check("espaco_e_propulsor", InputMap.event_is_action(space, &"thrust"))
 			GameState.reset()
+			GameState.stars = 5                                # veterano: ofertas na tela (sem o 1o salto ja aceito)
 			_main._title.visible = false
 			_main._open_hangar()
 		8:

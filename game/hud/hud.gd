@@ -39,6 +39,8 @@ var _rec_value: Dictionary = {}                 # id -> Label do valor no placar
 var _rec_best: Dictionary = {}                  # id -> Label "/recorde" (ou do recorde do dinheiro)
 var _rec_beaten: Dictionary = {}                # id -> ja passou o recorde neste run (pulsa/toca uma vez)
 var _money_bar: ProgressBar = null
+var _rec_grid: GridContainer = null              # 4 recordes (grade 2x2): so depois do 1o run (onboarding)
+var _rec_bar: HBoxContainer = null               # barra ate o recorde de dinheiro: idem
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -134,6 +136,9 @@ func set_records(start: Dictionary) -> void:
 		if key != "run_money":
 			l.get_parent().visible = rec > 0.0
 	(_rec_best["run_money"] as Label).get_parent().visible = float(_rec_start.get("run_money", 0.0)) > 0.0
+	# comeco do jogo (onboarding): no 1o run o placar mostra so o dinheiro; os recordes entram depois
+	_rec_grid.visible = GameState.shows_records()
+	_rec_bar.visible = _rec_bar.visible and GameState.shows_records()
 
 
 ## Placar (variante A aprovada): dinheiro grande; barra + trofeu + recorde; grade 2x2 com os outros recordes.
@@ -169,7 +174,9 @@ func _build_score() -> void:
 	bar_row.add_child(best)
 	_rec_best["run_money"] = best
 	_score.add_child(bar_row)
+	_rec_bar = bar_row
 	var grid := GridContainer.new()
+	_rec_grid = grid
 	grid.columns = 2
 	grid.add_theme_constant_override(&"h_separation", 8)
 	grid.add_theme_constant_override(&"v_separation", 0)
@@ -234,7 +241,7 @@ func _update_score() -> void:
 
 ## Reputacao com o ratinho da entrega em andamento (v14): rostinho + coracoes (cheios = nivel) + bonus. Some sem alvo.
 func _update_reputation(kind: String) -> void:
-	_rep_panel.visible = kind != ""
+	_rep_panel.visible = kind != "" and GameState.shows_reputation()   # coracoes so depois do comeco (onboarding)
 	if kind == "":
 		return
 	var lv := GameState.rep_level(kind)
@@ -326,9 +333,15 @@ func _update_mission() -> void:
 
 
 ## Minijogo do mundo: o verbo grande no comeco da missao (estilo WarioWare: "Pegue!", "Junte!"...).
-func show_verb(verb: String) -> void:
+func show_verb(verb: String, text: String = "") -> void:
 	if verb != "":
-		_show_toast(verb, "", &"MoneyLabel")
+		_show_toast(verb, text, &"MoneyLabel")
+
+
+## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Aviso animador + o jeito de acertar.
+func show_retry(reason: String) -> void:
+	_show_toast("TENTE DE NOVO!", UiKit.crash_tip(reason), &"MoneyLabel")
+	_set_status(_idle_status())
 
 
 ## Taxi: avisa o passo novo (o passageiro embarcou: agora leve de volta).

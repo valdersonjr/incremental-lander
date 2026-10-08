@@ -16,6 +16,10 @@ const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos"
 ## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
 const CRASH_TEXT := {"mar": "caiu no mar (splash!)", "atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
 		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado"}
+## Como acertar da proxima vez (aprendiz e resumo da batida; auditoria dos primeiros minutos A4).
+const CRASH_TIP := {"vertical_rapido": "segure o motor perto do chão para descer devagar",
+		"fora_da_plataforma": "pouse em cima da plataforma", "horizontal_rapido": "pare de ir de lado antes de pousar",
+		"inclinado": "deixe a nave reta antes de tocar o chão", "sem_gas": "voe em arco, sem ficar parado no ar"}
 ## Estados de interface dentro da paleta (bloqueado, silhueta, escurecer): ver set_locked/silhouette/dim_rect.
 const FX_SHADER := preload("res://game/screen/palette_fx.gdshader")
 
@@ -414,6 +418,11 @@ static func mult_text(m: float) -> String:
 
 static func crash_text(reason: String) -> String:
 	return CRASH_TEXT.get(reason, reason.replace("_", " "))
+
+
+## Dica curta do jeito certo para um motivo de batida (ou "sem_gas"); "" se nao ha.
+static func crash_tip(reason: String) -> String:
+	return str(CRASH_TIP.get(reason, ""))
 
 
 ## Moldura de foco (teclado): 1 px fora do botao, sem preencher.

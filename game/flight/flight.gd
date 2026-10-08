@@ -9,6 +9,8 @@ extends Node2D
 signal delivery_finished(result: Dictionary)
 ## Pousou fora do alvo sem gas para decolar de novo.
 signal stranded
+## Aprendiz: a nave parou no chao fora da plataforma (pode decolar de novo).
+signal rested(info: Dictionary)
 
 var planet_id := "luna"
 var stats: Dictionary = {}
@@ -32,6 +34,13 @@ const EXTEND_NEAR := 800.0                         # nave a menos disso (px) da 
 const EXTEND_STEP := 2400.0
 var target_tier := "normal"
 var target_dir := 1                                # lado do alvo: 1 direita, -1 esquerda
+## Primeiros minutos (world.json > onboarding; o Main liga antes de begin_mission): gentle = 1o salto do jogo (relevo
+## baixo, sem crista e sem paisagem sorteada); minigame_on = minijogo do mundo neste salto; apprentice = pouso devagar
+## fora da plataforma nao bate (Lander.ground_rest).
+var gentle := false
+var minigame_on := true
+var apprentice := false
+var _last_mission: Array = []                      # argumentos do ultimo begin_mission (retry_mission repete o salto)
 ## Missao da entrega atual (economy.json contracts.missions; fisica em world.json missions): {kind, star, parts}.
 ## failed = kinds das regras que falharam (a entrega paga menos; o run continua).
 var mission: Dictionary = {"kind": "simple", "star": 1, "parts": []}
@@ -103,6 +112,11 @@ func _ready() -> void:
 	move_child(_assist_view, lander.get_index())              # ajudas de voo (Painel de bordo), atras do lander
 	lander.landed.connect(_on_lander_landed)
 	lander.crashed.connect(_on_lander_crashed)
+	lander.rested.connect(_on_lander_rested)
+	var coach := Coach.new()                                   # dicas sem texto + medidor de descida (comeco do jogo)
+	coach.name = "Coach"
+	coach.flight = self
+	add_child(coach)
 
 
 func _physics_process(delta: float) -> void:
@@ -160,17 +174,36 @@ func start(p_planet_id: String, seed_value: int, p_stats: Dictionary, demo: bool
 ## descendo do ceu ate a partida (world.json > missions.arrival; sem gastar gas). O gas do lander continua o mesmo.
 func begin_mission(seed_value: int, distance_m: float, tier: String = "normal", dir: int = 1,
 		p_mission: Dictionary = {}, stage: int = 0) -> void:
+	_last_mission = [seed_value, distance_m, tier, dir, p_mission, stage]
+	lander.ground_rest = apprentice
 	_reset_map(seed_value)
 	_shape = TerrainGen.mission_shape(p_mission, stage)
 	var mg := Minigames.spec(planet_id)
 	if mg.has("basin_floor_m") and _shape.has("basin_m"):     # Bolhas: vale garantido para o mar e o bau
 		_shape["basin_floor_m"] = float(mg["basin_floor_m"])
-	landscape_id = TerrainGen.pick_landscape(landscapes, seed_value)
+	landscape_id = "" if gentle else TerrainGen.pick_landscape(landscapes, seed_value)
 	if landscape_id != "":                                     # paisagem sorteada pela seed (mesma seed = mesma)
 		_shape["land"] = TerrainGen.landscape(landscape_id, seed_value)
+	if gentle:                                                 # 1o salto do jogo: chao quase plano, sem crista
+		_shape["crest_scale"] = 0.0
+		_shape["land"] = {"amplitude_m": float(WorldConfig.load_config()["onboarding"]["first_hop"]["amplitude_m"])}
 	set_target(distance_m, tier, dir, p_mission, stage)
 	_place_on_start_pad()
 	_arrive()
+
+
+## Aprendiz: a nave bateu (ou ficou sem gas) e tenta o MESMO salto de novo, com o gas do comeco dele. Mesmo mapa
+## (mesma seed), nave nova descendo do ceu ate a partida.
+func retry_mission(gas: float) -> void:
+	if _last_mission.is_empty():
+		return
+	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	set_fatigue(fatigue)                                       # setup volta a eficiencia base
+	lander.gas = gas
+	lander.visible = true
+	lander.reset_physics_interpolation()
+	begin_mission(_last_mission[0], _last_mission[1], _last_mission[2], _last_mission[3], _last_mission[4],
+			_last_mission[5])
 
 
 ## Cansaco do run (v15, RunState.fatigue): a missao gasta fatigue x o gas normal (motor igual, eficiencia / fatigue);
@@ -343,8 +376,8 @@ func _float_text(text: String, pos: Vector2) -> void:
 	l.theme_type_variation = &"MoneyLabel"
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.size = Vector2(60, 12)
-	l.position = pos - Vector2(30, 6)
+	l.size = Vector2(120, 12)
+	l.position = pos - Vector2(60, 6)
 	add_child(l)
 	var tw := l.create_tween()
 	tw.tween_property(l, "position:y", l.position.y - 24.0, 0.9)
@@ -364,6 +397,17 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 	elif current_pad_id == target_pad_id:
 		_complete_landing(pad, quality, info)
 	elif lander.gas <= 0.001:
+		stranded.emit()
+
+
+## Aprendiz: parou no chao fora da plataforma (Lander.ground_rest). Poeira e aviso; sem gas = sem como sair dali.
+func _on_lander_rested(info: Dictionary) -> void:
+	var ground := TerrainGen.height_at(terrain.ridge, lander.global_position.x)
+	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, ground - 15.0), false)
+	Sound.sfx("landing")
+	_float_text("decole de novo!", lander.global_position - Vector2(0.0, 26.0))
+	rested.emit(info)
+	if lander.gas <= 0.001:
 		stranded.emit()
 
 
@@ -443,7 +487,7 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 func _setup_minigame() -> void:
 	_clear_minigame()
 	var cfg := Minigames.spec(planet_id)
-	if cfg.is_empty() or taxi_stage > 1:
+	if cfg.is_empty() or taxi_stage > 1 or not minigame_on:    # comeco do jogo: so pousar (onboarding)
 		return
 	var star := maxi(1, int(mission.get("star", 1)))
 	if planet_id == "luna":                                    # trilha de queijinhos (Subway Surfers)

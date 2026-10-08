@@ -830,5 +830,21 @@
         "height_m": 140.0
       }
     }
+  },
+  "onboarding": {
+    "notes": "2026-10-08 (auditoria dos primeiros minutos, relatorio https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg). Regras do comeco do jogo (nao sao economia: nada aqui muda preco ou pagamento). APRENDIZ = GameState.stars < apprentice_stars (1 estrela por entrega; saves antigos com estrelas ja sao veteranos). Aprendiz: batida/sem gas no salto nao acaba o run (a nave volta para a partida do salto com o gas do comeco dele), pouso devagar e reto fora da plataforma nao bate (a nave para no chao e decola de novo), pedidos que o gas nao alcanca ficam escondidos. first_hop = 1o salto do jogo (stars == 0): ja aceito, perto (distance_m), plataforma normal (a maior), relevo baixo (amplitude_m, sem crista) e sem minijogo. Revelacao por etapas: minijogo a partir de minigame_from_stars, placar de recordes depois de records_from_runs runs, coracoes de reputacao e aba REPUTACAO a partir de reputation_from_stars, x10/MAX na NAVE depois de bulk_from_levels niveis comprados. Dicas sem texto (Coach): tecla do motor se a nave ficar parada hint_idle_s na partida; teclas de girar depois de rotate_after_s no ar sem girar; somem no 1o uso e nunca voltam (GameState.tips). Medidor de descida perto da nave abaixo de meter_alt_m descendo (todo jogador).",
+    "apprentice_stars": 5,
+    "first_hop": {
+      "distance_m": 160.0,
+      "amplitude_m": 10.0
+    },
+    "minigame_from_stars": 1,
+    "records_from_runs": 1,
+    "reputation_from_stars": 5,
+    "bulk_from_levels": 5,
+    "hint_idle_s": 2.5,
+    "rotate_after_s": 2.5,
+    "meter_alt_m": 60.0,
+    "retry_fade_s": 0.35
   }
 }
