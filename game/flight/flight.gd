@@ -69,6 +69,7 @@ var _seeds: Array[Sprite2D] = []                    # Jardim: sementes de dente-
 var sliding := false                                # Sorvete: deslizando no gelo depois do pouso
 var _slide_v := 0.0                                 # m/s
 var _slide_info: Dictionary = {}
+var _ghost: Node2D = null                           # Sorvete: marca de onde a nave vai parar se tocar agora
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -470,10 +471,21 @@ func _setup_minigame() -> void:
 		for ring: Array in [[r, "#e83b3b"], [r * 0.66, "#ffffff"], [r * 0.33, "#4d9be6"]]:
 			var bar := ColorRect.new()
 			bar.color = Color(str(ring[1]))
-			bar.position = Vector2(float(pad["x"]) - float(ring[0]), float(pad["y"]) - 2.0)
-			bar.size = Vector2(float(ring[0]) * 2.0, 3.0)
+			bar.position = Vector2(float(pad["x"]) - float(ring[0]), float(pad["y"]) - 3.0)
+			bar.size = Vector2(float(ring[0]) * 2.0, 5.0)
 			add_child(bar)
 			_rings.append(bar)
+		_ghost = Node2D.new()                                  # placeholder (pino branco com contorno ink)
+		for part: Array in [[Rect2(-2, -13, 5, 15), "#2e222f"], [Rect2(-1, -12, 3, 13), "#ffffff"],
+				[Rect2(-4, -14, 9, 4), "#2e222f"], [Rect2(-3, -13, 7, 2), "#ffffff"]]:
+			var cr := ColorRect.new()
+			cr.color = Color(str(part[1]))
+			cr.position = (part[0] as Rect2).position
+			cr.size = (part[0] as Rect2).size
+			_ghost.add_child(cr)
+		_ghost.hide()
+		add_child(_ghost)
+		_rings.append(_ghost)
 		minigame_total = 1
 	elif planet_id == "nuvens":                                # fila de carneirinhos (Snake) + correntes
 		var a: Dictionary = terrain.pads[current_pad_id]
@@ -659,6 +671,7 @@ func _clear_minigame() -> void:
 		if is_instance_valid(n):
 			n.queue_free()
 	_rings.clear()
+	_ghost = null                                          # foi liberado junto com _rings
 	sliding = false
 	lander.ice_pad_id = -1
 	for c: Dictionary in _caps:
@@ -779,6 +792,7 @@ func _start_slide(info: Dictionary) -> void:
 
 func _tick_slide() -> void:
 	if not sliding:
+		_tick_ghost()
 		return
 	var cfg := Minigames.spec(planet_id)
 	var dt_m := get_physics_process_delta_time() * float(WorldConfig.load_config()["time_scale"])
@@ -796,7 +810,26 @@ func _tick_slide() -> void:
 		minigame_got = 1 if q > 0.0 else 0
 		_float_text("no miolo!" if q > 0.66 else ("no alvo!" if q > 0.0 else "fora do alvo"),
 				lander.global_position + Vector2(0, -26))
+		Sound.sfx("star" if q > 0.66 else ("crystal_3" if q > 0.0 else "denied"))
 		_complete_landing(pad, q, _slide_info)
+
+
+## Sorvete: perto da pista (ghost_below_m), mostra onde a nave pararia se tocasse no gelo com a velocidade de agora.
+func _tick_ghost() -> void:
+	if _ghost == null or target_pad_id < 0 or lander.state != Lander.State.FLYING:
+		if _ghost != null:
+			_ghost.hide()
+		return
+	var cfg := Minigames.spec(planet_id)
+	var pad: Dictionary = terrain.pads[target_pad_id]
+	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
+	var h := WorldConfig.px_to_m(float(pad["y"]) - lander.global_position.y - feet)
+	var x := Minigames.slide_stop_x(lander.global_position.x, lander.vel_m, h, float(cfg.get("min_slide_mps", 4.0)),
+			float(cfg.get("friction_mps2", 0.6)), float(target_dir))
+	var lim := float(pad["half_width"]) - 6.0
+	var over := absf(lander.global_position.x - float(pad["x"])) <= float(pad["half_width"])
+	_ghost.visible = h >= 0.0 and h <= float(cfg.get("ghost_below_m", 40.0)) and over
+	_ghost.position = Vector2(roundf(clampf(x, float(pad["x"]) - lim, float(pad["x"]) + lim)), float(pad["y"]) - 3.0)
 
 
 ## Jardim: vento de dente-de-leao empurra de lado; bater num caule empurra de volta (sem explodir) e o caule nao

@@ -104,7 +104,16 @@ func _ready() -> void:
 	sv.begin_mission(11, 900.0, "narrow", 1, f2)
 	var rink: Dictionary = sv.terrain.pads[sv.target_pad_id]
 	_check("sorvete_pista_larga", WorldConfig.px_to_m(float(rink["half_width"]) * 2.0) > 150.0)
-	_check("sorvete_paga_a_plataforma_escolhida", sv.target_tier == "narrow" and sv._rings.size() == 4)
+	_check("sorvete_paga_a_plataforma_escolhida", sv.target_tier == "narrow" and sv._rings.size() == 5)   # gelo + 3 aneis + pino-fantasma
+	sv.lander.state = Lander.State.FLYING
+	sv.lander.global_position = Vector2(float(rink["x"]) - 60.0, float(rink["y"]) - 30.0)
+	sv.lander.vel_m = Vector2(6.0, 2.0)
+	sv._tick_minigame()
+	_check("sorvete_fantasma_mostra_onde_para", sv._ghost.visible and sv._ghost.position.x > sv.lander.global_position.x)
+	sv.lander.global_position.y = float(rink["y"]) - 200.0
+	sv._tick_minigame()
+	_check("sorvete_fantasma_some_no_alto", not sv._ghost.visible)
+	sv.lander.state = Lander.State.LANDED
 	var got: Array = []
 	sv.delivery_finished.connect(func(r: Dictionary) -> void: got.append(r))
 	sv.lander.global_position = Vector2(float(rink["x"]) - 120.0, float(rink["y"]) - 8.0)

@@ -752,7 +752,9 @@
         "tight": 20.0
       },
       "friction_mps2": 0.6,
-      "min_slide_mps": 6.0,
+      "min_slide_mps": 4.0,
+      "ghost_below_m": 40.0,
+      "audit_notes": "2026-10-07 auditoria: deslize minimo 6 -> 4 m/s (13 m < anel apertado de 20 m: pousar devagar no centro pontua); pino-fantasma mostra onde a nave para (Minigames.slide_stop_x) quando ela esta a ghost_below_m da pista; aneis de 5 px; som por resultado.",
       "stop_mps": 0.4,
       "ice_vx_mult": 4.0
     },

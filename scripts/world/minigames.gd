@@ -80,6 +80,16 @@ static func slide_step(v_mps: float, friction: float, dt_m: float) -> float:
 	return signf(v_mps) * nv if nv > 0.0 else 0.0
 
 
+## Sorvete: x (px) onde a nave para se tocar o gelo agora: anda vx ate tocar (h m de altura caindo a vy, minimo
+## 1 m/s) e depois desliza max(|vx|, min_slide)^2 / (2 x atrito) no sentido de vx (vx 0 = dir). 1 m = 1 px.
+static func slide_stop_x(x: float, vel_mps: Vector2, h_m: float, min_slide: float, friction: float, dir: float) -> float:
+	var t := maxf(h_m, 0.0) / maxf(vel_mps.y, 1.0)
+	var vx := vel_mps.x
+	var v := maxf(absf(vx), min_slide)
+	var sgn := signf(vx) if vx != 0.0 else signf(dir)
+	return x + WorldConfig.m_to_px(vx * t + sgn * v * v / (2.0 * maxf(friction, 0.001)))
+
+
 ## Jardim (Flappy Bird): a nave (px) bate no caule {x, half, gap_top, gap_bot}? (dentro da faixa do caule e fora do vao)
 static func hits_stem(pos_px: Vector2, stem: Dictionary) -> bool:
 	return absf(pos_px.x - float(stem["x"])) <= float(stem["half"]) \
