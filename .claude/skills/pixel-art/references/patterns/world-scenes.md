@@ -28,3 +28,11 @@ morador de corpo inteiro na conversa + rostinho 24x24, palco da conversa e plane
 - sprite-ai, fundos em pixel art: https://www.sprite-ai.art/blog/pixel-art-backgrounds
 - Scale2x/EPX: https://www.scale2x.it/algorithm
 - Método aprovado da Lua: `references/cute-scene-method.md`
+
+## 2026-10-08 — auditoria dos minijogos
+- `seed` (7x9, semente de dente-de-leão, efeito sem contorno: guarda-chuva de fiapos brancos + sementinha honey/copper)
+  — mostra o vento do Jardim (o jogo move 16 sementes a vento × 20 px/s).
+- `cheese` (13x11, queijinho da trilha da Lua): a 1ª versão (cunha com furos de 1 px) lia como "triângulo amarelo";
+  furos 2x2 amber + copper e face de cima lemon resolveram. Contorno ink (coletável).
+- Atenção: os carneirinhos decorativos do cenário das Nuvens são iguais aos do minijogo (confunde coletável e fundo).
+

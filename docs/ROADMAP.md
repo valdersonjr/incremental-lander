@@ -171,6 +171,12 @@
       moradores de corpo inteiro na conversa + palco por mundo (`world_npcs.py`, `TalkArt`), rostinhos 24x24
       (`kids npc_<mundo>`), planetinhas do Mapa em 1x (`map_planets.py`). Página de aprovação
       `art/previews/mundos_arte/index.html` — **aguardando o usuário ver/jogar**
+- [x] 18.5b Auditoria dos minijogos (2026-10-08, relatório https://claude.ai/artifact/1kffVyZpAtd3MmubEaw7wg) aplicada:
+      telemetria dos minijogos; integração `minigame_geometry`; Jardim (vento visível, vão inteiro, calmaria); Bolhas
+      (baú por estrela, corda 30 m, aviso de molhar); Cogumelos (escada até o alvo, n/N); Sorvete (pino-fantasma, deslize
+      4 m/s); Nuvens (fila 14, volta ao cair, correntes com intenção); Lua (queijinho, trilha ≤ +120 m); economia v18
+      (crédito parcial, estrela da Lua pelos queijinhos, bônus dos Cogumelos, takeoff_twr); placar em figuras, seta para
+      item fora da tela, selo de minijogo completo; sons boing/bump/sheep/pass (aguardando aprovação ouvindo)
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

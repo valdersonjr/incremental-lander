@@ -191,3 +191,22 @@ economia em `data/economy.json` + `scripts/economy/econ_math.gd` (paridade testa
 ## 12. Em aberto
 - Controles exatos e sensação de voo (Fase 1). · Geração dos mapas (procedural? quantos por planeta?).
 - Nome final do jogo (o menu inicial usa "INCREMENTAL LANDER" provisório) e logo em pixel art.
+
+## Minijogos dos mundos (v17; auditoria aplicada em 2026-10-08)
+Um pedido-assinatura por mundo, jogado só com a nave. Regras de design (relatório: https://claude.ai/artifact/1kffVyZpAtd3MmubEaw7wg):
+- **Falhar nunca acaba o run e paga pela parte feita** (crédito parcial), nunca tudo-ou-nada.
+- **A estrela maior pede mais do minijogo** (mais itens, vão menor, baú mais fundo, menos tempo), nunca paga de graça.
+- **Nada invisível**: vento com sementes, onde a nave para no gelo (pino), o baú pisca enquanto molha, seta para item
+  fora da tela; acerto e erro com sons diferentes.
+- **Só oferece a estrela que a nave controla** (folga de empuxo por mundo).
+- Minijogo bem feito = selo ("MINIJOGO COMPLETO!", "minijogos completos n/N" no resumo); as estrelas da Estrada
+  continuam 1 por entrega.
+| Mundo | Minijogo | ★1 → ★3 |
+|---|---|---|
+| Lua | trilha de queijinhos (bônus 15/40/75% do pagamento-base × queijinhos) | 6/9/11 itens, arco até +120 m |
+| Nuvens | fila de carneirinhos (cai = volta para o lugar) + correntes | 1/3/5; na ★3 um dentro da corrente |
+| Cogumelos | escada de chapéus-mola até acima da casa (bônus 15%) + ovinho | 1/3/3 chapéus; pouso 0,7/0,5/0,35 × vy máx |
+| Sorvete | curling na pista de gelo + relógio do picolé | anel pela plataforma; relógio 1/0,8/0,65 |
+| Jardim | vãos entre caules + vento visível + mel pesado | 2/4/6 caules, vão 120/95/75 m, vento 1,5/2,3/2,8 |
+| Bolhas | garra do baú + mar + bolhas | baú a 6/14/24 m do mar, 1,6/1,1/0,8 s para tirar |
+

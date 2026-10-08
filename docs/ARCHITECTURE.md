@@ -300,9 +300,20 @@ game/run/offer_panel.gd: cartão com seletores (_fill_choices/_choose/_remember;
   (`_tick_sheep`) · Cogumelos `_caps` (`_tick_caps`) · Sorvete pista `rink` + `_rings` + deslize (`_start_slide/_tick_slide`,
   `Lander.ice_pad_id`) · Jardim `_stems` + vento (`_tick_stems`) · Bolhas garra (`CargoTow` leve), `_water`, `_bubbles`
   (`_tick_claw`). Ambiente via `Lander.env_accel`. Placar `minigame_text()`, verbo `minigame_verb()` → `Hud.show_verb`.
-- Pagamento: Lua `EconMath.minigame_pay` (bônus por queijinho, `planets[].mission_bonus`); os outros usam a regra do pedido
-  (falhou = `fail_mult`). Testes: `tests/unit/world/test_minigames.gd`, integração `minigame_flow`; prévia
+- Pagamento (v18): `EconMath.minigame_pay(planeta, d, stats, fração, estrela)` — bônus por item na Lua (lista por estrela)
+  e nos Cogumelos; Nuvens/Jardim/Bolhas pagam a regra com **crédito parcial** (`Flight.minigame_partial()` →
+  `result.partial` → `RunState.complete_delivery(..., partial, minigame)` → `EconMath.mission_mult(m, failed, partial)` /
+  `fail_pay`). Folga de empuxo do pedido do mundo: `EconMath.takeoff_twr` (no `_flies`). O cartão soma o bônus
+  (`RunState._mg_pay`). Testes: `tests/unit/world/test_minigames.gd`, integração `minigame_flow`; prévia
   `tests/visual/minigame_preview.tscn -- --world=<id>`; dev `--dev_world=<id>`.
+- Auditoria (2026-10-08): `Minigames.cap_y` (escada até acima do alvo), `sheep_xs`/`free_x` (carneirinhos longe das
+  correntes; na ★3 um dentro), `deepest_x` (baú no fundo do vale; `TerrainGen._add_basin` aceita `basin_floor_m`),
+  `slide_stop_x` (pino-fantasma do curling `Flight._ghost`); Jardim: sementes `_seeds` andam com o vento
+  (`_move_seeds`), `_calm_t` depois de bater. HUD: `Flight.minigame_icon()` (figura do item) + `minigame_text()` "n/N";
+  seta na borda para o próximo item (`minigame_next_target`, `_update_pointer`); selo "MINIJOGO COMPLETO!" na entrega e
+  `RunState.minigames_full/played` no resumo. Telemetria: colunas `mission, star, failed, mg_got, mg_total, mg_extra`
+  (`Flight.minigame_extra`). Integração **`minigame_geometry`**: monta a Flight real nos 6 mundos (3 estrelas × 3
+  distâncias × 6 seeds) e confere que a geometria dá para jogar (rodar depois de mexer em minijogo ou terreno).
 
 ## Arte por mundo (Fase 18.5)
 - Fundo/terreno: `assets/bg/<mundo>_layers.json` + camadas (Backdrop/TerrainArt já carregam por id; sem `war`).

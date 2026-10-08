@@ -3,7 +3,19 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-07)
+## Estado atual (2026-10-08)
+- **Auditoria dos minijogos aplicada (ROADMAP 18.5b)**. Relatório: https://claude.ai/artifact/1kffVyZpAtd3MmubEaw7wg.
+  O usuário pediu "definir uma ordem e implementar tudo"; decisões em aberto ficaram com a recomendação (selo no
+  resumo em vez de estrela; crédito parcial em todos os mundos; Bolhas com g 2,4). Commits 15b544f → b104a4d. Verificado:
+  check, 111 testes, todas as integrações (nova `minigame_geometry`), paridade 43, demo 2400 quadros, capturas
+  `minigame_preview -- --world=jardim|bolhas|cogumelos|sorvete` e demo `--dev_world=nuvens`.
+  **Pendências para o usuário**: (1) aprovar ouvindo os sons novos (`audio/previews/minigame_reel.wav`: 3 quiques,
+  batida, 5 carneirinhos, 3 vãos); (2) aprovar a figura do queijinho e as sementes do Jardim (atlas `minigame_props`);
+  (3) **carneirinhos decorativos do cenário das Nuvens são iguais aos do minijogo** — criança vai tentar pegar; proposta:
+  trocar/esconder os do fundo (arte da 18.5, aguardando aprovação); (4) jogar e medir com a telemetria nova
+  (critérios de aprovação no relatório). Economia v18: casual abre os mundos finais ±10% da v17; pior parede 46 min
+  no engaged (= runs longos do modelo, calibração pendente).
+  **Próximo**: retorno do usuário (sons, arte, carneirinhos do fundo); depois 18.6 som por mundo.
 - **Fase 18 virou "viagem com minijogos" (2026-10-07)**: plano em `docs/DECISIONS.md`; protótipo jogável aprovado
   (`art/previews/minijogos/minijogos.html`). **18.3c ✅** economia v17 (Estrada por mundo, pedido-assinatura) + estado
   e save v6 por mundo. **18.3d ✅** hub: o jogo abre no Mapa (cartão do mundo
