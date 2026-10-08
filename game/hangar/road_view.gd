@@ -60,7 +60,7 @@ func rebuild(from_stars: int = -1, recenter: bool = false) -> void:
 		_track.remove_child(c)
 		c.queue_free()
 	_stop_nodes.clear()
-	var road := EconMath.road()
+	var road := EconMath.road(GameState.current_planet)
 	var next_i := _next_index(road)
 	for i in road.size():
 		var stop: Dictionary = road[i]
@@ -79,12 +79,12 @@ func rebuild(from_stars: int = -1, recenter: bool = false) -> void:
 	_avatar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_avatar.size = Vector2(32, 32)
 	_track.add_child(_avatar)
-	var target := _x_for(GameState.stars, road)
+	var target := _x_for(GameState.stars_in(), road)
 	_avatar_x = _x_for(from_stars, road) if from_stars >= 0 else target
 	_place_avatar()
 	if next_i >= 0 and not GameState.road_reached.has(road[next_i]["id"]):
 		var need := Label.new()
-		need.text = "faltam %d" % (int(road[next_i]["stars"]) - GameState.stars)
+		need.text = "faltam %d" % (int(road[next_i]["stars"]) - GameState.stars_in())
 		need.theme_type_variation = &"MoneyLabel"
 		var row := _with_star(need, 12)
 		row.position = Vector2(X0 + next_i * SPACING - 34, 72)
@@ -188,7 +188,7 @@ func _x_for(stars: int, road: Array) -> float:
 
 func _draw_line() -> void:
 	var y := TOP + BUBBLE / 2.0 - 2
-	var x1 := X0 + SPACING * maxi(0, EconMath.road().size() - 1)
+	var x1 := X0 + SPACING * maxi(0, EconMath.road(GameState.current_planet).size() - 1)
 	_track.draw_rect(Rect2(X0, y, x1 - X0, 5), UiKit.color("ink"))
 	_track.draw_rect(Rect2(X0, y + 1, x1 - X0, 3), UiKit.color("slate"))
 	_track.draw_rect(Rect2(X0, y + 1, clampf(_avatar_x - X0, 0.0, x1 - X0), 3), UiKit.color("aqua"))

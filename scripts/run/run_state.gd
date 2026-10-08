@@ -59,7 +59,7 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_
 			run._planet = p
 	var c: Dictionary = EconMath.spec["contracts"]
 	if not EconMath.mission_kinds(p_planet_id).is_empty():
-		for slot in EconMath.mission_slots(run.unlocked):
+		for slot in EconMath.mission_slots(run.unlocked, p_planet_id):
 			run._add_slot_offer(slot)
 		run._sort_offers()
 		return run
@@ -77,10 +77,10 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_
 func set_choice(index: int, tier: String, star: int) -> void:
 	offer_tiers[index] = tier
 	var m: Dictionary = offer_mission[index]
-	if m["kind"] == "simple" or m["kind"] == "double":
+	if m["kind"] == "double":
 		return
 	if star in stars_for(index):
-		offer_mission[index] = {"kind": m["kind"], "star": star, "parts": [{"kind": m["kind"], "star": star}]}
+		offer_mission[index] = EconMath.mission_of(str(m["kind"]), star, unlocked, planet_id, stats, _rng_extra)
 
 
 ## Estrelas que o jogador pode escolher no pedido index.

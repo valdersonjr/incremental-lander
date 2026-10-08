@@ -3,7 +3,7 @@
 class_name SaveData
 extends RefCounted
 
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 ## Migracoes (_migrate): versao -> funcao que recebe o dict e devolve a versao seguinte.
 ## v1 -> v2 (2026-10-06): sai prestigio, loja, outros mundos e Expedicao (so a Lua por enquanto).
 ## v2 -> v3 (2026-10-07): Estrada das Estrelas — estrelas viram total ACUMULADO (as gastas em nos de missao voltam:
@@ -12,6 +12,8 @@ const SAVE_VERSION := 5
 ## run_perfect, longest_hop -> run_distance (um run com aquele salto voou pelo menos isso); best_delivery fica.
 ## v4 -> v5 (2026-10-07): mundos paralelos — recordes viram {planeta: {id: valor}} (os atuais vao para "luna");
 ## current_planet passa a ser guardado de verdade (mundo liberado; senao "luna").
+## v5 -> v6 (2026-10-07): minijogos — uma Estrada por mundo; as estrelas que existiam vao para a Lua (world_stars);
+## paradas world_* somem (filtro da Estrada).
 ## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
 const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
@@ -32,6 +34,7 @@ static func serialize(state: Dictionary) -> Dictionary:
 		"road_reached": state.get("road_reached", []).duplicate(),
 		"road_seen": state.get("road_seen", []).duplicate(),
 		"rep_points": state.get("rep_points", {}).duplicate(),
+		"world_stars": state.get("world_stars", {}).duplicate(),
 		"runs_done": state["runs_done"],
 		"play_seconds": state["play_seconds"],
 		"settings": state["settings"].duplicate(),
@@ -69,6 +72,7 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"play_seconds": maxf(0.0, _num(d.get("play_seconds", 0.0))),
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
 		"records": {},
+		"world_stars": {},
 	}
 	var planet_ids: Array = EconMath.spec["planets"].map(func(p: Dictionary) -> String: return p["id"])
 	var recs: Variant = d.get("records", {})
@@ -77,8 +81,18 @@ static func deserialize(raw: Variant) -> Dictionary:
 			st["records"][str(pid)] = _filter_numbers(recs[pid], RECORD_IDS, "recorde", warnings, false)
 		else:
 			warnings.append("recordes do mundo '%s' ignorados" % pid)
+	var ws: Variant = d.get("world_stars", {})
+	st["world_stars"] = _filter_numbers(ws if ws is Dictionary else {}, planet_ids, "estrelas do mundo", warnings, true)
 	var cp := str(d.get("current_planet", "luna"))
-	if cp in planet_ids and (cp == "luna" or ("world_" + cp) in st["road_reached"]):
+	var prev := ""                                             # mundo liberado = o anterior esta completo
+	var open_ids: Array = []
+	for pid: String in planet_ids:
+		if prev == "" or ("complete_" + prev) in st["road_reached"]:
+			open_ids.append(pid)
+		else:
+			break
+		prev = pid
+	if cp in open_ids:
 		st["current_planet"] = cp
 	for rid: String in res_ids:
 		if not st["resources"].has(rid):
@@ -127,6 +141,8 @@ static func _migrate(from_version: int, d: Dictionary) -> Dictionary:
 			return _from_v3(d)
 		4:
 			return _from_v4(d)
+		5:
+			return _from_v5(d)
 	return d
 
 
@@ -170,6 +186,13 @@ static func _from_v4(d: Dictionary) -> Dictionary:
 	var rec: Variant = out.get("records", {})
 	out["records"] = {"luna": rec} if rec is Dictionary and not (rec as Dictionary).is_empty() else {}
 	out["save_version"] = 5
+	return out
+
+
+static func _from_v5(d: Dictionary) -> Dictionary:
+	var out := d.duplicate(true)
+	out["world_stars"] = {"luna": maxi(0, int(_num(d.get("stars", 0))))}
+	out["save_version"] = 6
 	return out
 
 

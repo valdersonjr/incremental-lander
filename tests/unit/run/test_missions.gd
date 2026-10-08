@@ -25,29 +25,16 @@ func test_arvore_pede_os_anteriores() -> void:
 	assert_eq(EconMath.mission_node_cost(_node("heavy1")), 3)
 
 
-func test_liberadas_viram_pedidos() -> void:
-	var un := EconMath.missions_unlocked(["heavy1"])
-	assert_eq(un, {"simple": 1, "heavy": 1})
-	var viu := false
-	for s in 10:
-		var run := RunState.create("luna", EconMath.ship_stats({}), s, un, {"heavy": 2})
-		for m: Dictionary in run.offer_mission:
-			viu = viu or m["kind"] == "heavy"
-	assert_true(viu, "Pesada aparece nos pedidos depois de liberada")
-
-
-func test_dupla_junta_duas_regras_diferentes() -> void:
-	var un := EconMath.missions_unlocked(["heavy1", "soft1", "fast1", "heavy2", "heavy3", "soft2", "soft3", "double1"])
-	var rng := RandomNumberGenerator.new()
-	var viu := false
-	for s in 80:
-		rng.seed = s
-		var m := EconMath.draw_mission("luna", un, {"double": 1}, EconMath.ship_stats({"thrust": 10}), rng)
-		if m["kind"] == "double":
-			viu = true
-			assert_eq((m["parts"] as Array).size(), 2)
-			assert_true(m["parts"][0]["kind"] != m["parts"][1]["kind"], "duas regras diferentes")
-	assert_true(viu)
+func test_cada_mundo_oferece_so_o_pedido_dele() -> void:
+	var un := EconMath.missions_unlocked(["heavy1", "soft1"])
+	assert_eq(un, {"simple": 1, "heavy": 1, "soft": 1})
+	var cog := RunState.create("cogumelos", EconMath.ship_stats({}), 3, un)
+	assert_eq(cog.offers.size(), 3, "3 pedidos do sapinho (perto/medio/longe)")
+	for m: Dictionary in cog.offer_mission:
+		assert_eq(m["kind"], "soft", "Cogumelos = Pouso suave")
+	var lua := RunState.create("luna", EconMath.ship_stats({}), 3, un)
+	for m: Dictionary in lua.offer_mission:
+		assert_eq(m["kind"], "simple", "na Lua so o mineiro, mesmo com outros liberados")
 
 
 func test_pesada_que_nao_decola_nao_e_sorteada() -> void:

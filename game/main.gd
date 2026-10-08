@@ -478,6 +478,7 @@ func _apply_dev_args() -> void:
 		GameState.mission_nodes.assign(str(_args["dev_missions"]).split(","))
 	if _args.has("dev_stars"):                                 # anda na Estrada sem festa (tudo ja visto)
 		GameState.stars = int(_args["dev_stars"])
+		GameState.world_stars[GameState.current_planet] = int(_args["dev_stars"])   # v17: na Estrada do mundo atual
 		GameState._check_road(true)
 
 

@@ -394,6 +394,9 @@ def mission_kinds(E: dict, planet_id: str) -> list[dict]:
     ms = mission_spec(E)
     if not ms or planet_id not in ms.get("planets", []):
         return []
+    sig = next((p.get("mission") for p in E["planets"] if p["id"] == planet_id), None)
+    if sig:                                               # v17: so o pedido-assinatura do mundo
+        return [k for k in ms["kinds"] if k["id"] == sig]
     return ms["kinds"]
 
 
@@ -730,11 +733,19 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     return RunResult(total, t, n, maxd, dist, crashed, 100 * gas / stats["tank"])
 
 
-def mission_slots(E: dict, unlocked: dict | None) -> list[str]:
+def slot_kind(slot: str) -> str:
+    """Tipo de missao de um espaco ('simple0' / 'passenger2' -> tira o numero da faixa)."""
+    return slot.rstrip("0123456789")
+
+
+def mission_slots(E: dict, unlocked: dict | None, planet: dict | None = None) -> list[str]:
     """Espacos de pedido do run (v12.1): a Simples tem simple_offers faixas de distancia (perto -> longe) e cada outro
-    tipo liberado tem 1 pedido (um por ratinho). Entregou -> o mesmo espaco ganha um pedido novo."""
+    tipo liberado tem 1 pedido (um por ratinho). Entregou -> o mesmo espaco ganha um pedido novo.
+    v17 (minijogos): planeta com `mission` = so o pedido-assinatura daquele mundo, em simple_offers faixas."""
     ms = mission_spec(E)
     n = ms.get("simple_offers", 3)
+    if planet and planet.get("mission"):
+        return [f"{planet['mission']}{i}" for i in range(n)]
     out = [f"simple{i}" for i in range(n)]
     for k in ms.get("kinds", []):
         if k["id"] != "simple" and (unlocked or {}).get(k["id"], 0) > 0:
@@ -745,9 +756,9 @@ def mission_slots(E: dict, unlocked: dict | None) -> list[str]:
 def slot_distance(E: dict, planet: dict, slot: str, u: float) -> float:
     """Distancia de um espaco a partir de u em [0,1): Simples i = faixa i de simple_offers (em log); outros = faixa toda."""
     lo, hi = (math.log(x) for x in planet["distance"])
-    if slot.startswith("simple"):
+    if slot[-1:].isdigit():
         n = mission_spec(E).get("simple_offers", 3)
-        i = int(slot[6:])
+        i = int(slot[len(slot_kind(slot)):])
         return math.exp(lo + (hi - lo) * (i + u) / n)
     return math.exp(lo + (hi - lo) * u)
 
@@ -814,8 +825,12 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     gf_pay, gf_gas, gf_dv = gift_expect(E, planet, prof)
     rewards_w = planet.get("rewards", {"credits": 1.0})
     total = {k: 0.0 for k in rewards_w}
-    slots = mission_slots(E, unlocked)
-    choices = {sl: _mission_choices(E, planet, stats, prof, "simple" if sl.startswith("simple") else sl, unlocked)
+    slots = mission_slots(E, unlocked, planet)
+    if planet.get("mission"):
+        unlocked = dict(unlocked)
+        unlocked[planet["mission"]] = max(1, unlocked.get(planet["mission"], 0))
+    mbonus = planet.get("mission_bonus", 0.0) * min(1.0, prof.skill)   # v17: extra do minijogo (ex.: queijinhos)
+    choices = {sl: _mission_choices(E, planet, stats, prof, slot_kind(sl), unlocked)
                for sl in slots}
     us = list(stream[0]) + list(stream[1]) if stream else None
     lo, hi = (math.log(x) for x in planet["distance"])
@@ -864,8 +879,8 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         gas -= g_need * fat
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
-        cm = reputation_mult(E, (rep or {}).get("simple" if pick.startswith("simple") else pick, 0))
-        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay)
+        cm = reputation_mult(E, (rep or {}).get(slot_kind(pick), 0))
+        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay + mbonus)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, d, stats, prof) * ch["t"]
         if expected:
@@ -961,12 +976,15 @@ def _available(u: dict, lv: int, unlocked: set[str], shop: dict[str, int] | None
     return req is None or req in unlocked
 
 
-def road_spec(E: dict) -> list[dict]:
+def road_spec(E: dict, planet: str | None = None) -> list[dict]:
     """Estrada das Estrelas (v13, progression.road): paradas em ordem, cada uma com `stars` (total ACUMULADO de
     estrelas para chegar) e `type`: start | mission (no da arvore de missoes) | grant (upgrade de compra unica que
     vem pronto: habilidade/ajuda) | unlock (upgrade que passa a poder ser comprado: Frota, Piloto) | final.
     Espelho GDScript: EconMath.road / road_reached / road_can_buy."""
-    return (E.get("progression") or {}).get("road") or []
+    P_ = E.get("progression") or {}
+    if P_.get("roads"):                                   # v17: uma Estrada por mundo
+        return list(P_["roads"].get(planet, [])) if planet else [s for r in P_["roads"].values() for s in r]
+    return P_.get("road") or []
 
 
 def record_bonus(E: dict, run_money: float, old_record: float) -> float:
@@ -986,9 +1004,17 @@ def world_of_stop(stop: dict) -> str:
     return str(stop["id"])[6:] if stop.get("type") == "world" else ""
 
 
-def road_reached_now(E: dict, stars_total: float, reached: set) -> list[dict]:
-    """Paradas que o total de estrelas alcanca e ainda nao foram marcadas (na ordem da estrada)."""
-    return [s for s in road_spec(E) if s["id"] not in reached and stars_total >= s["stars"]]
+def road_reached_now(E: dict, stars_total: float, reached: set, planet: str | None = None) -> list[dict]:
+    """Paradas que o total de estrelas alcanca e ainda nao foram marcadas (na ordem da estrada). v17: planet = a
+    Estrada daquele mundo (estrelas feitas nele)."""
+    return [s for s in road_spec(E, planet) if s["id"] not in reached and stars_total >= s["stars"]]
+
+
+def next_world(E: dict, planet: str) -> str:
+    """Mundo seguinte na ordem da spec (o que a parada 'complete' do mundo libera); '' no ultimo."""
+    ids = [p["id"] for p in E["planets"]]
+    i = ids.index(planet) if planet in ids else -1
+    return ids[i + 1] if 0 <= i < len(ids) - 1 else ""
 
 
 def road_can_buy(E: dict, upgrade_id: str, reached: set) -> bool:
@@ -1020,6 +1046,8 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     planets = {p["id"]: p for p in E["planets"]}
     unlocked = {p["id"] for p in E["planets"] if not p.get("unlock") and not p.get("road")}
     world_rec: dict = {}   # v16: recorde de dinheiro do run por mundo (bonus de recorde)
+    world_stars: dict = {}  # v17: estrelas feitas em cada mundo (andam a Estrada dele)
+    done: set = set()       # v17: mundos completos
     world_runs: dict = {}  # runs jogados em cada mundo (relatorio)
     current = E["planets"][0]["id"]
     ppoints = 0.0          # poeira ganha na vida toda (nivel de prestigio: bonus passivo, nunca diminui)
@@ -1050,6 +1078,14 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
 
     last_run_s = [120.0]
 
+    def choose_world(stats):
+        # v17: o jogador segue a viagem (o primeiro mundo liberado ainda nao completo); tudo completo = o melhor
+        if (E.get("progression") or {}).get("roads"):
+            for p in E["planets"]:
+                if p["id"] in unlocked and p["id"] not in done:
+                    return p["id"]
+        return best_planet(stats)
+
     def best_planet(stats):
         # v16: renda esperada + bonus de recorde se o run esperado passar a marca daquele mundo
         B = E["contracts"].get("record_bonus") or {}
@@ -1069,7 +1105,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         r = do_run(E, planets[current], stats, prof, rng, missions=mu, boost=boost, rep=rep_lv, log=dlog)
         for entry in dlog[:r.deliveries]:          # entrega feita (modelo: falha de regra ja esta no pagamento medio)
             if len(entry) >= 6:
-                kind = "simple" if str(entry[4]).startswith("simple") else str(entry[4])
+                kind = slot_kind(str(entry[4]))
                 rep_pts[kind] = rep_pts.get(kind, 0) + reputation_points(E, True, entry[2] >= RQ)
         runs += 1
         last_run_s[0] = max(30.0, r.time_s)
@@ -1085,7 +1121,10 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             boost = {k: v - 1 for k, v in boost.items() if v > 1}
             stars += r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
             cost = MS.get("stars", {}).get("unlock_cost", 3)
-            for stop in road_reached_now(E, stars, reached):
+            per_world = bool((E.get("progression") or {}).get("roads"))
+            world_stars[current] = world_stars.get(current, 0) + r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
+            for stop in road_reached_now(E, world_stars[current] if per_world else stars, reached,
+                                         current if per_world else None):
                 reached.add(stop["id"])
                 if stop["type"] == "mission":
                     owned.add(stop["id"])
@@ -1094,8 +1133,14 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                 elif world_of_stop(stop) in planets:
                     unlocked.add(world_of_stop(stop))
                     res.events.append({"t": t, "type": "planet", "id": world_of_stop(stop), "cost": {}, "gap_s": 0.0})
+                elif stop["type"] == "complete":
+                    done.add(current)
+                    nw = next_world(E, current)
+                    if nw:
+                        unlocked.add(nw)
+                        res.events.append({"t": t, "type": "planet", "id": nw, "cost": {}, "gap_s": 0.0})
                 res.events.append({"t": t, "type": "road", "id": stop["id"], "gap_s": 0.0})
-            current = best_planet(stats_now())
+            current = choose_world(stats_now())
             for node in ([] if road else MS.get("nodes", [])):
                 if stars < node.get("cost", cost):
                     break
@@ -1205,7 +1250,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                 unlocked.add(oid)
                 res.events.append({"t": t, "type": "planet", "id": oid, "cost": cost, "gap_s": t - last_buy_t})
             last_buy_t = t
-            current = best_planet(stats_now())
+            current = choose_world(stats_now())
         # ---- prestigio
         if P:
             gain = prestige_gain(P, run_earned[P.get("based_on", "credits")])
@@ -1273,7 +1318,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             if goal.get("stop", True):
                 break
     res.final = {"t_h": t / 3600, "runs": runs, "levels": levels, "unlocked": sorted(unlocked), "shop": shop,
-                 "world_runs": world_runs, "world_rec": world_rec,
+                 "world_runs": world_runs, "world_rec": world_rec, "world_stars": world_stars, "done": sorted(done),
                  "missions": sorted(owned) if MS else [], "stars": stars if MS else 0, "reputation": {k: reputation_level(E, v) for k, v in rep_pts.items()},
                  "money": money, "lifetime": lifetime, "prestige_points": ppoints, "stats": stats_now()}
     return res

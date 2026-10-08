@@ -105,17 +105,20 @@ func _process(_d: float) -> void:
 			GameState.mission_nodes = []
 			GameState.road_reached = []
 			GameState.road_seen = []
+			GameState.world_stars = {}
+			GameState.current_planet = "luna"
 			GameState._check_road(true)
 			_check("estrada_comeca_no_mineiro", GameState.road_reached == ["start"])
-			var first := int(EconMath.road_stop("heavy1")["stars"])
+			var first := int(EconMath.road_stop("simple2")["stars"])     # v17: Estrada da Lua (estrela 2 do mineiro)
 			GameState.add_stars(first)
 			_check("estrelas_nao_se_gastam", GameState.stars == first)
-			_check("parada_libera_ratinho", int(GameState.missions_unlocked().get("heavy", 0)) == 1)
-			_check("tipo_novo_em_destaque", int(GameState.missions_new.get("heavy", 0)) > 0)
+			_check("parada_libera_ratinho", int(GameState.missions_unlocked().get("simple", 0)) == 2)
+			_check("tipo_novo_em_destaque", int(GameState.missions_new.get("simple", 0)) > 0)
 			_check("jingle_ao_chegar_na_parada", int(Sound.played.get("unlock", 0)) > 0)
-			_check("novidade_para_mostrar", GameState.road_news().has("heavy1"))
-			GameState.add_stars(int(EconMath.road_stop("turbo")["stars"]) - GameState.stars)
-			_check("habilidade_vem_pronta", int(GameState.levels.get("turbo", 0)) == 1 and not GameState.can_buy("turbo"))
+			_check("novidade_para_mostrar", GameState.road_news().has("simple2"))
+			GameState.add_stars(int(EconMath.road_stop("stabilizer")["stars"]) - GameState.stars)
+			_check("habilidade_vem_pronta", int(GameState.levels.get("stabilizer", 0)) == 1
+					and not GameState.can_buy("stabilizer"))
 			_check("frota_fechada_antes_da_parada", not GameState.can_buy("fleet"))
 			for i in 3:
 				GameState.tick_missions_new()

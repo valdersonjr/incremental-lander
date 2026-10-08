@@ -7,7 +7,8 @@ var levels: Dictionary = {}
 var current_planet := "luna"          # so a Lua por enquanto (os outros mundos voltam depois)
 var runs_done := 0
 var income_history: Array = []        # [{earned, seconds}] dos ultimos runs (base da renda da frota)
-var stars := 0                        # estrelas ACUMULADAS (1 por entrega; nao se gastam): andam na Estrada (v13)
+var stars := 0                        # estrelas ACUMULADAS no jogo todo (1 por entrega; estatistica)
+var world_stars: Dictionary = {}      # v17: estrelas feitas em cada mundo -> andam a Estrada DAQUELE mundo
 var mission_nodes: Array = []         # nos da arvore de missoes ja liberados (ids; vem da Estrada)
 var road_reached: Array = []          # paradas da Estrada das Estrelas ja alcancadas (ids; EconMath.road)
 var road_seen: Array = []             # paradas que o jogador ja viu festejar na PROGRESSAO
@@ -53,6 +54,7 @@ func reset() -> void:
 	current_planet = "luna"
 	income_history = []
 	stars = 0
+	world_stars = {}
 	mission_nodes = []
 	missions_new = {}
 	road_reached = []
@@ -131,35 +133,50 @@ func can_buy(upgrade_id: String) -> bool:
 	return EconMath.road_can_buy(upgrade_id, road_reached)
 
 
-## Soma estrelas ganhas (entregas do run) e anda na Estrada.
+## Soma estrelas ganhas (entregas do run) no total e no mundo atual, e anda a Estrada desse mundo.
 func add_stars(n: int) -> void:
 	if n == 0:
 		return
 	stars += n
+	world_stars[current_planet] = stars_in(current_planet) + n
 	Events.stars_changed.emit(stars)
 	_check_road()
+
+
+## Estrelas feitas num mundo (planet "" = o atual).
+func stars_in(planet: String = "") -> int:
+	return int(world_stars.get(planet if planet != "" else current_planet, 0))
 
 
 ## Marca as paradas da Estrada que o total de estrelas ja alcanca e entrega o premio de cada uma: ratinho (no da
 ## arvore de missoes), habilidade/ajuda (nivel 1), Frota/Piloto (passam a poder ser comprados). quiet = sem festa
 ## (jogo novo, save carregado): a parada ja conta como vista.
 func _check_road(quiet: bool = false) -> void:
-	for stop: Dictionary in EconMath.road_reached_now(stars, road_reached):
-		var id := str(stop["id"])
-		road_reached.append(id)
-		match str(stop["type"]):
-			"mission":
-				if not mission_nodes.has(id):
-					mission_nodes.append(id)
-				for node: Dictionary in EconMath.mission_spec().get("nodes", []):
-					if node["id"] == id:
-						missions_new[node["kind"]] = int(EconMath.mission_spec().get("new_boost", {}).get("runs", 0))
-			"grant":
-				levels[id] = maxi(int(levels.get(id, 0)), 1)
-		if quiet or stop["type"] == "start":
-			road_seen.append(id)
-		else:
-			Events.road_reached.emit(id)
+	var changed := true
+	while changed:                                             # completar um mundo abre o proximo (parada 0 dele)
+		changed = false
+		for w: String in worlds():
+			for stop: Dictionary in EconMath.road_reached_now(stars_in(w), road_reached, w):
+				_reach_stop(stop, quiet)
+				changed = true
+
+
+func _reach_stop(stop: Dictionary, quiet: bool) -> void:
+	var id := str(stop["id"])
+	road_reached.append(id)
+	match str(stop["type"]):
+		"mission":
+			if not mission_nodes.has(id):
+				mission_nodes.append(id)
+			for node: Dictionary in EconMath.mission_spec().get("nodes", []):
+				if node["id"] == id:
+					missions_new[node["kind"]] = int(EconMath.mission_spec().get("new_boost", {}).get("runs", 0))
+		"grant":
+			levels[id] = maxi(int(levels.get(id, 0)), 1)
+	if quiet or stop["type"] == "start":
+		road_seen.append(id)
+	else:
+		Events.road_reached.emit(id)
 
 
 ## Paisagens do relevo liberadas (v15): as do jogo novo (world.json terrain.landscapes.start) + as paradas
@@ -238,14 +255,23 @@ func note_record(key: String, value: float) -> bool:
 	return old > 0.0
 
 
-## Mundos liberados (v16, mundos paralelos): a Lua + os das paradas "world" alcancadas, na ordem da spec.
+## Mundos liberados (v17, viagem): o primeiro + cada mundo cujo anterior esta completo (parada complete_<id>).
 func worlds() -> Array[String]:
 	var out: Array[String] = []
+	var prev := ""
 	for p: Dictionary in EconMath.spec["planets"]:
 		var id := str(p["id"])
-		if not bool(p.get("road", false)) or road_reached.has("world_" + id):
+		if prev == "" or world_done(prev):
 			out.append(id)
+		else:
+			break
+		prev = id
 	return out
+
+
+## O mundo esta completo (alcancou a ultima parada da Estrada dele)?
+func world_done(planet: String) -> bool:
+	return road_reached.has("complete_" + planet)
 
 
 ## Escolhe o mundo do proximo voo (so os liberados). Retorna false se o mundo ainda esta fechado.
@@ -260,7 +286,7 @@ func select_world(planet: String) -> bool:
 func save_state() -> Dictionary:
 	return {"resources": resources, "levels": levels, "current_planet": current_planet,
 			"income_history": income_history, "stars": stars, "mission_nodes": mission_nodes,
-			"missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "rep_points": rep_points, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
+			"world_stars": world_stars, "missions_new": missions_new, "road_reached": road_reached, "road_seen": road_seen, "rep_points": rep_points, "runs_done": runs_done, "play_seconds": play_seconds, "settings": settings, "records": records}
 
 
 ## Aplica um estado ja validado por SaveData.deserialize.
@@ -270,6 +296,7 @@ func apply_save_state(st: Dictionary) -> void:
 	current_planet = st["current_planet"]
 	income_history = st["income_history"]
 	stars = int(st.get("stars", 0))
+	world_stars = st.get("world_stars", {})
 	mission_nodes = st.get("mission_nodes", [])
 	missions_new = st.get("missions_new", {})
 	road_reached = st.get("road_reached", [])

@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-07)
+- **Fase 18 virou "viagem com minijogos" (2026-10-07)**: plano em `docs/DECISIONS.md`; protótipo jogável aprovado
+  (`art/previews/minijogos/minijogos.html`). **18.3c ✅** economia v17 (Estrada por mundo, pedido-assinatura) + estado
+  e save v6 por mundo. **Próximo**: 18.3d hub (jogo abre no Mapa, cartão do mundo com a Estrada, NAVE, viagem) e 18.4
+  minijogos no voo, um mundo por vez (Lua trilha primeiro).
 - **Fase 18 — Mundos novos (2026-10-07)**: plano aprovado (mundos paralelos, recordes por mundo + bônus de recorde,
   Estrada única com parada `world`, seletor). **18.1 ✅** o usuário ficou com os 5 conceitos de
   `art/previews/mundos/mundos.html` (git-ignorado): Nuvens → Bolhas → Cogumelos → Sorvete → Jardim.

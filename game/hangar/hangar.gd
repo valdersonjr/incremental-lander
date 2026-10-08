@@ -71,9 +71,9 @@ func open() -> void:
 	_balloon.visible = false
 	_road.selected = ""
 	refresh()
-	var from := _seen_stars if _seen_stars >= 0 and _seen_stars < GameState.stars else -1
+	var from := _seen_stars if _seen_stars >= 0 and _seen_stars < GameState.stars_in() else -1
 	_road.rebuild(from, true)
-	_seen_stars = GameState.stars
+	_seen_stars = GameState.stars_in()
 	_news = GameState.road_news()
 	if not _news.is_empty():
 		get_tree().create_timer(0.6 if from >= 0 else 0.1).timeout.connect(_show_next_news)
@@ -152,7 +152,7 @@ func _fill_resources() -> void:
 	stars.mouse_filter = Control.MOUSE_FILTER_PASS
 	stars.add_child(_kid_rect("star_on", 18))
 	var n := Label.new()
-	n.text = str(GameState.stars)
+	n.text = str(GameState.stars_in())
 	n.theme_type_variation = &"MoneyLabel"
 	n.add_theme_font_size_override(&"font_size", UiKit.TITLE_SIZE)
 	stars.add_child(n)
@@ -789,7 +789,7 @@ func _toggle_balloon(stop_id: String) -> void:
 	_road.selected = stop_id
 	_road.rebuild()
 	if not _road.is_visible_stop(stop_id):
-		_road.center_on(RoadView.X0 + EconMath.road().find(stop) * RoadView.SPACING)
+		_road.center_on(RoadView.X0 + EconMath.road(GameState.current_planet).find(stop) * RoadView.SPACING)
 	_clear(_balloon)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 6)
@@ -830,7 +830,7 @@ func _toggle_balloon(stop_id: String) -> void:
 	if GameState.road_reached.has(stop_id):
 		status.text = "Você já tem!"
 	else:
-		status.text = "Faltam %d estrelas (você tem %d). Cada entrega dá 1." % [need - GameState.stars, GameState.stars]
+		status.text = "Faltam %d estrelas (você tem %d). Cada entrega dá 1." % [need - GameState.stars_in(), GameState.stars_in()]
 	col.add_child(status)
 	if not GameState.road_reached.has(stop_id):
 		var bar := ProgressBar.new()
@@ -838,7 +838,7 @@ func _toggle_balloon(stop_id: String) -> void:
 		bar.theme_type_variation = &"XpBar"
 		bar.custom_minimum_size = Vector2(170, 6)
 		bar.max_value = maxi(1, need)
-		bar.value = GameState.stars
+		bar.value = GameState.stars_in()
 		col.add_child(bar)
 	_balloon.visible = true
 	_balloon.reset_size()
@@ -865,7 +865,7 @@ func _show_next_news() -> void:
 	if stop.is_empty():
 		_show_next_news()
 		return
-	_road.center_on(RoadView.X0 + EconMath.road().find(stop) * RoadView.SPACING)
+	_road.center_on(RoadView.X0 + EconMath.road(GameState.current_planet).find(stop) * RoadView.SPACING)
 	_road.celebrate(id)
 	_confetti()
 	Sound.jingle("unlock")

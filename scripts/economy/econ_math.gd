@@ -220,14 +220,30 @@ static func delivery_pay(planet_id: String, distance: float, stats: Dictionary, 
 ## Estrada das Estrelas (v13, progression.road): paradas em ordem {id, type, stars}; type = start | mission (no da
 ## arvore de missoes) | grant (habilidade/ajuda que vem pronta) | unlock (Frota/Piloto passam a ser compraveis) |
 ## final. stars = total ACUMULADO de estrelas para chegar (nao se gastam). Espelho de econ.road_spec.
-static func road() -> Array:
-	return spec.get("progression", {}).get("road", [])
+## v17: uma Estrada por mundo (progression.roads.<planeta>); planet "" = todas as paradas juntas (busca por id).
+static func road(planet: String = "") -> Array:
+	var pr: Dictionary = spec.get("progression", {})
+	if pr.has("roads"):
+		if planet != "":
+			return (pr["roads"] as Dictionary).get(planet, [])
+		var all: Array = []
+		for k: String in pr["roads"]:
+			all.append_array(pr["roads"][k])
+		return all
+	return pr.get("road", [])
 
 
-## Paradas que stars_total alcanca e ainda nao estao em reached (na ordem da estrada).
-static func road_reached_now(stars_total: int, reached: Array) -> Array:
+## Mundo seguinte na ordem da spec (o que a parada 'complete' libera); "" no ultimo.
+static func next_world(planet: String) -> String:
+	var ids: Array = spec["planets"].map(func(p: Dictionary) -> String: return p["id"])
+	var i := ids.find(planet)
+	return str(ids[i + 1]) if i >= 0 and i < ids.size() - 1 else ""
+
+
+## Paradas que stars_total alcanca e ainda nao estao em reached (na ordem da estrada; v17: a Estrada do planeta).
+static func road_reached_now(stars_total: int, reached: Array, planet: String = "") -> Array:
 	var out: Array = []
-	for s: Dictionary in road():
+	for s: Dictionary in road(planet):
 		if not reached.has(s["id"]) and stars_total >= int(s["stars"]):
 			out.append(s)
 	return out
@@ -325,6 +341,9 @@ static func mission_kinds(planet_id: String) -> Array:
 	var ms := mission_spec()
 	if ms.is_empty() or not (ms.get("planets", []) as Array).has(planet_id):
 		return []
+	var sig := str(_find("planets", planet_id).get("mission", ""))
+	if sig != "":                                              # v17: so o morador/pedido-assinatura do mundo
+		return (ms["kinds"] as Array).filter(func(k: Dictionary) -> bool: return k["id"] == sig)
 	return ms["kinds"]
 
 
@@ -468,9 +487,14 @@ static func draw_mission(planet_id: String, unlocked: Dictionary, boost: Diction
 
 ## Espacos de pedido do run (v12.1): a Simples tem simple_offers faixas de distancia (perto -> longe) e cada outro tipo
 ## liberado tem 1 pedido (um por ratinho). Entregou -> o mesmo espaco ganha um pedido novo.
-static func mission_slots(unlocked: Dictionary) -> Array[String]:
+static func mission_slots(unlocked: Dictionary, planet_id: String = "") -> Array[String]:
 	var ms := mission_spec()
 	var out: Array[String] = []
+	var sig := str(_find("planets", planet_id).get("mission", "")) if planet_id != "" else ""
+	if sig != "":                                              # v17: so o pedido-assinatura do mundo, em faixas
+		for i in int(ms.get("simple_offers", 3)):
+			out.append("%s%d" % [sig, i])
+		return out
 	for i in int(ms.get("simple_offers", 3)):
 		out.append("simple%d" % i)
 	for k: Dictionary in ms.get("kinds", []):
@@ -484,22 +508,29 @@ static func slot_distance(planet_id: String, slot: String, u: float) -> float:
 	var r: Array = _find("planets", planet_id)["distance"]
 	var lo := log(float(r[0]))
 	var hi := log(float(r[1]))
-	if slot.begins_with("simple"):
+	if slot.right(1).is_valid_int():
 		var n := float(mission_spec().get("simple_offers", 3))
-		return exp(lo + (hi - lo) * (float(slot.substr(6).to_int()) + u) / n)
+		return exp(lo + (hi - lo) * (float(slot.substr(slot_kind(slot).length()).to_int()) + u) / n)
 	return exp(lo + (hi - lo) * u)
 
 
 ## Tipo de missao de um espaco ("simple0" -> "simple").
 static func slot_kind(slot: String) -> String:
-	return "simple" if slot.begins_with("simple") else slot
+	var k := slot
+	while k.length() > 0 and k.right(1).is_valid_int():
+		k = k.left(k.length() - 1)
+	return k
 
 
 ## Estrelas que o jogador pode escolher para o tipo (liberadas e em que a nave decola; Simples/Dupla: so a 1).
 static func mission_stars(kind_id: String, unlocked: Dictionary, planet_id: String, stats: Dictionary) -> Array[int]:
 	var out: Array[int] = []
-	if kind_id == "simple" or kind_id == "double":
+	if kind_id == "double":
 		out.append(1)
+		return out
+	if kind_id == "simple":                                    # v17: a Simples tambem tem estrelas (trilha da Lua)
+		for s in range(1, maxi(1, int(unlocked.get("simple", 1))) + 1):
+			out.append(s)
 		return out
 	for s in range(1, int(unlocked.get(kind_id, 0)) + 1):
 		if _flies(planet_id, stats, kind_id, s):
@@ -511,7 +542,7 @@ static func mission_stars(kind_id: String, unlocked: Dictionary, planet_id: Stri
 static func mission_of(kind_id: String, star: int, unlocked: Dictionary, planet_id: String, stats: Dictionary,
 		rng: RandomNumberGenerator) -> Dictionary:
 	if kind_id == "simple":
-		return simple_mission()
+		return simple_mission() if star <= 1 else {"kind": "simple", "star": star, "parts": [{"kind": "simple", "star": star}]}
 	if kind_id == "double":
 		var opts := _double_parts(planet_id, unlocked, stats)
 		if opts.size() < 2:

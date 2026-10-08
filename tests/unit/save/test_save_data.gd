@@ -45,7 +45,7 @@ func test_dados_invalidos() -> void:
 	assert_eq(SaveData.deserialize(closed)["state"]["current_planet"], "luna", "mundo fechado vira a Lua")
 	var open_w := SaveData.serialize(_state())
 	open_w["current_planet"] = "nuvens"
-	open_w["road_reached"] = ["start", "world_nuvens"]
+	open_w["road_reached"] = ["start", "complete_luna"]
 	assert_eq(SaveData.deserialize(open_w)["state"]["current_planet"], "nuvens", "mundo liberado fica")
 
 

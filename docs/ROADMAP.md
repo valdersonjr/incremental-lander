@@ -131,10 +131,15 @@
       VOAR EM …; DECOLAR abre o mapa quando há 2+ mundos), dados provisórios por mundo (world.json terrain.planets +
       routes), `RoadText` com parada de mundo; prévias `world_map_preview [-- --all]`, `flight_ui_preview --world=<id>`;
       integração `world_flow` (2026-10-07)
-- [ ] 18.4 Mecânica de cada mundo (base Hazards/HazardView do commit 4ec1ea1)
-- [ ] 18.5 Arte de cada mundo (cute-scene-method, validada no jogo)
-- [ ] 18.6 Som: ambiência + som do elemento + jingle de mundo novo
-- [ ] 18.7 Jogar e ajustar
+- [x] 18.3b Minijogos — plano + protótipo jogável aprovado ("pode implementar"): `art/previews/minijogos/minijogos.html`
+      (6 minijogos com a nave + autoteste) e `art/previews/hub/hub.html`; ordem Lua (trilha) → Nuvens (Snake) →
+      Cogumelos (Doodle Jump) → Sorvete (curling) → Jardim (Flappy) → Bolhas (garra) (2026-10-07)
+- [x] 18.3c Economia v17 + estado por mundo: Estrada por mundo (`progression.roads`), pedido-assinatura
+      (`planets[].mission`), `GameState.world_stars/stars_in/world_done/worlds` (mundo completo abre o próximo), save v6,
+      `RunState` só com os 3 pedidos do mundo, `RoadText` com a parada `complete`; testes e integrações atualizados (2026-10-07)
+- [ ] 18.3d Hub: jogo abre no Mapa; cartão do mundo com a Estrada dele + VOAR/NAVE; PROGRESSÃO vira NAVE; viagem animada
+- [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
+      Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 
 ## Fase 17 — Bata seu recorde + paisagens (2026-10-07) · skills: `economy-balance`, `godot-dev`, `pixel-art`
 > Pedido do usuário: o run como meta imposta (teto de 6 entregas) não combina; "competir com ele mesmo": tanque cheio,

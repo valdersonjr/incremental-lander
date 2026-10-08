@@ -46,6 +46,8 @@ static func stop_name(stop: Dictionary) -> String:
 			return str(_land(id).get("name", id))
 		"world":
 			return str(EconMath._find("planets", EconMath.world_of_stop(stop)).get("name", id))
+		"complete":                                            # v17: ultima parada da Estrada do mundo
+			return "Mundo completo!"
 	return str(EconMath._find("upgrades", id).get("name", id))
 
 
@@ -66,6 +68,8 @@ static func stop_icon(stop: Dictionary) -> Texture2D:
 			return UiKit.kid("rat_" + str(_node(id)["kind"]))
 		"landscape":
 			return UiKit.kid(id)
+		"complete":
+			return UiKit.kid("trophy")
 		"world":
 			return UiKit.kid("world_" + EconMath.world_of_stop(stop)) if UiKit.has_kid("world_" + EconMath.world_of_stop(stop)) \
 					else UiKit.kid("mystery")
@@ -102,6 +106,11 @@ static func stop_desc(stop: Dictionary) -> String:
 			return "Novo amiguinho! %s %s" % [MissionText.ask(m), MissionText.say_rule(m)]
 		"world":
 			return "Novo mundo! Voe em %s: cada mundo tem os seus recordes." % stop_name(stop)
+		"complete":
+			var nxt := EconMath.next_world(id.substr(9))
+			if nxt == "":
+				return "Você completou a viagem inteira!"
+			return "Mundo completo! Abre: %s." % str(EconMath._find("planets", nxt).get("name", nxt))
 		"landscape":
 			var d := str(_land(id).get("desc", ""))
 			return "Nova paisagem! " + d.left(1).to_upper() + d.substr(1)
