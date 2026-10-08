@@ -412,15 +412,23 @@ def mission_level(E: dict, kind_id: str, star: int) -> dict:
     return lv[max(0, min(int(star), len(lv)) - 1)]
 
 
-def mission_mult(E: dict, mission: dict, failed: tuple | list | set = ()) -> float:
-    """Multiplicador de pagamento. failed = kinds das partes cuja regra falhou."""
+def fail_pay(level: dict, partial: float = 0.0) -> float:
+    """v18: fator de pagamento de uma regra que falhou, com credito parcial: fail_mult + (1 - fail_mult) x parte
+    cumprida (0..1; ex.: 3 de 5 carneirinhos = 0,6). partial 0 = o fail_mult de sempre (tudo-ou-nada)."""
+    fm = level.get("fail_mult", 1.0)
+    return fm + (1.0 - fm) * min(1.0, max(0.0, partial))
+
+
+def mission_mult(E: dict, mission: dict, failed: tuple | list | set = (), partial: dict | None = None) -> float:
+    """Multiplicador de pagamento. failed = kinds das partes cuja regra falhou; partial = {kind: parte cumprida}
+    (v18: credito parcial do minijogo do mundo)."""
     parts = mission.get("parts", [])
     if not parts:
         return 1.0
     fail = 1.0
     for p in parts:
         if p["kind"] in failed:
-            fail *= mission_level(E, p["kind"], p["star"]).get("fail_mult", 1.0)
+            fail *= fail_pay(mission_level(E, p["kind"], p["star"]), (partial or {}).get(p["kind"], 0.0))
     if mission["kind"] == "double":
         mx = mission_spec(E).get("double", {}).get("max_mult", 3.0)
         m = min(mx, 1.0 + sum(mission_level(E, p["kind"], p["star"])["mult"] - 1.0 for p in parts))
@@ -476,10 +484,31 @@ def missions_unlocked(E: dict, owned: set) -> dict[str, int]:
     return out
 
 
-def _heavy_factor(planet: dict, stats: dict, div: float) -> float:
-    """Quanto o delta-v sobe com o motor dividido (perda gravitacional maior); inf se nao decola."""
+def takeoff_twr(planet: dict, kind: str, star: int) -> float:
+    """v18: folga minima de empuxo (motor / divisor > g x isto) para o pedido-assinatura do mundo aparecer nessa
+    estrela (planets[].takeoff_twr, numero ou lista por estrela); outros pedidos: 1,05 (so precisa decolar)."""
+    t = planet.get("takeoff_twr")
+    if t is None or kind != planet.get("mission"):
+        return 1.05
+    return t[max(1, min(int(star), len(t))) - 1] if isinstance(t, list) else t
+
+
+def mission_bonus_at(planet: dict, star: int = 1) -> float:
+    """v18: bonus do minijogo do mundo na estrela (planets[].mission_bonus, numero ou lista por estrela)."""
+    b = planet.get("mission_bonus", 0.0)
+    return b[max(1, min(int(star), len(b))) - 1] if isinstance(b, list) else b
+
+
+def _partial_model(planet: dict, kind: str) -> float:
+    """v18: parte media cumprida quando a regra falha (credito parcial do minijogo; so o pedido do mundo)."""
+    return planet.get("partial_frac_model", 0.0) if kind == planet.get("mission") else 0.0
+
+
+def _heavy_factor(planet: dict, stats: dict, div: float, twr: float = 1.05) -> float:
+    """Quanto o delta-v sobe com o motor dividido (perda gravitacional maior); inf se nao decola (ou se a folga
+    de empuxo for menor que twr)."""
     g, a = planet["gravity"], stats["thrust"]
-    if a / div <= g * 1.05:
+    if a / div <= g * twr:
         return math.inf
     return (1 + 0.707 * g / (a / div)) / (1 + 0.707 * g / a)
 
@@ -496,8 +525,9 @@ def mission_expect(E: dict, planet: dict, prof: Profile, stats: dict, unlocked: 
     def single(kid, star):
         lv = mission_level(E, kid, star)
         pf = mission_fail_p(lv, prof.skill)
-        pay = lv["mult"] * ((1 - pf) + pf * lv.get("fail_mult", 1.0))
-        dv = lv.get("dv_mult", 1.0) * _heavy_factor(planet, stats, lv.get("thrust_div", 1.0))
+        pay = lv["mult"] * ((1 - pf) + pf * fail_pay(lv, _partial_model(planet, kid)))
+        dv = lv.get("dv_mult", 1.0) * _heavy_factor(planet, stats, lv.get("thrust_div", 1.0),
+                                                    takeoff_twr(planet, kid, star))
         leg = lv.get("leg2", 0.0)
         return pay * (1 + leg ** 1.1), dv * (1 + math.sqrt(leg)), 1 + math.sqrt(leg), lv, pf
 
@@ -555,9 +585,10 @@ def gift_value(E: dict, planet: dict, d: float, stats: dict, kind: dict) -> floa
     return kind.get("pay_frac", 0.0) * contract_pay(E, planet, d, stats)
 
 
-def minigame_pay(E: dict, planet: dict, d: float, stats: dict, frac: float) -> float:
-    """v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1)."""
-    return planet.get("mission_bonus", 0.0) * contract_pay(E, planet, d, stats) * min(1.0, max(0.0, frac))
+def minigame_pay(E: dict, planet: dict, d: float, stats: dict, frac: float, star: int = 1) -> float:
+    """v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1);
+    v18: o bonus pode ser uma lista por estrela (Lua: a estrela maior vale pelos queijinhos)."""
+    return mission_bonus_at(planet, star) * contract_pay(E, planet, d, stats) * min(1.0, max(0.0, frac))
 
 
 def gift_gas(stats: dict, kind: dict) -> float:
@@ -795,13 +826,15 @@ def _mission_choices(E: dict, planet: dict, stats: dict, prof: Profile, kind: st
         return out
     for s_ in range(1, max(1, unlocked.get(kind, 1)) + 1):
         lv = mission_level(E, kind, s_)
-        hf = _heavy_factor(planet, stats, lv.get("thrust_div", 1.0))
+        hf = _heavy_factor(planet, stats, lv.get("thrust_div", 1.0), takeoff_twr(planet, kind, s_))
         if not math.isfinite(hf):
             continue
         pf = mission_fail_p(lv, prof.skill)
         leg = lv.get("leg2", 0.0)
-        out.append({"star": s_, "pay": lv["mult"] * ((1 - pf) + pf * lv.get("fail_mult", 1.0)) * (1 + leg ** 1.1),
-                    "dv": lv.get("dv_mult", 1.0) * hf * (1 + math.sqrt(leg)), "t": 1 + math.sqrt(leg)})
+        bonus = mission_bonus_at(planet, s_) * min(1.0, prof.skill) if kind == planet.get("mission") else 0.0
+        out.append({"star": s_, "pay": lv["mult"] * ((1 - pf) + pf * fail_pay(lv, _partial_model(planet, kind)))
+                    * (1 + leg ** 1.1), "dv": lv.get("dv_mult", 1.0) * hf * (1 + math.sqrt(leg)),
+                    "t": 1 + math.sqrt(leg), "bonus": bonus})
     return out
 
 
@@ -834,7 +867,6 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     if planet.get("mission"):
         unlocked = dict(unlocked)
         unlocked[planet["mission"]] = max(1, unlocked.get(planet["mission"], 0))
-    mbonus = planet.get("mission_bonus", 0.0) * min(1.0, prof.skill)   # v17: extra do minijogo (ex.: queijinhos)
     choices = {sl: _mission_choices(E, planet, stats, prof, slot_kind(sl), unlocked)
                for sl in slots}
     us = list(stream[0]) + list(stream[1]) if stream else None
@@ -859,7 +891,8 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
                 q_mu = _q_on_tier(prof.skill, tier, prof.skill)
                 pc = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
                 # bater acaba o run: o jogador pesa tambem as entregas que perderia (~CRASH_RISK_K entregas)
-                ev = base * (1 + qbonus * q_mu ** qexp) * tier["mult"] * ch["pay"] * (1 - pc) ** CRASH_RISK_K
+                ev = base * ((1 + qbonus * q_mu ** qexp) * tier["mult"] * ch["pay"] + ch.get("bonus", 0.0)) \
+                    * (1 - pc) ** CRASH_RISK_K
                 if best is None or ev / g_need > best[0]:
                     best = (ev / g_need, g_need, tier, ch)
         return best and (d, best[1], base, best[2], best[3])
@@ -874,7 +907,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         fat = run_fatigue_mult(E, n)
         for sl, it in items.items():
             if it and it[1] * fat <= gas:
-                score = (it[2] * it[3]["mult"] * it[4]["pay"]) / it[1]
+                score = it[2] * (it[3]["mult"] * it[4]["pay"] + it[4].get("bonus", 0.0)) / it[1]
                 if score > best_score:
                     pick, best_score = sl, score
         if pick is None:
@@ -885,7 +918,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         cm = reputation_mult(E, (rep or {}).get(slot_kind(pick), 0))
-        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay + mbonus)
+        pay = base * ((1 + qbonus * q ** qexp) * tier["mult"] * cm * ch["pay"] + gf_pay + ch.get("bonus", 0.0))
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
         t += hop_time(planet, d, stats, prof) * ch["t"]
         if expected:

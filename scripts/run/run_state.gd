@@ -109,8 +109,8 @@ func offer_info(index: int, gas_left: float) -> Dictionary:
 		"mission": m,
 		"mission_mult": mm,
 		"mult": float(EconMath.pad_tier(tier)["mult"]),
-		"pay_best": _pay(d, d2, 1.0, tier, mm, str(m.get("kind", "simple"))),
-		"pay_typical": _pay(d, d2, 0.7, tier, mm, str(m.get("kind", "simple"))),
+		"pay_best": _pay(d, d2, 1.0, tier, mm, str(m.get("kind", "simple"))) + _mg_pay(d, m, 1.0),
+		"pay_typical": _pay(d, d2, 0.7, tier, mm, str(m.get("kind", "simple"))) + _mg_pay(d, m, 0.7),
 		"gas_est": gas_est,
 		"reachable": gas_est <= gas_left,
 	}
@@ -120,7 +120,13 @@ func offer_info(index: int, gas_left: float) -> Dictionary:
 func pay_for_tier(index: int, tier: String) -> float:
 	var d: float = offers[index]
 	var m: Dictionary = offer_mission[index]
-	return _pay(d, leg2_m(m, d), 0.7, tier, EconMath.mission_mult(m), str(m.get("kind", "simple")))
+	return _pay(d, leg2_m(m, d), 0.7, tier, EconMath.mission_mult(m), str(m.get("kind", "simple"))) + _mg_pay(d, m, 0.7)
+
+
+## v18: bonus do minijogo do mundo que o pedido pode render (frac = parte cumprida estimada; Lua: queijinhos da
+## estrela, Cogumelos: quiques) — o cartao mostra o que a estrela maior vale.
+func _mg_pay(d: float, m: Dictionary, frac: float) -> float:
+	return EconMath.minigame_pay(planet_id, d, stats, frac, maxi(1, int(m.get("star", 1))))
 
 
 ## Gas estimado de uma missao de distancia d (os 2 trechos do taxi; Pesada divide o motor; Cabo x dv_mult).
@@ -205,15 +211,16 @@ func take_offer(index: int) -> float:
 ## e devolve as recompensas {recurso: qtd}. Depois a Reputacao do ratinho: regra cumprida soma pontos (pouso perfeito
 ## soma mais); falhou = 0.
 ## gift_pay = creditos do presente pego no alto do morro (EconMath.gift_value; v10), somados ao pagamento.
-## failed = kinds das regras da missao taken_mission que falharam (paga mult x fail_mult; nunca acaba o run).
+## failed = kinds das regras da missao taken_mission que falharam (paga mult x fail_mult; nunca acaba o run);
+## partial = {kind: parte cumprida} do minijogo (v18: credito parcial, EconMath.fail_pay).
 ## Taxi: distance = 1o trecho; o 2o (leg2 x distance) tambem paga. Ganha estrelas (stars.per_delivery).
 ## Detalhes da conta ficam em deliveries[-1] (base, mult, rep, missao) para o HUD mostrar.
 func complete_delivery(distance: float, quality: float, gas_used: float, failed: Array = [],
-		gift_pay: float = 0.0, perfect: bool = false) -> Dictionary:
+		gift_pay: float = 0.0, perfect: bool = false, partial: Dictionary = {}) -> Dictionary:
 	var kind := str(taken_mission.get("kind", "simple"))
 	var rep := EconMath.reputation_mult(rep_level(kind))
 	var mult := float(EconMath.pad_tier(taken_tier)["mult"])
-	var mm := EconMath.mission_mult(taken_mission, failed)
+	var mm := EconMath.mission_mult(taken_mission, failed, partial)
 	var pay := _pay(distance, leg2_m(taken_mission, distance), quality, taken_tier, mm, kind) + gift_pay
 	var rewards := {}
 	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})

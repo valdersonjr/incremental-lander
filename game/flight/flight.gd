@@ -411,11 +411,13 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"dir": target_dir,
 		"mission": mission,
 		"failed": failed.duplicate(),
+		"partial": minigame_partial(),
 		"mission_ok": failed.is_empty() and not crashed,
 		"leg": taxi_stage,
 		"gift": gift_kind if gift_taken else "",
 		"gift_pay": (EconMath.gift_value(planet_id, target_distance_m, stats, gift_kind) if gift_taken else 0.0)
-				+ (EconMath.minigame_pay(planet_id, target_distance_m, stats, float(minigame_got) / minigame_total)
+				+ (EconMath.minigame_pay(planet_id, target_distance_m, stats, float(minigame_got) / minigame_total,
+						maxi(1, int(mission.get("star", 1))))
 				if minigame_total > 0 else 0.0) if not crashed else 0.0,
 		"minigame": [minigame_got, minigame_total],
 		"mg_extra": snappedf(minigame_extra, 0.01),
@@ -961,6 +963,22 @@ func _rise(nodes: Array, speed: float) -> void:
 		if y < float(s.get_meta("top")):
 			y = float(s.get_meta("bottom"))
 		s.position = Vector2(float(s.get_meta("x0")) + sin(y * 0.08) * 2.0, y)
+
+
+## v18: credito parcial da regra do mundo que falhou pelo minijogo ({kind: parte cumprida 0..1}): Nuvens = carneirinhos
+## que chegaram, Jardim = vaos passados, Bolhas = 0,5 se o bau chegou (molhado/rachado) e 0 sem bau.
+func minigame_partial() -> Dictionary:
+	if minigame_total <= 0:
+		return {}
+	var frac := float(minigame_got) / float(minigame_total)
+	match planet_id:
+		"nuvens":
+			return {"passenger": frac}
+		"jardim":
+			return {"heavy": frac}
+		"bolhas":
+			return {"tow": 0.5 if chest_got else 0.0}
+	return {}
 
 
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).

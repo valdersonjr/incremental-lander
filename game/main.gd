@@ -377,7 +377,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		gift += _taxi_gift_pay
 	var stars_before := _run.stars
 	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift,
-			bool(result.get("perfect", false)))
+			bool(result.get("perfect", false)), result.get("partial", {}))
 	var rep_kind := str(_run.deliveries[-1].get("rep_kind", "simple"))
 	var rep_before := GameState.rep_level(rep_kind)
 	GameState.rep_points = _run.rep_points.duplicate()

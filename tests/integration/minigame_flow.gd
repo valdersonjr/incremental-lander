@@ -71,6 +71,8 @@ func _ready() -> void:
 	_check("nuvens_corrente_empurra_para_cima", n.lander.env_accel.y < 0.0)
 	n._judge_mission({"vy": 1.0}, 0.9)
 	_check("nuvens_faltou_carneirinho_paga_menos", n.failed.has("passenger"))
+	_check("nuvens_credito_parcial", is_equal_approx(float(n.minigame_partial().get("passenger", -1.0)),
+			float(n.minigame_got) / float(n.minigame_total)))
 	_check("verbo_das_nuvens", n.minigame_verb() == "Junte!")
 	n.queue_free()
 	await get_tree().process_frame
@@ -166,6 +168,7 @@ func _ready() -> void:
 		bo._tow.pos.y = float(bo._water["y"]) + 20.0
 		bo._tick_minigame()
 	_check("bolhas_bau_no_mar_molha", bo.chest_wet and bo.failed.has("tow"))
+	_check("bolhas_bau_molhado_paga_metade_do_que_falta", bo.minigame_partial() == {"tow": 0.5})
 	var bx: float = float(bo._bubbles[0]["x"])
 	bo.lander.global_position = Vector2(bx, float(bo._water["y"]) - 30.0)
 	bo._tick_minigame()

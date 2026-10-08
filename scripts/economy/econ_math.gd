@@ -313,9 +313,33 @@ static func run_fatigue_mult(n: int) -> float:
 
 
 ## v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1).
-static func minigame_pay(planet_id: String, distance: float, stats: Dictionary, frac: float) -> float:
-	return float(_find("planets", planet_id).get("mission_bonus", 0.0)) * contract_pay(planet_id, distance, stats, 0.0) \
-			* clampf(frac, 0.0, 1.0)
+static func minigame_pay(planet_id: String, distance: float, stats: Dictionary, frac: float, star: int = 1) -> float:
+	return mission_bonus_at(planet_id, star) * contract_pay(planet_id, distance, stats, 0.0) * clampf(frac, 0.0, 1.0)
+
+
+## v18: bonus do minijogo do mundo na estrela (planets[].mission_bonus: numero ou lista por estrela).
+static func mission_bonus_at(planet_id: String, star: int = 1) -> float:
+	var b: Variant = _find("planets", planet_id).get("mission_bonus", 0.0)
+	if b is Array:
+		return float(b[clampi(star, 1, (b as Array).size()) - 1])
+	return float(b)
+
+
+## v18: folga minima de empuxo do pedido-assinatura do mundo (planets[].takeoff_twr); outros pedidos: 1,05.
+static func takeoff_twr(planet_id: String, kind_id: String, star: int) -> float:
+	var p := _find("planets", planet_id)
+	var t: Variant = p.get("takeoff_twr", null)
+	if t == null or kind_id != str(p.get("mission", "")):
+		return 1.05
+	if t is Array:
+		return float(t[clampi(star, 1, (t as Array).size()) - 1])
+	return float(t)
+
+
+## v18: fator de pagamento de uma regra que falhou com credito parcial (fail_mult + (1 - fail_mult) x parte 0..1).
+static func fail_pay(level: Dictionary, partial: float = 0.0) -> float:
+	var fm := float(level.get("fail_mult", 1.0))
+	return fm + (1.0 - fm) * clampf(partial, 0.0, 1.0)
 
 
 ## Sorteia o presente do salto: "" (sem presente; chance da spec) ou o id do tipo (pelos pesos).
@@ -372,14 +396,14 @@ static func simple_mission() -> Dictionary:
 
 
 ## Multiplicador de pagamento. failed = kinds das partes cuja regra falhou.
-static func mission_mult(mission: Dictionary, failed: Array = []) -> float:
+static func mission_mult(mission: Dictionary, failed: Array = [], partial: Dictionary = {}) -> float:
 	var parts: Array = mission.get("parts", [])
 	if parts.is_empty():
 		return 1.0
 	var fail := 1.0
 	for p: Dictionary in parts:
 		if failed.has(p["kind"]):
-			fail *= float(mission_level(p["kind"], int(p["star"])).get("fail_mult", 1.0))
+			fail *= fail_pay(mission_level(p["kind"], int(p["star"])), float(partial.get(p["kind"], 0.0)))
 	var m := 1.0
 	if mission["kind"] == "double":
 		var mx := float(mission_spec().get("double", {}).get("max_mult", 3.0))
@@ -578,7 +602,7 @@ static func _double_parts(planet_id: String, unlocked: Dictionary, stats: Dictio
 ## A nave decola com a regra (Pesada divide o motor)?
 static func _flies(planet_id: String, stats: Dictionary, kind_id: String, star: int) -> bool:
 	var div := float(mission_level(kind_id, star).get("thrust_div", 1.0))
-	return float(stats["thrust"]) / div > float(_find("planets", planet_id)["gravity"]) * 1.05
+	return float(stats["thrust"]) / div > float(_find("planets", planet_id)["gravity"]) * takeoff_twr(planet_id, kind_id, star)
 
 
 static func _pick(weights: Array[float], rng: RandomNumberGenerator) -> int:

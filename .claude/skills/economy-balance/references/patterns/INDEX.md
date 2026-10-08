@@ -17,3 +17,4 @@ mecânica, procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Eta
 | progression-road | Estrada das Estrelas: estrelas acumuladas liberam prêmios visíveis desde o início; Reputação +10% | Clash Royale, Fortnite, Hades, Kingdom Rush | progression.road, contracts.reputation | 2026-10-07 |
 | run-fatigue-records | Run sem teto, meta = recorde pessoal; cansaço geométrico do gás para o run acabar | Hill Climb Racing, Learn to Fly, Tiny Wings | contracts.run_fatigue | 2026-10-07 |
 | parallel-worlds | Mundos paralelos (mesma nave/moedas) com recorde próprio + bônus por bater a marca | Hill Climb Racing 2, Clash Royale, Cut the Rope | planets[].road, contracts.record_bonus | 2026-10-07 |
+| minigame-graded-reward | Minijogo com recompensa graduada (crédito parcial, bônus por estrela, folga de empuxo) | Angry Birds, Subway Surfers, gradiente de meta | planets[].mission_bonus/partial_frac_model/takeoff_twr | 2026-10-08 |
