@@ -42,5 +42,35 @@ func _ready() -> void:
 	_check("lua_limpa_a_trilha", f._trail.is_empty())
 	_check("verbo_da_lua", f.minigame_verb() == "Pegue!")
 	f.queue_free()
+	await get_tree().process_frame
+	# Nuvens: fila de carneirinhos (Snake) + correntes de ar
+	var p3 := {"kind": "passenger", "star": 3, "parts": [{"kind": "passenger", "star": 3}]}
+	var n := _flight("nuvens", p3, 900.0)
+	_check("nuvens_5_carneirinhos_na_estrela_3", n.minigame_total == 5 and n._sheep.size() == 5)
+	_check("nuvens_sem_resgate_antigo", n._rescue_sprite == null)
+	for c: Dictionary in n._sheep.slice(0, 2):
+		n.lander.global_position = c["pos"]
+		n._tick_minigame()
+	_check("nuvens_entram_na_fila", n._tail.size() == 2 and n.minigame_got == 2)
+	for i in 30:                                               # a nave anda: a fila segue atras
+		n.lander.global_position += Vector2(3, 0)
+		n._tick_minigame()
+	var first_tail: Vector2 = (n._tail[0]["sprite"] as Sprite2D).position
+	_check("nuvens_fila_segue_atras", first_tail.x < n.lander.global_position.x)
+	var last: Dictionary = n._tail[-1]
+	n._history.clear()
+	var gx: float = n.lander.global_position.x
+	for i in 40:                                               # nave rente ao chao: o ultimo da fila encosta e cai
+		n._history.insert(0, Vector2(gx, TerrainGen.height_at(n.terrain.ridge, gx) + 10.0))
+	n._tick_minigame()
+	_check("nuvens_encostar_no_chao_perde_o_ultimo", n._tail.size() == 1 and n.minigame_got == 1)
+	var u: Dictionary = n._updrafts[0]
+	n.lander.global_position = Vector2(float(u["x"]), TerrainGen.height_at(n.terrain.ridge, float(u["x"])) - 60.0)
+	n._tick_minigame()
+	_check("nuvens_corrente_empurra_para_cima", n.lander.env_accel.y < 0.0)
+	n._judge_mission({"vy": 1.0}, 0.9)
+	_check("nuvens_faltou_carneirinho_paga_menos", n.failed.has("passenger"))
+	_check("verbo_das_nuvens", n.minigame_verb() == "Junte!")
+	n.queue_free()
 	print("MINIGAME_TEST " + ("OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails)))
 	get_tree().quit(0 if _fails.is_empty() else 1)

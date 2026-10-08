@@ -38,6 +38,9 @@ static func balloon(m: Dictionary) -> String:
 
 ## Pedido falado pelo ratinho de m.
 static func ask(m: Dictionary) -> String:
+	var w := str(Minigames.spec(GameState.current_planet).get("ask", ""))   # v17: fala do morador do mundo
+	if w != "":
+		return w
 	return ASK.get(_key(m), ASK["simple"])
 
 
@@ -45,6 +48,9 @@ static func ask(m: Dictionary) -> String:
 static func say_rule(m: Dictionary) -> String:
 	if str(m.get("kind", "simple")) == "double":
 		return rule(m)
+	var w := str(Minigames.spec(GameState.current_planet).get("say", ""))   # v17: o minijogo do mundo
+	if w != "":
+		return w
 	return SAY_RULE.get(_key(m), SAY_RULE["simple"])
 
 

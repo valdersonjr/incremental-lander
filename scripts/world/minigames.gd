@@ -27,6 +27,31 @@ static func trail_points(a: Dictionary, b: Dictionary, n: int, arc_mult: float) 
 	return out
 
 
+## Nuvens: x (px) das N figuras espalhadas entre as plataformas (faixas iguais, sem as pontas).
+static func spread_x(a: Dictionary, b: Dictionary, n: int) -> Array[float]:
+	var out: Array[float] = []
+	for i in n:
+		out.append(lerpf(float(a["x"]), float(b["x"]), float(i + 1) / float(n + 1)))
+	return out
+
+
+## Nuvens (Snake): posicao do i-esimo da fila no historico de posicoes da nave (mais recente primeiro).
+static func follow_point(history: PackedVector2Array, i: int, step: int) -> Vector2:
+	if history.is_empty():
+		return Vector2.ZERO
+	return history[mini(history.size() - 1, (i + 1) * step)]
+
+
+## Corrente de ar: a nave (px) esta dentro de alguma coluna {x, half} (ate height px acima do chao local)?
+static func in_updraft(pos_px: Vector2, columns: Array, ground_y: float, height_px: float) -> bool:
+	if pos_px.y < ground_y - height_px:
+		return false
+	for c: Dictionary in columns:
+		if absf(pos_px.x - float(c["x"])) <= float(c["half"]):
+			return true
+	return false
+
+
 ## A nave (centro, px) encostou no queijinho?
 static func touches(pos_px: Vector2, coin_px: Vector2, radius_px: float) -> bool:
 	return pos_px.distance_to(coin_px) <= radius_px

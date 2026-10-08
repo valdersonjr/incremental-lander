@@ -45,6 +45,11 @@ var rescued := false                               # Passageiro 1: passageiro re
 var minigame_got := 0                              # v17: minijogo do mundo (Lua: queijinhos pegos)
 var minigame_total := 0
 var _trail: Array[Dictionary] = []                  # Lua: queijinhos {pos, sprite, got}
+var _sheep: Array[Dictionary] = []                  # Nuvens: carneirinhos {pos, sprite, got}
+var _tail: Array[Dictionary] = []                   # Nuvens: fila atras da nave (Snake)
+var _history := PackedVector2Array()                # Nuvens: posicoes recentes da nave (a fila segue)
+var _updrafts: Array = []                           # Nuvens: colunas de corrente {x, half}
+var _updraft_lines: Array[Node] = []
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -417,18 +422,66 @@ func _setup_minigame() -> void:
 			move_child(sp, lander.get_index())
 			_trail.append({"pos": p, "sprite": sp, "got": false})
 		minigame_total = n
+	elif planet_id == "nuvens":                                # fila de carneirinhos (Snake) + correntes
+		var a: Dictionary = terrain.pads[current_pad_id]
+		var b: Dictionary = terrain.pads[target_pad_id]
+		var n := int(Minigames.by_star(cfg["sheep"], star))
+		var hv: Array = cfg["hover_m"]
+		var rng := RandomNumberGenerator.new()
+		rng.seed = _seed * 13 + 5
+		for x: float in Minigames.spread_x(a, b, n):
+			var p := Vector2(x, TerrainGen.height_at(terrain.ridge, x) - WorldConfig.m_to_px(rng.randf_range(hv[0], hv[1])))
+			var sp := Sprite2D.new()
+			sp.texture = UiKit.kid("bunny")
+			sp.position = p
+			add_child(sp)
+			move_child(sp, lander.get_index())
+			_sheep.append({"pos": p, "sprite": sp, "got": false})
+		minigame_total = n
+		var up: Dictionary = cfg["updrafts"]
+		var half := WorldConfig.m_to_px(float(up["width_m"])) * 0.5
+		for x: float in Minigames.spread_x(a, b, int(up["count"])):
+			x += (rng.randf() - 0.5) * half
+			_updrafts.append({"x": x, "half": half})
+			var gy := TerrainGen.height_at(terrain.ridge, x)
+			for k in 3:                                          # linhas de ar subindo (placeholder ate a arte)
+				var ln := Line2D.new()
+				ln.width = 1.0
+				ln.default_color = Color("#eaaded")
+				var lx := x + (k - 1) * half * 0.6
+				var top := gy - WorldConfig.m_to_px(float(up["height_m"]))
+				var y := gy - 4.0
+				while y > top:
+					ln.add_point(Vector2(lx, y))
+					ln.add_point(Vector2(lx, y - 6.0))
+					y -= 18.0
+				add_child(ln)
+				move_child(ln, lander.get_index())
+				_updraft_lines.append(ln)
 
 
 func _clear_minigame() -> void:
-	for c: Dictionary in _trail:
+	for c: Dictionary in _trail + _sheep + _tail:
 		if is_instance_valid(c["sprite"]):
 			(c["sprite"] as Node).queue_free()
+	for n: Node in _updraft_lines:
+		if is_instance_valid(n):
+			n.queue_free()
+	_updraft_lines.clear()
+	_updrafts.clear()
+	_sheep.clear()
+	_tail.clear()
+	_history.clear()
+	lander.env_accel = Vector2.ZERO
 	_trail.clear()
 	minigame_got = 0
 	minigame_total = 0
 
 
 func _tick_minigame() -> void:
+	if planet_id == "nuvens":
+		_tick_sheep()
+		return
 	if _trail.is_empty() or lander.state != Lander.State.FLYING:
 		return
 	var r := WorldConfig.m_to_px(float(Minigames.spec(planet_id).get("radius_m", 14.0)))
@@ -440,11 +493,47 @@ func _tick_minigame() -> void:
 			Sound.sfx("crystal_%d" % clampi(minigame_got % 3 + 1, 1, 3))
 
 
+## Nuvens: pega carneirinhos ao encostar (entram na fila), a fila segue a nave, encostar no chao perde o ultimo;
+## dentro de uma corrente de ar a nave e empurrada para cima.
+func _tick_sheep() -> void:
+	var cfg := Minigames.spec(planet_id)
+	var flying := lander.state == Lander.State.FLYING
+	var gy := TerrainGen.height_at(terrain.ridge, lander.global_position.x)
+	var up: Dictionary = cfg.get("updrafts", {})
+	lander.env_accel = Vector2(0.0, -float(up.get("accel", 0.0))) if flying and Minigames.in_updraft(
+			lander.global_position, _updrafts, gy, WorldConfig.m_to_px(float(up.get("height_m", 0.0)))) else Vector2.ZERO
+	if minigame_total <= 0:
+		return
+	if flying:
+		_history.insert(0, lander.global_position + Vector2(0, 6))
+		if _history.size() > 400:
+			_history.resize(400)
+		var r := WorldConfig.m_to_px(float(cfg.get("radius_m", 16.0)))
+		for c: Dictionary in _sheep:
+			if not c["got"] and Minigames.touches(lander.global_position, c["pos"], r):
+				c["got"] = true
+				_tail.append(c)
+				minigame_got += 1
+				Sound.sfx("crystal_2")
+	var step := int(cfg.get("follow_frames", 9))
+	for i in _tail.size():
+		var p := Minigames.follow_point(_history, i, step)
+		(_tail[i]["sprite"] as Sprite2D).position = p
+	if flying and not _tail.is_empty():                         # o ultimo da fila encostou no chao: caiu
+		var last: Dictionary = _tail[-1]
+		var lp: Vector2 = (last["sprite"] as Sprite2D).position
+		if lp.y >= TerrainGen.height_at(terrain.ridge, lp.x) - 2.0:
+			_tail.pop_back()
+			minigame_got -= 1
+			(last["sprite"] as Sprite2D).hide()
+			_float_text("caiu!", lp + Vector2(0, -12))
+
+
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
 func minigame_text() -> String:
 	if minigame_total <= 0:
 		return ""
-	return "queijinhos %d/%d" % [minigame_got, minigame_total]
+	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
 
 
 ## Verbo do minijogo do mundo (WarioWare): mostrado pelo HUD quando a missao comeca.
@@ -512,6 +601,8 @@ func _tick_gift() -> void:
 
 ## Estrela do resgate (Passageiro 1, sozinho ou na Dupla); 0 se o salto nao tem resgate.
 func _rescue_star() -> int:
+	if planet_id == "nuvens":                                  # v17: nas Nuvens o Passageiro e a fila de carneirinhos
+		return 0
 	var st := EconMath.mission_has(mission, "passenger")
 	return st if st > 0 and EconMath.mission_leg2(mission) <= 0.0 else 0
 
@@ -654,6 +745,8 @@ func _judge_mission(info: Dictionary, quality: float) -> void:
 		_mission_failed("soft", "cake_squashed", lander.global_position)
 	if _rescue_star() > 0 and not rescued and not failed.has("passenger"):
 		failed.append("passenger")
+	if planet_id == "nuvens" and minigame_total > 0 and minigame_got < minigame_total and not failed.has("passenger"):
+		failed.append("passenger")                             # chegou sem todos os carneirinhos: paga menos
 	if taxi_stage == 1:
 		if quality < float(mcfg["passenger"]["board_q"]):
 			_mission_failed("passenger", "", lander.global_position)

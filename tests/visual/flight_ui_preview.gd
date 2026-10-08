@@ -17,8 +17,7 @@ func _ready() -> void:
 				"soft3"])
 	for a in args:                                             # --world=<id>: voa nesse mundo (v16; libera a parada)
 		if a.begins_with("--world="):
-			GameState.road_reached.append("world_" + a.get_slice("=", 1))
-			GameState.select_world(a.get_slice("=", 1))
+			GameState.current_planet = a.get_slice("=", 1)          # v17: direto no mundo (sem a Estrada)
 	var main := MAIN.instantiate()
 	add_child(main)
 	for i in 20:

@@ -49,7 +49,10 @@ static func create(p_planet_id: String, p_stats: Dictionary, seed_value: int, p_
 	run.stats = p_stats
 	run.taken_mission = EconMath.simple_mission()
 	if not p_unlocked.is_empty():
-		run.unlocked = p_unlocked
+		run.unlocked = p_unlocked.duplicate()
+	var sig := str(EconMath._find("planets", p_planet_id).get("mission", ""))
+	if sig != "":                                              # v17: o pedido do mundo vem sempre (pelo menos a 1)
+		run.unlocked[sig] = maxi(1, int(run.unlocked.get(sig, 0)))
 	run.boost = p_boost
 	run._rng.seed = seed_value
 	run._rng_extra.seed = seed_value * 7919 + 17

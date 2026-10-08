@@ -686,7 +686,32 @@
         1.3,
         1.5
       ],
-      "radius_m": 14.0
+      "radius_m": 14.0,
+      "ask": "Leva meu queijo pra vila?",
+      "say": "Pegue os queijinhos no caminho!"
+    },
+    "nuvens": {
+      "name": "Fila de carneirinhos",
+      "verb": "Junte!",
+      "sheep": [
+        1,
+        3,
+        5
+      ],
+      "radius_m": 16.0,
+      "hover_m": [
+        30.0,
+        110.0
+      ],
+      "follow_frames": 9,
+      "updrafts": {
+        "count": 2,
+        "width_m": 46.0,
+        "accel": 5.5,
+        "height_m": 420.0
+      },
+      "ask": "Meus carneirinhos se perderam!",
+      "say": "Junte todos e pouse comigo!"
     }
   }
 }
