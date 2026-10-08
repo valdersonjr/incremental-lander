@@ -691,6 +691,7 @@
         1.5
       ],
       "radius_m": 14.0,
+      "max_extra_lift_m": 120.0,
       "ask": "Leva meu queijo pra vila?",
       "say": "Pegue os queijinhos no caminho!"
     },

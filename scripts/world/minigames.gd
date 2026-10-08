@@ -17,13 +17,14 @@ static func by_star(values: Array, star: int) -> Variant:
 
 ## Pontos dos queijinhos (px do mundo): n pontos ao longo do arco ideal de a ate b, sem as pontas; arc_mult > 1
 ## levanta o arco (estrela mais alta = trilha mais alta e com mais curva).
-static func trail_points(a: Dictionary, b: Dictionary, n: int, arc_mult: float) -> Array[Vector2]:
+## max_extra_px limita o quanto a trilha passa ACIMA do arco ideal (a trilha cabe na tela; auditoria 2026-10-07).
+static func trail_points(a: Dictionary, b: Dictionary, n: int, arc_mult: float, max_extra_px: float = INF) -> Array[Vector2]:
 	var arc := Assists.arc(a, b, n + 1)
 	var out: Array[Vector2] = []
 	for i in range(1, n + 1):
 		var base_y := lerpf(float(a["y"]), float(b["y"]), float(i) / float(n + 1))
 		var lift := base_y - arc[i].y                         # quanto o arco sobe neste ponto
-		out.append(Vector2(arc[i].x, base_y - lift * arc_mult))
+		out.append(Vector2(arc[i].x, arc[i].y - minf(lift * (arc_mult - 1.0), max_extra_px)))
 	return out
 
 

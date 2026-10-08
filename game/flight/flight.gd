@@ -444,10 +444,10 @@ func _setup_minigame() -> void:
 	if planet_id == "luna":                                    # trilha de queijinhos (Subway Surfers)
 		var n := int(Minigames.by_star(cfg["coins"], star))
 		var pts := Minigames.trail_points(terrain.pads[current_pad_id], terrain.pads[target_pad_id], n,
-				float(Minigames.by_star(cfg["arc_mult"], star)))
+				float(Minigames.by_star(cfg["arc_mult"], star)), WorldConfig.m_to_px(float(cfg.get("max_extra_lift_m", INF))))
 		for p: Vector2 in pts:
 			var sp := Sprite2D.new()
-			sp.texture = UiKit.icon("credits")
+			sp.texture = MinigameArt.tex("cheese")
 			sp.position = p
 			add_child(sp)
 			move_child(sp, lander.get_index())
@@ -725,6 +725,9 @@ func _tick_minigame() -> void:
 			minigame_got += 1
 			(c["sprite"] as Sprite2D).hide()
 			Sound.sfx("crystal_%d" % clampi(minigame_got % 3 + 1, 1, 3))
+			if minigame_got == minigame_total:                 # trilha completa: festa
+				_float_text("trilha completa!", lander.global_position + Vector2(0, -22))
+				Sound.sfx("star")
 
 
 ## Nuvens: pega carneirinhos ao encostar (entram na fila), a fila segue a nave, encostar no chao perde o ultimo;
