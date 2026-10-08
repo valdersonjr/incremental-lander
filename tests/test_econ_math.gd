@@ -28,6 +28,7 @@ func _init() -> void:
 		"gift_pay_luna": EconMath.gift_value("luna", 4200.0, st, "gift"),
 		"gift_gas": EconMath.gift_gas(st, "gas"),
 		"run_fatigue_5": EconMath.run_fatigue_mult(5),
+		"minigame_pay": [EconMath.minigame_pay("luna", 900.0, st, 0.5), EconMath.minigame_pay("nuvens", 900.0, st, 1.0)],
 		"road_nuvens": EconMath.road("nuvens").map(func(s: Dictionary) -> String: return s["id"]),
 		"road_reached_cog": EconMath.road_reached_now(11, ["soft1"], "cogumelos").map(func(s: Dictionary) -> String: return s["id"]),
 		"next_world": [EconMath.next_world("luna"), EconMath.next_world("jardim"), EconMath.next_world("bolhas")],

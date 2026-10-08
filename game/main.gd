@@ -345,6 +345,7 @@ func _on_offer_chosen(index: int) -> void:
 		_flight.begin_mission(seed_value, d, pickup, _run.taken_dir, m, 1)
 	else:
 		_flight.begin_mission(seed_value, d, _run.taken_tier, _run.taken_dir, m)
+	_hud.show_verb(_flight.minigame_verb())                    # v17: verbo do minijogo do mundo
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 

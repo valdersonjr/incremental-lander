@@ -42,6 +42,9 @@ var urgent_left := 0.0                             # Rapida: segundos reais que 
 var urgent_limit := 0.0
 var rescued := false                               # Passageiro 1: passageiro resgatado neste salto
 ## Presente do salto (v10): "" sem presente, "gas" (galao) ou "gift" (creditos com a entrega). Gifts.place/touches.
+var minigame_got := 0                              # v17: minijogo do mundo (Lua: queijinhos pegos)
+var minigame_total := 0
+var _trail: Array[Dictionary] = []                  # Lua: queijinhos {pos, sprite, got}
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -79,6 +82,7 @@ func _physics_process(delta: float) -> void:
 	camera.global_position = lander.global_position
 	_tick_mission(delta)
 	_tick_gift()
+	_tick_minigame()
 	_extend_terrain_if_near_edge()
 	var cam: Dictionary = WorldConfig.load_config()["camera"]
 	var alt := TerrainGen.height_at(terrain.ridge, lander.global_position.x) - lander.global_position.y
@@ -227,6 +231,7 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_miss
 	lander.can_takeoff = true
 	_setup_mission()
 	_setup_gift()
+	_setup_minigame()
 	if _demo:
 		var ap := Autopilot.new()
 		ap.target = terrain.pads[target_pad_id]
@@ -374,8 +379,10 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"mission_ok": failed.is_empty() and not crashed,
 		"leg": taxi_stage,
 		"gift": gift_kind if gift_taken else "",
-		"gift_pay": EconMath.gift_value(planet_id, target_distance_m, stats, gift_kind)
-				if gift_taken and not crashed else 0.0,
+		"gift_pay": (EconMath.gift_value(planet_id, target_distance_m, stats, gift_kind) if gift_taken else 0.0)
+				+ (EconMath.minigame_pay(planet_id, target_distance_m, stats, float(minigame_got) / minigame_total)
+				if minigame_total > 0 else 0.0) if not crashed else 0.0,
+		"minigame": [minigame_got, minigame_total],
 		"crashed": crashed,
 		"reason": reason,
 		# velocidade e inclinacao no toque (m/s e rad do modelo): calibram as tolerancias de pouso (world.json > landing)
@@ -386,7 +393,63 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 	Telemetry.record_delivery(result)
 	_clear_mission()
 	_clear_gift()
+	_clear_minigame()
 	delivery_finished.emit(result)
+
+
+# ---------------------------------------------------------------- minijogos do mundo (v17, world.json > minigames)
+## Monta o minijogo do mundo para o salto atual (so no 1o trecho; o pedido tem que ser o do mundo).
+func _setup_minigame() -> void:
+	_clear_minigame()
+	var cfg := Minigames.spec(planet_id)
+	if cfg.is_empty() or taxi_stage > 1:
+		return
+	var star := maxi(1, int(mission.get("star", 1)))
+	if planet_id == "luna":                                    # trilha de queijinhos (Subway Surfers)
+		var n := int(Minigames.by_star(cfg["coins"], star))
+		var pts := Minigames.trail_points(terrain.pads[current_pad_id], terrain.pads[target_pad_id], n,
+				float(Minigames.by_star(cfg["arc_mult"], star)))
+		for p: Vector2 in pts:
+			var sp := Sprite2D.new()
+			sp.texture = UiKit.icon("credits")
+			sp.position = p
+			add_child(sp)
+			move_child(sp, lander.get_index())
+			_trail.append({"pos": p, "sprite": sp, "got": false})
+		minigame_total = n
+
+
+func _clear_minigame() -> void:
+	for c: Dictionary in _trail:
+		if is_instance_valid(c["sprite"]):
+			(c["sprite"] as Node).queue_free()
+	_trail.clear()
+	minigame_got = 0
+	minigame_total = 0
+
+
+func _tick_minigame() -> void:
+	if _trail.is_empty() or lander.state != Lander.State.FLYING:
+		return
+	var r := WorldConfig.m_to_px(float(Minigames.spec(planet_id).get("radius_m", 14.0)))
+	for c: Dictionary in _trail:
+		if not c["got"] and Minigames.touches(lander.global_position, c["pos"], r):
+			c["got"] = true
+			minigame_got += 1
+			(c["sprite"] as Sprite2D).hide()
+			Sound.sfx("crystal_%d" % clampi(minigame_got % 3 + 1, 1, 3))
+
+
+## Texto do placar do minijogo para o HUD ("" sem minijogo).
+func minigame_text() -> String:
+	if minigame_total <= 0:
+		return ""
+	return "queijinhos %d/%d" % [minigame_got, minigame_total]
+
+
+## Verbo do minijogo do mundo (WarioWare): mostrado pelo HUD quando a missao comeca.
+func minigame_verb() -> String:
+	return str(Minigames.spec(planet_id).get("verb", ""))
 
 
 # ---------------------------------------------------------------- presentes no alto do morro (v10, 2026-10-06)

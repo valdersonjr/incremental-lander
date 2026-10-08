@@ -312,6 +312,12 @@ static func run_fatigue_mult(n: int) -> float:
 	return pow(float(spec["contracts"].get("run_fatigue", 1.0)), n)
 
 
+## v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1).
+static func minigame_pay(planet_id: String, distance: float, stats: Dictionary, frac: float) -> float:
+	return float(_find("planets", planet_id).get("mission_bonus", 0.0)) * contract_pay(planet_id, distance, stats, 0.0) \
+			* clampf(frac, 0.0, 1.0)
+
+
 ## Sorteia o presente do salto: "" (sem presente; chance da spec) ou o id do tipo (pelos pesos).
 static func draw_gift(planet_id: String, rng: RandomNumberGenerator) -> String:
 	var kinds := gift_kinds(planet_id)

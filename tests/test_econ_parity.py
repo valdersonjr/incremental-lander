@@ -37,6 +37,7 @@ P = {
     "gift_pay_luna": gift_value(E, planets["luna"], 4200.0, st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gift")),
     "gift_gas": gift_gas(st, next(k for k in gift_kinds(E, "luna") if k["id"] == "gas")),
     "run_fatigue_5": run_fatigue_mult(E, 5),
+    "minigame_pay": [minigame_pay(E, planets["luna"], 900.0, st, 0.5), minigame_pay(E, planets["nuvens"], 900.0, st, 1.0)],
     "road_nuvens": [s["id"] for s in road_spec(E, "nuvens")],
     "road_reached_cog": [s["id"] for s in road_reached_now(E, 11, {"soft1"}, "cogumelos")],
     "next_world": [next_world(E, "luna"), next_world(E, "jardim"), next_world(E, "bolhas")],

@@ -268,6 +268,16 @@ func _update_need_mark(l: Lander, tank: float) -> void:
 func _update_mission() -> void:
 	var m: Dictionary = flight.mission
 	var parts: Array = m.get("parts", [])
+	var mini := flight.minigame_text() if flight.target_pad_id >= 0 else ""
+	if mini != "":                                             # v17: placar do minijogo do mundo
+		_cargo_row.visible = true
+		_cargo_icon.texture = UiKit.icon("credits")
+		_cargo_bar.visible = true
+		_cargo_bar.value = 100.0 * flight.minigame_got / maxf(1.0, flight.minigame_total)
+		_cargo_bar.theme_type_variation = &"XpBar"
+		_cargo_text.text = mini
+		_cargo_text.theme_type_variation = &"MoneyLabel"
+		return
 	var show := flight.target_pad_id >= 0 and not parts.is_empty()
 	_cargo_row.visible = show
 	if not show:
@@ -305,6 +315,12 @@ func _update_mission() -> void:
 			texts.append(MISSION_HUD[k])
 	_cargo_text.text = "  ".join(texts)
 	_cargo_text.theme_type_variation = &"BadLabel" if bad else &"MoneyLabel"
+
+
+## Minijogo do mundo: o verbo grande no comeco da missao (estilo WarioWare: "Pegue!", "Junte!"...).
+func show_verb(verb: String) -> void:
+	if verb != "":
+		_show_toast(verb, "", &"MoneyLabel")
 
 
 ## Taxi: avisa o passo novo (o passageiro embarcou: agora leve de volta).

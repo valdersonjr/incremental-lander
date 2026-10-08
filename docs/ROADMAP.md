@@ -142,6 +142,10 @@
       completar (`WorldMap.open(travel_from)`); Esc na NAVE volta ao Mapa, Esc no Mapa abre o menu; sandbox com tudo
       liberado; resumo "CONTINUAR"; integrações adaptadas; prévia `world_map_preview [-- --all | --travel]` (2026-10-07).
       Pendente: a PROGRESSÃO ainda mostra a Estrada do mundo (duplicada com o cartão)
+- [x] 18.4a Lua — trilha de queijinhos: `world.json > minigames.luna` (6/9/11 queijinhos, arco mais alto nas estrelas
+      maiores), `scripts/world/minigames.gd` (`Minigames`), `Flight._setup_minigame/_tick_minigame/minigame_text/verb`,
+      pagamento `EconMath.minigame_pay` (planets[].mission_bonus; paridade 40), verbo no HUD (`Hud.show_verb`), placar na
+      linha da missão; testes `test_minigames` + integração `minigame_flow` (2026-10-07)
 - [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
       Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 

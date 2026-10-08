@@ -555,6 +555,11 @@ def gift_value(E: dict, planet: dict, d: float, stats: dict, kind: dict) -> floa
     return kind.get("pay_frac", 0.0) * contract_pay(E, planet, d, stats)
 
 
+def minigame_pay(E: dict, planet: dict, d: float, stats: dict, frac: float) -> float:
+    """v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1)."""
+    return planet.get("mission_bonus", 0.0) * contract_pay(E, planet, d, stats) * min(1.0, max(0.0, frac))
+
+
 def gift_gas(stats: dict, kind: dict) -> float:
     """Gas devolvido por um presente: gas_frac x tanque (o jogo nao passa do tanque cheio)."""
     return kind.get("gas_frac", 0.0) * stats["tank"]

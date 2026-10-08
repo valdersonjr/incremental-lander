@@ -670,5 +670,23 @@
       }
     },
     "terrain_notes": "v15 (2026-10-06): relevo de cada tipo no trecho partida -> alvo (TerrainGen shape): heavy = subida ate o alvo (rise_m); soft = alvo no alto de uma mesa (target_lift_m); fast = crista baixa (crest_scale); tow = sem crista e cratera no meio (basin_m, basin_width_frac); passenger (resgate) = cratera rasa onde o ratinho espera; taxi = busca num degrau. Dupla: maior de cada campo (crista: a menor)."
+  },
+  "minigames": {
+    "notes": "v17 (2026-10-07): um minijogo por mundo, jogado so com a nave (plano em docs/DECISIONS.md). verb = palavra no comeco da missao (estilo WarioWare). Listas = estrela 1, 2, 3 do pedido-assinatura do mundo.",
+    "luna": {
+      "name": "Trilha de queijinhos",
+      "verb": "Pegue!",
+      "coins": [
+        6,
+        9,
+        11
+      ],
+      "arc_mult": [
+        1.0,
+        1.3,
+        1.5
+      ],
+      "radius_m": 14.0
+    }
   }
 }
