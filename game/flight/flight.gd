@@ -44,6 +44,7 @@ var rescued := false                               # Passageiro 1: passageiro re
 ## Presente do salto (v10): "" sem presente, "gas" (galao) ou "gift" (creditos com a entrega). Gifts.place/touches.
 var minigame_got := 0                              # v17: minijogo do mundo (Lua: queijinhos pegos)
 var minigame_total := 0
+var minigame_extra := 0.0                          # medida do minijogo para a telemetria (ver Telemetry.record_delivery)
 var _trail: Array[Dictionary] = []                  # Lua: queijinhos {pos, sprite, got}
 var _sheep: Array[Dictionary] = []                  # Nuvens: carneirinhos {pos, sprite, got}
 var _tail: Array[Dictionary] = []                   # Nuvens: fila atras da nave (Snake)
@@ -411,6 +412,7 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 				+ (EconMath.minigame_pay(planet_id, target_distance_m, stats, float(minigame_got) / minigame_total)
 				if minigame_total > 0 else 0.0) if not crashed else 0.0,
 		"minigame": [minigame_got, minigame_total],
+		"mg_extra": snappedf(minigame_extra, 0.01),
 		"crashed": crashed,
 		"reason": reason,
 		# velocidade e inclinacao no toque (m/s e rad do modelo): calibram as tolerancias de pouso (world.json > landing)
@@ -651,6 +653,7 @@ func _clear_minigame() -> void:
 	_trail.clear()
 	minigame_got = 0
 	minigame_total = 0
+	minigame_extra = 0.0
 
 
 func _tick_minigame() -> void:
@@ -758,6 +761,7 @@ func _tick_slide() -> void:
 	if absf(_slide_v) <= float(cfg.get("stop_mps", 0.6)) or absf(nx - float(pad["x"])) >= lim:
 		sliding = false
 		var dist := WorldConfig.px_to_m(absf(nx - float(pad["x"])))
+		minigame_extra = dist
 		var q := Minigames.curling_quality(dist, float((cfg["ring_m"] as Dictionary).get(target_tier, 46.0)))
 		minigame_got = 1 if q > 0.0 else 0
 		_float_text("no miolo!" if q > 0.66 else ("no alvo!" if q > 0.0 else "fora do alvo"),
@@ -831,6 +835,7 @@ func _tick_claw() -> void:
 		var wet: bool = _tow.pos.x > float(_water["x0"]) and _tow.pos.x < float(_water["x1"]) \
 				and _tow.pos.y > float(_water["y"])
 		_wet_t = _wet_t + get_physics_process_delta_time() if wet else 0.0
+		minigame_extra = maxf(minigame_extra, _wet_t)
 		if _wet_t >= float(cfg.get("wet_s", 0.6)):
 			chest_wet = true
 			_mission_failed("tow", "", _tow.pos)

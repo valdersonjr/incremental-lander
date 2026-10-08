@@ -7,7 +7,8 @@ extends Node
 const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
-		"crashed", "pilot", "tier", "gift", "vy", "vx", "tilt", "reason"]
+		"crashed", "pilot", "tier", "gift", "vy", "vx", "tilt", "reason", "mission", "star", "failed", "mg_got",
+		"mg_total", "mg_extra"]
 
 const MAX_BYTES := 5 * 1024 * 1024
 
@@ -23,7 +24,10 @@ func _ready() -> void:
 		enabled = "--telemetry" in args
 
 
-## Grava uma entrega. result precisa das chaves de HEADER (distancias/gas nas unidades do modelo).
+## Grava uma entrega. result precisa das chaves de HEADER (distancias/gas nas unidades do modelo); missao, estrela,
+## regras que falharam e o placar do minijogo saem de result.mission/failed/minigame; mg_extra = medida propria do
+## minijogo (Flight.minigame_extra: curling = distancia de parada ao centro em m; Bolhas = segundos com o bau na agua;
+## Cogumelos = quiques totais).
 func record_delivery(result: Dictionary) -> void:
 	if not enabled:
 		return
@@ -38,8 +42,12 @@ func record_delivery(result: Dictionary) -> void:
 	if is_new:
 		f.store_csv_line(PackedStringArray(HEADER))
 	var row := PackedStringArray()
+	var m: Dictionary = result.get("mission", {})
+	var mg: Array = result.get("minigame", [0, 0])
+	var derived := {"pilot": pilot, "mission": m.get("kind", ""), "star": m.get("star", ""),
+			"failed": "|".join(PackedStringArray(result.get("failed", []))), "mg_got": mg[0], "mg_total": mg[1]}
 	for key: String in HEADER:
-		var v: Variant = pilot if key == "pilot" else result.get(key, "")
+		var v: Variant = derived[key] if derived.has(key) else result.get(key, "")
 		row.append(str(int(v)) if v is bool else str(v))
 	f.store_csv_line(row)
 
