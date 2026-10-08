@@ -757,7 +757,7 @@ func _tick_sheep() -> void:
 				c["got"] = true
 				_tail.append(c)
 				minigame_got += 1
-				Sound.sfx("crystal_2")
+				Sound.sfx("sheep_%d" % clampi(minigame_got, 1, 5))
 	var step := int(cfg.get("follow_frames", 9))
 	for i in _tail.size():
 		var p := Minigames.follow_point(_history, i, step)
@@ -782,14 +782,15 @@ func _tick_caps() -> void:
 	var feet := lander.global_position + Vector2(0, WorldConfig.m_to_px(
 			float(WorldConfig.load_config()["lander"]["feet_offset_m"])))
 	var cfg := Minigames.spec(planet_id)
-	for c: Dictionary in _caps:
+	for ci in _caps.size():
+		var c: Dictionary = _caps[ci]
 		if Minigames.hits_cap(feet, lander.vel_m.y, c):
 			lander.vel_m.y = Minigames.bounce_vy(lander.vel_m.y, float(cfg.get("bounce_mps", 10.0)))
 			minigame_extra += 1.0                              # quiques totais (telemetria)
 			if not c["hit"]:                                   # cada chapeu conta uma vez no placar
 				c["hit"] = true
 				minigame_got += 1
-			Sound.sfx("landing")
+			Sound.sfx("boing_%d" % clampi(ci + 1, 1, 3))           # cada degrau da escada soa mais alto
 			UiKit.pulse(c["node"], 1.6, 0.25)
 			break
 
@@ -869,7 +870,7 @@ func _tick_stems() -> void:
 			if not st["bumped"]:
 				st["bumped"] = true
 				_float_text("ai! o caule", lander.global_position + Vector2(0, -20))
-				Sound.sfx("landing")
+				Sound.sfx("bump")
 			lander.vel_m.x = -dir * maxf(absf(lander.vel_m.x) * float(cfg.get("bump_back", 0.5)), 2.0)
 			lander.global_position.x = float(st["x"]) - dir * (float(st["half"]) + 2.0)
 			_calm_t = float(cfg.get("bump_calm_s", 0.3))         # o vento nao empurra de volta contra o caule
@@ -877,7 +878,7 @@ func _tick_stems() -> void:
 			st["passed"] = true
 			if not st["bumped"]:
 				minigame_got += 1
-				Sound.sfx("crystal_2")
+				Sound.sfx("pass_%d" % ((minigame_got - 1) % 3 + 1))
 
 
 ## Jardim: as sementes andam com o vento (px/s = vento x px_per) e balancam; quem sai da tela volta do outro lado.

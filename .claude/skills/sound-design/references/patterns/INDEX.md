@@ -15,3 +15,4 @@ procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Etapa 2) e reg
 | gas-alarm | Alarme de gás baixo (2 bipes, baixa depois de 3 s) | loop | assets/audio/sfx/gas_alarm.wav | 2026-10-03 |
 | progress-jingles | Marco de upgrade, mundo liberado, recomeço, final | jingle | assets/audio/sfx/milestone.wav, assets/audio/sfx/unlock.wav, assets/audio/sfx/prestige.wav, assets/audio/sfx/goal.wav | 2026-10-03 |
 | mission-star | Estrela de missão (cada entrega) | sfx | assets/audio/sfx/star.wav | 2026-10-06 |
+| minigame-sfx | Minijogos: quique (boing), batida no caule, carneirinho, vão | sfx | assets/audio/sfx/boing_1.wav, assets/audio/sfx/boing_2.wav, assets/audio/sfx/boing_3.wav, assets/audio/sfx/bump.wav, assets/audio/sfx/sheep_1.wav, assets/audio/sfx/sheep_2.wav, assets/audio/sfx/sheep_3.wav, assets/audio/sfx/sheep_4.wav, assets/audio/sfx/sheep_5.wav, assets/audio/sfx/pass_1.wav, assets/audio/sfx/pass_2.wav, assets/audio/sfx/pass_3.wav | 2026-10-08 |
