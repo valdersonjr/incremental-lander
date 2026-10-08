@@ -184,7 +184,7 @@ Godot 4.7.2 (renderer Compatibility) · desktop (Mac/PC/Linux; presets em export
 remapeáveis) e controle (A/RT propulsor, analógico gira, LB/RB abas, Start menu) · tela cheia (opção, F11, Alt+Enter) ·
 tremor de tela opcional · 640×360 viewport, escala inteira (janela 1280×720) ·
 filtro Nearest · snap de pixel · buses de áudio Master/Music/Ambience/SFX→Engine/UI ·
-**5 jogos salvos** independentes (menu inicial → Jogar → um cartão por jogo com a progressão: missões liberadas, créditos, runs, tempo; jogar, novo jogo, apagar com 2 cliques), autosave no
+**5 jogos salvos** independentes (menu inicial → Jogar → um cartão por jogo com tempo, créditos e estrelas; jogar, novo jogo; X ao lado apaga com 2 cliques), autosave no
 jogo em uso; volumes e último jogo usado são globais ·
 economia em `data/economy.json` + `scripts/economy/econ_math.gd` (paridade testada com o Python).
 

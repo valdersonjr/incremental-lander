@@ -111,7 +111,7 @@ game/pause/pause_menu.*       # PauseMenu = menu do jogo (Control modal, PROCESS
                               # title_requested, new_game_requested (Main: SaveManager.new_game → hangar), closed → hangar.
 game/title/save_slots.gd      # SaveSlots (VBox): 5 cartões compactos 250x28, um embaixo do outro: faixa do mapa do jogo
                               # no fundo (assets/ui/save_bg_<mundo>.png, sem escalar), "Jogo N" + tempo (despertador),
-                              # créditos e estrelas; em uso = moldura dourada. SEM apagar. PLAY (menu inicial): com jogo →
+                              # créditos e estrelas; em uso = moldura dourada. PLAY: X ao lado apaga (2 cliques; Esc/cartão desiste; card(n)/delete_button(n)). PLAY (menu inicial): com jogo →
                               # slot_play_requested, vazio → new_game_requested. SAVE (menu do jogo): grava o jogo em uso
                               # no espaço (SaveManager.save_to_slot; por cima de OUTRO jogo pede 2º clique) → slot_saved.
 game/hangar/hangar.*          # Hangar = tela PROGRESSÃO (v13; raiz Control: %Frame + %Balloon + %Toast + MissionIntro): cabeçalho

@@ -1,6 +1,6 @@
 ## Menu inicial (tela de titulo) com cena PROPRIA (TitleBackdrop: gatinho heroi no morro de queijo, nada do mapa de
 ## voo). Logo + frase da proposta + coluna de botoes a esquerda; as subtelas abrem no painel do meio.
-## Jogar -> lista dos jogos salvos (SaveSlots: jogar ou novo jogo; nao ha apagar, grava-se por cima no menu do jogo) /
+## Jogar -> lista dos jogos salvos (SaveSlots: jogar ou novo jogo; X ao lado apaga com 2 cliques) /
 ## Sandbox (testar tudo sem progressao: mundo + nave, nada e salvo) / Opcoes (volumes, CRT) / Sair. Emite sinais; a Main
 ## decide o fluxo (carregar, decolar, hangar).
 class_name TitleScreen
@@ -66,6 +66,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
+		if _screen == Screen.SAVES and _slots.cancel_confirm():   # Esc primeiro desiste de apagar
+			return
 		if _screen != Screen.MENU:
 			_set_screen(Screen.MENU)
 

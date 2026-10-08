@@ -34,8 +34,8 @@ func _ready() -> void:
 	await _frames(3)
 	(title.find_child("Play", true, false) as Button).pressed.emit()
 	await _frames(3)
-	var cards := title.find_children("*", "Button", true, false).filter(func(b: Node) -> bool:
-		return b is Button and b.get_parent() is SaveSlots)
+	var list := title._slots
+	var cards: Array = range(1, SaveManager.SLOTS + 1).map(func(n: int) -> Button: return list.card(n))
 	if not title.visible or cards.size() != SaveManager.SLOTS:
 		fails.append("Jogar deveria abrir %d cartoes (veio %d)" % [SaveManager.SLOTS, cards.size()])
 	else:
@@ -47,6 +47,35 @@ func _ready() -> void:
 		if not "Novo jogo" in " ".join((cards[4] as Button).find_children("*", "Label", true, false).map(
 				func(l: Label) -> String: return l.text)):
 			fails.append("jogo 5 vazio deveria oferecer Novo jogo")
+		if list.delete_button(2) == null or list.delete_button(5) != null:
+			fails.append("X de apagar so deveria aparecer no espaco com jogo")
+	# apagar: jogo 3 salvo; 1o clique no X so pede confirmacao, Esc desiste, 2 cliques apagam
+	SaveManager.save_to_slot(3)
+	SaveManager.load_slot(2)
+	list.fill()
+	await _frames(1)
+	list.delete_button(3).pressed.emit()
+	await _frames(1)
+	if not SaveManager.slot_summary(3)["exists"]:
+		fails.append("1o clique no X nao deveria apagar")
+	list.cancel_confirm()
+	list.delete_button(3).pressed.emit()
+	list.delete_button(3).pressed.emit()
+	await _frames(1)
+	if SaveManager.slot_summary(3)["exists"] or list.delete_button(3) != null:
+		fails.append("2 cliques no X deveriam apagar o jogo 3")
+	if int(SaveManager.slot_summary(2)["runs"]) != 5 or SaveManager.slot != 2:
+		fails.append("apagar o jogo 3 mexeu no jogo 2")
+	# apagar o jogo em uso: o autosave nao recria o espaco vazio
+	SaveManager.save_to_slot(3)
+	list.fill()
+	await _frames(1)
+	list.delete_button(3).pressed.emit()
+	list.delete_button(3).pressed.emit()
+	SaveManager.save_game()
+	if SaveManager.slot_summary(3)["exists"]:
+		fails.append("autosave recriou o jogo em uso apagado")
+	SaveManager.load_slot(2)
 	title._set_screen(TitleScreen.Screen.MENU)
 	# jogo 1 vazio: decola um run novo; o jogo 2 continua salvo
 	title.slot_play_requested.emit(1)
@@ -69,7 +98,7 @@ func _ready() -> void:
 	pause._open_saves()
 	await _frames(2)
 	var slots := pause._slots
-	(slots.get_child(3) as Button).pressed.emit()
+	slots.card(4).pressed.emit()
 	await _frames(2)
 	if SaveManager.slot != 4 or not is_equal_approx(float(SaveManager.slot_summary(4)["credits"]), 321.0) \
 			or not SaveManager.slot_summary(2)["ok"]:
@@ -80,11 +109,11 @@ func _ready() -> void:
 	GameState.resources["credits"] = 999.0
 	slots.fill()
 	await _frames(1)
-	(slots.get_child(0) as Button).pressed.emit()
+	slots.card(1).pressed.emit()
 	await _frames(1)
 	if SaveManager.slot != 4 or is_equal_approx(float(SaveManager.slot_summary(1)["credits"]), 999.0):
 		fails.append("por cima de outro jogo deveria pedir um 2o clique")
-	(slots.get_child(0) as Button).pressed.emit()
+	slots.card(1).pressed.emit()
 	await _frames(1)
 	if SaveManager.slot != 1 or not is_equal_approx(float(SaveManager.slot_summary(1)["credits"]), 999.0):
 		fails.append("2o clique deveria gravar por cima do jogo 1 (slot=%d)" % SaveManager.slot)

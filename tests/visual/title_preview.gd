@@ -1,6 +1,6 @@
 ## Previa do menu inicial (cena propria TitleBackdrop; sem voo atras). gdtool.py capture res://tests/visual/title_preview.tscn [-- --progress --options --saves --planet=id]
 ## --progress: com jogo salvo (Continuar + resumo). --options: volumes. --sandbox: tela do sandbox. --saves: lista de jogos salvos (pasta propria
-## user://preview_saves com jogos 1, 3 e 4; nunca le o save real).
+## user://preview_saves com jogos 1, 3 e 4; nunca le o save real). --saves --delete: 1o clique no X do jogo 3 (pede confirmacao).
 extends Node
 
 const TITLE_SCENE := preload("res://game/title/title_screen.tscn")
@@ -23,6 +23,8 @@ func _ready() -> void:
 	if "--saves" in args:
 		fake_saves()
 		t._set_screen(TitleScreen.Screen.SAVES)
+		if "--delete" in args:
+			t._slots.delete_button(3).pressed.emit()
 	if "--sandbox" in args:
 		t._set_screen(TitleScreen.Screen.SANDBOX)
 	if "--options" in args:

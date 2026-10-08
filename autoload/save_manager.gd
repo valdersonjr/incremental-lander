@@ -24,6 +24,8 @@ var load_warning := ""
 ## Espacos cujo arquivo existe mas nao carregou (danificado ou de versao mais nova): antes de gravar por cima, os
 ## arquivos sao guardados a parte (nunca se perde um save por uma leitura que falhou).
 var _unreadable: Dictionary = {}
+## O jogo em uso foi apagado: o autosave nao grava (nao recria o jogo vazio) ate outro jogo ser escolhido.
+var _slot_deleted := false
 
 
 func _ready() -> void:
@@ -105,7 +107,7 @@ func save_game() -> bool:
 	if not enabled:
 		return false
 	_save_prefs()
-	if sandbox:
+	if sandbox or _slot_deleted:
 		return false
 	if _unreadable.has(slot):
 		_keep_unreadable(slot)
@@ -205,12 +207,14 @@ func delete_slot(n: int) -> void:
 		return
 	_remove_slot_files(n)
 	if n == slot:
+		_slot_deleted = true
 		var settings: Dictionary = GameState.settings.duplicate()
 		GameState.reset()
 		GameState.settings = settings
 
 
 func _use_slot(n: int) -> void:
+	_slot_deleted = false
 	slot = clampi(n, 1, SLOTS)
 	var f := slot_files(slot)
 	PATH = f["path"]

@@ -4,6 +4,9 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Apagar jogo salvo no menu inicial** (X ao lado de cada jogo, 2 cliques) e título do resumo pelo motivo
+  ("ACABOU O GÁS!"...). Verificado: check, 111 testes, integração `slots_flow` (apagar, Esc, jogo em uso), capturas
+  `title_preview -- --saves [--delete]` e `summary_preview [-- --crash]`.
 - **Auditoria dos minijogos aplicada (ROADMAP 18.5b)**. Relatório: https://claude.ai/artifact/1kffVyZpAtd3MmubEaw7wg.
   O usuário pediu "definir uma ordem e implementar tudo"; decisões em aberto ficaram com a recomendação (selo no
   resumo em vez de estrela; crédito parcial em todos os mundos; Bolhas com g 2,4). Commits 15b544f → b104a4d. Verificado:
