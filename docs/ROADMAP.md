@@ -185,6 +185,17 @@
       estados bloqueado/silhueta/escurecer na paleta (`palette_fx.gdshader`); Mapa só explica o próximo cadeado;
       plataformas grande/média/pequena e "longe: falta gás"; jogos salvos com fundo ink no texto e "começou agora";
       contorno branco no lander; nave pôster 1x na tela NAVE; vazamentos de nós na saída corrigidos
+- [x] 18.5d Auditoria dos primeiros minutos / FTUE (2026-10-08, relatório https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg):
+      pesquisa (Andersen 2012, Passalacqua 2020, SDT, Hodent, Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca) +
+      jornada com capturas + simulação + telemetria → 15 achados, 31 heurísticas (9 cumpre · 9 parcial · 13 falha)
+- [ ] 18.5e Aplicar a auditoria dos primeiros minutos, na ordem do relatório (aguarda o usuário escolher):
+  - [ ] M5 telemetria de sessão (marcos do começo) — medir antes de mudar
+  - [ ] C1+A5+M1 jogo novo começa voando (1ª entrega curta, plana, plataforma grande; Mapa/missão depois da 1ª entrega)
+  - [ ] C2 batida de aprendiz (respawn na última plataforma no começo; pouso devagar fora ≠ batida)
+  - [ ] C3+A3 protótipo HTML: ensinar o controle sem texto + medidor de descida → arte e código
+  - [ ] A1+M3 CONTINUAR → NAVE quando dá para comprar; moedas no Mapa; 1ª visita só PEÇAS
+  - [ ] A2+M4 revelar sistemas por etapas; festa da parada nova num lugar só
+  - [ ] A4 batida que ensina · C4 perfil "novato" no simulador · B1 teste com crianças · B2 GDD "Primeiros minutos"
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

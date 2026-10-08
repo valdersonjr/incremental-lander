@@ -4,6 +4,14 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Auditoria dos primeiros minutos / FTUE (ROADMAP 18.5d)**. Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg.
+  Veredito: o gancho visual é forte, mas o 1º minuto ensina pouco e pune muito. Jogo novo abre Mapa → conversa da
+  missão antes do 1º toque no motor; ninguém mostra como pilotar; batida no 1º salto acaba o run com 0 moedas
+  (telemetria humana com a nave inicial: 23/35 batidas, maioria "fora da plataforma"); CONTINUAR leva ao Mapa, que não
+  mostra moedas. O simulador supõe ~1,8% de batidas para o casual (1ª compra 119–207 s em 3 perfis × 3 sementes), então
+  não representa o novato. Nada de código mudou. **Próximo**: o usuário escolher a ordem (sugerida no relatório e na
+  18.5e); começar pela telemetria de sessão (M5). C3 (ensinar sem texto) e A3 (medidor) vão primeiro para protótipo HTML
+  com abas, porque esbarram na decisão "sem dicas óbvias".
 - **Auditoria de UX/UI aplicada (ROADMAP 18.5c)**: 20 achados; lista e decisões em `docs/DECISIONS.md` (vírgula
   decimal, NAVE em todo lugar, verde = partir, estados na paleta via `palette_fx.gdshader`, pausa em abas, HUD sem
   abreviações, recordes com troféu, nave pôster 1x na tela NAVE, contorno branco no lander). Verificado: check, 111
