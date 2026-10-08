@@ -151,6 +151,9 @@
       faltou carneirinho = Passageiro falhou (paga menos); resgate antigo desligado nas Nuvens; fala/regra do mundo em
       `minigames.<mundo>.ask/say` (`MissionText`); `RunState` garante o pedido do mundo; dev `--dev_world=<id>`;
       figura provisória (coelhinho) até a arte (2026-10-07)
+- [x] 18.4c Cogumelos — chapéus-mola (Doodle Jump) + ovinho: `minigames.cogumelos` (1/3/3 chapéus em escada), caindo
+      no chapéu a nave quica (`Minigames.hits_cap/bounce_vy`), placar de quiques; o ovinho é o Pouso suave que já existia;
+      cogumelo desenhado provisório (2026-10-07)
 - [ ] 18.4 Minijogos no voo, um mundo por item: Lua trilha · Nuvens fila + correntes · Cogumelos chapéu-mola + ovinho ·
       Sorvete gelo + curling + relógio · Jardim caules + vento · Bolhas garra + mar + bolhas
 

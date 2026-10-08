@@ -72,5 +72,23 @@ func _ready() -> void:
 	_check("nuvens_faltou_carneirinho_paga_menos", n.failed.has("passenger"))
 	_check("verbo_das_nuvens", n.minigame_verb() == "Junte!")
 	n.queue_free()
+	await get_tree().process_frame
+	# Cogumelos: chapeu-mola + ovinho (Pouso suave)
+	var s3 := {"kind": "soft", "star": 3, "parts": [{"kind": "soft", "star": 3}]}
+	var c := _flight("cogumelos", s3, 900.0)
+	_check("cogumelos_3_chapeus", c._caps.size() == 3)
+	var cap: Dictionary = c._caps[0]
+	var feet_off := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
+	c.lander.global_position = Vector2(float(cap["x"]), float(cap["y"]) - feet_off + 2.0)
+	c.lander.vel_m = Vector2(3.0, 6.0)
+	c._tick_minigame()
+	_check("cogumelos_chapeu_faz_quicar", c.lander.vel_m.y < -5.0 and c.minigame_got == 1)
+	c.lander.vel_m = Vector2(0, -4.0)                          # subindo nao quica
+	c._tick_minigame()
+	_check("cogumelos_subindo_nao_quica", c.minigame_got == 1)
+	c._judge_mission({"vy": 99.0}, 0.9)
+	_check("cogumelos_pouso_forte_racha_o_ovo", c.failed.has("soft"))
+	_check("verbo_dos_cogumelos", c.minigame_verb() == "Quique!")
+	c.queue_free()
 	print("MINIGAME_TEST " + ("OK" if _fails.is_empty() else "FALHOU " + "; ".join(_fails)))
 	get_tree().quit(0 if _fails.is_empty() else 1)

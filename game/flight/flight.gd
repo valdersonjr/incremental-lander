@@ -50,6 +50,7 @@ var _tail: Array[Dictionary] = []                   # Nuvens: fila atras da nave
 var _history := PackedVector2Array()                # Nuvens: posicoes recentes da nave (a fila segue)
 var _updrafts: Array = []                           # Nuvens: colunas de corrente {x, half}
 var _updraft_lines: Array[Node] = []
+var _caps: Array[Dictionary] = []                   # Cogumelos: chapeus-mola {x, y, half, node}
 var gift_kind := ""
 var gift_taken := false
 var _gift_pos := Vector2.ZERO                       # pes do presente (px do mundo)
@@ -422,6 +423,8 @@ func _setup_minigame() -> void:
 			move_child(sp, lander.get_index())
 			_trail.append({"pos": p, "sprite": sp, "got": false})
 		minigame_total = n
+	elif planet_id == "cogumelos":                             # cogumelos-mola (Doodle Jump) + ovinho (Pouso suave)
+		_setup_caps(cfg, star)
 	elif planet_id == "nuvens":                                # fila de carneirinhos (Snake) + correntes
 		var a: Dictionary = terrain.pads[current_pad_id]
 		var b: Dictionary = terrain.pads[target_pad_id]
@@ -460,7 +463,49 @@ func _setup_minigame() -> void:
 				_updraft_lines.append(ln)
 
 
+## Cogumelos: chapeus-mola em escada entre as plataformas (placeholder desenhado ate a arte).
+func _setup_caps(cfg: Dictionary, star: int) -> void:
+	var a: Dictionary = terrain.pads[current_pad_id]
+	var b: Dictionary = terrain.pads[target_pad_id]
+	var n := int(Minigames.by_star(cfg["caps"], star))
+	var half := WorldConfig.m_to_px(float(Minigames.by_star(cfg["cap_half_m"], star)))
+	var top_h := WorldConfig.m_to_px(float(Minigames.by_star(cfg["cap_height_m"], star)))
+	var xs := Minigames.spread_x(a, b, n)
+	for i in n:
+		var x: float = xs[i]
+		var gy := TerrainGen.height_at(terrain.ridge, x)
+		var cy := gy - top_h * (0.6 + 0.4 * float(i + 1) / float(n))   # escada subindo ate o alvo
+		var node := Node2D.new()
+		var stem := ColorRect.new()
+		stem.color = Color("#fdcbb0")
+		stem.position = Vector2(x - 4.0, cy)
+		stem.size = Vector2(8.0, gy - cy)
+		node.add_child(stem)
+		var cap := Polygon2D.new()
+		var pts := PackedVector2Array()
+		for k in 13:
+			var t := PI * float(k) / 12.0
+			pts.append(Vector2(x - cos(t) * half, cy - sin(t) * half * 0.5))
+		cap.polygon = pts
+		cap.color = Color("#e83b3b")
+		node.add_child(cap)
+		for d in [-0.5, 0.0, 0.5]:
+			var dot := ColorRect.new()
+			dot.color = Color("#ffffff")
+			dot.position = Vector2(x + d * half - 2.0, cy - half * 0.3 - 2.0)
+			dot.size = Vector2(4, 4)
+			node.add_child(dot)
+		add_child(node)
+		move_child(node, lander.get_index())
+		_caps.append({"x": x, "y": cy, "half": half, "node": node})
+	minigame_total = n
+
+
 func _clear_minigame() -> void:
+	for c: Dictionary in _caps:
+		if is_instance_valid(c["node"]):
+			(c["node"] as Node).queue_free()
+	_caps.clear()
 	for c: Dictionary in _trail + _sheep + _tail:
 		if is_instance_valid(c["sprite"]):
 			(c["sprite"] as Node).queue_free()
@@ -481,6 +526,9 @@ func _clear_minigame() -> void:
 func _tick_minigame() -> void:
 	if planet_id == "nuvens":
 		_tick_sheep()
+		return
+	if planet_id == "cogumelos":
+		_tick_caps()
 		return
 	if _trail.is_empty() or lander.state != Lander.State.FLYING:
 		return
@@ -529,10 +577,28 @@ func _tick_sheep() -> void:
 			_float_text("caiu!", lp + Vector2(0, -12))
 
 
+## Cogumelos: caindo sobre um chapeu, a nave quica (conta o quique; nao e pouso nem batida).
+func _tick_caps() -> void:
+	if _caps.is_empty() or lander.state != Lander.State.FLYING:
+		return
+	var feet := lander.global_position + Vector2(0, WorldConfig.m_to_px(
+			float(WorldConfig.load_config()["lander"]["feet_offset_m"])))
+	var cfg := Minigames.spec(planet_id)
+	for c: Dictionary in _caps:
+		if Minigames.hits_cap(feet, lander.vel_m.y, c):
+			lander.vel_m.y = Minigames.bounce_vy(lander.vel_m.y, float(cfg.get("bounce_mps", 10.0)))
+			minigame_got = mini(minigame_got + 1, 99)
+			Sound.sfx("landing")
+			UiKit.pulse(c["node"], 1.6, 0.25)
+			break
+
+
 ## Texto do placar do minijogo para o HUD ("" sem minijogo).
 func minigame_text() -> String:
 	if minigame_total <= 0:
 		return ""
+	if planet_id == "cogumelos":
+		return "quiques %d" % minigame_got
 	return ("carneirinhos %d/%d" if planet_id == "nuvens" else "queijinhos %d/%d") % [minigame_got, minigame_total]
 
 

@@ -712,6 +712,28 @@
       },
       "ask": "Meus carneirinhos se perderam!",
       "say": "Junte todos e pouse comigo!"
+    },
+    "cogumelos": {
+      "name": "Cogumelos-mola",
+      "verb": "Quique!",
+      "caps": [
+        1,
+        3,
+        3
+      ],
+      "cap_half_m": [
+        28.0,
+        22.0,
+        18.0
+      ],
+      "cap_height_m": [
+        45.0,
+        75.0,
+        105.0
+      ],
+      "bounce_mps": 11.0,
+      "ask": "Leva meu ovinho lá pra casa no alto?",
+      "say": "Quique nos cogumelos e pouse bem devagar!"
     }
   }
 }

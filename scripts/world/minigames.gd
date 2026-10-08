@@ -52,6 +52,17 @@ static func in_updraft(pos_px: Vector2, columns: Array, ground_y: float, height_
 	return false
 
 
+## Cogumelos: a nave caindo (vy_mps > 0) com os pes na altura do chapeu {x, y, half} quica? (px)
+static func hits_cap(feet_px: Vector2, vy_mps: float, cap: Dictionary) -> bool:
+	return vy_mps > 0.0 and absf(feet_px.x - float(cap["x"])) <= float(cap["half"]) \
+			and feet_px.y >= float(cap["y"]) - 3.0 and feet_px.y <= float(cap["y"]) + 8.0
+
+
+## Velocidade (m/s, para cima = negativa) depois de quicar: pelo menos bounce_mps, ou quase a mesma da queda.
+static func bounce_vy(vy_mps: float, bounce_mps: float) -> float:
+	return -maxf(vy_mps * 0.95, bounce_mps)
+
+
 ## A nave (centro, px) encostou no queijinho?
 static func touches(pos_px: Vector2, coin_px: Vector2, radius_px: float) -> bool:
 	return pos_px.distance_to(coin_px) <= radius_px
