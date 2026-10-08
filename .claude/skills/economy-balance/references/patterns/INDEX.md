@@ -18,3 +18,4 @@ mecânica, procure aqui; se não houver ou estiver raso, pesquise (SKILL.md, Eta
 | run-fatigue-records | Run sem teto, meta = recorde pessoal; cansaço geométrico do gás para o run acabar | Hill Climb Racing, Learn to Fly, Tiny Wings | contracts.run_fatigue | 2026-10-07 |
 | parallel-worlds | Mundos paralelos (mesma nave/moedas) com recorde próprio + bônus por bater a marca | Hill Climb Racing 2, Clash Royale, Cut the Rope | planets[].road, contracts.record_bonus | 2026-10-07 |
 | minigame-graded-reward | Minijogo com recompensa graduada (crédito parcial, bônus por estrela, folga de empuxo) | Angry Birds, Subway Surfers, gradiente de meta | planets[].mission_bonus/partial_frac_model/takeoff_twr | 2026-10-08 |
+| novice-profile | Perfil novato (batida alta que cai com a prática) + regra do aprendiz (bater no começo repete o salto) | Celeste, Super Meat Boy, Super Guide, Bandura | profiles novice; world.json onboarding.apprentice_stars | 2026-10-08 |

@@ -61,6 +61,14 @@ Consequências de design (por que o modelo é bom para o jogo):
 | casual | 0.55 | 1.6 | 2.5 s | 9 s | 35 s | 1.5 × pontos |
 | engaged | 0.72 | 1.35 | 1.5 s | 6 s | 20 s | 1.0 × pontos |
 | expert | 0.9 | 1.12 | 0.7 s | 4 s | 10 s | 0.7 × pontos (v3 da spec usa override 1.0: regra "dobrar") |
+| novice | 0.45 | 1.8 | 3 s | 12 s | 40 s | — (fora do screen/mc; só para os primeiros minutos) |
+
+**Novato** (2026-10-08, auditoria dos primeiros minutos): os perfis acima batem ~2% dos saltos, mas o humano com a
+nave inicial bateu 23/35 (telemetria). O novato soma `crash_extra` 0,6 × exp(−tentativas / `learn_hops` 25) à
+chance de batida (65% no 1º salto, metade em ~17 tentativas) e segue a regra do **aprendiz** do jogo
+(`apprentice` = world.json `onboarding.apprentice_stars`): enquanto fez menos entregas que isso, bater custa `retry_s`
+e o salto recomeça com o gás dele, sem acabar o run. Contadores (`attempts`, `delivered`) valem para o jogo todo
+(`simulate` zera numa cópia do perfil). Recalibrar `crash_extra`/`learn_hops` com `session.csv` + deliveries.csv.
 Estratégias de compra: `roi` (padrão, olha 1/2/4/8 níveis à frente e aceita algo acessível com ≥50%
 do melhor ROI), `cheapest`, `random`. Planetas recebem bônus de prioridade (são o objetivo).
 - Enquanto junta para a melhor opção (ex.: planeta), o jogador `roi` compra qualquer upgrade que **se

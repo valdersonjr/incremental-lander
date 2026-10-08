@@ -12,3 +12,4 @@ Antes de implementar algo, procure aqui; ao resolver algo não óbvio, registre.
 | controls-ux | Input/UX | nave travada até escolher entrega: aviso piscando, clique e numérico; foco do jogo embutido no editor 4.7; teste de controles com eventos reais | 2026-10-01 |
 | rope-tow | Física | carga pendurada por cabo (Thrust): restrição de comprimento máximo + impulso dividido pelas massas, sem RigidBody | 2026-10-05 |
 | camera-swap | Câmera | trocar de cena com Camera2D + interpolação de física: a câmera nova só processa se já for a atual → `make_current()` explícito; testar pelo canvas_transform | 2026-10-06 |
+| onboarding-ftue | UX/fluxo | primeiros minutos: aprendiz (batida repete o salto), 1º salto já aceito, Coach sem texto, revelação por etapas, funil session.csv | 2026-10-08 |

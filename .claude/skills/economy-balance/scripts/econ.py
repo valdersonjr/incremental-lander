@@ -261,6 +261,15 @@ class Profile:
     strategy: str = "roi"         # roi | cheapest | random
     prestige_ratio: float = 1.0   # faz prestigio quando o ganho >= ratio * pontos atuais (e >= min)
     session_minutes: float = 0    # 0 = continuo; senao simula sessoes (so para relatorio)
+    # Novato (2026-10-08, auditoria dos primeiros minutos): batida extra no comeco que cai com a pratica
+    # (crash_extra x exp(-tentativas / learn_hops)) e a regra do APRENDIZ do jogo (world.json > onboarding):
+    # enquanto fez menos de apprentice entregas, bater nao acaba o run - tenta o mesmo salto de novo (retry_s).
+    crash_extra: float = 0.0
+    learn_hops: float = 1.0
+    retry_s: float = 0.0
+    apprentice: int = 0
+    attempts: int = 0             # contadores do jogo todo (simulate zera numa copia do perfil)
+    delivered: int = 0
 
 
 PROFILES: dict[str, Profile] = {
@@ -269,12 +278,27 @@ PROFILES: dict[str, Profile] = {
     "engaged": Profile("engaged", skill=0.72, waste=1.35, hover_s=1.5, hop_overhead_s=6, run_overhead_s=20),
     "expert":  Profile("expert", skill=0.9, skill_sd=0.06, waste=1.12, hover_s=0.7, hop_overhead_s=4,
                        run_overhead_s=10, prestige_ratio=0.7),
+    # novato real (telemetria humana com a nave inicial: 23/35 voos bateram): ~65% de batida no 1o salto, cai pela
+    # metade em ~17 tentativas; aprendiz = world.json onboarding.apprentice_stars (load_onboarding). Fora do screen/mc.
+    "novice":  Profile("novice", skill=0.45, skill_sd=0.15, waste=1.8, hover_s=3.0, hop_overhead_s=12,
+                       run_overhead_s=40, crash_extra=0.6, learn_hops=25.0, retry_s=8.0, apprentice=-1),
 }
+
+
+def load_onboarding(path: str = "data/world.json") -> dict:
+    """Regras do comeco do jogo (world.json > onboarding; nao sao economia). {} se o arquivo nao existe."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f).get("onboarding", {})
+    except OSError:
+        return {}
 
 
 def profile_from(E: dict, name: str) -> Profile:
     """Perfil padrao com overrides opcionais de E['profiles_override'][name] (calibrados por telemetria)."""
     p = copy.deepcopy(PROFILES[name])
+    if p.apprentice < 0:                                       # aprendiz do jogo: mesmo numero do world.json
+        p.apprentice = int(load_onboarding().get("apprentice_stars", 0))
     for k, v in E.get("profiles_override", {}).get(name, {}).items():
         setattr(p, k, v)
     return p
@@ -923,9 +947,18 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
         t += hop_time(planet, d, stats, prof) * ch["t"]
         if expected:
             pay *= (1 - pc)
-        elif rng.random() < pc:
-            crashed = True
-            break
+        else:
+            if prof.crash_extra > 0:                           # novato: bate mais no comeco, aprende tentando
+                pc = min(0.95, pc + prof.crash_extra * math.exp(-prof.attempts / prof.learn_hops))
+                prof.attempts += 1
+            if rng.random() < pc:
+                if prof.delivered < prof.apprentice:           # aprendiz: o mesmo salto de novo, com o gas dele
+                    gas += g_need * fat
+                    t += prof.retry_s                  # (modelo: re-escolhe o pedido; o jogo repete o mesmo)
+                    continue
+                crashed = True
+                break
+            prof.delivered += 1
         if log is not None:
             log.append((d, tier["id"], q, cm, pick, ch["star"]))
         for k, w in rewards_w.items():
@@ -1072,8 +1105,8 @@ def fleet_mult(stats: dict) -> float:
 def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, max_runs: int = 200000) -> SimResult:
     """Joga o jogo por `hours` com um perfil. Loop: run -> recebe -> compra (estrategia) -> talvez
     desbloqueie planeta / prestigie. Termina cedo se o objetivo final (targets.goal) for atingido."""
-    if isinstance(prof, str):
-        prof = profile_from(E, prof)
+    prof = profile_from(E, prof) if isinstance(prof, str) else copy.deepcopy(prof)
+    prof.attempts = prof.delivered = 0                         # contadores do novato: jogo novo
     _INCOME_CACHE.clear()
     rng = random.Random(seed)
     res = SimResult(prof.name, seed)
