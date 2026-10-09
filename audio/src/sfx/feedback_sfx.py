@@ -26,11 +26,12 @@ from soundkit import *
 
 def landing_heavy() -> np.ndarray:
     """Pancada: thump mais fundo (75 -> 32 Hz) + metal do trem (FM ratio 1,41, não inteiro) + chocalho curto."""
-    thump = sine(sweep(75, 32, 0.35), 0.35) * decay(0.35, 0.11)
-    harm = triangle(sweep(150, 64, 0.2), 0.2) * decay(0.2, 0.05)            # harmônico: o peso aparece no notebook
+    thump = sine(sweep(75, 36, 0.3), 0.3) * decay(0.3, 0.09)
+    harm = triangle(sweep(220, 90, 0.2), 0.2) * decay(0.2, 0.05)            # harmônico: o peso aparece no notebook
     clank = fm(snap(380), 0.3, 1.41, 3.0 * decay(0.3, 0.06)) * decay(0.3, 0.07)
     rattle = bandpass(noise(0.18, "white", 31), 900, 3000) * decay(0.18, 0.04)
-    return fade(lowpass(mix([(thump, 0, 0), (harm, 0, -2), (clank, 0.01, -6), (rattle, 0.015, -16)]), 5000),
+    # v2 (auditoria 2026-10-09): thump -5 dB e harmônico mais alto (era 72% < 120 Hz, -7 dB no notebook)
+    return fade(lowpass(mix([(thump, 0, -5), (harm, 0, 0), (clank, 0.01, -5), (rattle, 0.015, -14)]), 5000),
                 0.001, 0.06)
 
 
@@ -49,9 +50,10 @@ def sputter() -> np.ndarray:
     parts = []
     for i, (t, f) in enumerate([(0.0, 140), (0.15, 115), (0.36, 90)]):
         d = 0.11
-        cough = lowpass(noise(d, "brown", 70 + i), 700) * decay(d, 0.03)
-        tone = lowpass(pulse(sweep(f, f * 0.7, d), d, duty=0.25), 900) * decay(d, 0.035)
-        parts += [(cough, t, -2 - 3 * i), (tone, t, -6 - 3 * i)]
+        # v2 (auditoria 2026-10-09): tosse em banda 150-900 Hz e tom uma oitava acima (era 43% < 120 Hz)
+        cough = bandpass(noise(d, "brown", 70 + i), 150, 900) * decay(d, 0.03)
+        tone = lowpass(pulse(sweep(f * 2, f * 1.4, d), d, duty=0.25), 1400) * decay(d, 0.035)
+        parts += [(cough, t, -2 - 3 * i), (tone, t, -8 - 3 * i)]
     sigh = svf(noise(0.4, "pink", 75), sweep(1500, 300, 0.4), 0.8) * env([(0, 0), (0.05, 1), (0.4, 0)], 0.4)
     parts.append((sigh, 0.5, -14))
     return fade(mix(parts), 0.001, 0.08)
@@ -117,7 +119,8 @@ def splash() -> np.ndarray:
     d = 0.7
     hit = svf(noise(d, "white", 92), sweep(5000, 400, d), 0.8) * decay(d, 0.12)
     body = sine(sweep(120, 45, 0.3), 0.3) * decay(0.3, 0.08)
-    parts = [(hit, 0, 0), (body, 0, -4)]
+    plop = triangle(sweep(note("A3"), note("D3"), 0.12), 0.12) * decay(0.12, 0.04)       # "plof" que o notebook toca
+    parts = [(hit, 0, 0), (body, 0, -7), (plop, 0, -6)]
     for k in range(9):
         parts.append((_bubble(float(rng.uniform(300, 900)), float(rng.uniform(0.04, 0.08))),
                       0.15 + k * float(rng.uniform(0.05, 0.09)), -8 - k))
@@ -166,10 +169,11 @@ def record() -> np.ndarray:
     """Novo recorde: arpejo D-F#-A-D-F# rápido + trinado brilhante (A6/B6) + sino final com eco."""
     notes = ["D5", "F#5", "A5", "D6", "F#6"]
     parts = [(pulse(note(n), 0.08, duty=0.25) * decay(0.08, 0.03), i * 0.06, -3) for i, n in enumerate(notes)]
-    trill = mix([(sine(note("A6" if k % 2 == 0 else "B6"), 0.05) * decay(0.05, 0.02), 0.32 + k * 0.05, -10)
+    trill = mix([(sine(note("A6" if k % 2 == 0 else "B6"), 0.05) * decay(0.05, 0.02), 0.32 + k * 0.05, -13)
                  for k in range(8)])
-    parts += [(trill, 0, 0), (_bell("D6", 1.2), 0.3, -2)]
-    return fade(lowpass(delay(mix(parts), 0.18, 0.28, 0.22, pingpong=False), 7500), 0.001, 0.3)
+    parts += [(trill, 0, 0), (_bell("D6", 1.2, 1.6), 0.3, -2)]
+    # v2 (auditoria 2026-10-09): 29% > 5 kHz (o mais chiado do jogo) -> passa-baixa 5 kHz, sino com índice menor
+    return fade(lowpass(delay(mix(parts), 0.18, 0.28, 0.22, pingpong=False), 5000), 0.001, 0.3)
 
 
 def crash_soft() -> np.ndarray:
@@ -186,7 +190,7 @@ def crash_soft() -> np.ndarray:
 
 ONE_SHOTS = {"landing_heavy": ("sfx", landing_heavy), "sputter": ("sfx", sputter), "chest": ("sfx", chest),
              "gas_glug": ("sfx", gas_glug), "gift_coin": ("sfx", gift_coin), "squeak": ("sfx", squeak),
-             "target_hit": ("sfx", target_hit), "oops": ("sfx", oops), "splash": ("impact", splash),
+             "target_hit": ("sfx", target_hit), "oops": ("sfx", oops), "splash": ("sfx", splash),
              "retry": ("sfx", retry), "aboard": ("sfx", aboard), "world_arrive": ("jingle", world_arrive),
              "summary_end": ("jingle", summary_end), "record": ("jingle", record), "crash_soft": ("sfx", crash_soft)}
 

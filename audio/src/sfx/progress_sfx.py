@@ -36,9 +36,10 @@ def milestone() -> np.ndarray:
     parts = [(_note(note(n), 0.07), i * 0.055, -2) for i, n in enumerate(notes)]
     last = 0.055 * len(notes)
     parts.append((_bell(note("D6"), 0.9) * 0.9, last, 0))
-    parts.append((pulse(vibrato(note("D6"), 0.6, 7.0, 0.25), 0.6, duty=0.125) * decay(0.6, 0.2), last, -8))
+    parts.append((pulse(vibrato(note("D6"), 0.6, 7.0, 0.25), 0.6, duty=0.25) * decay(0.6, 0.2), last, -10))
     x = mix(parts)
-    return fade(lowpass(delay(x, time=0.16, feedback=0.25, mix_=0.2, pingpong=False), 7000), 0.002, 0.15)
+    # v2 (auditoria 2026-10-09): 22% > 5 kHz -> pulso 25% (era 12,5%, mais zumbido) e passa-baixa 5 kHz
+    return fade(lowpass(delay(x, time=0.16, feedback=0.25, mix_=0.2, pingpong=False), 5000), 0.002, 0.15)
 
 
 def unlock() -> np.ndarray:

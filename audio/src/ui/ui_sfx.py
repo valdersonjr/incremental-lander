@@ -66,10 +66,10 @@ def tally() -> np.ndarray:
 # assets/audio/ui/back.wav assets/audio/ui/pop.wav assets/audio/ui/tally.wav
 
 if __name__ == "__main__":
-    save_variations(click, "assets/audio/ui/click.wav", "ui", 3, tres_path="assets/audio/ui/click.tres")
-    save_variations(buy, "assets/audio/ui/buy.wav", "ui", 3, tres_path="assets/audio/ui/buy.tres")
+    save_variations(click, "assets/audio/ui/click.wav", "ui", 3)  # sorteio no Sound.VARIANTS (sem .tres: web)
+    save_variations(buy, "assets/audio/ui/buy.wav", "ui", 3)  # sorteio no Sound.VARIANTS (sem .tres: web)
     save_wav("assets/audio/ui/denied.wav", denied(), "ui")
-    save_variations(move, "assets/audio/ui/move.wav", "ui", 3, tres_path="assets/audio/ui/move.tres")
+    save_variations(move, "assets/audio/ui/move.wav", "ui", 3)  # sorteio no Sound.VARIANTS (sem .tres: web)
     save_wav("assets/audio/ui/back.wav", back(), "ui")
     save_wav("assets/audio/ui/pop.wav", pop(), "ui")
     save_wav("assets/audio/ui/tally.wav", tally(), "ui")

@@ -46,7 +46,9 @@ def title() -> np.ndarray:
         return " ".join(" ".join([held(r, 0.5), held(r, 0.5), held(r, 0.5), held(r, 0.5)]) for r in roots)
     bass_a = bass_of(["D2", "B1", "G1", "A1"])
     bass_b = bass_of(["G1", "A1", "F#1", "B1"])
-    song.add("baixo", inst_triangle_bass(r=0.3), " ".join([bass_a, bass_a, bass_b, bass_a]), gain_db=-8)
+    # v2 (auditoria 2026-10-09): baixo com harmônico (o mesmo do tema) e 3 dB abaixo — a faixa tinha 68% da energia
+    # < 120 Hz e perdia 4,4 dB no alto-falante de notebook
+    song.add("baixo", _bass_inst(r=0.3), " ".join([bass_a, bass_a, bass_b, bass_a]), gain_db=-11)
     # sino: motivo de 8 compassos na pentatônica, respondido com variação (A A')
     m1 = " ".join([held("F#5", 0.75), held("A5", 0.25), held("E5", 1), rest(1), held("D5", 0.5), held("E5", 0.5),
                    held("B4", 1), rest(1), held("A4", 0.5), held("B4", 0.5), held("D5", 2)])
@@ -60,7 +62,8 @@ def title() -> np.ndarray:
     song.add("sino", inst_bell(ratio=3.5, index=2.2, tau=0.9), " ".join([m1, m2, m3, m4]), gain_db=-12,
              fx=lambda x: delay(x, time=60 / 84 * 0.75, feedback=0.35, mix_=0.3, pingpong=True))
     # filtro dentro do master_fx (antes de dobrar a cauda): filtrar depois do loop pronto cria clique na emenda
-    return song.render(loop=True, master_fx=lambda x: lowpass(reverb(x, size=0.8, damp=0.45, mix_=0.28), 9000))
+    return song.render(loop=True, master_fx=lambda x: highpass(lowpass(reverb(x, size=0.8, damp=0.45, mix_=0.28),
+                                                                       9000), 35))
 
 
 # --- voo ----------------------------------------------------------------------------------------------------------
@@ -89,7 +92,8 @@ def flight() -> np.ndarray:
                     for k in FLIGHT_BARS)
     bass_fill = " ".join(f"{roots[k][0]} - - . {roots[k][1]} - . {roots[k][0]} {roots[k][1]} - - . {roots[k][0]} - "
                          f"{roots[k][1]} ." for k in FLIGHT_BARS)
-    song.add("baixo", inst_triangle_bass(r=0.06), " ".join([bass, bass_fill, bass]), gain_db=-6)
+    # v2 (auditoria 2026-10-09): baixo com harmônico e 3 dB abaixo (72% < 120 Hz; brigava com o propulsor no grave)
+    song.add("baixo", _bass_inst(r=0.06), " ".join([bass, bass_fill, bass]), gain_db=-9)
     # bloco 2: melodia nova (pulso 12,5%, vibrato leve); bloco 3: a melodia original só no fim (compassos 45-48)
     lead_b = " ".join([held("F#5", 0.75), held("A5", 0.25), held("D6", 1), held("B5", 0.5), held("G#5", 0.5),
                        held("E5", 1), held("A5", 0.75), held("F#5", 0.25), held("D5", 1), held("E5", 0.5),
@@ -102,14 +106,14 @@ def flight() -> np.ndarray:
              " ".join([rest(16), lead_b, lead_c]), gain_db=-15, pan=0.15,
              fx=lambda x: delay(x, time=60 / 100 * 0.5, feedback=0.3, mix_=0.25, pingpong=True))
     kick = "x.......x......." * 16 + "x.......x......." * 16 + "................" * 4 + "x.......x......." * 12
-    song.add("bumbo", drum_kick(f0=120, f1=45, tau=0.1), kick, drum=True, gain_db=-9)
+    song.add("bumbo", drum_kick(f0=140, f1=55, tau=0.08), kick, drum=True, gain_db=-10)
     hat = "..x...x...x...x." * 16 + "..x.x.x...x.x.x." * 16 + "..x...x...x...x." * 16
     song.add("chimbal", drum_hat(), hat, drum=True, gain_db=-21)
     return song.render(loop=True, master_fx=_flight_master)
 
 
 def _flight_master(x: np.ndarray) -> np.ndarray:
-    return lowpass(reverb(x, size=0.7, damp=0.5, mix_=0.2), 10000)
+    return highpass(lowpass(reverb(x, size=0.7, damp=0.5, mix_=0.2), 10000), 35)
 
 
 # --- camada de cada mundo (contramelodia, mesma em todos, instrumento próprio) ----------------------------------
@@ -254,9 +258,9 @@ def _theme_strum(offbeat: bool) -> str:
     return " ".join(out)
 
 
-def _bass_inst() -> Instrument:
+def _bass_inst(r: float = 0.05) -> Instrument:
     """Baixo triângulo + harmônico de pulso uma oitava acima (drive leve): o 'peso' continua audível no notebook."""
-    tri = inst_triangle_bass(r=0.05)
+    tri = inst_triangle_bass(r=r)
     def play_(f, dur, vel):
         x = tri(f, dur, vel)
         h = pulse(f * 2, len(x) / SR, duty=0.5) * adsr(len(x) / SR, 0.003, 0.08, 0.4, 0.05) * vel

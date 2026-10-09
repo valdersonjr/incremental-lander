@@ -4,6 +4,22 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Sistema de áudio v2 (ROADMAP 18.5i)** — usuário pediu auditoria técnica completa; aprovou "recriar só o que tem
+  defeito medido" e "manter o modo Sample na web adaptando o sistema". Inventário medido dos 79 WAVs: 16 recriados
+  (pouso×3 + forte, propulsor×3, tosse, tchibum, cristal 3, entrega, recorde, marco, grave de title/flight, ambiência
+  da Lua); os outros 63 idênticos byte a byte (tema da ocarina intacto). Originais em `audio/previews/before/` (local)
+  e no git. `Sound` reescrito por dentro (API igual): variações sem `.tres`, camada do mundo em player gêmeo, ducking e
+  pausa por volume (web não tem efeito de bus), 10 vozes com prioridade, limite por som/família, intervalo mínimo,
+  opção "Geral" (bus Master); HardLimiter no Master (desktop) e `web/audio_limiter.js` no `html/head_include` do preset
+  Web. **Atenção**: o preset Web só existe na alteração NÃO commitada do usuário em `export_presets.cfg` (trocou
+  macOS/Windows/Linux pelo Web); o arquivo ficou fora do commit e, no working tree, ganhou a linha `html/head_include`
+  com o limitador. Ao commitar o preset Web, ela vai junto (o teste de áudio confere se houver preset Web). Verificado: check (102), 111 testes, 16
+  integrações (`sound_flow` com 23 checagens), `tests/test_audio_assets.py` (79 ok; nos antigos acusa os 11 defeitos),
+  hooks, demo; mixagem real gravada (desktop: +0,3 dBTP com 45 amostras clipadas → −0,8 dBTP, 0 clip); web local em
+  Chrome headless (`?audiotest`): tudo como sample, camada alinhada 0,0 ms, ducking/pausa, rajadas limitadas, saída
+  ≤ −0,3 dBFS por canal (entrada chegava a +2,6). **Para o usuário**: ouvir `audio/previews/ab_v2/index.html` (A/B por
+  som + reel de 2,5 min) e aprovar; redeploy no Vercel só quando pedir. **Próximo**: retorno do usuário; jingle de
+  mundo completo (18.6).
 - **Tela inicial nova: "Noite de história"** (usuário achou a Vitrine "pacata e não tão bonitinha"; 4 estilos no
   navegador `art/previews/title_styles/index.html` → escolheu a Noite; tema mais lento → 68 BPM em
   `title_styles/noite.html`). Gatinho sentado na lua crescente de queijo pescando uma estrelinha que dorme, ratinho de

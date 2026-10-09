@@ -220,6 +220,13 @@
   - [x] sons próprios: baú, galão, presente, ratinho, curling no alvo, regra falhou, A BORDO, TENTE DE NOVO, chegada
   - [x] resumo: contagem com tiques + ta-dá/recorde · INDEX da biblioteca limpo (sons de mundos antigos)
   - [ ] o usuário ouvir e aprovar (batida fofa vs explosão antiga; camadas por mundo)
+- [x] 18.5i Sistema de áudio v2 (2026-10-09; auditoria técnica pedida pelo usuário; patterns mix-system, web-audio-sample):
+  - [x] inventário medido dos 79 WAVs + eventos; recriados só os 16 com defeito medido (pouso×4, propulsor×3, tosse,
+        tchibum, cristal 3, entrega, recorde, marco, grave das músicas do Mapa e do voo, ambiência da Lua)
+  - [x] mixagem que funciona na web (modo Sample): variações, camada, ducking e pausa sem efeito de bus; limitador do
+        Master (desktop + web); prioridade de vozes, limite por som/família, intervalo mínimo; opção "Geral"
+  - [x] testes: tests/test_audio_assets.py, sound_flow ampliado, gravação da mixagem real (desktop) e autoteste web
+  - [ ] o usuário ouvir o A/B (`audio/previews/ab_v2/index.html`) e aprovar
 - [~] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
       musical por mundo ✔ (18.5h); falta o jingle de mundo completo
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no

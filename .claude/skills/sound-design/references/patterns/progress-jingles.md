@@ -24,3 +24,6 @@
 ## Fontes
 - https://morphic.com/resources/sounds/level-up-sound-effects — tipos de level-up: frase de 4 notas (assinatura), arpejo subindo, ping curto para upgrades frequentes
 - https://opengameart.org/node/22618 — jingles chiptune curtos de vitória/desbloqueio
+
+## Auditoria v2 (2026-10-09)
+- milestone: pulso 25% no lugar de 12,5% e passa-baixa 5 kHz (agudo 22% → 12%). unlock/goal intactos. Ver `mix-system`.

@@ -19,7 +19,7 @@ var settings: Dictionary = {}         # opcoes (volumes por bus) — salvas junt
 var records: Dictionary = {}          # recordes pessoais POR MUNDO (v16): planeta -> {RECORDS id -> maior valor}
 var tips: Array = []                  # dicas sem texto ja aprendidas (Coach: "thrust", "rotate"); nunca voltam
 
-const BUSES := ["Music", "Ambience", "SFX", "UI"]
+const BUSES := ["Master", "Music", "Ambience", "SFX", "UI"]   # Master = "Geral" (0 = silencia tudo)
 ## Dicas do comeco (lista e significado no SaveData.TIP_IDS).
 const TIPS := SaveData.TIP_IDS
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').

@@ -68,3 +68,6 @@
 - https://arxiv.org/pdf/2011.05538 — bolha/gota: seno curto com pitch modulado (10–20 ms), base das bolhas
 - https://www.audiokinetic.com/en/generating-rain-with-pure-synthesis — gotas e água por síntese pura
 - https://bugnet.io/blog/ui-sound-design-for-indie-games — diferenciar ações grandes; perda/erro suaves mas distintos
+
+## Auditoria v2 (2026-10-09)
+- landing_heavy: thump −5 dB e harmônico 220→90 Hz mais alto (72% → 32% de sub). sputter: tosse em banda 150–900 Hz e tom uma oitava acima (43% → 5% de sub). splash: kind sfx (era impact, 3,5 dB acima dos irmãos) + "plof" de triângulo. record: passa-baixa 5 kHz, trinado −13 dB, sino índice 1,6 (agudo 29% → 12%). Ver `mix-system`.

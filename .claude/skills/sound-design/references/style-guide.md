@@ -23,6 +23,8 @@
   (ambiência ≤ −3).
 
 ## Hierarquia e fadiga
+- Faixas por família (v2, 2026-10-09): sub = música/batidas raras; corpo 150–800 Hz = pouso/propulsor; brilho 1–5 kHz =
+  UI/recompensa. Conferido por `tests/test_audio_assets.py` (pattern `mix-system`).
 - Sons muito frequentes (clique, compra, tick): 40–150 ms, pouco conteúdo > 5 kHz, 3 variações + pitch
   aleatório ±5%.
 - Sons raros e importantes (upgrade grande, marco, desbloqueio): podem ser longos, brilhantes, com eco.
@@ -45,3 +47,4 @@
   intensidade física no pouso e no turbo, batida **fofa** (puf + apito de desenho; a explosão antiga fica guardada),
   ambiência nos 6 mundos (Lua sem batalha), voo de 115 s + camada do mundo (mesmo tema, instrumento de cada mundo,
   −24 LUFS, `AudioStreamSynchronized`) — aguarda o usuário ouvir e aprovar
+- 2026-10-09 — sistema de áudio v2 (auditoria técnica): faixas por família (sub < 120 Hz só para o baixo da música e batidas raras; pouso/propulsor/tosse no corpo 150–800 Hz com harmônicos; sons frequentes com ≤ 15% > 5 kHz), audibilidade no notebook medida (perda ≤ 5 dB sem o < 200 Hz; música/ambiência ≤ 4,5), limitador do Master (desktop e web), simultaneidade no Sound (pattern mix-system) — usuário aprovou o plano; aguarda ouvir o A/B

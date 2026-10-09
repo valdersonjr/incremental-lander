@@ -97,7 +97,9 @@ def luna() -> np.ndarray:
     sininhos da vila. (Antes: estrondos de batalha — não combinam mais com a Lua fofa.)"""
     d = LOOP + TAIL
     rng = np.random.default_rng(101)
-    beds = [(_drone("D2", "A2", d, 2), 0, -9)]                # sem o "ar" (ruído rosa): o usuário achou o vento chato
+    # sem o "ar" (ruído rosa): o usuário achou o vento chato. v2 (auditoria 2026-10-09): o drone em D2 era 95% < 120 Hz
+    # (mudo no notebook e por cima do baixo da música) -> uma oitava acima e mais baixo, as picaretas aparecem
+    beds = [(_drone("D3", "A3", d, 2), 0, -14)]
     events = []
 
     def pick(i: int, r: np.random.Generator) -> np.ndarray:      # picareta: 2-3 tlins secos de metal na escala

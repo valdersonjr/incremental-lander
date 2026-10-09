@@ -22,8 +22,12 @@ def warm(x: np.ndarray) -> np.ndarray:
 
 def loop_a(seed: int = 1) -> np.ndarray:
     total = LOOP + 0.2 + PRE
-    hum = unison(triangle, note("D2"), total, voices=3, detune_cents=9) * 0.55          # zumbido afinado
-    hum = lowpass(hum, 320)
+    # v2 (auditoria 2026-10-09): o zumbido era só D2 (87% da energia < 120 Hz, brigando com o baixo da música e
+    # sumindo no notebook). Agora o D2 fica fino e o tom mora na oitava de cima (D3 + quinta A3, 150-450 Hz).
+    hum = unison(triangle, note("D2"), total, voices=3, detune_cents=9) * 0.22
+    hum += unison(triangle, note("D3"), total, voices=3, detune_cents=7) * 0.32
+    hum += triangle(note("A3"), total) * 0.08
+    hum = highpass(lowpass(hum, 480), 55)
     breath = lfo(total, 2 / LOOP, 900, 2200, "sine", seed=seed)                         # filtro que respira
     plasma = svf(noise(total, "pink", seed), breath, 1.2, "bp") * 0.75
     shimmer = highpass(fm(note("A5"), total, 1.5, lfo(total, 3 / LOOP, 0.4, 1.4)), 2000) * 0.05
@@ -50,7 +54,8 @@ def ignition(loop: np.ndarray, seed: int = 4, with_loop: bool = False) -> np.nda
     d = 0.32
     whoosh = svf(noise(d, "pink", seed), sweep(200, 3000, d), 0.9) * env([(0, 0), (0.05, 1), (0.2, 0.6), (d, 0)], d)
     thump = sine(sweep(110, 50, 0.18), 0.18) * decay(0.18, 0.05)
-    parts = [(whoosh, 0, -6), (thump, 0, -4)]
+    puff = triangle(sweep(note("A3"), note("D3"), 0.1), 0.1) * decay(0.1, 0.03)      # "fup" audível no notebook
+    parts = [(whoosh, 0, -4), (thump, 0, -9), (puff, 0, -3)]
     if with_loop:
         parts.append((loop[: int(SR * d)] * env([(0, 0), (d, 1)], d), 0, 0))
     return mix(parts)
@@ -73,7 +78,7 @@ OPTIONS = {"A": loop_a, "B": loop_b, "C": loop_c}
 
 if __name__ == "__main__":
     pick = sys.argv[sys.argv.index("--export") + 1] if "--export" in sys.argv else None
-    if pick:
+    if pick:   # o caráter escolhido em 2026-10-01 foi o A (plasma suave): python3 audio/src/sfx/thruster.py --export A
         lp = OPTIONS[pick]()
         save_wav("assets/audio/sfx/thruster_loop.wav", lp, "loop", loop=True)
         save_wav("assets/audio/sfx/thruster_start.wav", ignition(lp), "sfx")

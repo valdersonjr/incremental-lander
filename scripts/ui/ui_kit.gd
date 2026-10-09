@@ -12,7 +12,7 @@ const FONT_SIZE := 11
 const TITLE_SIZE := 22
 ## Passo do volume nas opcoes (botoes - e +).
 const VOLUME_STEP := 0.1
-const BUS_NAMES := {"Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
+const BUS_NAMES := {"Master": "Geral", "Music": "Música", "Ambience": "Ambiente", "SFX": "Efeitos", "UI": "Interface"}
 ## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
 const CRASH_TEXT := {"mar": "caiu no mar (splash!)", "atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
 		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado"}

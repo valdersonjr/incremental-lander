@@ -59,3 +59,6 @@ Mundos antigos (referência):
 - https://splice.com/blog/audio-soundscape-for-video-games — cama de 10–30 s + one-shots esparsos; tirar o que "salta" da cama; crossfade
 - https://audiokinetic.com/ko/blog/designing-ambience-systems-in-wwise — cama + spots aleatórios (acesso bloqueado; título/resumo da busca)
 - https://designingsound.org/2012/11/15/room-tone-emotional-tone-the-importance-of-hearing-ambience — room tone: zumbido elétrico, ar, objetos
+
+## Auditoria v2 (2026-10-09)
+- luna: drone D2/A2 (95% < 120 Hz, mudo no notebook) → D3/A3 a −14 dB; as picaretas e sinos aparecem. Perda no notebook 7,6 → 3,8 dB. Sem o ar/vento (pedido antigo do usuário mantido). Ver `mix-system`.

@@ -1,7 +1,9 @@
-## Teste de integracao da auditoria de som (2026-10-09): gramatica da interface (seta move o foco = "move";
-## grab_focus de tela nova nao soa), musica de voo = base + camada do mundo sincronizadas (camada = 1/3 da base),
-## pausa abafa musica e ambiencia (e volta), tique da contagem, previa de volume no proprio canal, todo som novo
-## carrega, e a contagem do resumo termina no total com a vinheta.
+## Teste de integracao da auditoria de som (2026-10-09, v2): gramatica da interface (seta move o foco = "move";
+## grab_focus de tela nova nao soa), musica de voo = base + camada do mundo em players gemeos (camada = 1/3 da base),
+## pausa abaixa musica e ambiencia por volume (funciona na web em modo Sample) e volta, ducking do jingle por volume,
+## todo som/variacao toca como sample (WAV), regras de simultaneidade (repeticao no mesmo instante e ignorada, limite
+## de instancias, um clique nao rouba a voz de um som importante), tique da contagem, previa de volume, e a contagem
+## do resumo termina no total com a vinheta.
 ## Imprime SOUND_FLOW_TEST OK ou FALHOU.
 extends Node
 
@@ -54,6 +56,10 @@ func _process(_delta: float) -> void:
 				if not ResourceLoader.exists(Sound.STREAMS[n]):
 					missing.append(n)
 			_check("todos_os_sons_existem", missing.is_empty())
+			var diag := Sound.diagnostics()
+			_check("tudo_toca_como_sample", (diag["not_sampled"] as Array).is_empty())
+			if not (diag["not_sampled"] as Array).is_empty():
+				_log.append("nao_sample=%s" % [diag["not_sampled"]])
 			_a.grab_focus()                                    # foco de tela nova: nao soa
 		4:
 			_check("grab_focus_nao_soa", _played("move") == 0)
@@ -67,27 +73,58 @@ func _process(_delta: float) -> void:
 			_check("voltar_tique_previa", _played("back") == 1 and _played("tally") == 2 and _played("crystal_2") == 1)
 			Sound.music("flight", "bolhas")
 		10:
-			var s := Sound._music[0].stream as AudioStreamSynchronized
-			_check("voo_com_camada_do_mundo", s != null and s.stream_count == 2)
-			if s != null:
-				var base := s.get_sync_stream(0).get_length()
-				var layer := s.get_sync_stream(1).get_length()
-				_check("camada_cabe_3x_na_base", absf(layer * 3.0 - base) < 0.01)
+			var base := Sound._music[0]
+			var layer := Sound._layers[0]
+			_check("voo_com_camada_do_mundo", base.playing and layer.playing and layer.stream != null)
+			if layer.stream != null:
+				_check("camada_cabe_3x_na_base",
+						absf(layer.stream.get_length() * 3.0 - base.stream.get_length()) < 0.01)
+				_check("camada_junto_da_base",
+						absf(fmod(base.get_playback_position(), layer.stream.get_length()) - layer.get_playback_position()) < 0.05)
 			Sound.music("flight", "bolhas")                    # o mesmo: nao reinicia
 			_check("mesma_musica_nao_troca", Sound._music_name == "flight:bolhas")
 			Sound.music("title")
-			_check("titulo_sem_camada", not Sound._music[0].stream is AudioStreamSynchronized)
+			_check("titulo_sem_camada", not Sound._layers[0].playing)
 			Sound.muffle(true)
 		40:
-			var idx := AudioServer.get_bus_index(&"Music")
-			var last := AudioServer.get_bus_effect_count(idx) - 1
-			var lp := AudioServer.get_bus_effect(idx, last) as AudioEffectLowPassFilter
-			_check("pausa_abafa", lp != null and AudioServer.is_bus_effect_enabled(idx, last) and lp.cutoff_hz < 1500.0)
+			_check("pausa_abaixa_por_volume", Sound._muffle_db < -5.0 and Sound._music[0].volume_db < -5.0)
+			if Sound.effects_ok:                               # desktop: tambem abafa (passa-baixa)
+				var idx := AudioServer.get_bus_index(&"Music")
+				var last := AudioServer.get_bus_effect_count(idx) - 1
+				var lp := AudioServer.get_bus_effect(idx, last) as AudioEffectLowPassFilter
+				_check("pausa_abafa", lp != null and AudioServer.is_bus_effect_enabled(idx, last) and lp.cutoff_hz < 1500.0)
 			Sound.muffle(false)
 		90:
-			var idx := AudioServer.get_bus_index(&"Music")
-			var last := AudioServer.get_bus_effect_count(idx) - 1
-			_check("fim_da_pausa_desabafa", not AudioServer.is_bus_effect_enabled(idx, last))
+			_check("fim_da_pausa_volta", absf(Sound._muffle_db) < 0.01 and Sound._music[0].volume_db > -0.5)
+			if Sound.effects_ok:
+				var idx := AudioServer.get_bus_index(&"Music")
+				var last := AudioServer.get_bus_effect_count(idx) - 1
+				_check("fim_da_pausa_desabafa", not AudioServer.is_bus_effect_enabled(idx, last))
+			# simultaneidade: dois cliques no mesmo instante = um; tique da contagem nao e barrado
+			var c0 := _played("click")
+			Sound.ui("click")
+			Sound.ui("click")
+			_check("clique_repetido_no_mesmo_instante_vira_um", _played("click") == c0 + 1)
+			# vozes: todas ocupadas por sons importantes -> um "move" nao corta nenhum
+			for i in Sound.VOICES:
+				Sound._players[i].stream = Sound._stream("record")
+				Sound._players[i].play()
+				Sound._voice_name[i] = "record"
+			var m0 := _played("move")
+			Sound._last_start.erase("move")
+			Sound.ui("move")
+			_check("clique_nao_rouba_som_importante", _played("move") == m0)
+			Sound._last_start.erase("record")
+			Sound.sfx("record")                                # mesmo som no limite (3): recomeca o mais antigo
+			var n := 0
+			for i in Sound.VOICES:
+				n += int(Sound._voice_name[i] == "record")
+			_check("limite_reusa_a_mesma_voz", n == Sound.VOICES)
+			for p: AudioStreamPlayer in Sound._players:
+				p.stop()
+			Sound.jingle("milestone")
+		96:
+			_check("jingle_abaixa_a_musica", Sound._duck_db < -5.0 and Sound._music[0].volume_db < -5.0)
 			_summary = SUMMARY.instantiate()
 			add_child(_summary)
 			_summary.show_summary({"reason": "sem_gas", "rec_values": {"run_money": 1234.0}, "rec_start": {}})

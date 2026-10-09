@@ -66,3 +66,6 @@
 - https://payhip.com/b/BdMWQ — música de idle: suave, não intrusiva, para sessões longas
 - https://wondera.ai/tools/x-default/ugc/silent-snowfall-idle-game-ambient — BPM baixo, sino/kalimba, camadas que alternam
 - https://payhip.com/b/cFzDI — trilha de idle em camadas que se combinam/alternam (trilha adaptativa sem fadiga)
+
+## Auditoria v2 (2026-10-09)
+- title e flight: baixo = `_bass_inst` (o do tema: triângulo + harmônico de pulso) e −3 dB; voo com bumbo 140→55 Hz −10 dB; passa-alta 35 Hz no master. Grave < 120 Hz: title 68% → 50%, flight 72% → 52%; perda no notebook 4,4/5,8 → 3,3/4,0 dB. Tema da ocarina e camadas intactos. A camada toca num player gêmeo (não mais AudioStreamSynchronized). Ver `mix-system`.

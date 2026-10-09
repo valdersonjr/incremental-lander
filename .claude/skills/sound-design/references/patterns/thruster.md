@@ -28,3 +28,6 @@
 - https://www.moddb.com/tutorials/tutorial-engine-thruster-sounds — 8 loops por faixa, kick-up/power-down, camadas trocáveis por upgrade
 - https://blog.criware.com/index.php/2022/12/12/designing-spaceship-engines/ — camadas por RPM, curvas de volume/pitch, phaser/flanger contra fadiga
 - https://synthanatomy.com/2018/10/spacemotors-is-a-sci-fi-vehicle-synthesizer-for-complex-dynamic-engine-sounds.html — motores sci-fi sintetizados
+
+## Auditoria v2 (2026-10-09)
+- Zumbido saiu do D2 (87% < 120 Hz, mascarava o baixo da música e sumia no notebook) para D2 fino + D3 + quinta A3 (passa-alta 55 Hz, passa-baixa 480 Hz): 14% < 120 Hz. Ignição ganhou "fup" de triângulo A3→D3 e o thump sub −5 dB; o corte deriva do loop novo (perda no notebook 11 → 3,6 dB). Mesmo caráter plasma suave (opção A). Ver `mix-system`.

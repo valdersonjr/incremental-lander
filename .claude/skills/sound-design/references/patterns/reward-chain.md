@@ -28,3 +28,6 @@
 - https://pyfxr.readthedocs.io/en/stable/generating.html — gerador Pickup/Coin do sfxr
 - https://www.vinzius.com/snippets/coin-pickup-sound-effect-godot-4/ — "ding" = nota + quinta, ataque rápido, decaimento exponencial
 - https://bugnet.io/blog/how-to-build-a-combo-system-that-feels-good — feedback de combo que escala
+
+## Auditoria v2 (2026-10-09)
+- crystal: índice FM acompanha a altura (`(B5/nota)^4`, até B5 = igual): o D6 tinha 23% > 5 kHz contra 6–7% dos irmãos → 8%. Cristais 1 e 2 idênticos byte a byte. No Sound, a família conta junta no limite de instâncias (3). Ver `mix-system`.

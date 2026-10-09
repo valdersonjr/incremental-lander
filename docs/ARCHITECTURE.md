@@ -159,10 +159,15 @@ art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/s
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
-autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) one-shots (8 vozes); music("title"|"flight"|"",
-                              # mundo) e ambience(mundo|"") com crossfade de 1,2 s (a mesma faixa não reinicia; um tween por par);
-                              # o voo = AudioStreamSynchronized(flight.wav + layer_<mundo>.wav). jingle(nome) um por vez, música
-                              # abaixa -9 dB (AudioEffectAmplify no bus Music). Gramática da UI: "move" automático quando o foco
+autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) one-shots (10 vozes com prioridade; RULES = limite
+                              # de instâncias por som/família + intervalo mínimo; VARIANTS = sorteio de arquivo + pitch/volume);
+                              # music("title"|"flight"|"", mundo) e ambience(mundo|"") com crossfade de 1,2 s (a mesma faixa não
+                              # reinicia; um tween por par); o voo = flight.wav + layer_<mundo>.wav em players gêmeos disparados
+                              # juntos. jingle(nome) um por vez, música abaixa -9 dB. Mixagem por VOLUME dos players (_process:
+                              # crossfade + duck + pausa) porque a web (modo Sample) não tem efeito de bus; effects_ok = desktop
+                              # (passa-baixa extra na pausa). diagnostics() / ?audiotest na web (patterns web-audio-sample,
+                              # mix-system). Master: HardLimiter -1 dB (default_bus_layout) + web/audio_limiter.js no head_include
+                              # do preset Web. Opção "Geral" = bus Master (0 = silencia tudo). Gramática da UI: "move" automático quando o foco
                               # anda por seta/Tab (Viewport.gui_focus_changed até 1 quadro depois; grab_focus não soa), back(),
                               # tally(n), preview(bus) do volume, muffle(on) = passa-baixa 700 Hz em Music+Ambience (menu aberto,
                               # ligado pela visibilidade do PauseMenu). Main: título/hangar = "title", voo = "flight"+mundo,
@@ -172,6 +177,8 @@ autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) 
                               # gelo, vento, correntes, bolhas). RunSummary: contagem do dinheiro com tiques + ta-dá/recorde.
                               # music_beat(): batidas da faixa atual pela posição real do áudio (BPM por faixa) — a tela
                               # inicial (TitleBackdrop/TitleScreen: "Noite de história", art/src/title/title_night.py) escolhe quadros e fases por ela
+web/audio_limiter.js          # limitador do Master na web (WaveShaper soft-clip -0,3 dBFS), copiado no html/head_include do preset
+tests/test_audio_assets.py    # mede todo WAV (loudness/pico/clip/duração/agudo/notebook) + referências + limitador web no preset
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui (feedback_sfx.py, world_loops.py, ui_sfx.py...)
 audio/src/ambience/world_ambience.py # ambiência dos 6 mundos -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
 audio/src/music/soundtrack.py # title (D maior, 32 compassos), flight (D lídio, 48) e layer_<mundo> (16, mono) -> assets/audio/music/

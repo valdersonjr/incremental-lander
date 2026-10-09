@@ -17,7 +17,9 @@ def crystal(n: int) -> np.ndarray:
     """Sino de vidro: FM (ratio 3,5, índice caindo) na nota + quinta suave; tique de ruído no ataque."""
     root = CRYSTAL_NOTES[n]
     dur = 0.32
-    body = fm(note(root), dur, ratio=3.5, index=env([(0, 2.2), (0.06, 0.6), (dur, 0.2)], dur)) * decay(dur, 0.085)
+    # índice acompanha a altura (keyboard tracking): o D6 tinha 23% > 5 kHz contra 6-7% dos irmãos; até B5 = igual
+    k = min(1.0, note("B5") / note(root)) ** 4
+    body = fm(note(root), dur, ratio=3.5, index=env([(0, 2.2 * k), (0.06, 0.6 * k), (dur, 0.2)], dur)) * decay(dur, 0.085)
     fifth = sine(note(FIFTH[root]), dur) * decay(dur, 0.06)
     tick = highpass(noise(0.012, "white", seed=40 + n), 4000) * decay(0.012, 0.004)
     x = mix([(body, 0, 0), (fifth, 0.008, -9), (tick, 0, -16)])
