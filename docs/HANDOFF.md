@@ -4,6 +4,18 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Aprendiz validado contra os jogos mais vendidos (ROADMAP 18.5f)**. A base já seguia o padrão; aplicadas as 5
+  lacunas: relevo baixo em todo salto antes da 1ª entrega; **"Veja como!"** (passou das repetições ou sem gás → o
+  piloto automático voa o mesmo salto; motor/girar devolve a nave; a entrega vale; se o guia falhar → cartão);
+  **Nivelador emprestado** ao aprendiz (`onboarding.lent_assists`); **"PILOTO FORMADO!"** na 5ª entrega. Simulador:
+  `Profile.guide_after` (novato: mediana da 1ª compra igual, pior caso 682 → 354 s; `balance/sims/2026-10-08-novice-guide.py`).
+  Verificado: check (99), 111 testes + todas as integrações (`onboarding_flow` cobre guia, assumir o controle, guia que
+  pousa e entrega), paridade 43, capturas `flight_ui_preview -- --no_title --new --guide` (bateu → VEJA COMO! → pousa
+  sozinho) e `--new --meter --graduate` (Nivelador + medidor; aviso de formatura).
+  **Para o usuário**: escolher no protótipo `art/previews/dicas/dicas.html` (git-ignorado; servido em
+  http://localhost:8791/dicas.html enquanto o servidor da sessão estiver de pé) como mostrar o "tente de novo" sem texto:
+  A figurinha no aviso · B fantasma no lugar · C balão na nave (recomendado B+C). Depois: arte (pixel-art) + código.
+  Aviso de formatura usa o jingle milestone e texto (arte/som próprios só se quiser).
 - **Bug do loop do aprendiz corrigido** (relato do usuário jogando um save novo): missão difícil demais prendia o
   jogador (a batida repetia o mesmo salto para sempre). Agora: no máximo 2 repetições (`retries_per_hop`), depois volta
   ao cartão com o gás do começo do salto ("OUTRA MISSÃO!"); sem pedido ao alcance, o run acaba. Verificado: check,

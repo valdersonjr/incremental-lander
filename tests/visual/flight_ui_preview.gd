@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao]] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -55,6 +55,20 @@ func _ready() -> void:
 		fl.lander.global_position = Vector2(x, TerrainGen.height_at(fl.terrain.ridge, x) - 140.0)
 		fl.lander.vel_m = Vector2(0.0, 4.0)
 		fl.lander.reset_physics_interpolation()
+	if "--guide" in args:                                      # (com --new) "Veja como!": passou das tentativas
+		await get_tree().create_timer(2.5).timeout
+		main._retries = int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
+		main._flight.lander.state = Lander.State.FLYING
+		main._flight.lander.crash_now("vertical_rapido")
+	if "--no_lander" in args:                                  # fundo limpo para maquetes (sem a nave nem as ajudas)
+		await get_tree().create_timer(2.5).timeout
+		main._flight.lander.visible = false
+		(main._flight.find_child("Coach", true, false) as CanvasItem).visible = false
+		for n: Node in main._flight.find_children("*", "AssistView", true, false):
+			(n as CanvasItem).visible = false
+		(main.find_child("Hud", true, false) as CanvasItem).visible = false
+	if "--graduate" in args:                                   # aviso de fim do aprendiz
+		main._hud.show_graduation()
 	if "--accept" in args:                                     # joinha + comemoracao (sem partir)
 		offers._on_accept()
 	if "--no_offers" in args:                                  # so o mapa (fundo das maquetes da janela de conversa)

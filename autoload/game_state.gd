@@ -354,6 +354,12 @@ func shows_bulk() -> bool:
 	return Sandbox.active() or n >= int(onboarding().get("bulk_from_levels", 0))
 
 
+## Ajuda de voo emprestada ao aprendiz (world.json > onboarding.lent_assists; Smart Steering do Mario Kart): aparece no
+## voo como se fosse comprada; a NAVE continua mostrando so as compradas (assist_on).
+func assist_lent(id: String) -> bool:
+	return apprentice() and id in (onboarding().get("lent_assists", []) as Array)
+
+
 ## Dica sem texto ja aprendida (o jogador usou o comando)?
 func tip_done(id: String) -> bool:
 	return id in tips

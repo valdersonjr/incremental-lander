@@ -248,16 +248,22 @@ Planejados (`godot-dev`):
 - `Main`: jogo novo (menu ou pausa) → `_start_run()` direto; `_show_offers` no 1º salto aceita sozinho o pedido mais
   perto (`_first_simple_offer`, distância `first_hop.distance_m`); `_on_offer_chosen` liga `Flight.gentle/minigame_on/
   apprentice` e guarda `_hop_gas`; batida/`stranded` do aprendiz → `_retry_hop` (tela escura → `Flight.retry_mission`
-  → `Hud.show_retry`; passou de `retries_per_hop` ou sem gás → `Flight.reset_to_start` + `Hud.show_other_mission` +
-  cartão de novo, sem o 1º salto automático); aprendiz sem pedido alcançável → fim do run; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
+  → `Hud.show_retry`; passou de `retries_per_hop` ou sem gás → "Veja como!": `Flight.guided` + `retry_mission` +
+  `Hud.show_guide` (piloto automático no mesmo salto; a entrega vale); o guia também falhou (`_guided`) →
+  `Flight.reset_to_start` + `Hud.show_other_mission` + cartão de novo, sem o 1º salto automático); antes da 1ª entrega
+  todo salto é `gentle`; fim do aprendiz → `Hud.show_graduation` + jingle milestone; aprendiz sem pedido alcançável → fim do run; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
 - `Flight.retry_mission(gas)` repete o último `begin_mission` (mesma seed); `gentle` = relevo baixo sem crista nem
-  paisagem; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).
+  paisagem; `guided` = `set_target` liga um `Autopilot` e `_unhandled_input` (motor/girar) o desliga e emite
+  `took_over`; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).
 - `Coach` (`game/flight/coach.gd`, filho do Flight, z 5): teclinhas desenhadas (motor parado na partida; girar no ar)
   e medidor de descida perto do chão. Placeholder em `_draw` (cores Resurrect 64).
 - HUD: placar sem a grade de recordes no 1º run, corações só depois do aprendiz, `show_verb(verbo, texto)`,
   `show_retry(motivo)`; `UiKit.crash_tip`. NAVE: `_visible_tabs()` e ×10/MÁX por `shows_bulk`. Mapa: moedas, "NAVE  !"
   e "Novo amiguinho!" (`MissionIntro`) quando a Estrada libera um ratinho. Ofertas: aprendiz não vê "falta gás".
-- Prévia: `flight_ui_preview` é veterano por padrão; `--new` = jogador novo, `--meter` = caindo perto do chão.
+- `GameState.assist_lent(id)`: ajuda comprável emprestada ao aprendiz (`onboarding.lent_assists`, hoje o Nivelador);
+  o `AssistView` desenha, a NAVE continua usando `assist_on` (só as compradas).
+- Prévia: `flight_ui_preview` é veterano por padrão; `--new` = jogador novo, `--meter` = caindo perto do chão,
+  `--guide` = "Veja como!", `--graduate` = aviso de formatura, `--no_lander` = fundo limpo para maquetes.
   Integração: `tests/integration/onboarding_flow`.
 
 ## Regras de fluxo (auditoria de lançamento, 2026-10-03)

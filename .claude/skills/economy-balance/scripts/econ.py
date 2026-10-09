@@ -268,6 +268,7 @@ class Profile:
     learn_hops: float = 1.0
     retry_s: float = 0.0
     apprentice: int = 0
+    guide_after: int = 0          # falhas seguidas no salto antes do "Veja como!" (piloto automatico entrega); 0 = nunca
     attempts: int = 0             # contadores do jogo todo (simulate zera numa copia do perfil)
     delivered: int = 0
 
@@ -299,6 +300,7 @@ def profile_from(E: dict, name: str) -> Profile:
     p = copy.deepcopy(PROFILES[name])
     if p.apprentice < 0:                                       # aprendiz do jogo: mesmo numero do world.json
         p.apprentice = int(load_onboarding().get("apprentice_stars", 0))
+        p.guide_after = int(load_onboarding().get("retries_per_hop", 0)) + 1
     for k, v in E.get("profiles_override", {}).get(name, {}).items():
         setattr(p, k, v)
     return p
@@ -926,6 +928,7 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
     n = 0
     maxd = dist = 0.0
     crashed = False
+    fails = 0                                                  # aprendiz: batidas seguidas no salto atual
     while n < max_per_run:
         pick, best_score = None, 0.0
         fat = run_fatigue_mult(E, n)
@@ -951,13 +954,16 @@ def _do_run_missions(E: dict, planet: dict, stats: dict, prof: Profile, rng: ran
             if prof.crash_extra > 0:                           # novato: bate mais no comeco, aprende tentando
                 pc = min(0.95, pc + prof.crash_extra * math.exp(-prof.attempts / prof.learn_hops))
                 prof.attempts += 1
-            if rng.random() < pc:
+            guided = prof.guide_after > 0 and fails >= prof.guide_after
+            if not guided and rng.random() < pc:
                 if prof.delivered < prof.apprentice:           # aprendiz: o mesmo salto de novo, com o gas dele
                     gas += g_need * fat
                     t += prof.retry_s                  # (modelo: re-escolhe o pedido; o jogo repete o mesmo)
+                    fails += 1
                     continue
                 crashed = True
                 break
+            fails = 0                                          # "Veja como!": o piloto automatico entrega (paga igual)
             prof.delivered += 1
         if log is not None:
             log.append((d, tier["id"], q, cm, pick, ch["star"]))

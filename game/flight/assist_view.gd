@@ -45,7 +45,7 @@ func _draw() -> void:
 		_draw_shadow(l.global_position, ground)
 	if flying and GameState.assist_on("land_predict"):
 		_draw_predict(target, cfg)
-	if flying and GameState.assist_on("land_level") and alt_m < float(ac["level_alt_m"]):
+	if flying and (GameState.assist_on("land_level") or GameState.assist_lent("land_level")) and alt_m < float(ac["level_alt_m"]):
 		_draw_level(l, cfg)
 	if GameState.assist_on(GameState.ASSIST_FREE):
 		_draw_arrow(l.global_position, target, float(ac["arrow_r_px"]))

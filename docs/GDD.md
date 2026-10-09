@@ -171,7 +171,12 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
 - **Aprendiz** (menos de 5 entregas no jogo): bater ou ficar sem gás **não acaba o run**. A nave volta para a partida
   do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Depois de 2 repetições
   (ou sem gás) o salto não repete mais: a nave volta para a partida e o cartão abre ("OUTRA MISSÃO!") — missão difícil
-  demais nunca prende o jogador; sem nenhum pedido ao alcance, o run acaba. Pousar devagar e reto
+  demais nunca prende o jogador; sem nenhum pedido ao alcance, o run acaba.
+  **Revisão (validação contra os mais vendidos, 2026-10-08)**: depois das repetições (ou sem gás) vem o **"Veja como!"**
+  (Super Guide do New Super Mario Bros. Wii): o piloto automático voa o mesmo salto, apertar o motor ou girar devolve a
+  nave e a entrega vale; só se o guia também falhar o cartão abre. Antes da 1ª entrega todo salto tem relevo baixo
+  (quem desiste do 1º não ganha um mais difícil). O **Nivelador** fica emprestado durante o aprendiz (Smart Steering do
+  Mario Kart). Ao fazer a 5ª entrega: **"PILOTO FORMADO!"** com festa (daqui em diante bater acaba a viagem). Pousar devagar e reto
   fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
 - **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
   no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave

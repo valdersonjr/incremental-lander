@@ -1,7 +1,8 @@
 ## Teste de integracao dos PRIMEIROS MINUTOS (auditoria FTUE, 2026-10-08; world.json > onboarding), numa pasta propria
 ## (user://itest_onboarding). Jogo novo comeca voando no 1o salto ja aceito (perto, relevo baixo, sem minijogo) ->
 ## aprendiz bate e tenta o mesmo salto de novo (run continua, gas do comeco do salto) -> pouso devagar fora da
-## plataforma para no chao -> falhou o limite de tentativas: volta ao cartao de missoes -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
+## plataforma para no chao -> falhou o limite de tentativas: "Veja como!" (piloto automatico; o motor devolve a nave)
+## -> o guia tambem falhou: volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> o guia pousa e a entrega vale -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
 ## "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
 extends Node
 
@@ -64,18 +65,47 @@ func _ready() -> void:
 		var before: int = main._retries
 		flight.lander.crash_now("fora_da_plataforma")
 		await _until(func() -> bool: return main._offers.visible or (main._retries > before and flight.lander.visible))
-	_check(not main._run.over and main._offers.visible, "depois das tentativas: cartao de missoes (nao repete mais)")
+	# passou do limite: "Veja como!" (piloto automatico no mesmo salto; qualquer comando devolve a nave)
+	_check(main._guided and flight.guided and flight.lander.autopilot != null and flight.gentle,
+			"depois das tentativas: Veja como! no mesmo salto")
+	_check(GameState.assist_lent("land_level") and not GameState.assist_on("land_level"),
+			"aprendiz: Nivelador emprestado (sem aparecer como comprado)")
+	await _wait_ready(main)
+	var press := InputEventAction.new()
+	press.action = &"thrust"
+	press.pressed = true
+	Input.parse_input_event(press)
+	await _frames(2)
+	press = press.duplicate()
+	press.pressed = false
+	Input.parse_input_event(press)
+	_check(flight.lander.autopilot == null and not flight.guided, "apertar o motor tira o piloto automatico")
+	flight.lander.state = Lander.State.FLYING
+	flight.lander.crash_now("fora_da_plataforma")              # nem com o guia: cartao de missoes
+	await _until(func() -> bool: return main._offers.visible)
+	_check(not main._run.over and main._offers.visible, "guia tambem falhou: cartao de missoes (nao repete mais)")
 	_check(is_equal_approx(flight.lander.gas, gas0) and flight.lander.visible
 			and flight.lander.state == Lander.State.LANDED, "de volta na partida com o gas do comeco do salto")
 	_check(flight.target_pad_id < 0, "sem alvo enquanto escolhe")
 	main._on_offer_chosen(0)                                   # escolheu outra: voa normalmente
 	await _wait_ready(main)
 	_check(main._retries == 0 and not main._run.over, "missao nova zera as tentativas")
+	_check(main._flight.gentle and not main._guided, "antes da 1a entrega: relevo baixo tambem na missao escolhida")
+	# o guia pousa sozinho e a entrega vale (o aprendiz nunca fica preso)
+	for k in tries + 1:
+		await _wait_ready(main)
+		main._flight.lander.state = Lander.State.FLYING
+		main._flight.lander.crash_now("vertical_rapido")
+		await _until(func() -> bool: return main._flight.lander.state != Lander.State.CRASHED and main._fade.modulate.a < 0.05)
+	_check(main._guided and main._flight.lander.autopilot != null, "Veja como! na missao escolhida")
+	await _until(func() -> bool: return not main._run.deliveries.is_empty() or main._offers.visible, 900)
+	_check(main._run.deliveries.size() == 1 and GameState.stars == 1, "o guia pousou e a entrega valeu (entregas %d)" % [
+			main._run.deliveries.size()])
 	# fim do run com dinheiro para uma peca: CONTINUAR vai para a NAVE (1a visita: so PECAS, x1)
-	GameState.resources["credits"] = 100.0
 	main._run.finish("sem_gas")
 	main._end_run()
 	await _frames(2)
+	GameState.resources["credits"] = 100.0                     # depois do fim do run (a entrega do guia ja pagou)
 	main._on_continue()
 	await _frames(3)
 	var hangar: Hangar = main._hangar

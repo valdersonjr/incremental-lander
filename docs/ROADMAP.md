@@ -201,6 +201,11 @@
   - [ ] M2 janela de missão menor (mantida a maquete aprovada; o 1º salto mostra o mundo antes dela) — rever jogando
   - [ ] arte final do Coach (teclinha e medidor; pixel-art) e som de "tente de novo" (sound-design), se o usuário quiser
   - [ ] jogar e medir: funil `ftue.py` + 3 crianças (PLAYTEST_KIDS); novato simulado ainda ~5 min até a 1ª compra
+- [x] 18.5f Aprendiz validado contra os jogos mais vendidos (2026-10-08; GDD §8, DECISIONS):
+  - [x] relevo baixo em todo salto antes da 1ª entrega · "Veja como!" (piloto automático; o motor devolve a nave)
+  - [x] Nivelador emprestado ao aprendiz · "PILOTO FORMADO!" na 5ª entrega · simulador: `guide_after` no novato
+  - [ ] retorno em figura em vez de texto: escolher no protótipo `art/previews/dicas/dicas.html` (A/B/C; recomendado B+C)
+        e depois fazer a arte (pixel-art) e o código
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

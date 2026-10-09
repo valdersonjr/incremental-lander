@@ -340,8 +340,19 @@ func show_verb(verb: String, text: String = "") -> void:
 
 ## Aprendiz: o salto nao deu depois das tentativas; o cartao abre para escolher outra missao.
 func show_other_mission() -> void:
-	_show_toast("OUTRA MISSÃO!", "essa ficou difícil: escolha uma mais perto", &"MoneyLabel")
+	_show_toast("OUTRA MISSÃO!", "essa ficou difícil: escolha outra", &"MoneyLabel")
 	_set_status(_idle_status())
+
+
+## Aprendiz: "Veja como!" - o piloto automatico voa o salto; qualquer comando devolve a nave ao jogador.
+func show_guide() -> void:
+	_show_toast("VEJA COMO!", "aperte o motor para pilotar", &"GoodLabel")
+	_set_status(_idle_status())
+
+
+## Fim do aprendiz (world.json > onboarding.apprentice_stars entregas): daqui em diante bater acaba a viagem.
+func show_graduation() -> void:
+	_show_toast("PILOTO FORMADO!", "agora é pra valer: bater acaba a viagem", &"GoodLabel")
 
 
 ## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Aviso animador + o jeito de acertar.

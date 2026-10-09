@@ -19,3 +19,10 @@ sem o aprendiz 122–580 s. Casual/engaged idênticos ao modelo anterior.
 ## Decisão / pendência
 O usuário mandou aplicar a auditoria. O novato ainda passa de 4 min em 3/5 seeds porque a 1ª compra só vem no fim
 do 1º run. Medir com `session.csv` antes de baixar preço ou encurtar o 1º run.
+
+## "Veja como!" (2026-10-08, validação contra os mais vendidos)
+Super Guide (NSMB Wii: oferecido depois de 8 mortes) e Crash (máscara extra depois de mortes seguidas): a ajuda
+cresce com a falha. No jogo: depois de `retries_per_hop` repetições (ou sem gás), o piloto automático voa o mesmo
+salto e qualquer comando devolve a nave; a entrega vale. No modelo: `Profile.guide_after` (= retries_per_hop + 1
+batidas seguidas → entrega). Efeito medido (0,15 h, 20 seeds): mediana da 1ª compra igual (191,5 s); pior caso
+682 → 354 s. Lição: a ajuda dinâmica não mexe no jogador médio, só corta a cauda dos azarados — o que se quer.

@@ -43,6 +43,7 @@ var _hop_gas := 0.0
 var _first_hop := false
 var _retries := 0                                  # tentativas repetidas do salto atual (aprendiz)
 var _no_auto_hop := false                          # o aprendiz desistiu do 1o salto: escolhe no cartao
+var _guided := false                               # o "Veja como!" ja voou este salto (falhou de novo -> cartao)
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -309,6 +310,7 @@ func _start_run() -> void:
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
 	_flight.rested.connect(func(_i: Dictionary) -> void: Telemetry.event("rest"))
+	_flight.took_over.connect(func() -> void: Telemetry.event("take_over"))
 	_flight.lander.took_off.connect(func() -> void: Telemetry.event("takeoff"))
 	_offers.offer_chosen.connect(_on_offer_chosen)
 	_offers.end_requested.connect(_on_end_requested)
@@ -373,7 +375,10 @@ func _on_offer_chosen(index: int) -> void:
 	var m := _run.taken_mission
 	_hop_gas = _flight.lander.gas
 	_retries = 0
-	_flight.gentle = _first_hop
+	_guided = false
+	_flight.guided = false
+	# relevo baixo no 1o salto e em todo salto antes da 1a entrega (quem desistiu do 1o nao ganha um mais dificil)
+	_flight.gentle = _first_hop or (GameState.first_hop() and not _demo)
 	_flight.minigame_on = (GameState.shows_minigame() or _demo) and not _first_hop
 	_flight.apprentice = GameState.apprentice() and not _demo
 	Telemetry.event("mission", "%s:%d" % [str(m.get("kind", "simple")), int(d)])
@@ -438,6 +443,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		gift += _taxi_gift_pay
 	Telemetry.event("delivery", "%.2f" % float(result["quality"]))
 	var stars_before := _run.stars
+	var was_apprentice := GameState.apprentice()
 	var rewards := _run.complete_delivery(dist, result["quality"], result["gas_used"], result.get("failed", []), gift,
 			bool(result.get("perfect", false)), result.get("partial", {}), result.get("minigame", [0, 0]))
 	var rep_kind := str(_run.deliveries[-1].get("rep_kind", "simple"))
@@ -459,6 +465,12 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		tw.tween_interval(0.9)
 		tw.tween_callback(_hud.show_reputation_up.bind(rep_kind, GameState.rep_level(rep_kind)))
 		tw.tween_callback(Sound.jingle.bind("unlock"))
+	if was_apprentice and not GameState.apprentice() and not _demo:   # fim do aprendiz: festa (bater acaba o run)
+		Telemetry.event("graduated")
+		var tg := _hud.create_tween()
+		tg.tween_interval(1.8 if rep_up else 0.9)
+		tg.tween_callback(_hud.show_graduation)
+		tg.tween_callback(Sound.jingle.bind("milestone"))
 	_show_offers()
 
 
@@ -473,12 +485,15 @@ func _on_stranded() -> void:
 
 ## Aprendiz (world.json > onboarding): a batida (ou o gas que acabou) nao acaba o run. A tela escurece, a nave volta
 ## para a partida do MESMO salto com o gas do comeco dele, e o aviso diz o jeito de acertar. Depois de retries_per_hop
-## repeticoes (ou sem gas) o salto nao repete mais: a nave volta para a partida e o cartao abre para escolher outra
-## missao (missao dificil demais nunca prende o jogador).
+## repeticoes (ou sem gas) vem o "Veja como!" (Super Guide do New Super Mario Bros. Wii): o piloto automatico voa o
+## mesmo salto e qualquer comando devolve a nave ao jogador; a entrega vale normalmente. Se ainda assim nao der, a nave
+## volta para a partida e o cartao abre para escolher outra missao (missao dificil demais nunca prende o jogador).
 func _retry_hop(reason: String) -> void:
 	_retries += 1
-	var give_up := reason == "sem_gas" or _retries > int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
-	Telemetry.event("give_up" if give_up else "retry", reason)
+	var give_up := _guided
+	var guide := not give_up and (reason == "sem_gas"
+			or _retries > int(WorldConfig.load_config()["onboarding"]["retries_per_hop"]))
+	Telemetry.event("give_up" if give_up else ("guide" if guide else "retry"), reason)
 	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
 	var flight := _flight
 	var tw := _fade.create_tween()
@@ -489,14 +504,21 @@ func _retry_hop(reason: String) -> void:
 		return
 	if give_up:
 		_retries = 0
+		_guided = false
 		_first_hop = false
 		_no_auto_hop = true
+		_flight.guided = false
 		_flight.reset_to_start(_hop_gas)
 		_hud.show_other_mission()
 		_show_offers()
 	else:
+		_guided = guide
+		_flight.guided = guide
 		_flight.retry_mission(_hop_gas)
-		_hud.show_retry(reason)
+		if guide:
+			_hud.show_guide()
+		else:
+			_hud.show_retry(reason)
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 

@@ -11,6 +11,8 @@ signal delivery_finished(result: Dictionary)
 signal stranded
 ## Aprendiz: a nave parou no chao fora da plataforma (pode decolar de novo).
 signal rested(info: Dictionary)
+## "Veja como!": o jogador apertou um comando e assumiu a nave do piloto automatico.
+signal took_over
 
 var planet_id := "luna"
 var stats: Dictionary = {}
@@ -36,10 +38,12 @@ var target_tier := "normal"
 var target_dir := 1                                # lado do alvo: 1 direita, -1 esquerda
 ## Primeiros minutos (world.json > onboarding; o Main liga antes de begin_mission): gentle = 1o salto do jogo (relevo
 ## baixo, sem crista e sem paisagem sorteada); minigame_on = minijogo do mundo neste salto; apprentice = pouso devagar
-## fora da plataforma nao bate (Lander.ground_rest).
+## fora da plataforma nao bate (Lander.ground_rest); guided = "Veja como!" (o piloto automatico voa o salto ate o
+## jogador apertar um comando, como o Super Guide; ver _unhandled_input).
 var gentle := false
 var minigame_on := true
 var apprentice := false
+var guided := false
 var _last_mission: Array = []                      # argumentos do ultimo begin_mission (retry_mission repete o salto)
 ## Missao da entrega atual (economy.json contracts.missions; fisica em world.json missions): {kind, star, parts}.
 ## failed = kinds das regras que falharam (a entrega paga menos; o run continua).
@@ -143,6 +147,18 @@ func _process(delta: float) -> void:
 		var target := TerrainGen.mean_height(terrain.ridge, center.x, float(gf["span_px"])) - float(terrain.pads[0]["y"])
 		_bg_ground = lerpf(_bg_ground, target, 1.0 - exp(-float(gf["speed"]) * delta))
 	backdrop.follow(center + Vector2(_bg_origin, -_bg_ground))
+
+
+## "Veja como!" (aprendiz): qualquer comando de voo tira o piloto automatico e devolve a nave ao jogador.
+func _unhandled_input(event: InputEvent) -> void:
+	if not guided or lander.autopilot == null:
+		return
+	for a: StringName in [&"thrust", &"rotate_left", &"rotate_right"]:
+		if event.is_action_pressed(a):
+			lander.autopilot = null
+			guided = false
+			took_over.emit()
+			return
 
 
 ## Tremor de tela (somado; 1 = batida). Desligavel nas opcoes.
@@ -311,7 +327,7 @@ func set_target(distance_m: float, tier: String = "normal", dir: int = 1, p_miss
 	_setup_mission()
 	_setup_gift()
 	_setup_minigame()
-	if _demo:
+	if _demo or guided:
 		var ap := Autopilot.new()
 		ap.target = terrain.pads[target_pad_id]
 		ap.ridge = terrain.ridge
