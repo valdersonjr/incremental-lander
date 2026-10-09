@@ -48,3 +48,4 @@
   ambiência nos 6 mundos (Lua sem batalha), voo de 115 s + camada do mundo (mesmo tema, instrumento de cada mundo,
   −24 LUFS, `AudioStreamSynchronized`) — aguarda o usuário ouvir e aprovar
 - 2026-10-09 — sistema de áudio v2 (auditoria técnica): faixas por família (sub < 120 Hz só para o baixo da música e batidas raras; pouso/propulsor/tosse no corpo 150–800 Hz com harmônicos; sons frequentes com ≤ 15% > 5 kHz), audibilidade no notebook medida (perda ≤ 5 dB sem o < 200 Hz; música/ambiência ≤ 4,5), limitador do Master (desktop e web), simultaneidade no Sound (pattern mix-system) — usuário aprovou o plano e, ouvindo o A/B, o resultado ("Aprovo")
+- 2026-10-09 — jingle de mundo completo = motivo do tema do gatinho na ocarina + marimba + "ta-dá" de sinos (opção A "caixinha" de 3) — usuário escolheu ouvindo numa página no navegador; escolhas de som sempre como página HTML aberta no Chrome (solo + no contexto do jogo)

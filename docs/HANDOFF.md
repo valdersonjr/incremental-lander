@@ -4,6 +4,14 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Jingle de mundo completo (ROADMAP 18.6 fechado)** — `world_complete.wav` (3,9 s): motivo do tema do gatinho na
+  ocarina + marimba + cadência Lá → Ré + "ta-dá" de sinos. Toca na parada `complete_<mundo>` da Estrada (última estrela),
+  no lugar do `unlock` (`Sound._on_road_reached`); a viagem no Mapa continua com o `goal`. Usuário escolheu a opção A
+  ("caixinha") de 3 numa página no navegador (`audio/previews/world_complete/index.html`; B e C ficam no script,
+  `progress_sfx.py --options`). **Regra nova do usuário**: escolha de som = página HTML aberta no Chrome (solo + no
+  contexto), nunca afplay + pergunta no terminal. Verificado: check (102), 111 testes, 16 integrações (`sound_flow`:
+  mundo completo toca o jingle, parada comum toca unlock), `test_audio_assets` (80 ok). **Próximo**: ver ROADMAP
+  (16.5 arte das peças/ícones é o próximo item aberto); redeploy no Vercel só quando o usuário pedir.
 - **Sistema de áudio v2 (ROADMAP 18.5i)** — usuário pediu auditoria técnica completa; aprovou "recriar só o que tem
   defeito medido" e "manter o modo Sample na web adaptando o sistema". Inventário medido dos 79 WAVs: 16 recriados
   (pouso×3 + forte, propulsor×3, tosse, tchibum, cristal 3, entrega, recorde, marco, grave de title/flight, ambiência
@@ -18,7 +26,7 @@
   hooks, demo; mixagem real gravada (desktop: +0,3 dBTP com 45 amostras clipadas → −0,8 dBTP, 0 clip); web local em
   Chrome headless (`?audiotest`): tudo como sample, camada alinhada 0,0 ms, ducking/pausa, rajadas limitadas, saída
   ≤ −0,3 dBFS por canal (entrada chegava a +2,6). **Aprovado pelo usuário ouvindo o A/B** ("Aprovo");
-  redeploy no Vercel só quando pedir. **Próximo**: jingle de mundo completo (18.6).
+  redeploy no Vercel só quando pedir. Próximo: feito (jingle de mundo completo, acima).
 - **Tela inicial nova: "Noite de história"** (usuário achou a Vitrine "pacata e não tão bonitinha"; 4 estilos no
   navegador `art/previews/title_styles/index.html` → escolheu a Noite; tema mais lento → 68 BPM em
   `title_styles/noite.html`). Gatinho sentado na lua crescente de queijo pescando uma estrelinha que dorme, ratinho de

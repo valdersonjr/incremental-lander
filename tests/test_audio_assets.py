@@ -19,7 +19,7 @@ import soundfile as sf
 from soundkit import LOUDNESS_TARGETS, highpass, lufs, true_peak_db
 
 AUDIO = "assets/audio"
-JINGLES = {"delivered", "milestone", "unlock", "goal", "world_arrive", "summary_end", "record"}
+JINGLES = {"delivered", "milestone", "unlock", "goal", "world_arrive", "summary_end", "record", "world_complete"}
 LOOPS = {"thruster_loop", "rcs_loop", "gas_alarm", "ice_slide", "wind_loop", "bubbles_loop"}
 IMPACTS = {"crash"}
 LAYER_LUFS = -24.0                      # camadas de mundo: 6 dB abaixo do voo (soundtrack.py, LAYER_LUFS)

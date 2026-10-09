@@ -227,8 +227,9 @@
         Master (desktop + web); prioridade de vozes, limite por som/família, intervalo mínimo; opção "Geral"
   - [x] testes: tests/test_audio_assets.py, sound_flow ampliado, gravação da mixagem real (desktop) e autoteste web
   - [x] o usuário ouviu o A/B (`audio/previews/ab_v2/index.html`) e aprovou (2026-10-09: "Aprovo")
-- [~] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
-      musical por mundo ✔ (18.5h); falta o jingle de mundo completo
+- [x] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
+      musical por mundo ✔ (18.5h); jingle de mundo completo ✔ (2026-10-09: motivo do tema na ocarina, opção A
+      "caixinha" escolhida pelo usuário ouvindo `audio/previews/world_complete/index.html`)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;
       sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito

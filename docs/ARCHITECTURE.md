@@ -167,7 +167,8 @@ autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) 
                               # crossfade + duck + pausa) porque a web (modo Sample) não tem efeito de bus; effects_ok = desktop
                               # (passa-baixa extra na pausa). diagnostics() / ?audiotest na web (patterns web-audio-sample,
                               # mix-system). Master: HardLimiter -1 dB (default_bus_layout) + web/audio_limiter.js no head_include
-                              # do preset Web. Opção "Geral" = bus Master (0 = silencia tudo). Gramática da UI: "move" automático quando o foco
+                              # do preset Web. Opção "Geral" = bus Master (0 = silencia tudo). Events.road_reached: parada
+                              # complete_<mundo> = jingle "world_complete", outras = "unlock" (_on_road_reached). Gramática da UI: "move" automático quando o foco
                               # anda por seta/Tab (Viewport.gui_focus_changed até 1 quadro depois; grab_focus não soa), back(),
                               # tally(n), preview(bus) do volume, muffle(on) = passa-baixa 700 Hz em Music+Ambience (menu aberto,
                               # ligado pela visibilidade do PauseMenu). Main: título/hangar = "title", voo = "flight"+mundo,

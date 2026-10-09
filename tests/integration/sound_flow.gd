@@ -124,6 +124,10 @@ func _process(_delta: float) -> void:
 				p.stop()
 			Sound.jingle("milestone")
 		96:
+			Sound._on_road_reached("complete_luna")            # ultima estrela do mundo: jingle proprio
+			_check("mundo_completo_toca_o_jingle", _played("world_complete") == 1 and Sound._jingle.playing)
+			Sound._on_road_reached("ship_1")                   # outra parada qualquer: unlock
+			_check("parada_comum_toca_unlock", _played("unlock") >= 1)
 			_check("jingle_abaixa_a_musica", Sound._duck_db < -5.0 and Sound._music[0].volume_db < -5.0)
 			_summary = SUMMARY.instantiate()
 			add_child(_summary)

@@ -9,7 +9,8 @@
 ## crossfade (loops; tocar o que ja toca nao reinicia). O voo toca a base + a camada do mundo (layer_<mundo>.wav) em
 ## dois players disparados juntos (o mesmo tema, instrumento de cada mundo; a camada tem 1/3 da base e fecha junto).
 ## Sound.muffle(true) abafa musica e ambiencia (pausa). Jingles: Sound.jingle(nome) no bus SFX, um por vez (o novo
-## corta o anterior) e a musica abaixa enquanto toca. Liberar missao toca "unlock" pelo Events. Propulsor, jatinhos de
+## corta o anterior) e a musica abaixa enquanto toca. Parada nova na Estrada toca "unlock" pelo Events; a de mundo
+## completo, "world_complete". Propulsor, jatinhos de
 ## giro e alarme de gas moram no Lander; os loops dos mundos (gelo, vento, bolhas) no Flight.
 ## Mixagem (auditoria v2, 2026-10-09): a web roda em modo Sample (sem threads), onde efeitos de bus NAO funcionam
 ## (docs: "Exporting for the Web"). Por isso ducking e pausa sao volume dos players (compostos em _process); o
@@ -66,6 +67,7 @@ const STREAMS := {
 	"milestone": "res://assets/audio/sfx/milestone.wav",
 	"unlock": "res://assets/audio/sfx/unlock.wav",
 	"goal": "res://assets/audio/sfx/goal.wav",
+	"world_complete": "res://assets/audio/sfx/world_complete.wav",
 }
 ## Sons com variacoes: sorteia o arquivo (sem repetir o anterior) + pitch/volume aleatorios (os mesmos dos .tres
 ## antigos: pitch ate x1,05, volume +-1 dB). WAV puro: toca em modo Sample na web.
@@ -178,7 +180,7 @@ func _ready() -> void:
 				AudioServer.set_bus_effect_enabled(idx, AudioServer.get_bus_effect_count(idx) - 1, false)
 				_muffle_fx.append(lp)
 	get_viewport().gui_focus_changed.connect(_on_focus_changed)
-	Events.road_reached.connect(func(_n: String) -> void: jingle("unlock"))      # parada nova na Estrada das Estrelas
+	Events.road_reached.connect(_on_road_reached)
 	if OS.has_feature("web") and str(JavaScriptBridge.eval("location.search", true)).contains("audiotest"):
 		_web_report.call_deferred()
 
@@ -197,6 +199,12 @@ func _process(_delta: float) -> void:
 		p.volume_db = float(_level[p]) + _duck_db + _muffle_db
 	for p: AudioStreamPlayer in _ambience:
 		p.volume_db = float(_level[p]) + _muffle_db
+
+
+## Parada nova na Estrada das Estrelas: "unlock"; a ultima estrela do mundo (parada complete_<mundo>) toca o jingle de
+## mundo completo (o motivo do tema na ocarina, escolhido pelo usuario ouvindo as 3 opcoes em 2026-10-09).
+func _on_road_reached(id: String) -> void:
+	jingle("world_complete" if id.begins_with("complete_") else "unlock")
 
 
 ## Seta/Tab: marca o quadro; o foco que mudar logo depois foi o jogador navegando (grab_focus de tela nova nao soa).
