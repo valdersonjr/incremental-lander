@@ -61,6 +61,13 @@
     "npc_cogumelos",
     "npc_sorvete",
     "npc_jardim",
-    "npc_bolhas"
+    "npc_bolhas",
+    "assist_color",
+    "assist_trail",
+    "assist_route",
+    "assist_shadow",
+    "assist_level",
+    "assist_predict",
+    "assist_gas"
   ]
 }

@@ -13,8 +13,9 @@
   atlas + chama, destaque dourado por peça (uma caixa por lado). Versão 0 = nave antiga pixel a pixel (assert no
   script). Verificado: check (104), 116 testes (novo `test_ship_art`), 16 integrações, demo, capturas do voo com tudo no
   máximo e da NAVE com destaque. Também: redeploy no Vercel (áudio v2 + jingle) verificado na URL pública.
-  **Próximo**: resto do 16.5 — ícones da estrada que faltam (Estabilizador, ajudas, troféu), selo de Reputação e
-  sons (parada alcançada, degrau de peça, pouso perfeito; escolhas sempre em página no navegador).
+  Ícones das 7 ajudas na Estrada também feitos e aprovados (`art/src/ui/assist_icons.py` → fim do `kids.png`;
+  Estabilizador, troféu e selo de Reputação já tinham arte). **Próximo**: sons do 16.5 (parada alcançada, degrau de
+  peça, pouso perfeito; escolhas sempre em página no navegador).
 - **Jingle de mundo completo (ROADMAP 18.6 fechado)** — `world_complete.wav` (3,9 s): motivo do tema do gatinho na
   ocarina + marimba + cadência Lá → Ré + "ta-dá" de sinos. Toca na parada `complete_<mundo>` da Estrada (última estrela),
   no lugar do `unlock` (`Sound._on_road_reached`); a viagem no Mapa continua com o `goal`. Usuário escolheu a opção A

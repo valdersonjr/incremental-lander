@@ -18,6 +18,7 @@ from pixelart import *
 import moon_cute as mc
 sys.path.insert(0, "art/src/ui")
 import rep_badge
+import assist_icons
 
 CELL = 24
 FUR = ["white", "white", "cream", "peach"]
@@ -526,7 +527,7 @@ NAMES = ["pin", "pin_sel", "pin_off", "rat", "bunny", "alien", "bear", "star_on"
          "drones", "drone_coin", "arrow", "lock", "mystery"] + list(MISSION_MICE) \
     + ["pad_normal", "pad_narrow", "pad_tight", "dist_1", "dist_2", "dist_3", "check", "cross", "clock"] \
     + ["rep_on", "rep_off", "heart_on", "heart_off", "trophy"] + ["land_" + n for n in LAND_PROFILES] \
-    + ["npc_" + w for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")]
+    + ["npc_" + w for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")] + list(assist_icons.ICONS)
 
 NPC_CROP = {"nuvens": (4, 1), "cogumelos": (4, 3), "sorvete": (4, 0), "jardim": (4, 0), "bolhas": (5, 8)}
 
@@ -552,7 +553,8 @@ def build() -> Canvas:
         + [heart(True), heart(False)] \
         + [trophy()] \
         + [landscape(n) for n in LAND_PROFILES] \
-        + [npc_face(w) for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")]   # moradores (Fase 18.5)
+        + [npc_face(w) for w in ("nuvens", "cogumelos", "sorvete", "jardim", "bolhas")] \
+        + [make() for make in assist_icons.ICONS.values()]                                   # ajudas (16.5)
     cv = Canvas(CELL * len(parts), CELL)
     for i, p in enumerate(parts):
         cv.stamp(p, i * CELL, 0)

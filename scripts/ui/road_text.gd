@@ -81,10 +81,10 @@ static func stop_icon(stop: Dictionary) -> Texture2D:
 			return UiKit.kid("drones")
 		"autopilot":
 			return UiKit.icon("autopilot")
-		"gas_need":
-			return UiKit.icon("gas")
-	return UiKit.kid(str({"nav_color": "arrow", "nav_trail": "dist_2", "nav_route": "dist_3", "land_shadow": "pad_normal",
-			"land_level": "pad_narrow", "land_predict": "cross"}.get(id, "mystery")))
+	# ajudas de voo: a figura do que cada uma mostra no voo (art/src/ui/assist_icons.py, ROADMAP 16.5)
+	return UiKit.kid(str({"nav_color": "assist_color", "nav_trail": "assist_trail", "nav_route": "assist_route",
+			"land_shadow": "assist_shadow", "land_level": "assist_level", "land_predict": "assist_predict",
+			"gas_need": "assist_gas"}.get(id, "mystery")))
 
 
 ## Frase do balao: o que o premio traz.

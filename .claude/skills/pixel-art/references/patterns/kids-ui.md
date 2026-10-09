@@ -44,3 +44,13 @@
 `clock`: tempo jogado nos cartões de save. Sininhos gold nos cantos de cima, disco `sky` + mostrador branco/mist,
 ponteiros ink (12h e 3h) com pino raspberry; lê bem em 16 px.
 - https://design.tutsplus.com/tutorials/quick-tip-create-a-nice-award-medal-icon--vector-4433 — anatomia de medalha (disco + fitas)
+
+## Ícones das ajudas de voo (2026-10-09, ROADMAP 16.5)
+- `art/src/ui/assist_icons.py` → 7 células no fim do atlas (`assist_color`, `assist_trail`, `assist_route`,
+  `assist_shadow`, `assist_level`, `assist_predict`, `assist_gas`); `RoadText.stop_icon` usa nas paradas da Estrada.
+- Regra: cada ícone mostra **o que a ajuda desenha no voo** (seta tricolor, pontinhos do arco, arco entre plataformas,
+  sombra no chão, régua de nível, X da queda, marquinha na barra de gás). Nave = **mini lander 11x8 com o gatinho**
+  (o ícone "navezinha" foi reprovado pelo usuário). Chão de queijo (honey/amber) = Lua.
+- Acrescentar sempre no FIM da lista (as células antigas ficam idênticas; conferido comparando com o HEAD).
+- Usuário aprovou a página antes/depois nas bolinhas da Estrada (`art/previews/assist_icons/index.html`): "ok".
+
