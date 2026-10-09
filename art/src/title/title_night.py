@@ -1,8 +1,9 @@
 """Tela de título APROVADA "Noite de história" (2026-10-09). Skill pixel-art, padrão title-screen.
 Usuário escolheu entre 4 estilos no navegador ("Gostei da noite de história") com o tema da ocarina a 68 BPM.
-Desenho em art/src/title/title_styles.py (s3_static, draw_fisher); aqui só exporta em CAMADAS para o jogo
+v2 (2026-10-09): lua EM PÉ estilo DreamWorks + mais detalhe ("ficou bom, só o contorno estranho" → sem halo
+pontilhado). Desenho em art/src/title/night_v2.py; aqui só exporta em CAMADAS para o jogo
 (TitleBackdrop faz o parallax pelo mouse e escolhe o quadro pela batida da música):
-  assets/bg/title_night_sky.png     céu noturno degradê + estrelinhas fixas (640x360, opaco)
+  assets/bg/title_night_sky.png     céu noturno (via láctea, nebulosa, planetinha) + banco de nuvens de trás (opaco)
   assets/bg/title_night_moon.png    lua crescente de queijo (camada "back", com a sobra lateral do parallax)
   assets/bg/title_night_clouds.png  nuvenzinhas lilás soltas (deriva lenta, na frente da lua)
   assets/bg/title_night_bank.png    banco de nuvens contínuo na base (camada da frente)
@@ -19,10 +20,10 @@ import sys
 sys.path.insert(0, ".claude/skills/pixel-art/scripts")
 sys.path.insert(0, "art/src/title")
 from pixelart import *
-import title_styles as ts
+import night_v2 as nv
 import title_moon as tm
 
-W, H = ts.W, ts.H
+W, H = nv.W, nv.H
 PAD = tm.PAD
 FR = 16
 
@@ -39,7 +40,7 @@ def fisher_anim() -> tuple:
     full = []
     for fr in range(FR):
         cv = Canvas(W, H)
-        ts.draw_fisher(cv, fr)
+        nv.draw_fisher(cv, fr)
         full.append(cv)
     boxes = [bbox(c) for c in full]
     x0, y0 = min(b[0] for b in boxes), min(b[1] for b in boxes)
@@ -57,7 +58,9 @@ def transparent_padded(c: Canvas) -> Canvas:
 
 
 def export() -> dict:
-    sky, moon, clouds, bank = ts.s3_static()
+    sky, moon, back_bank, bank, clouds = nv.static()
+    sky = sky.copy()
+    sky.stamp(back_bank)                                        # o banco de trás não tem parallax: vai junto do céu
     sky.save("assets/bg/title_night_sky.png", preview=False)
     transparent_padded(moon).save("assets/bg/title_night_moon.png", preview=False)
     clouds.save("assets/bg/title_night_clouds.png", preview=False)
@@ -70,9 +73,9 @@ def export() -> dict:
                  "640x360. Camadas: sky (fixa), back (lua + pescador), front (nuvens soltas + banco). O quadro de cada "
                  "animação sai da batida da música (TitleBackdrop).",
         "fisher": list(pos),
-        "clouds_y": -14,
+        "clouds_y": 0,
         "star": [250, 18],
-        "twinkle": [list(p) for p in ts.TWINKLE3],
+        "twinkle": [list(p) for p in nv.TWINKLE],
         "layer_pad": PAD,
         "cloud_drift_px": 2,
         "parallax_px": {"back": 3, "front": 6},
@@ -83,13 +86,14 @@ def export() -> dict:
 
 
 def preview(layout: dict) -> None:
-    sky, moon, clouds, bank = ts.s3_static()
+    sky, moon, back_bank, bank, clouds = nv.static()
     cv = sky.copy()
+    cv.stamp(back_bank)
     cv.stamp(moon)
     cv.stamp(fisher_anim()[0].frames[0], *layout["fisher"])
-    cv.stamp(clouds, 0, layout["clouds_y"])
     cv.stamp(bank)
-    cv.stamp(ts.tc.lg.logo(), 22, 18)
+    cv.stamp(clouds, 0, layout["clouds_y"])
+    cv.stamp(nv.tc.lg.logo(), 22, 18)
     cv.preview("art/previews/title_night_preview.png", scale=2, grid=False)
 
 

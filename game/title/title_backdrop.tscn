@@ -60,16 +60,16 @@ offset_right = 656.0
 offset_bottom = 360.0
 mouse_filter = 2
 
-[node name="Clouds" type="TextureRect" parent="Front"]
-layout_mode = 0
-offset_right = 640.0
-offset_bottom = 360.0
-mouse_filter = 2
-texture = ExtResource("5_clouds")
-
 [node name="Bank" type="TextureRect" parent="Front"]
 layout_mode = 0
 offset_right = 656.0
 offset_bottom = 360.0
 mouse_filter = 2
 texture = ExtResource("6_bank")
+
+[node name="Clouds" type="TextureRect" parent="Front"]
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 360.0
+mouse_filter = 2
+texture = ExtResource("5_clouds")

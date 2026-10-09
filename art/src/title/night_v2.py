@@ -5,7 +5,7 @@ Pedido: "seria mais legal se a lua fosse em pé, igual a da dreamworks. E també
   céu    — 7 tons, faixa de via láctea (estrelinhas densas na diagonal), nebulosa em pontilhado, estrelas de 3
            tamanhos, planetinha de anel ao longe
   lua    — esfera iluminada de cima-esquerda em 5 tons, recortada por um círculo deslocado para a direita
-           (terminador com sombra), contorno rust, brilho de borda no lado da luz, halo pontilhado no céu, furos de
+           (terminador com sombra), contorno rust, brilho de borda creme no lado da luz (o halo pontilhado saiu: "contorno estranho"), furos de
            queijo com profundidade (parede de cima na sombra, de baixo-direita na luz, lábio claro), textura de
            pintinhas e um pingo de queijo escorrendo da ponta de baixo
   nuvens — duas camadas: banco de trás mais escuro e alto, banco da frente com volume (topo claro, sombra embaixo
@@ -90,13 +90,6 @@ def moon() -> Canvas:
     ax, ay, ar = OUTER
     bx, by, br = INNER
     lx, ly, lz = LIGHT
-    for y in range(ay - ar - 12, ay + ar + 12):                # halo pontilhado no céu (mais forte no lado da luz)
-        for x in range(ax - ar - 12, ax + ar + 12):
-            d = math.hypot(x + 0.5 - ax, y + 0.5 - ay) - ar
-            if 0 < d < 11 and not in_moon(x + 0.5, y + 0.5) and (x - bx) ** 2 + (y - by) ** 2 > (br - 6) ** 2:
-                side = max(0.0, -((x - ax) * 0.8 + (y - ay) * 0.6) / ar)    # 1 no lado de cima-esquerda
-                if bayer(x, y, (1 - d / 11) * (0.12 + 0.3 * side)):
-                    cv.px(x, y, "violet" if d < 4 else "purple")
     for y in range(H):
         for x in range(ax - ar - 1, ax + ar + 2):
             if not in_moon(x + 0.5, y + 0.5):
@@ -134,11 +127,11 @@ def moon() -> Canvas:
         w = 2 if y < drip_y + 5 else 3 if y < drip_y + 8 else 2
         for x in range(drip_x - w // 2, drip_x + (w + 1) // 2 + 1):
             cv.px(x, y, "gold" if x > drip_x else "lemon")
-    cv.outline("rust")
-    for y in range(H):                                          # brilho de borda no lado da luz (1 px dentro)
-        for x in range(ax - ar, ax):
-            if in_moon(x + 0.5, y + 0.5) and not in_moon(x - 0.5, y + 0.5) and y < ay + 60:
-                cv.px(x, y, "white" if y < ay - 30 else "lemon")
+    for y in range(H):                                          # brilho de borda no lado da luz (1 px, por dentro)
+        for x in range(ax - ar, ax + 20):
+            if in_moon(x + 0.5, y + 0.5) and not in_moon(x - 0.5, y + 0.5) and y < ay + 70:
+                cv.px(x, y, "cream")
+    cv.outline("rust")                                          # contorno contínuo (sem halo pontilhado: "estranho")
     return cv
 
 

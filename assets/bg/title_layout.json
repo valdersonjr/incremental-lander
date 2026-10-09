@@ -1,70 +1,78 @@
 {
   "notes": "Gerado por art/src/title/title_night.py (pixel-art). Posi\u00e7\u00f5es = canto de cima-esquerdo, px na tela 640x360. Camadas: sky (fixa), back (lua + pescador), front (nuvens soltas + banco). O quadro de cada anima\u00e7\u00e3o sai da batida da m\u00fasica (TitleBackdrop).",
   "fisher": [
-    404,
-    152
+    430,
+    191
   ],
-  "clouds_y": -14,
+  "clouds_y": 0,
   "star": [
     250,
     18
   ],
   "twinkle": [
     [
-      365,
-      36
+      486,
+      84
     ],
     [
-      316,
-      88
-    ],
-    [
-      437,
-      24
-    ],
-    [
-      492,
-      77
-    ],
-    [
-      431,
-      162
-    ],
-    [
-      442,
-      121
-    ],
-    [
-      332,
-      100
-    ],
-    [
-      254,
-      70
-    ],
-    [
-      306,
-      54
-    ],
-    [
-      385,
-      43
-    ],
-    [
-      467,
-      75
-    ],
-    [
-      292,
-      135
-    ],
-    [
-      546,
-      43
-    ],
-    [
-      570,
+      384,
       133
+    ],
+    [
+      465,
+      216
+    ],
+    [
+      196,
+      69
+    ],
+    [
+      248,
+      28
+    ],
+    [
+      273,
+      17
+    ],
+    [
+      400,
+      113
+    ],
+    [
+      506,
+      174
+    ],
+    [
+      275,
+      210
+    ],
+    [
+      212,
+      217
+    ],
+    [
+      462,
+      43
+    ],
+    [
+      600,
+      61
+    ],
+    [
+      512,
+      79
+    ],
+    [
+      469,
+      216
+    ],
+    [
+      280,
+      114
+    ],
+    [
+      389,
+      204
     ]
   ],
   "layer_pad": 8,

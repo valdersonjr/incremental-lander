@@ -78,6 +78,17 @@ Usuário: "Gostei da noite de história" (+ tema a 68 BPM). `art/src/title/title
 da lua no parallax), `assets/bg/title_night_clouds.png` + `assets/bg/title_night_bank.png` (front). Estrela cadente
 reaproveitada. A Vitrine (`title_moon.py`) agora grava `title_vitrine_layout.json` para não sobrescrever o layout.
 
+### v2 no jogo: lua EM PÉ (estilo DreamWorks) + mais detalhe (2026-10-09)
+Pedido: "lua em pé, igual a da dreamworks, e melhor o nível de detalhamento"; depois "só esse contorno da lua que tá
+estranho". `art/src/title/night_v2.py`: crescente = círculo (456,170,r148) menos círculo (516,150,r132) → barriga à
+esquerda, pontas à direita; gato na ponta de baixo (terminador em x=478). Luz por normal de esfera (normal·luz, luz
+cima-esq.) em 5 tons + sombra colada no terminador; furos com parede de cima na sombra e de baixo-direita na luz e
+lábio claro; pintinhas trocando 1 tom; pingo de queijo perto da interseção de baixo dos círculos. Céu com via láctea
+(pontinhos densos na diagonal), nebulosa e estrelas de 3 tamanhos; nuvens em 2 bancos (soma de círculos com sombra por
+bolota). Erros: sinal da luz invertido (lua escura em cima); **halo pontilhado em volta = "contorno estranho"** (faixa
+xadrez serrilhada) → contorno rust contínuo + brilho creme de 1 px por dentro no lado da luz. Pontilhado só em
+transição de céu, nunca em borda de objeto.
+
 ## 4 estilos novos (2026-10-09)
 Pedido: "tela inicial bastante pacata e não tanto bonitinha — 1 melhoria na atual + 3 novas, estilos diferentes, no
 navegador". `art/src/title/title_styles.py` → `art/previews/title_styles/index.html` (abas, tema tocando, quadro =
