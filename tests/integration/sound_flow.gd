@@ -126,8 +126,13 @@ func _process(_delta: float) -> void:
 		96:
 			Sound._on_road_reached("complete_luna")            # ultima estrela do mundo: jingle proprio
 			_check("mundo_completo_toca_o_jingle", _played("world_complete") == 1 and Sound._jingle.playing)
-			Sound._on_road_reached("ship_1")                   # outra parada qualquer: unlock
-			_check("parada_comum_toca_unlock", _played("unlock") >= 1)
+			Sound._on_road_reached("ship_1")                   # outra parada qualquer: xilofone curto
+			_check("parada_comum_toca_road_stop", _played("road_stop") >= 1)
+			Sound.perfect(1)
+			_check("perfeito_1_na_nota_base", _played("perfect") == 1 and _voice_pitch("perfect") == 1.0)
+			Sound._last_start.erase("perfect")
+			Sound.perfect(3)                                   # 3o perfeito seguido: 2 graus acima (4 semitons)
+			_check("perfeito_3_sobe", absf(_voice_pitch("perfect") - pow(2.0, 4.0 / 12.0)) < 0.001)
 			_check("jingle_abaixa_a_musica", Sound._duck_db < -5.0 and Sound._music[0].volume_db < -5.0)
 			_summary = SUMMARY.instantiate()
 			add_child(_summary)
@@ -140,6 +145,14 @@ func _process(_delta: float) -> void:
 			_check("vinheta_no_fim", _played("summary_end") == 1)
 			print("SOUND_FLOW_TEST %s %s" % ["OK" if _ok else "FALHOU", " ".join(_log)])
 			get_tree().quit()
+
+
+func _voice_pitch(name: String) -> float:
+	var best := -1
+	for i in Sound.VOICES:
+		if Sound._voice_name[i] == name and (best < 0 or Sound._voice_t[i] >= Sound._voice_t[best]):
+			best = i
+	return Sound._players[best].pitch_scale if best >= 0 else -1.0
 
 
 func _big_text() -> String:

@@ -230,10 +230,11 @@
 - [x] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
       musical por mundo ✔ (18.5h); jingle de mundo completo ✔ (2026-10-09: motivo do tema na ocarina, opção A
       "caixinha" escolhida pelo usuário ouvindo `audio/previews/world_complete/index.html`)
-- [~] 16.5 Arte (pixel-art): peças que crescem por degrau ✔ (2026-10-09: 4 versões de chama/tanque/bocal/pernas no voo e
+- [x] 16.5 Arte (pixel-art): peças que crescem por degrau ✔ (2026-10-09: 4 versões de chama/tanque/bocal/pernas no voo e
       na NAVE, aprovadas na página `art/previews/lander_parts/index.html`; pattern ship-parts), ícones das 7 ajudas na
       Estrada ✔ (2026-10-09, `assist_icons.py`; Estabilizador, troféu e selo de Reputação já tinham arte);
-      sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito
+      sons (sound-design) ✔ (2026-10-09, opção A de cada numa página no navegador; pattern step-sfx): parada da estrada
+      alcançada (xilofone curto), degrau de peça (catraca + boing + sinos), pouso perfeito (ding duplo que sobe)
 - [ ] 16.6 Aprovação do usuário jogando → depois, fase de economia (estrelas por parada, preços sem o upgrade de
       Reputação, Gasolina/Eficiência pouco compradas, marcos alinhados aos degraus)
 

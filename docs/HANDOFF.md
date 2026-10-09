@@ -4,6 +4,13 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Sons do progresso (fecha o ROADMAP 16.5)** — usuário escolheu "tudo letra A" na página `audio/previews/step/index.html`
+  (atual/A/B, sozinho e no jogo): `road_stop` (xilofone curto) em toda parada nova da Estrada (Sound._on_road_reached,
+  festa da NAVE e do Mapa; `unlock` fica só no 1º drone), `part_step` (catraca + boing + sinos) quando a peça sobe de
+  degrau (milestone continua nos marcos), `Sound.perfect(sequência)` no pouso perfeito (sobe 0/2/4/7/9 semitons;
+  `combo_2..5` apagados). Fonte `audio/src/sfx/step_sfx.py`, pattern step-sfx. Verificado: check (104), 116 testes,
+  16 integrações (sound_flow: parada, perfeito 1 e 3), test_audio_assets (79 ok), demo. **Próximo**: 16.6 (aprovação
+  do usuário jogando) — sugerir redeploy no Vercel para ele jogar a versão nova.
 - **Peças que crescem por degrau (ROADMAP 16.5, parte de arte)** — aprovadas pelo usuário na página interativa
   `art/previews/lander_parts/index.html` ("Boa, gostei"). Gasolina = bolotas nos ombros do disco; Eficiência = bocal
   sino → anel aqua → anel dourado + aletas; Resistência = sapata redonda → mola → almofada; Motor = chama maior.
@@ -15,7 +22,7 @@
   máximo e da NAVE com destaque. Também: redeploy no Vercel (áudio v2 + jingle) verificado na URL pública.
   Ícones das 7 ajudas na Estrada também feitos e aprovados (`art/src/ui/assist_icons.py` → fim do `kids.png`;
   Estabilizador, troféu e selo de Reputação já tinham arte). **Próximo**: sons do 16.5 (parada alcançada, degrau de
-  peça, pouso perfeito; escolhas sempre em página no navegador).
+  peça, pouso perfeito) — FEITO (ver item acima).
 - **Jingle de mundo completo (ROADMAP 18.6 fechado)** — `world_complete.wav` (3,9 s): motivo do tema do gatinho na
   ocarina + marimba + cadência Lá → Ré + "ta-dá" de sinos. Toca na parada `complete_<mundo>` da Estrada (última estrela),
   no lugar do `unlock` (`Sound._on_road_reached`); a viagem no Mapa continua com o `goal`. Usuário escolheu a opção A

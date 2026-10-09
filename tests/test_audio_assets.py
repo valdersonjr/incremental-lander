@@ -19,14 +19,15 @@ import soundfile as sf
 from soundkit import LOUDNESS_TARGETS, highpass, lufs, true_peak_db
 
 AUDIO = "assets/audio"
-JINGLES = {"delivered", "milestone", "unlock", "goal", "world_arrive", "summary_end", "record", "world_complete"}
+JINGLES = {"delivered", "milestone", "unlock", "goal", "world_arrive", "summary_end", "record", "world_complete",
+           "road_stop", "part_step"}
 LOOPS = {"thruster_loop", "rcs_loop", "gas_alarm", "ice_slide", "wind_loop", "bubbles_loop"}
 IMPACTS = {"crash"}
 LAYER_LUFS = -24.0                      # camadas de mundo: 6 dB abaixo do voo (soundtrack.py, LAYER_LUFS)
 # guardados de propósito (não tocam hoje): a explosão antiga, trocada pela batida fofa (crash_soft)
 UNUSED_OK = {"sfx/crash.wav"}
 # tocam muitas vezes por minuto: agudo controlado e audíveis em notebook
-FREQUENT = re.compile(r"^(ui/.*|sfx/(landing_\d+|landing_heavy|delivered|crystal_\d|combo_\d|sheep_\d|boing_\d|pass_\d|"
+FREQUENT = re.compile(r"^(ui/.*|sfx/(landing_\d+|landing_heavy|delivered|crystal_\d|perfect|road_stop|sheep_\d|boing_\d|pass_\d|"
                       r"bump|star|gift_coin|thruster_\w+|sputter|aboard|retry))\.wav$")
 MAX_HI_PCT = 15.0                       # % da energia acima de 5 kHz (som frequente)
 MAX_LOSS_FREQUENT_DB = 5.0              # perda de loudness ao tirar < 200 Hz (alto-falante de notebook)

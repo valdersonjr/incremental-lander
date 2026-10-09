@@ -31,3 +31,4 @@
 
 ## Auditoria v2 (2026-10-09)
 - crystal: índice FM acompanha a altura (`(B5/nota)^4`, até B5 = igual): o D6 tinha 23% > 5 kHz contra 6–7% dos irmãos → 8%. Cristais 1 e 2 idênticos byte a byte. No Sound, a família conta junta no limite de instâncias (3). Ver `mix-system`.
+- 2026-10-09: `combo_2..5` apagados — o pouso perfeito ganhou som próprio (`step-sfx` perfect, escolhido pelo usuário).

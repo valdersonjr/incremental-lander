@@ -1,7 +1,9 @@
 ## Sons do jogo (arte sonora da skill sound-design: audio/src/** -> assets/audio/**).
 ## One-shots: Sound.ui(nome[, db, pitch]) no bus UI; Sound.sfx(nome[, db, pitch]) no bus SFX (cristal: sobe um grau
-## por cristal do mesmo salto; combo: sobe com o tamanho do combo). Sons com variacoes (VARIANTS) sorteiam o arquivo e
+## por cristal do mesmo salto). Sons com variacoes (VARIANTS) sorteiam o arquivo e
 ## ganham pitch/volume aleatorios aqui (antes era AudioStreamRandomizer, que nao toca em modo Sample na web).
+## Progresso (ROADMAP 16.5): Sound.perfect(sequencia) no pouso perfeito; "part_step" quando a peca sobe de degrau;
+## "road_stop" a cada parada nova da Estrada.
 ## Gramatica da interface (auditoria de som 2026-10-09): "move" quando o foco anda pelo teclado/controle (automatico,
 ## via Viewport.gui_focus_changed logo depois de uma seta/Tab), "click" confirma, Sound.back() volta/fecha, "denied"
 ## nega, "pop" balao/aviso aparecendo, Sound.tally(i) tique da contagem (sobe grau a grau na escala).
@@ -47,10 +49,6 @@ const STREAMS := {
 	"crystal_1": "res://assets/audio/sfx/crystal_1.wav",
 	"crystal_2": "res://assets/audio/sfx/crystal_2.wav",
 	"crystal_3": "res://assets/audio/sfx/crystal_3.wav",
-	"combo_2": "res://assets/audio/sfx/combo_2.wav",
-	"combo_3": "res://assets/audio/sfx/combo_3.wav",
-	"combo_4": "res://assets/audio/sfx/combo_4.wav",
-	"combo_5": "res://assets/audio/sfx/combo_5.wav",
 	"star": "res://assets/audio/sfx/star.wav",
 	"boing_1": "res://assets/audio/sfx/boing_1.wav",
 	"boing_2": "res://assets/audio/sfx/boing_2.wav",
@@ -68,6 +66,9 @@ const STREAMS := {
 	"unlock": "res://assets/audio/sfx/unlock.wav",
 	"goal": "res://assets/audio/sfx/goal.wav",
 	"world_complete": "res://assets/audio/sfx/world_complete.wav",
+	"road_stop": "res://assets/audio/sfx/road_stop.wav",
+	"part_step": "res://assets/audio/sfx/part_step.wav",
+	"perfect": "res://assets/audio/sfx/perfect.wav",
 }
 ## Sons com variacoes: sorteia o arquivo (sem repetir o anterior) + pitch/volume aleatorios (os mesmos dos .tres
 ## antigos: pitch ate x1,05, volume +-1 dB). WAV puro: toca em modo Sample na web.
@@ -85,13 +86,13 @@ const RANDOM_DB := 1.0
 ## Simultaneidade por som: [instancias ao mesmo tempo, intervalo minimo entre disparos (s)]. Passou do limite, a
 ## instancia mais antiga do mesmo som recomeca (nao rouba voz de outro som); dentro do intervalo, o disparo e ignorado
 ## (repeticao redundante: dois cliques no mesmo quadro soam como um, mais alto e embolado). Familias numeradas
-## (crystal_1..3, combo_2..5, sheep_*, boing_*, pass_*) contam juntas no limite: e o mesmo som em alturas diferentes
+## (crystal_1..3, sheep_*, boing_*, pass_*) contam juntas no limite: e o mesmo som em alturas diferentes
 ## (12 cristais seguidos davam 9 vozes somadas e estouravam a saida web, que nao tem limitador de bus).
 const RULES := {
 	"move": [1, 0.035], "pop": [1, 0.08], "back": [1, 0.06], "denied": [1, 0.1], "click": [2, 0.04],
 	"buy": [2, 0.05], "tally": [2, 0.0], "landing": [1, 0.15], "landing_heavy": [1, 0.15], "bump": [2, 0.06],
 	"crash_soft": [1, 0.3], "splash": [1, 0.3], "delivered": [1, 0.2], "oops": [1, 0.2],
-	"crystal": [3, 0.0], "combo": [1, 0.0], "sheep": [2, 0.0], "boing": [2, 0.0], "pass": [2, 0.0],
+	"crystal": [3, 0.0], "sheep": [2, 0.0], "boing": [2, 0.0], "pass": [2, 0.0], "perfect": [1, 0.0],
 }
 const DEFAULT_RULE := [3, 0.03]
 ## Prioridade no roubo de voz (todas ocupadas): um som so rouba a voz de outro de prioridade igual ou menor (o mais
@@ -113,6 +114,8 @@ const MOVE_DB := -7.0
 ## Tique da contagem: graus da pentatonica (semitons acima de D6); passou do fim, fica no ultimo.
 const TALLY_STEPS: Array[int] = [0, 2, 4, 7, 9, 12, 14, 16, 19]
 const TALLY_DB := -5.0
+## Pouso perfeito seguido: graus da pentatonica (semitons) do 1o, 2o, 3o... perfeito.
+const PERFECT_STEPS: Array[int] = [0, 2, 4, 7, 9]
 ## Pausa: musica e ambiencia abaixam MUFFLE_DB (funciona em todo lugar) e, no desktop, tambem ficam abafadas
 ## (passa-baixa em MUFFLE_HZ) — o jogo "fica de lado" sem silenciar.
 const MUFFLE_DB := -6.0
@@ -201,10 +204,16 @@ func _process(_delta: float) -> void:
 		p.volume_db = float(_level[p]) + _muffle_db
 
 
-## Parada nova na Estrada das Estrelas: "unlock"; a ultima estrela do mundo (parada complete_<mundo>) toca o jingle de
-## mundo completo (o motivo do tema na ocarina, escolhido pelo usuario ouvindo as 3 opcoes em 2026-10-09).
+## Parada nova na Estrada das Estrelas: "road_stop" (xilofone curto: toca muito); a ultima estrela do mundo (parada
+## complete_<mundo>) toca o jingle de mundo completo (motivo do tema na ocarina). Escolhas do usuario ouvindo opcoes
+## numa pagina no navegador (2026-10-09).
 func _on_road_reached(id: String) -> void:
-	jingle("world_complete" if id.begins_with("complete_") else "unlock")
+	jingle("world_complete" if id.begins_with("complete_") else "road_stop")
+
+
+## Pouso perfeito: a cada perfeito seguido no run sobe um grau da pentatonica (1o = nota base).
+func perfect(streak: int) -> void:
+	sfx("perfect", 0.0, pow(2.0, float(PERFECT_STEPS[clampi(streak - 1, 0, PERFECT_STEPS.size() - 1)]) / 12.0))
 
 
 ## Seta/Tab: marca o quadro; o foco que mudar logo depois foi o jogador navegando (grab_focus de tela nova nao soa).

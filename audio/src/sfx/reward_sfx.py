@@ -44,14 +44,10 @@ if __name__ == "__main__":
     files = []
     # caminhos literais (o pre-commit liga cada asset ao script-fonte):
     # assets/audio/sfx/crystal_1.wav assets/audio/sfx/crystal_2.wav assets/audio/sfx/crystal_3.wav
-    # assets/audio/sfx/combo_2.wav assets/audio/sfx/combo_3.wav assets/audio/sfx/combo_4.wav assets/audio/sfx/combo_5.wav
+    # (combo_2..5 sairam em 2026-10-09: o pouso perfeito ganhou som proprio, step_sfx.py perfect; combo() fica de referencia)
     for n in range(3):
         p = f"{out}crystal_{n + 1}.wav"
         save_wav(p, crystal(n), "sfx")
-        files.append(p)
-    for lv in (2, 3, 4, 5):
-        p = f"{out}combo_{lv}.wav"
-        save_wav(p, combo(lv), "sfx")
         files.append(p)
     if "--reel" in sys.argv:                                   # resumo para o usuário: 3 cristais + entrega + combo
         seq = mix([(crystal(0), 0.0, 0), (crystal(1), 0.35, 0), (crystal(2), 0.7, 0),

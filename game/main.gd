@@ -486,7 +486,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
 	_hud.show_delivery(_run.deliveries[-1])
 	if bool(_run.deliveries[-1].get("perfect", false)):        # pouso perfeito: estalo, depois da entrega
-		get_tree().create_timer(0.35).timeout.connect(Sound.sfx.bind("combo_%d" % clampi(_run.perfect_streak + 1, 2, 5)))
+		get_tree().create_timer(0.35).timeout.connect(Sound.perfect.bind(_run.perfect_streak))
 	if rep_up:                                                 # subiu a reputacao com o ratinho: festa
 		Events.reputation_up.emit(rep_kind, GameState.rep_level(rep_kind))
 		var tw := _hud.create_tween()                          # tween do HUD: some junto se o run acabar antes

@@ -481,7 +481,9 @@ func _buy_part(id: String, n: int) -> void:
 	_flash_money = true
 	var mx := int(EconMath._find("upgrades", id).get("max_level", 1))
 	var stage_up := after / RoadText.STAGE > before / RoadText.STAGE or after >= mx
-	if stage_up or Purchases.milestone_crossed(id, before, after):
+	if stage_up:                                               # a peca cresceu no desenho: catraca + boing + sino
+		Sound.jingle("part_step")
+	elif Purchases.milestone_crossed(id, before, after):
 		Sound.jingle("milestone")
 	refresh()
 	if stage_up:
@@ -954,7 +956,7 @@ func _show_next_news() -> void:
 	_road.center_on(RoadView.X0 + EconMath.road(GameState.current_planet).find(stop) * RoadView.SPACING)
 	_road.celebrate(id)
 	_confetti()
-	Sound.jingle("unlock")
+	Sound.jingle("road_stop")
 	refresh()
 	if str(stop["type"]) == "mission" and RoadText.stop_star(stop) == 1:
 		_intro.show_kind(str(RoadText._node(id)["kind"]))

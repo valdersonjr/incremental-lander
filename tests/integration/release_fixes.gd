@@ -117,7 +117,7 @@ func _process(_d: float) -> void:
 			_check("estrelas_nao_se_gastam", GameState.stars == first)
 			_check("parada_libera_ratinho", int(GameState.missions_unlocked().get("simple", 0)) == 2)
 			_check("tipo_novo_em_destaque", int(GameState.missions_new.get("simple", 0)) > 0)
-			_check("jingle_ao_chegar_na_parada", int(Sound.played.get("unlock", 0)) > 0)
+			_check("jingle_ao_chegar_na_parada", int(Sound.played.get("road_stop", 0)) > 0)
 			_check("novidade_para_mostrar", GameState.road_news().has("simple2"))
 			GameState.add_stars(int(EconMath.road_stop("stabilizer")["stars"]) - GameState.stars)
 			_check("habilidade_vem_pronta", int(GameState.levels.get("stabilizer", 0)) == 1

@@ -190,7 +190,7 @@ func _celebrate_news() -> void:
 		return
 	_road.rebuild(-1, true)
 	_road.celebrate(str(news[-1]))
-	Sound.jingle("unlock")
+	Sound.jingle("road_stop")
 	for id: String in news:                                    # ratinho novo: "Novo amiguinho!" aqui mesmo (a NAVE
 		var stop := EconMath.road_stop(id)                     # nao ve mais a parada: ja ficou vista)
 		if not stop.is_empty() and str(stop["type"]) == "mission" and RoadText.stop_star(stop) == 1:
