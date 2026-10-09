@@ -4,6 +4,11 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Tema do gatinho na tela inicial** (usuário: "a tela inicial do gatinho deveria ter uma música, não?"). Tocava a
+  faixa calma do Mapa/NAVE, só pad + sino e 83% grave: no notebook parecia muda. Novo `theme.wav` (D maior, 92 BPM,
+  24 compassos, melodia cantarolável, baixo com harmônico audível) só na tela inicial; Mapa e NAVE seguem com `title`.
+  Exportada a opção **A (caixinha de música)**; a B (chiptune fofo) está no script (`THEME_PICK`). Verificado: check
+  (102), 111 testes, integrações (release_fixes checa `tela_inicial_toca_o_tema`). **Para o usuário**: escolher A ou B.
 - **Auditoria de som aplicada (ROADMAP 18.5h; adianta 18.6)** — usuário pediu a validação contra os melhores jogos e
   depois "conserte tudo". Feito: gramática da UI (`move` automático na seta/Tab, `Sound.back()`, `pop` nos balões,
   `Sound.tally` na contagem), pausa abafa música/ambiência (`Sound.muffle` pela visibilidade do PauseMenu), prévia do

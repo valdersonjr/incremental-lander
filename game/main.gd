@@ -203,7 +203,7 @@ func _show_title() -> void:
 	_gui.move_child(_title, -1)
 	Telemetry.event("title")
 	_title.open()
-	Sound.music("title")
+	Sound.music("theme")                                       # tema do gatinho (o Mapa e a NAVE tocam a calma "title")
 	Sound.ambience("luna")                                     # a cena do titulo e a Lua de queijo
 
 

@@ -51,6 +51,7 @@ func _process(_d: float) -> void:
 			space.keycode = KEY_SPACE
 			_check("espaco_fora_do_ui_accept", not InputMap.event_is_action(space, &"ui_accept"))
 			_check("espaco_e_propulsor", InputMap.event_is_action(space, &"thrust"))
+			_check("tela_inicial_toca_o_tema", Sound._music_name == "theme" and Sound._music[0].playing)
 			GameState.reset()
 			GameState.stars = 5                                # veterano: ofertas na tela (sem o 1o salto ja aceito)
 			_main._title.visible = false

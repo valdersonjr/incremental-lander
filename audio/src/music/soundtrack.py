@@ -1,5 +1,7 @@
 """Trilha (padrão: patterns/soundtrack.md). Faixas em loop, -18 LUFS (o bus Music fica -6 dB no jogo):
-  title  — menu inicial e hangar: D maior, 84 BPM, 32 compassos (~91 s; era 16): A A' + B (IV-V-iii-vi) + volta.
+  theme  — TEMA DO GATINHO, só na tela inicial (2026-10-09): D maior, 92 BPM, 24 compassos A B A', melodia
+           cantarolável (motivo de 2 compassos pergunta/resposta), baixo com harmônico audível no notebook.
+  title  — Mapa e NAVE (era também a tela inicial): D maior, 84 BPM, 32 compassos (~91 s; era 16): A A' + B (IV-V-iii-vi) + volta.
            Pad + sino FM esparso + baixo triângulo, sem bateria (calma: muito tempo no hangar).
   flight — voo: D lídio, 100 BPM, 48 compassos (~115 s; era 38 s) = 3 blocos de 16 sobre a MESMA progressão
            (A: arpejo/pad/baixo · A': melodia nova, chimbal mais ativo · A'': respiro sem bumbo, arpejo invertido e a
@@ -186,18 +188,123 @@ def layer(world: str) -> np.ndarray:
     return x * db_to_lin(LAYER_LUFS - lufs(x)[0])
 
 
-TRACKS = {"title": title, "flight": flight}
+# --- tema do gatinho (tela inicial) ------------------------------------------------------------------------------
+
+THEME_BPM = 92
+# 24 compassos: A (tema) · B (sobe, resposta) · A' (tema com final novo). I-IV-vi-V em D maior, cantarolável.
+THEME_CHORDS = ["D", "G", "Bm", "A", "D", "G", "A", "D",
+                "G", "A", "F#m", "Bm", "G", "A", "D", "D",
+                "D", "G", "Bm", "A", "D", "G", "A", "D"]
+THEME_TONES = {"D": ("D", "F#", "A"), "G": ("G", "B", "D"), "Bm": ("B", "D", "F#"), "A": ("A", "C#", "E"),
+               "F#m": ("F#", "A", "C#")}
+
+
+def _bar(*notes: tuple[str, int]) -> str:
+    """Um compasso a partir de (nota|'.', passos); confere que soma 16."""
+    assert sum(n for _, n in notes) == STEPS, notes
+    return " ".join(" ".join([t] + (["-"] if t != "." else ["."]) * (n - 1)) for t, n in notes)
+
+
+def _theme_melody() -> str:
+    a = [_bar(("F#5", 4), ("A5", 4), ("B5", 2), ("A5", 2), ("F#5", 4)),      # motivo: pergunta
+         _bar(("E5", 4), ("D5", 4), ("B4", 8)),
+         _bar(("D5", 4), ("F#5", 4), ("A5", 4), ("F#5", 4)),
+         _bar(("E5", 12), (".", 4)),
+         _bar(("F#5", 4), ("A5", 4), ("B5", 2), ("A5", 2), ("F#5", 4)),      # motivo de novo: resposta
+         _bar(("B5", 4), ("A5", 4), ("G5", 4), ("E5", 4)),
+         _bar(("A5", 4), ("G5", 2), ("F#5", 2), ("E5", 8)),
+         _bar(("D5", 12), (".", 4))]
+    b = [_bar(("B5", 6), ("A5", 2), ("G5", 8)),
+         _bar(("A5", 6), ("G5", 2), ("F#5", 8)),
+         _bar(("A5", 4), ("C#6", 4), ("A5", 4), ("F#5", 4)),
+         _bar(("B5", 12), (".", 4)),
+         _bar(("D6", 4), ("B5", 4), ("G5", 4), ("B5", 4)),
+         _bar(("C#6", 4), ("A5", 4), ("E5", 4), ("A5", 4)),
+         _bar(("F#5", 4), ("A5", 4), ("D6", 8)),
+         _bar((".", 16))]                                                   # respiro antes da volta
+    a2 = a[:6] + [_bar(("A5", 4), ("B5", 2), ("A5", 2), ("G5", 4), ("E5", 4)),
+                  _bar(("D5", 4), ("F#5", 4), ("D5", 8))]
+    return " ".join(a + b + a2)
+
+
+def _theme_bass() -> str:
+    """Baixo saltitante (tônica, quinta, tônica oitava acima) — oitava 2-3 para ser ouvido no notebook."""
+    out = []
+    for c in THEME_CHORDS:
+        r, _, f = THEME_TONES[c]
+        lo = f"{r}2" if r in ("G", "A", "B", "F#") else f"{r}3"
+        fifth = f"{f}3" if f not in ("D", "C#", "E") else f"{f}3"
+        hi = lo[:-1] + str(int(lo[-1]) + 1)
+        out.append(_bar((lo, 4), (fifth, 2), (lo, 2), (hi, 4), (fifth, 4)))
+    return " ".join(out)
+
+
+def _theme_strum(offbeat: bool) -> str:
+    """Acompanhamento: arpejo dedilhado em colcheias (A) ou acorde 'pá' nos contratempos (B)."""
+    out = []
+    for c in THEME_CHORDS:
+        r, t, f = THEME_TONES[c]
+        n1, n2, n3 = f"{r}4", f"{t}4", f"{f}4"
+        if offbeat:
+            chord_ = "+".join([n1, n2, n3])
+            out.append(_bar((".", 2), (chord_, 2), (".", 2), (chord_, 2), (".", 2), (chord_, 2), (".", 2), (chord_, 2)))
+        else:
+            out.append(_bar((n1, 2), (n2, 2), (n3, 2), (n2, 2), (n1, 2), (n2, 2), (n3, 2), (n2, 2)))
+    return " ".join(out)
+
+
+def _bass_inst() -> Instrument:
+    """Baixo triângulo + harmônico de pulso uma oitava acima (drive leve): o 'peso' continua audível no notebook."""
+    tri = inst_triangle_bass(r=0.05)
+    def play_(f, dur, vel):
+        x = tri(f, dur, vel)
+        h = pulse(f * 2, len(x) / SR, duty=0.5) * adsr(len(x) / SR, 0.003, 0.08, 0.4, 0.05) * vel
+        return x + lowpass(drive(h, 1.5), 1800) * 0.35
+    return play_
+
+
+def theme(option: str = "A") -> np.ndarray:
+    """Tema do gatinho. A = caixinha de música (sino + violãozinho + baixo + bumbo/chocalho leves);
+    B = chiptune fofo (pulso com vibrato + 'pom-pá' de pulso + bateria de chip)."""
+    song = Song(bpm=THEME_BPM, bars=len(THEME_CHORDS))
+    mel = _theme_melody()
+    if option == "A":
+        song.add("melodia", inst_bell(ratio=3.5, index=2.0, tau=0.45), mel, gain_db=-4,
+                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.25, mix_=0.2, pingpong=True))
+        song.add("dobra", inst_pulse(duty=0.5, a=0.01, d=0.1, s=0.3, r=0.1), mel, gain_db=-20)   # corpo médio
+        song.add("violao", inst_pluck(cutoff0=3500, cutoff1=500, tau=0.18, osc="pulse"), _theme_strum(False),
+                 gain_db=-15, pan=-0.2)
+        song.add("bumbo", drum_kick(f0=110, f1=50, tau=0.08), "x.......x.......", drum=True, gain_db=-13)
+        song.add("chocalho", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-22)
+    else:
+        song.add("melodia", inst_pulse(duty=0.25, a=0.006, d=0.12, s=0.55, r=0.1, vib=0.18), mel, gain_db=-6,
+                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.3, mix_=0.25, pingpong=True))
+        song.add("eco", inst_bell(ratio=3.5, index=1.5, tau=0.3), _shift(mel, 12), gain_db=-22)   # brilho em cima
+        song.add("pompa", inst_pulse(duty=0.125, a=0.003, d=0.06, s=0.2, r=0.04), _theme_strum(True),
+                 gain_db=-16, pan=0.15)
+        song.add("bumbo", drum_chip(f0=900, f1=55, t=0.1), "x.......x.......", drum=True, gain_db=-12)
+        song.add("caixa", drum_snare(tone=210, tau=0.06), "....x.......x...", drum=True, gain_db=-20)
+        song.add("chimbal", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-24)
+    song.add("baixo", _bass_inst(), _theme_bass(), gain_db=-8)
+    return song.render(loop=True, master_fx=lambda x: lowpass(reverb(x, size=0.6, damp=0.5, mix_=0.18), 11000))
+
+
+THEME_PICK = "A"        # opção escolhida pelo usuário (A caixinha de música / B chiptune fofo)
+TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK)}
 
 if __name__ == "__main__":
     out = "assets/audio/music/" if "--export" in sys.argv else "audio/previews/"
     # caminhos literais (o pre-commit liga cada asset ao script-fonte):
-    # assets/audio/music/title.wav assets/audio/music/flight.wav
+    # assets/audio/music/title.wav assets/audio/music/flight.wav assets/audio/music/theme.wav
     # assets/audio/music/layer_luna.wav assets/audio/music/layer_cogumelos.wav assets/audio/music/layer_bolhas.wav
     # assets/audio/music/layer_jardim.wav assets/audio/music/layer_sorvete.wav assets/audio/music/layer_nuvens.wav
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     names = [a for a in args if a in TRACKS] or ([] if args else list(TRACKS))
     for name in names:
         save_wav(f"{out}{name}.wav", TRACKS[name](), "music", loop=True)
+    if "theme_options" in args:                              # prévia das opções do tema (não exporta)
+        for opt in ("A", "B"):
+            save_wav(f"audio/previews/theme_{opt}.wav", theme(opt), "music", loop=True)
     if "layers" in args or not args:
         for w in LAYERS:
             save_wav(f"{out}layer_{w}.wav", layer(w), "music", loop=True, do_normalize=False)

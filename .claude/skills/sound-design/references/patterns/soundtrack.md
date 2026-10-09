@@ -1,4 +1,4 @@
-# Trilha: título/hangar e voo
+# Trilha: tema do gatinho (tela inicial), Mapa/NAVE e voo
 
 - **Slug**: soundtrack
 - **kind**: music (estéreo, −18 LUFS; bus Music −6 dB no jogo; abaixa −9 dB durante jingles)
@@ -8,6 +8,15 @@
   `assets/audio/music/flight.wav`, camadas `assets/audio/music/layer_luna.wav`, `assets/audio/music/layer_cogumelos.wav`,
   `assets/audio/music/layer_bolhas.wav`, `assets/audio/music/layer_jardim.wav`, `assets/audio/music/layer_sorvete.wav`,
   `assets/audio/music/layer_nuvens.wav`
+- **Tema do gatinho** (2026-10-09, "a tela inicial deveria ter uma música"): `assets/audio/music/theme.wav`, só na
+  tela inicial. A faixa calma (`title`) tinha 83% da energia < 250 Hz e só pad + sino: no notebook (−22,4 LUFS acima de
+  200 Hz, −28 efetivo com o bus) parecia não haver música. Tema: D maior, 92 BPM, 24 compassos A B A' (62,6 s);
+  I–IV–vi–V; motivo de 2 compassos F#–A–B–A–F# / E–D–B (pergunta) repetido como resposta; B sobe até D6 e respira
+  um compasso antes da volta. Baixo triângulo saltitante (tônica–quinta–oitava) + harmônico de pulso uma oitava acima
+  com drive (o peso aparece no notebook: −18,8 LUFS acima de 200 Hz). Opções: **A caixinha de música** (sino FM +
+  dobra de pulso −20, violãozinho de pulso dedilhado, bumbo/chocalho leves) — exportada; **B chiptune fofo** (pulso
+  25% com vibrato + eco de sino uma oitava acima, "pom-pá" de pulso nos contratempos, bateria de chip) —
+  `THEME_PICK` no script.
 - **2026-10-09 (auditoria)**: título 16 → 32 compassos (~91 s, parte B Gmaj7–A7–F#m7–Bm7); voo 16 → 48 compassos
   (~115 s, 3 blocos sobre a mesma progressão: A / A' com melodia nova e chimbal ativo / A'' sem bumbo nos 4 primeiros,
   arpejo invertido e a melodia antiga no fim); **camada do mundo** = contramelodia esparsa (tempos 2 e 4, nota longa
@@ -43,6 +52,9 @@
 - Emendas 3–6 dB nas camadas/título: nota do tempo 1 começando a frase (musical).
 
 ## Fontes
+- https://www.tunee.ai/music-generator/menu-music — música de menu: primeira impressão, loop sem emenda, deixar espaço para a UI
+- https://www.audiogang.org/composing-signature-game-themes/ — o tema é a marca do jogo: motivo, gancho, paleta por estilo
+- https://www.sonarworks.com/blog/learn/make-your-mix-sound-great-on-small-speakers — alto-falante pequeno: harmônicos no médio
 - https://splice.com/blog/adaptive-music-video-games/ — camadas por local (Banjo-Kazooie), música por fase (Mario)
 - https://blog.criware.com/index.php/2020/04/20/dynamic-music-with-adx2-part1-vertical-layering/ — stems sincronizados, camadas entram/saem
 - https://payhip.com/b/BdMWQ — música de idle: suave, não intrusiva, para sessões longas

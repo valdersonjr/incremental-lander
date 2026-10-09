@@ -63,7 +63,9 @@ const STREAMS := {
 	"unlock": "res://assets/audio/sfx/unlock.wav",
 	"goal": "res://assets/audio/sfx/goal.wav",
 }
-const MUSIC := {"title": "res://assets/audio/music/title.wav", "flight": "res://assets/audio/music/flight.wav"}
+## theme = tema do gatinho (so a tela inicial); title = Mapa e NAVE (calma); flight = voo (+ camada do mundo).
+const MUSIC := {"theme": "res://assets/audio/music/theme.wav", "title": "res://assets/audio/music/title.wav",
+		"flight": "res://assets/audio/music/flight.wav"}
 const LAYER_DIR := "res://assets/audio/music/layer_%s.wav"
 const AMBIENCE_DIR := "res://assets/audio/ambience/%s.wav"
 ## Cursor: o mais baixo da interface (toca a cada seta; "quase silencioso", padrao de UI).
