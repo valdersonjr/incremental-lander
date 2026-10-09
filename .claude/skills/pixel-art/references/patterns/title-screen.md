@@ -70,3 +70,23 @@ Pedido: "lista vertical, com horas jogadas, gold, estrela (sem barra de progress
 - Confirmação ("Gravar por cima?") em vermelho não lê sobre a arte: o cartão fica liso nesse estado.
 - Texto sobre a arte: contorno `ink` de 4 (outline_size) nos rótulos — legível sem escurecer a arte.
 - Exportar no tamanho exato do cartão e mostrar sem escalar (TextureRect KEEP_CENTERED num Control com clip).
+
+## 4 estilos novos (2026-10-09)
+Pedido: "tela inicial bastante pacata e não tanto bonitinha — 1 melhoria na atual + 3 novas, estilos diferentes, no
+navegador". `art/src/title/title_styles.py` → `art/previews/title_styles/index.html` (abas, tema tocando, quadro =
+posição da música: 16 quadros por compasso de 92 BPM; com/sem menu).
+1. **Festa na Lua** — Vitrine + ratinhos 2x pulando no tempo, balões 2x amarrados no pé da nave, bandeirinhas 2x do
+   topo da bandeira à antena, planetinha de anel.
+2. **Planetinha** — esfera de queijo r=122 (luz cima-esq., furinhos, borda rust), gato no topo, casinhas 2x na curva
+   (base no ponto mais alto das duas laterais), órbita da nave em 2 compassos passando atrás do planeta.
+3. **Noite de história** — crescente-barquinho (círculo menos círculo deslocado para cima), gato "hold" sentado com
+   perninhas para fora pescando estrela dormindo; banco de nuvens contínuo (soma de círculos) — nuvens do kit
+   soltas deixavam uma faixa lisa.
+4. **Decolagem!** — nave pôster com a cabeça do gato (k=0,8) recortada na cúpula, rastro = pufes que abrem para baixo
+   + núcleo de plasma, riscos diagonais, ratinhos 2x na plataforma, confete.
+Revisão antes de mostrar: peças 1x somem perto do herói k=1,6 → Scale2x em ratinhos/balões/casinhas; pacote
+pendurado dentro do jato (sem motivo) saiu; Terra cortada no canto → centro em (556, 74); céu com poucos tons
+vira faixas largas → mais paradas.
+Fontes extras: https://www.fortnite.com/create/creator-marketing-playbook/keyart (diagonal = dinâmico, foco único),
+https://reverbinc.com/captivating-versatile-video-game-key-art/ (key art: um foco, cores contrastantes, sem poluição),
+https://mori-seika.itch.io/star-planet-pixel-art-scene (planetinha com personagem e casinha)
