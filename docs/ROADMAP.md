@@ -226,7 +226,7 @@
   - [x] mixagem que funciona na web (modo Sample): variações, camada, ducking e pausa sem efeito de bus; limitador do
         Master (desktop + web); prioridade de vozes, limite por som/família, intervalo mínimo; opção "Geral"
   - [x] testes: tests/test_audio_assets.py, sound_flow ampliado, gravação da mixagem real (desktop) e autoteste web
-  - [ ] o usuário ouvir o A/B (`audio/previews/ab_v2/index.html`) e aprovar
+  - [x] o usuário ouviu o A/B (`audio/previews/ab_v2/index.html`) e aprovou (2026-10-09: "Aprovo")
 - [~] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
       musical por mundo ✔ (18.5h); falta o jingle de mundo completo
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no

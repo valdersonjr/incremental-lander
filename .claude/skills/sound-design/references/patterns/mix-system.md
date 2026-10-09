@@ -50,6 +50,7 @@
 
 ## Feedback do usuário
 - Aprovou recriar só os sons com defeito medido (não os 79) e manter o modo Sample na web adaptando o sistema.
+- Ouviu o A/B (página com botões A/B por som + reel) e aprovou tudo de primeira ("Aprovo"), sem ajustes.
 
 ## Fontes
 - https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_web.html — modo Sample (padrão sem threads):

@@ -17,9 +17,8 @@
   integrações (`sound_flow` com 23 checagens), `tests/test_audio_assets.py` (79 ok; nos antigos acusa os 11 defeitos),
   hooks, demo; mixagem real gravada (desktop: +0,3 dBTP com 45 amostras clipadas → −0,8 dBTP, 0 clip); web local em
   Chrome headless (`?audiotest`): tudo como sample, camada alinhada 0,0 ms, ducking/pausa, rajadas limitadas, saída
-  ≤ −0,3 dBFS por canal (entrada chegava a +2,6). **Para o usuário**: ouvir `audio/previews/ab_v2/index.html` (A/B por
-  som + reel de 2,5 min) e aprovar; redeploy no Vercel só quando pedir. **Próximo**: retorno do usuário; jingle de
-  mundo completo (18.6).
+  ≤ −0,3 dBFS por canal (entrada chegava a +2,6). **Aprovado pelo usuário ouvindo o A/B** ("Aprovo");
+  redeploy no Vercel só quando pedir. **Próximo**: jingle de mundo completo (18.6).
 - **Tela inicial nova: "Noite de história"** (usuário achou a Vitrine "pacata e não tão bonitinha"; 4 estilos no
   navegador `art/previews/title_styles/index.html` → escolheu a Noite; tema mais lento → 68 BPM em
   `title_styles/noite.html`). Gatinho sentado na lua crescente de queijo pescando uma estrelinha que dorme, ratinho de
