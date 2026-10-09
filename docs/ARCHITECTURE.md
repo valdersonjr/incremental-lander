@@ -178,6 +178,10 @@ autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) 
                               # gelo, vento, correntes, bolhas). RunSummary: contagem do dinheiro com tiques + ta-dá/recorde.
                               # music_beat(): batidas da faixa atual pela posição real do áudio (BPM por faixa) — a tela
                               # inicial (TitleBackdrop/TitleScreen: "Noite de história", art/src/title/title_night.py) escolhe quadros e fases por ela
+scripts/world/ship_art.gd     # ShipArt: versão (0-3) de cada peça pelo degrau (STAGE = 10 níveis; tabela world.json ship_parts),
+                              # animação do corpo b_<tanque><bocal><pernas> e da chama flame_<motor>, boca do bocal, recortes do
+                              # pôster (ship_poster.png) e caixas de destaque (lander_parts.json). Main manda stats["parts"] ao
+                              # Flight; Lander.set_parts; ShipView (NAVE) desenha o pôster. Arte: art/src/sprites/lander_parts.py
 web/audio_limiter.js          # limitador do Master na web (WaveShaper soft-clip -0,3 dBFS), copiado no html/head_include do preset
 tests/test_audio_assets.py    # mede todo WAV (loudness/pico/clip/duração/agudo/notebook) + referências + limitador web no preset
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui (feedback_sfx.py, world_loops.py, ui_sfx.py...)

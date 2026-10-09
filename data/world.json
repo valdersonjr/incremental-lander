@@ -26,6 +26,11 @@
     "half_width_m": 13.0,
     "feet_offset_m": 8.0
   },
+  "ship_parts": {
+    "notes": "pecas que crescem no desenho da nave (arte art/src/sprites/lander_parts.py; ROADMAP 16.5): versao 0-3 a partir do degrau (nivel / 10). stage_to_tier[d] para Motor/Gasolina/Eficiencia (degrau >= ultimo indice = ultima versao); gear_stage_to_tier para a Resistencia (3 degraus). So visual: nao muda fisica nem economia.",
+    "stage_to_tier": [0, 1, 1, 2, 2, 2, 3],
+    "gear_stage_to_tier": [0, 1, 2, 3]
+  },
   "terrain": {
     "step_m": 16.0,
     "margin_m": 600.0,

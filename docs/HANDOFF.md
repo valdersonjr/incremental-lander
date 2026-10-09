@@ -4,6 +4,17 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Peças que crescem por degrau (ROADMAP 16.5, parte de arte)** — aprovadas pelo usuário na página interativa
+  `art/previews/lander_parts/index.html` ("Boa, gostei"). Gasolina = bolotas nos ombros do disco; Eficiência = bocal
+  sino → anel aqua → anel dourado + aletas; Resistência = sapata redonda → mola → almofada; Motor = chama maior.
+  4 versões (degrau 0 / 1–2 / 3–5 / 6+; Resistência 1:1, `world.json ship_parts`). Voo: `Visual` toca
+  `b_<tanque><bocal><pernas>` (lander_body_frames.tres) e `%Flame` (lander_flame_frames.tres) fica atrás, na boca do
+  bocal; o Main manda `stats["parts"]` (o Flight continua sem ler o GameState). NAVE: `ShipView` desenha o pôster do
+  atlas + chama, destaque dourado por peça (uma caixa por lado). Versão 0 = nave antiga pixel a pixel (assert no
+  script). Verificado: check (104), 116 testes (novo `test_ship_art`), 16 integrações, demo, capturas do voo com tudo no
+  máximo e da NAVE com destaque. Também: redeploy no Vercel (áudio v2 + jingle) verificado na URL pública.
+  **Próximo**: resto do 16.5 — ícones da estrada que faltam (Estabilizador, ajudas, troféu), selo de Reputação e
+  sons (parada alcançada, degrau de peça, pouso perfeito; escolhas sempre em página no navegador).
 - **Jingle de mundo completo (ROADMAP 18.6 fechado)** — `world_complete.wav` (3,9 s): motivo do tema do gatinho na
   ocarina + marimba + cadência Lá → Ré + "ta-dá" de sinos. Toca na parada `complete_<mundo>` da Estrada (última estrela),
   no lugar do `unlock` (`Sound._on_road_reached`); a viagem no Mapa continua com o `goal`. Usuário escolheu a opção A

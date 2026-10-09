@@ -1,0 +1,54 @@
+{
+  "frame_width": 32,
+  "frame_height": 24,
+  "animations": [
+    {
+      "name": "flame_0",
+      "row": 0,
+      "frames": 4,
+      "durations_ms": [
+        70,
+        70,
+        70,
+        70
+      ],
+      "loop": true
+    },
+    {
+      "name": "flame_1",
+      "row": 1,
+      "frames": 4,
+      "durations_ms": [
+        70,
+        70,
+        70,
+        70
+      ],
+      "loop": true
+    },
+    {
+      "name": "flame_2",
+      "row": 2,
+      "frames": 4,
+      "durations_ms": [
+        70,
+        70,
+        70,
+        70
+      ],
+      "loop": true
+    },
+    {
+      "name": "flame_3",
+      "row": 3,
+      "frames": 4,
+      "durations_ms": [
+        70,
+        70,
+        70,
+        70
+      ],
+      "loop": true
+    }
+  ]
+}

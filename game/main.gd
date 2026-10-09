@@ -207,12 +207,20 @@ func _show_title() -> void:
 	Sound.ambience("")                                         # tela inicial: so o tema (sem vento/drone por baixo)
 
 
+## Stats da nave para o voo + a versao de cada peca no desenho (pecas que crescem por degrau; o Flight nao le o
+## GameState). Copia: o RunState continua so com os numeros.
+func _flight_stats(stats: Dictionary) -> Dictionary:
+	var s := stats.duplicate()
+	s["parts"] = ShipArt.tiers(GameState.levels)
+	return s
+
+
 ## Cena de fundo do hangar: o mundo do jogo em uso, nave parada na plataforma.
 func _build_hangar_world() -> void:
 	_clear_run()
 	_flight = FLIGHT_SCENE.instantiate()
 	_world.add_child(_flight)
-	_flight.start(GameState.current_planet, _run_seed, GameState.ship_stats(), false)
+	_flight.start(GameState.current_planet, _run_seed, _flight_stats(GameState.ship_stats()), false)
 	Sound.ambience(GameState.current_planet)
 
 
@@ -319,7 +327,7 @@ func _start_run() -> void:
 	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
 	for c: Control in [_hud, _offers, _summary, _pause]:
 		c.theme = ui
-	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
+	_flight.start(GameState.current_planet, _run_seed, _flight_stats(stats), _demo)
 	_flight.landscapes = GameState.landscapes()
 	Sound.music("flight", GameState.current_planet)        # base do voo + camada do mundo
 	Sound.ambience(GameState.current_planet)

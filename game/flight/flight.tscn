@@ -3,7 +3,8 @@
 [ext_resource type="Script" path="res://game/flight/flight.gd" id="1_flight"]
 [ext_resource type="Script" path="res://game/flight/lander.gd" id="2_lander"]
 [ext_resource type="PackedScene" path="res://game/terrain/terrain.tscn" id="3_terrain"]
-[ext_resource type="SpriteFrames" path="res://assets/sprites/lander_frames.tres" id="4_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/lander_body_frames.tres" id="4_frames"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/lander_flame_frames.tres" id="7_flame"]
 [ext_resource type="PackedScene" path="res://game/background/backdrop.tscn" id="5_backdrop"]
 [ext_resource type="AudioStream" path="res://assets/audio/sfx/thruster_loop.wav" id="6_loop"]
 
@@ -23,10 +24,18 @@ unique_name_in_owner = true
 unique_name_in_owner = true
 script = ExtResource("2_lander")
 
+[node name="Flame" type="AnimatedSprite2D" parent="Lander"]
+unique_name_in_owner = true
+visible = false
+position = Vector2(-16, 5)
+sprite_frames = ExtResource("7_flame")
+animation = &"flame_0"
+centered = false
+
 [node name="Visual" type="AnimatedSprite2D" parent="Lander"]
 unique_name_in_owner = true
 sprite_frames = ExtResource("4_frames")
-animation = &"idle"
+animation = &"b_000"
 
 [node name="ThrustLoop" type="AudioStreamPlayer2D" parent="Lander"]
 unique_name_in_owner = true

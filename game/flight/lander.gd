@@ -1,6 +1,8 @@
 ## Lander: fisica propria (LanderPhysics) em unidades do modelo, pouso/batida por LandingRules.
-## Controlado pelo teclado ou por um Autopilot (modo --demo). Visual: AnimatedSprite2D %Visual com
-## assets/sprites/lander_frames.tres (skill pixel-art, gatinho astronauta): "idle" (pisca) / "thrust".
+## Controlado pelo teclado ou por um Autopilot (modo --demo). Visual: AnimatedSprite2D %Visual com o corpo
+## (assets/sprites/lander_body_frames.tres, gatinho astronauta; animacao b_<tanque><bocal><pernas> pela versao das
+## pecas, idle com piscar) e %Flame atras dele com a chama (lander_flame_frames.tres, flame_<motor>), que comeca na boca
+## do bocal. stats["parts"] = ShipArt.tiers(levels) (o Main manda no setup) escolhe as versoes (ROADMAP 16.5).
 class_name Lander
 extends CharacterBody2D
 
@@ -52,6 +54,8 @@ const ALARM_LOUD_S := 3.0
 const ALARM_QUIET_DB := -14.0
 
 @onready var _visual: AnimatedSprite2D = %Visual
+@onready var _flame: AnimatedSprite2D = %Flame
+var parts: Dictionary = {}                 # versao de cada peca (ShipArt.tiers); vazio = tudo de serie
 @onready var _thrust_loop: AudioStreamPlayer2D = %ThrustLoop
 @onready var _thrust_fx: AudioStreamPlayer2D = %ThrustFx
 var _was_thrusting := false
@@ -76,6 +80,7 @@ func setup(stats: Dictionary, planet: Dictionary, terrain_pads: Array[Dictionary
 		"turbo": float(stats.get("turbo", 0.0)) >= 1.0,
 	}
 	gas = params["tank"]
+	set_parts(stats.get("parts", {}))                          # versao das pecas no desenho (Main manda; vazio = de serie)
 	pads = terrain_pads
 	state = State.LANDED
 	vel_m = Vector2.ZERO
@@ -139,11 +144,21 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 
+## Versoes das pecas no desenho (corpo com tanque/bocal/pernas; chama do motor a partir da boca do bocal).
+func set_parts(t: Dictionary) -> void:
+	parts = t
+	_visual.play(ShipArt.body_anim(t))
+	_flame.play(ShipArt.flame_anim(t))
+	_flame.position = Vector2(-16, ShipArt.mouth(t) - 16)
+
+
 func _process(delta: float) -> void:
-	var anim := &"thrust" if thrusting else &"idle"
-	if _visual.animation != anim:
-		_visual.play(anim)
-	_visual.speed_scale = 2.0 if turbo_on and thrusting else 1.0   # Turbo: chama tremendo mais rapido
+	if not _visual.is_playing():
+		_visual.play(ShipArt.body_anim(parts))
+	_flame.visible = thrusting
+	if thrusting and not _flame.is_playing():
+		_flame.play(ShipArt.flame_anim(parts))
+	_flame.speed_scale = 2.0 if turbo_on and thrusting else 1.0    # Turbo: chama tremendo mais rapido
 	_update_thrust_sound()
 	_update_gas_alarm(delta)
 

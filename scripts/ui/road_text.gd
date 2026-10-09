@@ -30,7 +30,7 @@ const PART_DOES := {"thrust": "sobe mais fácil", "tank": "voa mais longe", "eff
 ## Nome do degrau da peca (algarismo comum: crianca de 6 anos nao le romano).
 const STAGE_NAMES := ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
 ## Niveis por degrau das pecas (festinha e a peca cresce no desenho a cada degrau).
-const STAGE := 10
+const STAGE := ShipArt.STAGE
 
 
 ## Nome curto da parada (2 linhas no maximo no no da estrada).
