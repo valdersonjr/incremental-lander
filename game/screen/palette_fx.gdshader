@@ -4,6 +4,8 @@
 //   mode 2 = silhueta: todo pixel visivel vira uma cor so (fill).
 //   mode 3 = escurecer atras de janela: xadrez de 1 px em ink (metade dos pixels), sem semitransparencia.
 //   mode 4 = contorno externo de 1 px na cor fill (o heroi se destaca de cenarios carregados); miolo intacto.
+//   mode 5 = fantasma: xadrez de 1 px de textura, metade dos pixels na cor fill e metade na cor original
+//            ("Veja como" / fantasma do retry, 2026-10-08).
 // Alfa: pixel com alfa >= 0.5 fica opaco, o resto some (a arte nunca e semitransparente).
 shader_type canvas_item;
 
@@ -40,6 +42,9 @@ void fragment() {
 		}
 		if (mode == 2) {
 			COLOR = vec4(fill, 1.0);
+		} else if (mode == 5) {
+			ivec2 t = ivec2(floor(UV / TEXTURE_PIXEL_SIZE));
+			COLOR = (t.x + t.y) % 2 == 0 ? vec4(fill, 1.0) : vec4(c.rgb, 1.0);
 		} else {
 			float l = dot(c.rgb, vec3(0.299, 0.587, 0.114));
 			vec3 o = l < 0.2 ? ramp0 : (l < 0.42 ? ramp1 : (l < 0.66 ? ramp2 : ramp3));

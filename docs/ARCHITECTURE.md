@@ -260,10 +260,17 @@ Planejados (`godot-dev`):
 - HUD: placar sem a grade de recordes no 1º run, corações só depois do aprendiz, `show_verb(verbo, texto)`,
   `show_retry(motivo)`; `UiKit.crash_tip`. NAVE: `_visible_tabs()` e ×10/MÁX por `shows_bulk`. Mapa: moedas, "NAVE  !"
   e "Novo amiguinho!" (`MissionIntro`) quando a Estrada libera um ratinho. Ofertas: aprendiz não vê "falta gás".
+- `RetryHint` (`game/flight/retry_hint.gd`, filho do Flight, z 5; `Flight.retry_hint`): `pose(motivo, u)` estático
+  (movimento certo por motivo de batida), `play_ghost` (fantasma em cima da plataforma alvo; filho com
+  `UiKit.ghost` = `palette_fx` modo 5, xadrez branco) e `show_balloon` (some quando a nave sai de LANDED).
+  `Flight.play_ghost(motivo)` → duração (câmera em `ghost_focus`, `_focus_ghost`), `end_ghost()`. `Main._retry_hop`:
+  BATEU 0,5 s → fantasma → tela escura → `retry_mission` + `Hud.show_retry` (só o título) + balão. O Coach desenha a
+  teclinha ao lado quando o balão está aberto.
 - `GameState.assist_lent(id)`: ajuda comprável emprestada ao aprendiz (`onboarding.lent_assists`, hoje o Nivelador);
   o `AssistView` desenha, a NAVE continua usando `assist_on` (só as compradas).
 - Prévia: `flight_ui_preview` é veterano por padrão; `--new` = jogador novo, `--meter` = caindo perto do chão,
-  `--guide` = "Veja como!", `--graduate` = aviso de formatura, `--no_lander` = fundo limpo para maquetes.
+  `--guide` = "Veja como!", `--graduate` = aviso de formatura, `--no_lander` = fundo limpo para maquetes,
+  `--retry=<motivo>` = batida do aprendiz (fantasma + balão).
   Integração: `tests/integration/onboarding_flow`.
 
 ## Regras de fluxo (auditoria de lançamento, 2026-10-03)

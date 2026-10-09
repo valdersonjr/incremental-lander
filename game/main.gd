@@ -496,12 +496,21 @@ func _retry_hop(reason: String) -> void:
 	Telemetry.event("give_up" if give_up else ("guide" if guide else "retry"), reason)
 	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
 	var flight := _flight
+	await get_tree().create_timer(0.5, false).timeout          # o "BATEU!" aparece um instante
+	if flight != _flight or _run == null or _run.over:
+		return
+	if not give_up and not guide:                              # fantasma: o movimento certo em cima da plataforma
+		var ghost_s := _flight.play_ghost(reason)
+		if ghost_s > 0.0:
+			await get_tree().create_timer(ghost_s + 0.3, false).timeout
+			if flight != _flight or _run == null or _run.over:
+				return
 	var tw := _fade.create_tween()
-	tw.tween_interval(0.5)                                     # o "BATEU!" aparece um instante
 	tw.tween_property(_fade, "modulate:a", 1.0, fade_s)
 	await tw.finished
 	if flight != _flight or _run == null or _run.over:         # o run acabou/recomecou durante a tela escura
 		return
+	_flight.end_ghost()
 	if give_up:
 		_retries = 0
 		_guided = false
@@ -519,6 +528,7 @@ func _retry_hop(reason: String) -> void:
 			_hud.show_guide()
 		else:
 			_hud.show_retry(reason)
+			_flight.retry_hint.show_balloon(reason)          # a cena do jeito certo fica em cima da nave ate decolar
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 

@@ -12,7 +12,7 @@ var _fails: Array[String] = []
 
 
 func _ready() -> void:
-	Engine.time_scale = 4.0                                    # explosoes/telas escuras/descidas 4x (cabe nos 600 quadros
+	Engine.time_scale = 8.0                                    # explosoes/fantasma/telas escuras/descidas 8x (cabe nos 600 quadros
 	SaveManager.enabled = true                                 # do gdtool test; a fisica roda os mesmos passos)
 	SaveManager.set_dir("user://itest_onboarding")
 	for n in range(1, SaveManager.SLOTS + 1):
@@ -37,7 +37,10 @@ func _ready() -> void:
 	flight.lander.state = Lander.State.FLYING
 	flight.lander.gas = gas0 * 0.5
 	flight.lander.crash_now("vertical_rapido")
-	await _until(func() -> bool: return main._retries == 1 and flight.lander.visible)   # explosao + tela escura
+	await _until(func() -> bool: return flight._focus_ghost)
+	_check(flight._focus_ghost and flight.retry_hint._ghost_on, "aprendiz: fantasma do jeito certo na plataforma")
+	await _until(func() -> bool: return main._retries == 1 and flight.lander.visible and main._fade.modulate.a < 0.05)
+	_check(not flight._focus_ghost and flight.retry_hint.balloon_visible(), "de volta na partida: balao em cima da nave")
 	_check(not main._run.over, "aprendiz: batida nao deveria acabar o run")
 	_check(main._flight == flight and flight.lander.visible, "aprendiz: a nave volta")
 	_check(is_equal_approx(flight.lander.gas, gas0), "aprendiz: gas do comeco do salto (%.1f / %.1f)" % [
@@ -45,6 +48,7 @@ func _ready() -> void:
 	_check(flight.gentle and is_equal_approx(flight.target_distance_m, first_m), "aprendiz: o MESMO salto")
 	# pouso devagar fora da plataforma: para no chao (sem batida)
 	await _wait_ready(main)
+	_check(flight.retry_hint.balloon_visible(), "balao fica ate decolar")
 	var l := flight.lander
 	var pad: Dictionary = flight.terrain.pads[0]
 	var x := float(pad["x"]) - float(pad["half_width"]) - 80.0
@@ -57,6 +61,7 @@ func _ready() -> void:
 	await _until(func() -> bool: return crashed[0] or l.state != Lander.State.FLYING)
 	_check(not crashed[0] and l.state == Lander.State.LANDED, "pouso devagar fora: parou no chao (estado %s)" % [
 			Lander.State.keys()[l.state]])
+	_check(not flight.retry_hint.balloon_visible(), "decolou: o balao some")
 	# bug do loop (2026-10-08): o aprendiz que falha o mesmo salto de novo e de novo volta ao cartao de missoes
 	var tries := int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
 	for k in tries:                                            # 1a batida ja foi; mais `tries` = passou do limite

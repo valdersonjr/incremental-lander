@@ -393,6 +393,11 @@ static func outline(item: CanvasItem, color_name: String = "white") -> void:
 	item.material = _fx_material(4, color(color_name))
 
 
+## Fantasma de 1 px em xadrez (metade dos pixels na cor fill): a nave pontilhada que mostra o movimento certo.
+static func ghost(item: CanvasItem, color_name: String = "white") -> void:
+	item.material = _fx_material(5, color(color_name))
+
+
 ## Escurecimento atras de janelas: xadrez de 1 px em ink (sem semitransparencia).
 static func dim_rect(rect: CanvasItem) -> void:
 	rect.material = _fx_material(3, Color.BLACK)

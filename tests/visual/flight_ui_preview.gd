@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--retry=<motivo>: fantasma + balao do tente de novo] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -60,6 +60,11 @@ func _ready() -> void:
 		main._retries = int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
 		main._flight.lander.state = Lander.State.FLYING
 		main._flight.lander.crash_now("vertical_rapido")
+	for a in args:                                             # --retry=<motivo>: aprendiz bate -> fantasma -> balao
+		if a.begins_with("--retry="):
+			await get_tree().create_timer(2.5).timeout
+			main._flight.lander.state = Lander.State.FLYING
+			main._flight.lander.crash_now(a.get_slice("=", 1))
 	if "--no_lander" in args:                                  # fundo limpo para maquetes (sem a nave nem as ajudas)
 		await get_tree().create_timer(2.5).timeout
 		main._flight.lander.visible = false

@@ -355,9 +355,10 @@ func show_graduation() -> void:
 	_show_toast("PILOTO FORMADO!", "agora é pra valer: bater acaba a viagem", &"GoodLabel")
 
 
-## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Aviso animador + o jeito de acertar.
-func show_retry(reason: String) -> void:
-	_show_toast("TENTE DE NOVO!", UiKit.crash_tip(reason), &"MoneyLabel")
+## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. So o aviso animador: o jeito de acertar vem em
+## figura (fantasma + balao do RetryHint), sem precisar ler.
+func show_retry(_reason: String) -> void:
+	_show_toast("TENTE DE NOVO!", "", &"MoneyLabel")
 	_set_status(_idle_status())
 
 
@@ -438,6 +439,7 @@ func _show_toast(title: String, text: String, variation: StringName) -> void:
 	_toast_title.text = title
 	_toast_title.add_theme_color_override(&"font_color", get_theme_color(&"font_color", variation))
 	_toast_text.text = text
+	_toast_text.visible = text != ""
 	_toast_extra.visible = false
 	_toast.modulate.a = 1.0
 	_toast.visible = true

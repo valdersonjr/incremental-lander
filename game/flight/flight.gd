@@ -27,6 +27,9 @@ const EXPLOSION_FRAMES := preload("res://assets/sprites/explosion_frames.tres")
 const DUST_FRAMES := preload("res://assets/sprites/landing_dust_frames.tres")
 
 var _assist_view: AssistView
+## "Tente de novo" sem texto (aprendiz): fantasma do movimento certo + balao em cima da nave (RetryHint).
+var retry_hint: RetryHint
+var _focus_ghost := false                          # camera olha o fantasma (plataforma alvo) em vez da nave
 
 var _seed := 0
 var _pad_positions_m: Array[float] = [0.0]
@@ -121,10 +124,14 @@ func _ready() -> void:
 	coach.name = "Coach"
 	coach.flight = self
 	add_child(coach)
+	retry_hint = RetryHint.new()
+	retry_hint.name = "RetryHint"
+	retry_hint.flight = self
+	add_child(retry_hint)
 
 
 func _physics_process(delta: float) -> void:
-	camera.global_position = lander.global_position
+	camera.global_position = retry_hint.ghost_focus() if _focus_ghost else lander.global_position
 	_tick_mission(delta)
 	_tick_gift()
 	_tick_minigame()
@@ -147,6 +154,21 @@ func _process(delta: float) -> void:
 		var target := TerrainGen.mean_height(terrain.ridge, center.x, float(gf["span_px"])) - float(terrain.pads[0]["y"])
 		_bg_ground = lerpf(_bg_ground, target, 1.0 - exp(-float(gf["speed"]) * delta))
 	backdrop.follow(center + Vector2(_bg_origin, -_bg_ground))
+
+
+## Aprendiz que bateu: a nave pontilhada refaz o movimento certo em cima da plataforma alvo (a camera vai ate la).
+## Devolve a duracao (s) ou 0 se o motivo nao tem fantasma.
+func play_ghost(reason: String) -> float:
+	if not retry_hint.play_ghost(reason):
+		return 0.0
+	_focus_ghost = true
+	return RetryHint.PAN_S + RetryHint.LOOP_S
+
+
+## Fim do fantasma: a camera volta a seguir a nave.
+func end_ghost() -> void:
+	_focus_ghost = false
+	retry_hint.hide_all()
 
 
 ## "Veja como!" (aprendiz): qualquer comando de voo tira o piloto automatico e devolve a nave ao jogador.

@@ -176,7 +176,10 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
   (Super Guide do New Super Mario Bros. Wii): o piloto automático voa o mesmo salto, apertar o motor ou girar devolve a
   nave e a entrega vale; só se o guia também falhar o cartão abre. Antes da 1ª entrega todo salto tem relevo baixo
   (quem desiste do 1º não ganha um mais difícil). O **Nivelador** fica emprestado durante o aprendiz (Smart Steering do
-  Mario Kart). Ao fazer a 5ª entrega: **"PILOTO FORMADO!"** com festa (daqui em diante bater acaba a viagem). Pousar devagar e reto
+  Mario Kart). Ao fazer a 5ª entrega: **"PILOTO FORMADO!"** com festa (daqui em diante bater acaba a viagem).
+  **"Tente de novo" sem texto**: depois da batida, uma nave pontilhada (fantasma) refaz o movimento certo em cima da
+  plataforma alvo e ganha ✓; a nave volta para a partida com um **balão** mostrando a mesma cena em miniatura até
+  decolar. O aviso diz só "TENTE DE NOVO!" (sem gás: só o balão, com o voo em arco). Pousar devagar e reto
   fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
 - **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
   no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave

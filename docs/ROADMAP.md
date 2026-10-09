@@ -204,8 +204,9 @@
 - [x] 18.5f Aprendiz validado contra os jogos mais vendidos (2026-10-08; GDD §8, DECISIONS):
   - [x] relevo baixo em todo salto antes da 1ª entrega · "Veja como!" (piloto automático; o motor devolve a nave)
   - [x] Nivelador emprestado ao aprendiz · "PILOTO FORMADO!" na 5ª entrega · simulador: `guide_after` no novato
-  - [ ] retorno em figura em vez de texto: escolher no protótipo `art/previews/dicas/dicas.html` (A/B/C; recomendado B+C)
-        e depois fazer a arte (pixel-art) e o código
+  - [x] retorno em figura em vez de texto: o usuário escolheu a recomendação B+C do protótipo
+        `art/previews/dicas/dicas.html` → `RetryHint` (fantasma na plataforma + balão na nave até decolar), placeholder em `_draw`
+  - [ ] arte final do fantasma/balão (pixel-art), se o usuário quiser
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

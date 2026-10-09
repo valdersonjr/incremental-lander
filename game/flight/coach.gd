@@ -79,7 +79,9 @@ func _draw() -> void:
 	if flight == null:
 		return
 	var at := to_local(flight.lander.global_position)
-	if _show_thrust:
+	if _show_thrust and flight.retry_hint.balloon_visible():      # balao do "tente de novo" em cima: tecla ao lado
+		_draw_keys(at + Vector2(-72.0, -44.0), ["thrust"])
+	elif _show_thrust:
 		_draw_keys(at + Vector2(0.0, -36.0), ["thrust"])
 	elif _show_rotate:
 		_draw_keys(at + Vector2(0.0, -36.0), ["rotate_left", "rotate_right"])

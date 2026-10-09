@@ -12,10 +12,12 @@
   Verificado: check (99), 111 testes + todas as integrações (`onboarding_flow` cobre guia, assumir o controle, guia que
   pousa e entrega), paridade 43, capturas `flight_ui_preview -- --no_title --new --guide` (bateu → VEJA COMO! → pousa
   sozinho) e `--new --meter --graduate` (Nivelador + medidor; aviso de formatura).
-  **Para o usuário**: escolher no protótipo `art/previews/dicas/dicas.html` (git-ignorado; servido em
-  http://localhost:8791/dicas.html enquanto o servidor da sessão estiver de pé) como mostrar o "tente de novo" sem texto:
-  A figurinha no aviso · B fantasma no lugar · C balão na nave (recomendado B+C). Depois: arte (pixel-art) + código.
-  Aviso de formatura usa o jingle milestone e texto (arte/som próprios só se quiser).
+  **"Tente de novo" em figura aplicado (B+C, pedido "faça o mais recomendado")**: `RetryHint` = fantasma pontilhado na
+  plataforma alvo + balão com a cena em cima da nave até decolar; aviso só com o título. Verificado: check (100), 111
+  testes + integrações (`onboarding_flow` agora a 8x: fantasma, balão, balão some ao decolar), paridade 43, demo 2400
+  quadros, capturas `flight_ui_preview -- --no_title --new --retry=<motivo>`.
+  **Para o usuário**: jogar um jogo novo e bater de propósito; aprovar o fantasma/balão (placeholder em `_draw`; arte
+  final via pixel-art só se quiser). Aviso de formatura usa o jingle milestone e texto.
 - **Bug do loop do aprendiz corrigido** (relato do usuário jogando um save novo): missão difícil demais prendia o
   jogador (a batida repetia o mesmo salto para sempre). Agora: no máximo 2 repetições (`retries_per_hop`), depois volta
   ao cartão com o gás do começo do salto ("OUTRA MISSÃO!"); sem pedido ao alcance, o run acaba. Verificado: check,
