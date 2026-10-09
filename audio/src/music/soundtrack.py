@@ -263,12 +263,66 @@ def _bass_inst() -> Instrument:
     return play_
 
 
+def _lead_marimba() -> Instrument:
+    """Marimba/kalimba: triângulo + sobretom 4x (madeira) e 10x curtinho (toque), decaimento médio."""
+    def play_(f, dur, vel):
+        total = max(dur, 0.7)
+        body = triangle(f, total) * decay(total, 0.32)
+        wood = sine(f * 4, total) * decay(total, 0.05) * 0.35
+        tick = sine(f * 10, total) * decay(total, 0.008) * 0.12
+        return lowpass(body + wood + tick, 6000) * vel
+    return play_
+
+
+def _lead_ocarina() -> Instrument:
+    """Ocarina/flauta: seno + um pouco de triângulo, sopro de ruído no ataque e vibrato que entra devagar."""
+    def play_(f, dur, vel):
+        total = dur + 0.12
+        fr = vibrato(f, total, 5.0, 0.18, delay=0.18)
+        tone = sine(fr, total) * 0.8 + triangle(fr, total) * 0.2
+        breath = bandpass(noise(total, "pink", int(f) % 97), f * 0.8, f * 2.5) * decay(total, 0.06) * 0.25
+        return (tone * adsr(total, 0.04, 0.1, 0.8, 0.12) + breath) * vel
+    return play_
+
+
+def _lead_epiano() -> Instrument:
+    """Piano elétrico (FM tipo Rhodes): portadora com modulador 1:1 de índice caindo + 'tine' 14:1 no ataque."""
+    def play_(f, dur, vel):
+        total = max(dur, 0.9)
+        body = fm(f, total, ratio=1.0, index=1.6 * decay(total, 0.35)) * decay(total, 0.7)
+        tine = fm(f, total, ratio=14.0, index=0.8 * decay(total, 0.02)) * decay(total, 0.04) * 0.25
+        return lowpass(body + tine, 5000) * vel
+    return play_
+
+
+def _lead_harp() -> Instrument:
+    """Harpa: pulso 50% com passa-baixa que fecha rápido (dedilhado) + oitava de seno suave."""
+    pl = inst_pluck(cutoff0=4500, cutoff1=700, tau=0.35, osc="pulse")
+    def play_(f, dur, vel):
+        x = pl(f, dur, vel)
+        return x + sine(f * 2, len(x) / SR) * decay(len(x) / SR, 0.2) * 0.2 * vel
+    return play_
+
+
+# opção -> (instrumento da melodia, ganho dB, eco)
+THEME_LEADS = {"C": (_lead_marimba, -4, 0.18), "D": (_lead_ocarina, -6, 0.22), "E": (_lead_epiano, -5, 0.18),
+               "F": (_lead_harp, -6, 0.2)}
+
+
 def theme(option: str = "A") -> np.ndarray:
     """Tema do gatinho. A = caixinha de música (sino + violãozinho + baixo + bumbo/chocalho leves);
     B = chiptune fofo (pulso com vibrato + 'pom-pá' de pulso + bateria de chip)."""
     song = Song(bpm=THEME_BPM, bars=len(THEME_CHORDS))
     mel = _theme_melody()
-    if option == "A":
+    if option in THEME_LEADS:                                # mesmo arranjo da A, só troca o instrumento da melodia
+        make, db, wet = THEME_LEADS[option]
+        song.add("melodia", make(), mel, gain_db=db,
+                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.25, mix_=wet, pingpong=True))
+        song.add("violao", inst_pluck(cutoff0=3500, cutoff1=500, tau=0.18, osc="pulse"), _theme_strum(False),
+                 gain_db=-15, pan=-0.2)
+        song.add("bumbo", drum_kick(f0=110, f1=50, tau=0.08), "x.......x.......", drum=True, gain_db=-13)
+        song.add("chocalho", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-22)
+    elif option == "A":
         song.add("melodia", inst_bell(ratio=3.5, index=2.0, tau=0.45), mel, gain_db=-4,
                  fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.25, mix_=0.2, pingpong=True))
         song.add("dobra", inst_pulse(duty=0.5, a=0.01, d=0.1, s=0.3, r=0.1), mel, gain_db=-20)   # corpo médio
@@ -289,7 +343,7 @@ def theme(option: str = "A") -> np.ndarray:
     return song.render(loop=True, master_fx=lambda x: lowpass(reverb(x, size=0.6, damp=0.5, mix_=0.18), 11000))
 
 
-THEME_PICK = "A"        # opção escolhida pelo usuário (A caixinha de música / B chiptune fofo)
+THEME_PICK = "D"        # escolhida pelo usuário ouvindo as 6 no navegador (2026-10-09): ocarina/flauta
 TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK)}
 
 if __name__ == "__main__":
@@ -303,7 +357,7 @@ if __name__ == "__main__":
     for name in names:
         save_wav(f"{out}{name}.wav", TRACKS[name](), "music", loop=True)
     if "theme_options" in args:                              # prévia das opções do tema (não exporta)
-        for opt in ("A", "B"):
+        for opt in [a for a in args if a in THEME_LEADS] or ("A", "B"):
             save_wav(f"audio/previews/theme_{opt}.wav", theme(opt), "music", loop=True)
     if "layers" in args or not args:
         for w in LAYERS:

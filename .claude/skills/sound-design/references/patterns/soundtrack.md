@@ -16,7 +16,9 @@
   com drive (o peso aparece no notebook: −18,8 LUFS acima de 200 Hz). Opções: **A caixinha de música** (sino FM +
   dobra de pulso −20, violãozinho de pulso dedilhado, bumbo/chocalho leves) — exportada; **B chiptune fofo** (pulso
   25% com vibrato + eco de sino uma oitava acima, "pom-pá" de pulso nos contratempos, bateria de chip) —
-  `THEME_PICK` no script.
+  `THEME_PICK` no script. **Escolhida: D ocarina/flauta** (usuário, "MUUUITO melhor"): seno 80% + triângulo 20%,
+  vibrato 5 Hz/0,18 st entrando após 0,18 s, sopro de ruído rosa em banda (0,8–2,5× a nota) no ataque, ataque 40 ms,
+  −6 dB, eco 0,22. As outras opções do mesmo arranjo (C marimba, E piano elétrico FM, F harpa) ficam no script.
 - **2026-10-09 (auditoria)**: título 16 → 32 compassos (~91 s, parte B Gmaj7–A7–F#m7–Bm7); voo 16 → 48 compassos
   (~115 s, 3 blocos sobre a mesma progressão: A / A' com melodia nova e chimbal ativo / A'' sem bumbo nos 4 primeiros,
   arpejo invertido e a melodia antiga no fim); **camada do mundo** = contramelodia esparsa (tempos 2 e 4, nota longa
@@ -40,6 +42,9 @@
   melodia de pulso 12,5% só nos compassos 13–16 (variação) −15.
 
 ## Feedback do usuário (o que mudou e por quê)
+- 2026-10-09: tema na caixinha de música "parece ser bom (quase o que eu quero), mas ainda tá ruim… outro instrumento";
+  6 timbres na página `audio/previews/theme_options.html` (troca mantendo o ponto da música) → ocarina venceu de longe.
+  Lição: para escolher timbre, comparar no mesmo trecho lado a lado ajuda muito mais que tocar em sequência.
 - 2026-10-03: aprovado no resumo do pacote de áudio.
 - 2026-10-09: auditoria — voo de 38 s igual em todos os mundos cansava; pedido "conserte tudo".
 

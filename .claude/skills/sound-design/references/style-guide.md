@@ -32,6 +32,10 @@
 - Caráter do propulsor: **plasma suave** (zumbido grave afinado em D + sopro de plasma com filtro que respira + brilho
   elétrico leve) — combina com a nave futurista de plasma ciano. (2026-10-01: 3 opções geradas; o usuário delegou a escolha.)
 
+## Identidade — melodia principal
+- **Ocarina/flauta** (seno + sopro + vibrato atrasado) é o timbre do tema do jogo (escolha do usuário, 2026-10-09):
+  cozy, fofo, "Zelda". Bom candidato para melodias de destaque futuras (vinhetas, mundo completo).
+
 ## Decisões registradas
 <!-- data — decisão — motivo -->
 - 2026-10-01 — propulsor = plasma suave (opção A de `audio/src/sfx/thruster.py`) — usuário: "escolhe qualquer 1"; o usuário prefere não auditar som por som: gerar o pacote seguindo a skill e tocar um resumo para aprovação geral
