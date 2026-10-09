@@ -22,7 +22,7 @@ Mundos atuais (2026-10-09, auditoria de som; fofos, só cenário). Eventos espal
 emenda), drone −18 dB nos mundos novos (o que caracteriza o mundo são os eventos), reverb nos eventos.
 | Mundo | Cama | Eventos |
 |---|---|---|
-| Lua de queijo | unison seno D2 + triângulo A2 respirando −9 + ar rosa LP 220–700 | 5 picaretas da mina (FM 2,76, 2–3 tlins) −10..−5; 3 sinos FM −11..−6; reverb 0,85 (sai a batalha) |
+| Lua de queijo | unison seno D2 + triângulo A2 respirando −9 (sem ar: "vento chato", 2026-10-09) | 5 picaretas da mina (FM 2,76, 2–3 tlins) −10..−5; 3 sinos FM −11..−6; reverb 0,85 (sai a batalha) |
 | Cogumelos | drone D2/A2 −18 + folhas (rosa LP 400–1400 respirando 4×) −9 | 7 passarinhos (2–4 piados 1,8–3,2 kHz na escala) −9..−3; 6 gotas (seno ×2) −12..−6 |
 | Bolhas | drone D2/A2 −16 + água (marrom LP 180–420 respirando) −11 | 14 cachinhos de bolhas −4..0; 2 cantos de baleia (seno D3→A3→F#3, LP 900) −14..−10; reverb 0,9 |
 | Jardim | drone D3/A3 −18 + brisa rosa LP 500–1800 −8 | 4 abelhas (serra BP 300–2,5k com AM 45 Hz, vibrato) −9..−4; 6 passarinhos −9..−4 |
@@ -41,6 +41,10 @@ Mundos antigos (referência):
 - 2026-10-03: aprovado no resumo do pacote de áudio ("Aprovado, integra").
 - 2026-10-09: auditoria de som — 5 dos 6 mundos estavam sem ambiência; a Lua perdeu os estrondos de batalha
   (não combinam com a Lua de queijo fofa) e ganhou picaretas da mina.
+
+- 2026-10-09: "esse barulho de vento no fundo tá chato" (tela inicial, quando o volume voltou de 0) → a Lua perdeu o
+  ar de ruído rosa e a tela inicial toca só o tema, sem ambiência. Ruído de ar contínuo cansa: usar só onde o vento
+  é a identidade do mundo (Nuvens, Jardim), e baixo.
 
 ## Erros / avisos resolvidos
 - Reverb aplicada depois de fechar o loop e cama somada duas vezes no início (salto de 76 dB na emenda) → cama fecha

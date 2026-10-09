@@ -1,6 +1,6 @@
 """Ambiência de cada mundo (padrão: patterns/world-ambience.md). Loops estéreo de LOOP s, -24 LUFS, embaixo de tudo:
 cama contínua (drone/ar) + eventos esparsos com variação (nunca rítmicos), tonal em D.
-  luna      — Lua de queijo: drone espacial + picaretas da mina ao longe + sininhos (2026-10-09: sai a batalha)
+  luna      — Lua de queijo: drone espacial + picaretas da mina ao longe + sininhos (2026-10-09: sai a batalha e o vento)
   cogumelos — floresta morna: folhas, passarinhos, gotas
   bolhas    — fundo do mar: tudo abafado, bolhas, baleia bem longe
   jardim    — brisa, abelhinhas passando, passarinhos
@@ -97,7 +97,7 @@ def luna() -> np.ndarray:
     sininhos da vila. (Antes: estrondos de batalha — não combinam mais com a Lua fofa.)"""
     d = LOOP + TAIL
     rng = np.random.default_rng(101)
-    beds = [(_drone("D2", "A2", d, 2), 0, -9), (_bed_air(5, 220, 700, 3, -8), 0, 0)]
+    beds = [(_drone("D2", "A2", d, 2), 0, -9)]                # sem o "ar" (ruído rosa): o usuário achou o vento chato
     events = []
 
     def pick(i: int, r: np.random.Generator) -> np.ndarray:      # picareta: 2-3 tlins secos de metal na escala

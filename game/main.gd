@@ -204,7 +204,7 @@ func _show_title() -> void:
 	Telemetry.event("title")
 	_title.open()
 	Sound.music("theme")                                       # tema do gatinho (o Mapa e a NAVE tocam a calma "title")
-	Sound.ambience("luna")                                     # a cena do titulo e a Lua de queijo
+	Sound.ambience("")                                         # tela inicial: so o tema (sem vento/drone por baixo)
 
 
 ## Cena de fundo do hangar: o mundo do jogo em uso, nave parada na plataforma.
