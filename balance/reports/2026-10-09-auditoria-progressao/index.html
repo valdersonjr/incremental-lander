@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditoria da progressão</title>
+<style>
+  :root { --bg:#2e222f; --card:#3e3546; --ink:#fff; --dim:#c7dcd0; --acc:#f9c22b; --good:#91db69; --bad:#f68181; --line:#625565; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 system-ui, sans-serif; padding:24px 16px 64px; }
+  main { max-width:900px; margin:0 auto; }
+  h1 { font-size:26px; margin:0 0 4px; }
+  h2 { font-size:19px; margin:30px 0 8px; color:var(--acc); }
+  h3 { font-size:15px; margin:14px 0 4px; }
+  p, li { color:#efe9f2; }
+  .sub { color:var(--dim); margin:0 0 18px; }
+  .card { background:var(--card); border-radius:12px; padding:14px 16px; margin:10px 0; }
+  .you { border-left:4px solid var(--acc); }
+  table { border-collapse:collapse; width:100%; font-size:14px; margin:6px 0; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--dim); font-weight:600; }
+  td.n { text-align:right; font-variant-numeric:tabular-nums; }
+  .big { color:var(--bad); font-weight:700; }
+  .ok { color:var(--good); font-weight:700; }
+  .tag { display:inline-block; background:#4d9be6; color:#fff; border-radius:6px; padding:0 7px; font-size:12px; font-weight:700; margin-right:6px; }
+  .rec { background:#2f5233; border-radius:6px; padding:0 7px; font-size:12px; font-weight:700; color:#c8f5b0; }
+  .opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+  .opt { background:#4b3f56; border-radius:10px; padding:12px; }
+  .opt.r { outline:2px solid var(--good); }
+  small, .src { color:var(--dim); font-size:12.5px; }
+  a { color:#8fd3ff; }
+  ul { padding-left:20px; margin:6px 0; }
+</style>
+</head>
+<body><main>
+<h1>Auditoria da progressão</h1>
+<p class="sub">Seu feedback depois de jogar + números do simulador (spec v18) + o que os bons jogos fazem. <b>Nada foi mudado no
+jogo</b>: no fim há um pacote recomendado para você aprovar, ajustar ou recusar.</p>
+
+<div class="card you"><b>O que você sentiu</b>
+<ul><li>A progressão está meio fraca.</li><li>"Só pousar" é pouco.</li><li>Só compensa a missão longa (o multiplicador é muito maior).</li>
+<li>Cada pequena evolução da nave já aumenta muito o potencial.</li><li>Os itens que liberam primeiro talvez não estejam na ordem em que ajudam.</li></ul>
+<b>Veredito:</b> os números confirmam os cinco.</div>
+
+<h2>1. A missão longa sempre vence</h2>
+<p>Pagamento cresce com distância<sup>1,1</sup> (e a plataforma multiplica até ×2,2), mas o gás cresce só com √distância. Resultado na Lua, começo do jogo:</p>
+<table>
+<tr><th>Escolha</th><th class="n">Paga</th><th class="n">Gás</th><th class="n">Paga por gás</th><th class="n">Paga por segundo</th></tr>
+<tr><td>Perto + normal</td><td class="n">41</td><td class="n">24</td><td class="n">1,7</td><td class="n">1,3</td></tr>
+<tr><td>Médio + normal</td><td class="n">259</td><td class="n">53</td><td class="n">4,9</td><td class="n">3,9</td></tr>
+<tr><td>Longe + normal</td><td class="n">1.628</td><td class="n">121</td><td class="n">13,5</td><td class="n">11,1</td></tr>
+<tr><td>Longe + apertada</td><td class="n">3.583</td><td class="n">121</td><td class="n big">29,7 (17×)</td><td class="n big">24,4 (19×)</td></tr>
+</table>
+<p>Isso não muda ao longo do jogo. O "cansaço do run" (cada entrega custa ×1,7 mais gás) ainda empurra para poucas entregas longas.
+Estrela é 1 por entrega (o que favorece as curtas), mas isso fica invisível: <b>dinheiro e estrela puxam para lados opostos sem o jogador perceber</b>.</p>
+<p class="src">Referências: escolha dominante "resolve" o jogo e acaba com a escolha (balanceamento); motoristas de aplicativo escolhem a dedo as corridas longas quando o pagamento cresce mais rápido que o esforço, e um <b>bônus fixo por corrida</b> devolve valor às curtas; Euro Truck dá bônus por <i>tipo</i> de entrega (longa +25%, urgente +30%), não por quilômetro elevado a potência.</p>
+
+<h2>2. A nave cresce aos trancos e depois para</h2>
+<table>
+<tr><th>Momento</th><th>+1 nível de…</th><th class="n">Renda muda</th></tr>
+<tr><td>Começo</td><td>Gasolina</td><td class="n big">+245%</td></tr>
+<tr><td>Nível 10</td><td>Gasolina / Motor / Eficiência</td><td class="n">+3,9% / +0,9% / ≈0</td></tr>
+<tr><td>Nível 30</td><td>qualquer peça</td><td class="n">≈ 0</td></tr>
+</table>
+<p>No começo um nível só destrava a missão longe (salto enorme). Depois que a nave alcança os 15 km da Lua, as peças quase não mudam nada,
+e o gás some: no nível 40 o tanque tem <b>9.305</b> e um salto longo gasta <b>6,5</b>. No modelo, o run vira uma maratona de ~23 min do mesmo gesto.</p>
+<p class="src">Referência (matemática dos idle games, AdVenture Capitalist / Pecorella, GDC 2016): cada nível dá um ganho <b>pequeno e perceptível</b> (custo sobe ×1,07–1,15), e os <b>saltos grandes</b> vêm de marcos (a cada 25/50/100) e de conteúdo novo. Nenhum nível isolado multiplica a renda por 3,5.</p>
+
+<h2>3. Depois de ~3 h, acabam os objetivos</h2>
+<p>Os 6 mundos fecham em <b>2,9 h (piloto bom) a 3,3 h (casual)</b>, uma diferença pequena: pilotar bem pesa pouco. Depois disso só sobra juntar para a Frota, com esperas de
+<b class="big">até ~5 h</b> sem nada para comprar. E os mundos difíceis pagam <b>menos</b> por metro (Jardim ×0,73), todos com a mesma faixa de distância: não existe o "salto" de recompensa que faz progresso parecer progresso.</p>
+
+<h2>4. "Só pousar"</h2>
+<p>Os minijogos dos outros mundos (fila, quique, curling, Flappy, garra) dão variedade, mas a Lua (o mundo em que você mais joga e a primeira impressão) é só pousar, e o run longo repete o mesmo gesto por muitos minutos.</p>
+<p class="src">Referências: <b>Lunar Lander Beyond</b> (Dotemu): campanha de 30 missões em 5 luas e planetas (entregar carga, recuperar recursos, resgatar pilotos), pilotos com estresse e fadiga, 4 naves, ~12 melhorias. <b>Jetpack Joyride</b>: 3 missões ativas de cada vez (coletar, distância, passar raspando, ficar no veículo) que sobem o "rank", e uma tela de recompensa a cada tentativa. Roguelites liberam mecânicas uma a uma.</p>
+
+<h2>5. Ordem da Estrada × quando a ajuda faz falta</h2>
+<table>
+<tr><th>Item</th><th>Onde chega hoje</th><th>Onde faz falta</th></tr>
+<tr><td>Dá pra chegar? (gás)</td><td>3º mundo (Cogumelos)</td><td>Começo do jogo: tanque pequeno, é aí que dá medo de ficar sem gás</td></tr>
+<tr><td>Turbo</td><td>Nuvens (gravidade 1,15, a mais leve)</td><td>Mundos pesados: Sorvete 4,0 e Jardim 4,9</td></tr>
+<tr><td>Bolhas</td><td>nenhuma ajuda</td><td>Garra + correnteza: o mundo mais técnico</td></tr>
+<tr><td>Estabilizador</td><td>Lua 11★</td><td>ok (cedo, quando o iniciante tomba)</td></tr>
+</table>
+<p class="src">Referência: deixar o jogador <b>sentir o problema antes</b> de dar a habilidade que o resolve; a ajuda chega como "chave" no momento da necessidade.</p>
+
+<h2>Propostas</h2>
+<div class="card">
+<h3><span class="tag">1</span>Distância: todas as escolhas valerem a pena</h3>
+<div class="opts">
+<div class="opt r"><span class="rec">recomendada</span><br><b>A: taxa fixa + distância suave.</b> Paga = taxa por entrega + parte ∝ √distância (acompanha o gás). Perto e longe rendem parecido por minuto; a longe paga mais por entrega e custa mais gás/risco. Plataforma estreita/apertada vira prêmio de risco menor (ex.: ×1,25 / ×1,5).</div>
+<div class="opt"><b>B: cada distância com papel próprio.</b> Mantém a curva, mas perto dá estrela extra e combo de sequência, e longe dá só dinheiro. Torna a troca "estrela × dinheiro" visível no cartão.</div>
+</div>
+<h3><span class="tag">2</span>Peças: crescer sempre, com saltos nos degraus</h3>
+<div class="opts">
+<div class="opt r"><span class="rec">recomendada</span><br><b>A: gás volta a ser escasso.</b> Tanque/eficiência com retorno decrescente; o run volta a ter ~5–8 entregas (2–4 min). Cada nível rende +3–6%, e o <b>degrau de 10</b> (quando a peça cresce no desenho) dá o salto visível (ex.: ×1,5).</div>
+<div class="opt"><b>B: alcance cresce com o mundo.</b> Cada mundo novo leva mais longe (faixas de distância maiores) para as peças continuarem importando. Combina com a proposta 3.</div>
+</div>
+<h3><span class="tag">3</span>Progressão: sempre ter o próximo objetivo</h3>
+<div class="opts">
+<div class="opt r"><span class="rec">recomendada</span><br><b>A: mundos em escada.</b> Cada mundo paga mais (×3–10) e é mais longe; o mundo difícil vale a pena. Depois dos 6: recordes por mundo e "mundo completo ★★★" (todas as missões com 3 estrelas).</div>
+<div class="opt"><b>B: quadro de desafios.</b> Missões feitas à mão por mundo (estilo Lunar Lander Beyond): "entregue 3 perfeitos seguidos", "resgate sem turbo"… com recompensa própria.</div>
+</div>
+<h3><span class="tag">4</span>Mais que pousar</h3>
+<div class="opts">
+<div class="opt r"><span class="rec">recomendada</span><br><b>A: 3 desafios ativos</b> (estilo Jetpack Joyride), sempre visíveis, trocando quando cumpre: "pouse perfeito 2×", "pegue 2 presentes", "entregue longe com pouco gás". Cumpriu: estrela/medalha e o "nível de piloto" sobe.</div>
+<div class="opt"><b>B: eventos no voo da Lua:</b> chuva de meteoritos, plataforma que se move, carga especial pedindo cuidado. Variedade dentro do próprio pouso.</div>
+</div>
+<h3><span class="tag">5</span>Reordenar a Estrada</h3>
+<p>"Dá pra chegar?" vai para a Lua (antes do Estabilizador); Turbo para o Sorvete ou o Jardim; Bolhas ganha uma ajuda (ex.: Onde vou cair); depois conferir com a telemetria do seu jogo.</p>
+</div>
+
+<h2>Pacote recomendado</h2>
+<div class="card">
+<p><b>1A + 2A + 3A + 4A + 5</b>, em duas etapas para você sentir jogando:</p>
+<ul>
+<li><b>Etapa 1 (só números, rápida):</b> 1A (distância), 2A (gás escasso + saltos nos degraus) e 5 (ordem da Estrada). Simulo antes nos 3 perfis, mostro o antes/depois, você joga.</li>
+<li><b>Etapa 2 (conteúdo):</b> 3A (mundos em escada + objetivos pós-mundos) e 4A (desafios ativos), com protótipo de tela numa página antes de entrar no jogo.</li>
+</ul>
+<p class="src">Limites desta análise: o diagnóstico vem do simulador e da matemática; a telemetria real tem poucas entregas (16 no formato atual). Depois da etapa 1, uma sessão sua jogando calibra o modelo.</p>
+</div>
+
+<p class="src" style="margin-top:28px">Fontes: <a href="https://joeldignam.substack.com/p/the-timeless-game-design-of-squad">escolhas sem estratégia dominante</a> ·
+<a href="https://arxiv.org/pdf/1905.07544">corridas longas × curtas (apps de transporte)</a> ·
+<a href="https://steamcommunity.com/app/227300/discussions/0/144513524084823554">Euro Truck: bônus por tipo de entrega</a> ·
+<a href="https://www.slideshare.net/slideshow/quest-for-progress-gdc-europe-2016/65405507">Pecorella, matemática dos idle games (GDC 2016)</a> ·
+<a href="https://www.nuuvem.com/bs-pt/item/lunar-lander-beyond">Lunar Lander Beyond</a> ·
+<a href="https://en.wikipedia.org/wiki/Jetpack_Joyride">Jetpack Joyride (missões)</a> ·
+<a href="https://jboger.substack.com/p/the-emotions-of-rogue-lites">roguelites: mecânicas uma a uma</a> ·
+<a href="https://xinyichen.itch.io/learning-the-hard-way">sentir o problema antes da habilidade</a>.
+Medição: <code>balance/sims/2026-10-09-audit-progressao.py</code> e <code>econ.py screen</code> (spec v18).</p>
+</main></body></html>
