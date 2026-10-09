@@ -64,6 +64,15 @@ func _ready() -> void:
 			_news.append(id))
 
 
+## Botao de compra da 1a peca que da para comprar (destaque de 1a visita); null se nenhuma.
+func first_affordable_buy() -> Button:
+	for b: Node in _body.find_children("*", "Button", true, false):
+		var bt := b as Button
+		if str(bt.get_meta(&"focus_key", "")).begins_with("buy:") and not bt.disabled and not bt.is_queued_for_deletion():
+			return bt
+	return null
+
+
 ## Mostra a PROGRESSAO atualizada na aba NAVE; a navezinha anda ate as estrelas de agora e as paradas novas festejam.
 func open() -> void:
 	_tab = Tab.SHIP

@@ -268,6 +268,12 @@ Planejados (`godot-dev`):
   BATEU 0,5 s → fantasma → tela escura → `retry_mission` + `Hud.show_retry` (só o título) + balão — só na 1ª batida
   de cada motivo (dica `crash_<motivo>` em `GameState.tips`; lista em `SaveData.TIP_IDS`); depois, título + frase. O Coach desenha a
   teclinha ao lado quando o balão está aberto.
+- `Spotlight` (`game/screen/spotlight.gd`, filho do GUI): `point(alvo, tip, ícone, palavra)` uma vez por dica
+  (`spot_offer/spot_ship/spot_map` em `SaveData.TIP_IDS`); 4 `ColorRect` com `UiKit.dim_rect` em volta do alvo pegam o
+  clique de fora (fecha); o `pressed` do alvo fecha; some se o alvo some. `Main._point(target_fn, ...)` espera 2
+  quadros de layout; alvos: `OfferPanel.accept_button()`, `Hangar.first_affordable_buy()`, `WorldMap.spotlight_target()`.
+  Fantasma/balão do RetryHint: só na 1ª batida do jogo (`GameState.crash_taught()`). "Veja como!" atrás de
+  `onboarding.guide` (false). Prévia: `flight_ui_preview -- --spot` mostra os destaques (sem ele ficam marcados como vistos).
 - `GameState.assist_lent(id)`: ajuda comprável emprestada ao aprendiz (`onboarding.lent_assists`, hoje o Nivelador);
   o `AssistView` desenha, a NAVE continua usando `assist_on` (só as compradas).
 - Prévia: `flight_ui_preview` é veterano por padrão; `--new` = jogador novo, `--meter` = caindo perto do chão,

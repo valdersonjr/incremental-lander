@@ -18,10 +18,10 @@ const SAVE_VERSION := 6
 ## por TIP_IDS (= GameState.TIPS).
 ## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
-## Dicas sem texto do comeco: motor e girar (Coach) e o "tente de novo" em figura de cada motivo de batida
-## (RetryHint: fantasma + balao so na 1a batida daquele tipo).
+## Dicas do comeco: motor e girar (Coach), "tente de novo" em figura (RetryHint: so na 1a batida do jogo; o id
+## guarda o motivo dela) e os destaques de 1a visita (Spotlight: cartao, NAVE, Mapa).
 const TIP_IDS := ["thrust", "rotate", "crash_vertical_rapido", "crash_fora_da_plataforma", "crash_horizontal_rapido",
-		"crash_inclinado", "crash_sem_gas"]
+		"crash_inclinado", "crash_sem_gas", "spot_offer", "spot_ship", "spot_map"]
 const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
 
 

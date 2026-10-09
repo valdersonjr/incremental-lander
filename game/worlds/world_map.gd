@@ -123,6 +123,13 @@ func _build_card() -> void:
 	right.add_child(_ship)
 
 
+## Destaque de 1a visita: a NAVE se ela tem "!" (da para comprar), senao VOAR. [botao, icone infantil, palavra]
+func spotlight_target() -> Array:
+	if _ship.text.ends_with("!"):
+		return [_ship, "coins", "Melhore!"]
+	return [_fly, "flame_b", "Voe!"]
+
+
 ## Abre o mapa com o mundo atual escolhido. travel_from = mundo que acabou de ficar completo: a navezinha viaja dele
 ## ate o mundo novo (ja escolhido) e o aviso "X completo! Y abriu!" aparece.
 func open(travel_from: String = "") -> void:

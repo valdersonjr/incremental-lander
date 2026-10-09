@@ -1,8 +1,8 @@
 ## Teste de integracao dos PRIMEIROS MINUTOS (auditoria FTUE, 2026-10-08; world.json > onboarding), numa pasta propria
 ## (user://itest_onboarding). Jogo novo comeca voando no 1o salto ja aceito (perto, relevo baixo, sem minijogo) ->
 ## aprendiz bate e tenta o mesmo salto de novo (run continua, gas do comeco do salto) -> pouso devagar fora da
-## plataforma para no chao -> falhou o limite de tentativas: "Veja como!" (piloto automatico; o motor devolve a nave)
-## -> o guia tambem falhou: volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> o guia pousa e a entrega vale -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
+## plataforma para no chao -> falhou o limite de tentativas: "Veja como!"
+## (desligado) -> volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> destaques de 1a visita (cartao, NAVE, Mapa) -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
 ## "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
 extends Node
 
@@ -62,69 +62,53 @@ func _ready() -> void:
 	_check(not crashed[0] and l.state == Lander.State.LANDED, "pouso devagar fora: parou no chao (estado %s)" % [
 			Lander.State.keys()[l.state]])
 	_check(not flight.retry_hint.balloon_visible(), "decolou: o balao some")
-	# bug do loop (2026-10-08): o aprendiz que falha o mesmo salto de novo e de novo volta ao cartao de missoes
+	# bug do loop (2026-10-08): depois de retries_per_hop repeticoes volta ao cartao de missoes. "Veja como!" desligado
+	# (usuario: o jogo nao pilota sozinho) e o fantasma/balao so na 1a batida do jogo (outro motivo nao mostra de novo)
 	var tries := int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
+	var ghost_seen := [false]
+	var watch := func() -> void: ghost_seen[0] = ghost_seen[0] or flight._focus_ghost
+	get_tree().process_frame.connect(watch)
 	for k in tries:                                            # 1a batida ja foi; mais `tries` = passou do limite
 		await _wait_ready(main)
 		flight.lander.state = Lander.State.FLYING
 		var before: int = main._retries
 		flight.lander.crash_now("fora_da_plataforma")
-		await _until(func() -> bool: return main._offers.visible or (main._retries > before and flight.lander.visible))
-	# passou do limite: "Veja como!" (piloto automatico no mesmo salto; qualquer comando devolve a nave)
-	_check(main._guided and flight.guided and flight.lander.autopilot != null and flight.gentle,
-			"depois das tentativas: Veja como! no mesmo salto")
+		await _until(func() -> bool: return main._offers.visible or (main._retries > before and flight.lander.visible
+				and main._fade.modulate.a < 0.05))
+		if k == 0:
+			_check(not flight.retry_hint.balloon_visible(), "2a batida (outro motivo): sem balao")
+	get_tree().process_frame.disconnect(watch)
+	_check(not ghost_seen[0], "fantasma so na 1a batida do jogo")
+	_check(not main._guided and flight.lander.autopilot == null, "Veja como! desligado: o jogo nao pilota sozinho")
+	_check(not main._run.over and main._offers.visible, "depois das tentativas: cartao de missoes (nao repete mais)")
 	_check(GameState.assist_lent("land_level") and not GameState.assist_on("land_level"),
 			"aprendiz: Nivelador emprestado (sem aparecer como comprado)")
-	await _wait_ready(main)
-	var press := InputEventAction.new()
-	press.action = &"thrust"
-	press.pressed = true
-	Input.parse_input_event(press)
-	await _frames(2)
-	press = press.duplicate()
-	press.pressed = false
-	Input.parse_input_event(press)
-	_check(flight.lander.autopilot == null and not flight.guided, "apertar o motor tira o piloto automatico")
-	flight.lander.state = Lander.State.FLYING
-	flight.lander.crash_now("fora_da_plataforma")              # nem com o guia: cartao de missoes
-	await _until(func() -> bool: return main._offers.visible)
-	_check(not main._run.over and main._offers.visible, "guia tambem falhou: cartao de missoes (nao repete mais)")
 	_check(is_equal_approx(flight.lander.gas, gas0) and flight.lander.visible
 			and flight.lander.state == Lander.State.LANDED, "de volta na partida com o gas do comeco do salto")
 	_check(flight.target_pad_id < 0, "sem alvo enquanto escolhe")
+	await _frames(4)
+	_check(main._spotlight.visible and main._spotlight._target == main._offers.accept_button(),
+			"1o cartao: destaque no ACEITAR MISSAO")
 	main._on_offer_chosen(0)                                   # escolheu outra: voa normalmente
 	await _wait_ready(main)
+	_check(not main._spotlight.visible, "cartao fechado: destaque some")
 	_check(main._retries == 0 and not main._run.over, "missao nova zera as tentativas")
-	_check(main._flight.gentle and not main._guided, "antes da 1a entrega: relevo baixo tambem na missao escolhida")
-	# o guia pousa sozinho e a entrega vale (o aprendiz nunca fica preso)
-	var ghost_seen := [false]                                  # "vertical_rapido" ja foi ensinado na 1a batida
-	var watch := func() -> void: ghost_seen[0] = ghost_seen[0] or main._flight._focus_ghost
-	get_tree().process_frame.connect(watch)
-	for k in tries + 1:
-		await _wait_ready(main)
-		main._flight.lander.state = Lander.State.FLYING
-		main._flight.lander.crash_now("vertical_rapido")
-		await _until(func() -> bool: return main._flight.lander.state != Lander.State.CRASHED and main._fade.modulate.a < 0.05)
-		if k == 0:
-			_check(not main._flight.retry_hint.balloon_visible(), "2a batida do mesmo tipo: sem balao")
-	get_tree().process_frame.disconnect(watch)
-	_check(not ghost_seen[0], "fantasma so na 1a batida do tipo")
-	_check(main._guided and main._flight.lander.autopilot != null, "Veja como! na missao escolhida")
-	await _until(func() -> bool: return not main._run.deliveries.is_empty() or main._offers.visible, 900)
-	_check(main._run.deliveries.size() == 1 and GameState.stars == 1, "o guia pousou e a entrega valeu (entregas %d)" % [
-			main._run.deliveries.size()])
+	_check(main._flight.gentle, "antes da 1a entrega: relevo baixo tambem na missao escolhida")
 	# fim do run com dinheiro para uma peca: CONTINUAR vai para a NAVE (1a visita: so PECAS, x1)
 	main._run.finish("sem_gas")
 	main._end_run()
 	await _frames(2)
-	GameState.resources["credits"] = 100.0                     # depois do fim do run (a entrega do guia ja pagou)
+	GameState.resources["credits"] = 100.0                     # depois do fim do run (o bonus de recorde ja pagou)
 	main._on_continue()
-	await _frames(3)
+	await _frames(4)
 	var hangar: Hangar = main._hangar
 	_check(hangar.visible, "fim do run com dinheiro deveria abrir a NAVE")
+	_check(main._spotlight.visible and main._spotlight._target == hangar.first_affordable_buy(),
+			"1a NAVE com dinheiro: destaque na peca que da para comprar")
 	_check(not hangar._tabs.visible and not hangar._bulk_box.visible, "1a visita a NAVE: so PECAS, sem x10/MAX")
 	main._open_map()
-	await _frames(2)
+	await _frames(4)
+	_check(main._spotlight.visible and main._spotlight._target == map._ship, "1o Mapa: destaque na NAVE com '!'")
 	_check(map._coins_label.text == "100" and map._ship.text.ends_with("!"), "Mapa: moedas e '!' na NAVE (%s / %s)" % [
 			map._coins_label.text, map._ship.text])
 	# bug 2026-10-08 ("acabou o gas" com 23 de gas): aprendiz com pouco gas ve o cartao e pode tentar (o run so acaba
@@ -149,6 +133,8 @@ func _ready() -> void:
 	main._on_launch_requested()
 	await _frames(3)
 	_check(main._offers.visible, "veterano: escolhe o pedido no cartao")
+	await _frames(4)
+	_check(not main._spotlight.visible, "destaque do cartao nao volta")
 	main._on_offer_chosen(0)
 	await _wait_ready(main)
 	main._flight.lander.state = Lander.State.FLYING

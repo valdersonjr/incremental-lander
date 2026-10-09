@@ -165,6 +165,11 @@ func pad_button_center(tier: String) -> Vector2:
 	return (_option_buttons["tier:" + tier] as Button).get_global_rect().get_center()
 
 
+## Botao ACEITAR MISSAO (destaque de 1a visita).
+func accept_button() -> Button:
+	return _accept
+
+
 ## Centro (tela) do botao ACEITAR MISSAO (teste de controles).
 func accept_button_center() -> Vector2:
 	return _accept.get_global_rect().get_center()

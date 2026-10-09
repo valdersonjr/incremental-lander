@@ -300,7 +300,8 @@ def profile_from(E: dict, name: str) -> Profile:
     p = copy.deepcopy(PROFILES[name])
     if p.apprentice < 0:                                       # aprendiz do jogo: mesmo numero do world.json
         p.apprentice = int(load_onboarding().get("apprentice_stars", 0))
-        p.guide_after = int(load_onboarding().get("retries_per_hop", 0)) + 1
+        onb = load_onboarding()                                # "Veja como!" so se ligado (guide; desligado em 2026-10-08)
+        p.guide_after = int(onb.get("retries_per_hop", 0)) + 1 if onb.get("guide", False) else 0
     for k, v in E.get("profiles_override", {}).get(name, {}).items():
         setattr(p, k, v)
     return p

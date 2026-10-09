@@ -20,8 +20,7 @@ var records: Dictionary = {}          # recordes pessoais POR MUNDO (v16): plane
 var tips: Array = []                  # dicas sem texto ja aprendidas (Coach: "thrust", "rotate"); nunca voltam
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
-## Dicas sem texto do comeco (lista no SaveData): motor e girar (Coach) e o "tente de novo" em figura de cada
-## motivo de batida (RetryHint: fantasma + balao so na 1a batida daquele tipo).
+## Dicas do comeco (lista e significado no SaveData.TIP_IDS).
 const TIPS := SaveData.TIP_IDS
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
 const ASSIST_FREE := "nav_arrow"
@@ -364,6 +363,14 @@ func assist_lent(id: String) -> bool:
 ## Dica sem texto ja aprendida (o jogador usou o comando)?
 func tip_done(id: String) -> bool:
 	return id in tips
+
+
+## O "tente de novo" em figura ja apareceu (uma vez no jogo todo, na 1a batida; o id guarda o motivo dela).
+func crash_taught() -> bool:
+	for id: Variant in tips:
+		if str(id).begins_with("crash_"):
+			return true
+	return false
 
 
 func learn_tip(id: String) -> void:

@@ -27,6 +27,7 @@ var _world_map: WorldMap = null                 # Mapa das estrelas (v17: tela p
 var _worlds_before := 0                         # mundos liberados no inicio do run (completar um = viagem no Mapa)
 var _title: TitleScreen = null
 var _pause: PauseMenu = null
+var _spotlight: Spotlight = null                # destaque de 1a visita (cartao, NAVE, Mapa)
 ## Segundos reais do run em andamento, sem pausa (o relogio para com o jogo pausado ou a janela sem foco): a frota
 ## e paga por este tempo, nao pelo relogio de parede.
 var _run_time := 0.0
@@ -96,6 +97,9 @@ func _ready() -> void:
 		get_tree().quit())
 	_pause = PAUSE_SCENE.instantiate()
 	_gui.add_child(_pause)
+	_spotlight = Spotlight.new()
+	_spotlight.name = "Spotlight"
+	_gui.add_child(_spotlight)
 	# v17: o Mapa e a tela principal. Esc na NAVE volta ao Mapa; Esc no Mapa abre o menu do jogo; fechar o menu volta
 	# ao Mapa.
 	_hangar.menu_requested.connect(func() -> void: _open_map())
@@ -182,6 +186,8 @@ func _open_hangar() -> void:
 			c.visible = false
 	Telemetry.event("nave")
 	_hangar.open()
+	if GameState.can_afford_any():
+		_point(_hangar.first_affordable_buy, "spot_ship", "coin", "Compre!")
 	Sound.music("title")                                       # hangar = menu: a mesma musica calma do titulo
 	Sound.ambience(GameState.current_planet)
 
@@ -228,6 +234,7 @@ func _open_map(travel_from: String = "") -> void:
 	_gui.move_child(_world_map, -1)
 	_gui.move_child(_pause, -1)
 	_world_map.open(travel_from)
+	_point(func() -> Control: return _world_map.spotlight_target()[0], "spot_map", "", "")
 	Sound.music("title")
 	Sound.ambience(GameState.current_planet)
 
@@ -345,6 +352,7 @@ func _show_offers() -> void:
 			return
 	Telemetry.event("offers")
 	_offers.show_offers(_run, gas)
+	_point(_offers.accept_button, "spot_offer", "check", "Aceite!")
 	if _demo:
 		await get_tree().create_timer(0.5).timeout
 		var i := _run.best_offer(_flight.lander.gas)
@@ -483,6 +491,23 @@ func _on_stranded() -> void:
 	_end_run()
 
 
+## Destaque de 1a visita (Spotlight, uma vez por tip): espera o layout e acende o botao de target_fn(). Mapa: icone e
+## palavra vem do proprio Mapa (NAVE com "!" ou VOAR). Fora no demo e no modo livre.
+func _point(target_fn: Callable, tip: String, icon: String, word: String) -> void:
+	if _demo or Sandbox.active() or GameState.tip_done(tip):
+		return
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var target: Control = target_fn.call()
+	if tip == "spot_map":
+		var info := _world_map.spotlight_target()
+		icon = str(info[1])
+		word = str(info[2])
+	_gui.move_child(_spotlight, -1)
+	_gui.move_child(_pause, -1)
+	_spotlight.point(target, tip, icon, word)
+
+
 ## O salto atual tem a protecao do aprendiz (repete na batida, para no chao fora da plataforma)?
 func _apprentice_hop() -> bool:
 	return GameState.apprentice() and not _demo and _hop_safe
@@ -495,19 +520,19 @@ func _apprentice_hop() -> bool:
 ## volta para a partida e o cartao abre para escolher outra missao (missao dificil demais nunca prende o jogador).
 func _retry_hop(reason: String) -> void:
 	_retries += 1
-	var give_up := _guided
-	var guide := not give_up and (reason == "sem_gas"
-			or _retries > int(WorldConfig.load_config()["onboarding"]["retries_per_hop"]))
+	var onb: Dictionary = WorldConfig.load_config()["onboarding"]
+	var over_limit := reason == "sem_gas" or _retries > int(onb["retries_per_hop"])
+	var guide := bool(onb.get("guide", false)) and not _guided and over_limit   # desligado (usuario, 2026-10-08)
+	var give_up := _guided or (over_limit and not guide)
 	Telemetry.event("give_up" if give_up else ("guide" if guide else "retry"), reason)
 	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
 	var flight := _flight
 	await get_tree().create_timer(0.5, false).timeout          # o "BATEU!" aparece um instante
 	if flight != _flight or _run == null or _run.over:
 		return
-	var tip := "crash_" + reason
-	var teach := not give_up and not guide and not GameState.tip_done(tip)   # figura so na 1a batida desse tipo
+	var teach := not give_up and not guide and not GameState.crash_taught()   # figura so na 1a batida do jogo
 	if teach:
-		GameState.learn_tip(tip)
+		GameState.learn_tip("crash_" + reason)
 	if teach:                                                  # fantasma: o movimento certo em cima da plataforma
 		var ghost_s := _flight.play_ghost(reason)
 		if ghost_s > 0.0:
