@@ -13,7 +13,7 @@
   Cogumelos). Medido: longe+apertada 17× → ~2,7× por gás; run do modelo ~23 → ~4–5 min; intervalo entre compras
   19,5 → 5,6 min; MC 3×3 mundos 2,6/2,8/3,1 h (expert/engaged/casual). Verificado: paridade 43, 116 testes (2 testes
   de compras passaram a ler a spec), 16 integrações, demo, captura do cartão (perto +154; longe "falta gás" no começo).
-  **Pendências**: (1) o usuário jogar a v19 — não publicada no Vercel ainda; (2) telemetria só grava em build de
+  **Pendências**: (1) o usuário jogar a v19 — publicada no Vercel (hashes e autoteste conferidos); (2) telemetria só grava em build de
   desenvolvimento: para calibrar, uma sessão local (o voo real leva ~1,8× o modelo); (3) **etapa 2**: mundos em escada
   (ofertas acompanhando o alcance, faixas maiores), objetivos depois dos 6 mundos, 3 desafios ativos — protótipo de tela
   numa página antes.
