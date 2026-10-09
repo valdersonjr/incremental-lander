@@ -265,7 +265,8 @@ Planejados (`godot-dev`):
   (movimento certo por motivo de batida), `play_ghost` (fantasma em cima da plataforma alvo; filho com
   `UiKit.ghost` = `palette_fx` modo 5, xadrez branco) e `show_balloon` (some quando a nave sai de LANDED).
   `Flight.play_ghost(motivo)` → duração (câmera em `ghost_focus`, `_focus_ghost`), `end_ghost()`. `Main._retry_hop`:
-  BATEU 0,5 s → fantasma → tela escura → `retry_mission` + `Hud.show_retry` (só o título) + balão. O Coach desenha a
+  BATEU 0,5 s → fantasma → tela escura → `retry_mission` + `Hud.show_retry` (só o título) + balão — só na 1ª batida
+  de cada motivo (dica `crash_<motivo>` em `GameState.tips`; lista em `SaveData.TIP_IDS`); depois, título + frase. O Coach desenha a
   teclinha ao lado quando o balão está aberto.
 - `GameState.assist_lent(id)`: ajuda comprável emprestada ao aprendiz (`onboarding.lent_assists`, hoje o Nivelador);
   o `AssistView` desenha, a NAVE continua usando `assist_on` (só as compradas).

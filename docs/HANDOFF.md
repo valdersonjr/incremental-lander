@@ -4,6 +4,9 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Fantasma + balão só na 1ª batida de cada tipo** (pedido do usuário); dicas `crash_<motivo>` salvas. Pergunta em
+  aberto do usuário: tutoriais com tela escura + destaque + balão — respondida no chat (viável nas telas de menu;
+  no voo não), aguardando se ele quer o protótipo HTML.
 - **Correção: "ACABOU O GÁS!" com gás sobrando** (relato do usuário, aprendiz com 23 de gás e 2 entregas). Causa: regra
   "aprendiz sem pedido ao alcance acaba o run" da correção do loop. Agora o run do aprendiz só acaba com o tanque vazio;
   pedido fora do alcance pode ser tentado sem a proteção (`Main._hop_safe`). Teste novo no `onboarding_flow`.

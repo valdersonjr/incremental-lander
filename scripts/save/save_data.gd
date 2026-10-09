@@ -15,9 +15,13 @@ const SAVE_VERSION := 6
 ## v5 -> v6 (2026-10-07): minijogos — uma Estrada por mundo; as estrelas que existiam vao para a Lua (world_stars);
 ## paradas world_* somem (filtro da Estrada).
 ## Dicas aprendidas (2026-10-08, campo opcional sem mudar a versao: save sem ele = nenhuma dica vista), filtradas
-## por GameState.TIPS.
+## por TIP_IDS (= GameState.TIPS).
 ## Reputacao por ratinho (v14): rep_points {tipo: pontos}, validado pelos tipos da spec.
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
+## Dicas sem texto do comeco: motor e girar (Coach) e o "tente de novo" em figura de cada motivo de batida
+## (RetryHint: fantasma + balao so na 1a batida daquele tipo).
+const TIP_IDS := ["thrust", "rotate", "crash_vertical_rapido", "crash_fora_da_plataforma", "crash_horizontal_rapido",
+		"crash_inclinado", "crash_sem_gas"]
 const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
 
 
@@ -76,7 +80,7 @@ static func deserialize(raw: Variant) -> Dictionary:
 		"settings": d.get("settings", {}) if d.get("settings", {}) is Dictionary else {},
 		"records": {},
 		"world_stars": {},
-		"tips": _filter_ids(d.get("tips", []), ["thrust", "rotate"]),
+		"tips": _filter_ids(d.get("tips", []), TIP_IDS),
 	}
 	var planet_ids: Array = EconMath.spec["planets"].map(func(p: Dictionary) -> String: return p["id"])
 	var recs: Variant = d.get("records", {})

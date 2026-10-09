@@ -180,7 +180,8 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
   Mario Kart). Ao fazer a 5ª entrega: **"PILOTO FORMADO!"** com festa (daqui em diante bater acaba a viagem).
   **"Tente de novo" sem texto**: depois da batida, uma nave pontilhada (fantasma) refaz o movimento certo em cima da
   plataforma alvo e ganha ✓; a nave volta para a partida com um **balão** mostrando a mesma cena em miniatura até
-  decolar. O aviso diz só "TENTE DE NOVO!" (sem gás: só o balão, com o voo em arco). Pousar devagar e reto
+  decolar. O aviso diz só "TENTE DE NOVO!" (sem gás: só o balão, com o voo em arco). **Só na 1ª batida de cada tipo**
+  (pedido do usuário); nas seguintes, "TENTE DE NOVO!" com a frase curta. Pousar devagar e reto
   fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
 - **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
   no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave

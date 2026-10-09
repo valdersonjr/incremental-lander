@@ -20,8 +20,9 @@ var records: Dictionary = {}          # recordes pessoais POR MUNDO (v16): plane
 var tips: Array = []                  # dicas sem texto ja aprendidas (Coach: "thrust", "rotate"); nunca voltam
 
 const BUSES := ["Music", "Ambience", "SFX", "UI"]
-## Dicas sem texto do comeco (Coach): motor e girar.
-const TIPS := ["thrust", "rotate"]
+## Dicas sem texto do comeco (lista no SaveData): motor e girar (Coach) e o "tente de novo" em figura de cada
+## motivo de batida (RetryHint: fantasma + balao so na 1a batida daquele tipo).
+const TIPS := SaveData.TIP_IDS
 ## Ajuda de voo que todo jogador ja tem (a raiz da arvore do Painel de bordo; as outras vem da spec, 'assist').
 const ASSIST_FREE := "nav_arrow"
 ## Recordes pessoais (estatistica, nao economia; v15 "bata seu recorde": todos medidos num run, RunState.record_values):

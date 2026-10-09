@@ -97,11 +97,18 @@ func _ready() -> void:
 	_check(main._retries == 0 and not main._run.over, "missao nova zera as tentativas")
 	_check(main._flight.gentle and not main._guided, "antes da 1a entrega: relevo baixo tambem na missao escolhida")
 	# o guia pousa sozinho e a entrega vale (o aprendiz nunca fica preso)
+	var ghost_seen := [false]                                  # "vertical_rapido" ja foi ensinado na 1a batida
+	var watch := func() -> void: ghost_seen[0] = ghost_seen[0] or main._flight._focus_ghost
+	get_tree().process_frame.connect(watch)
 	for k in tries + 1:
 		await _wait_ready(main)
 		main._flight.lander.state = Lander.State.FLYING
 		main._flight.lander.crash_now("vertical_rapido")
 		await _until(func() -> bool: return main._flight.lander.state != Lander.State.CRASHED and main._fade.modulate.a < 0.05)
+		if k == 0:
+			_check(not main._flight.retry_hint.balloon_visible(), "2a batida do mesmo tipo: sem balao")
+	get_tree().process_frame.disconnect(watch)
+	_check(not ghost_seen[0], "fantasma so na 1a batida do tipo")
 	_check(main._guided and main._flight.lander.autopilot != null, "Veja como! na missao escolhida")
 	await _until(func() -> bool: return not main._run.deliveries.is_empty() or main._offers.visible, 900)
 	_check(main._run.deliveries.size() == 1 and GameState.stars == 1, "o guia pousou e a entrega valeu (entregas %d)" % [

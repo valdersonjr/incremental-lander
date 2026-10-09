@@ -504,7 +504,11 @@ func _retry_hop(reason: String) -> void:
 	await get_tree().create_timer(0.5, false).timeout          # o "BATEU!" aparece um instante
 	if flight != _flight or _run == null or _run.over:
 		return
-	if not give_up and not guide:                              # fantasma: o movimento certo em cima da plataforma
+	var tip := "crash_" + reason
+	var teach := not give_up and not guide and not GameState.tip_done(tip)   # figura so na 1a batida desse tipo
+	if teach:
+		GameState.learn_tip(tip)
+	if teach:                                                  # fantasma: o movimento certo em cima da plataforma
 		var ghost_s := _flight.play_ghost(reason)
 		if ghost_s > 0.0:
 			await get_tree().create_timer(ghost_s + 0.3, false).timeout
@@ -532,8 +536,9 @@ func _retry_hop(reason: String) -> void:
 		if guide:
 			_hud.show_guide()
 		else:
-			_hud.show_retry(reason)
-			_flight.retry_hint.show_balloon(reason)          # a cena do jeito certo fica em cima da nave ate decolar
+			_hud.show_retry(reason, teach)
+			if teach:
+				_flight.retry_hint.show_balloon(reason)      # a cena do jeito certo fica em cima da nave ate decolar
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 

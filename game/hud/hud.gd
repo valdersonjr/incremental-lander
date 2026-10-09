@@ -355,10 +355,10 @@ func show_graduation() -> void:
 	_show_toast("PILOTO FORMADO!", "agora é pra valer: bater acaba a viagem", &"GoodLabel")
 
 
-## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. So o aviso animador: o jeito de acertar vem em
-## figura (fantasma + balao do RetryHint), sem precisar ler.
-func show_retry(_reason: String) -> void:
-	_show_toast("TENTE DE NOVO!", "", &"MoneyLabel")
+## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Na 1a batida do tipo (shown_in_picture) o jeito
+## de acertar vem em figura (fantasma + balao do RetryHint) e o aviso e so o titulo; depois, a frase curta lembra.
+func show_retry(reason: String, shown_in_picture: bool = false) -> void:
+	_show_toast("TENTE DE NOVO!", "" if shown_in_picture else UiKit.crash_tip(reason), &"MoneyLabel")
 	_set_status(_idle_status())
 
 
