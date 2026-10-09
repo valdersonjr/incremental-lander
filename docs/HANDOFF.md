@@ -4,6 +4,9 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-08)
+- **Correção: "ACABOU O GÁS!" com gás sobrando** (relato do usuário, aprendiz com 23 de gás e 2 entregas). Causa: regra
+  "aprendiz sem pedido ao alcance acaba o run" da correção do loop. Agora o run do aprendiz só acaba com o tanque vazio;
+  pedido fora do alcance pode ser tentado sem a proteção (`Main._hop_safe`). Teste novo no `onboarding_flow`.
 - **Aprendiz validado contra os jogos mais vendidos (ROADMAP 18.5f)**. A base já seguia o padrão; aplicadas as 5
   lacunas: relevo baixo em todo salto antes da 1ª entrega; **"Veja como!"** (passou das repetições ou sem gás → o
   piloto automático voa o mesmo salto; motor/girar devolve a nave; a entrega vale; se o guia falhar → cartão);

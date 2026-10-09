@@ -44,6 +44,9 @@ var _first_hop := false
 var _retries := 0                                  # tentativas repetidas do salto atual (aprendiz)
 var _no_auto_hop := false                          # o aprendiz desistiu do 1o salto: escolhe no cartao
 var _guided := false                               # o "Veja como!" ja voou este salto (falhou de novo -> cartao)
+## O salto atual esta coberto pelo aprendiz (o gas alcancava o pedido na escolha). Pedido longe demais pode ser
+## tentado (o run so acaba com o tanque vazio), mas sem repeticao: senao o gas do comeco voltaria para sempre.
+var _hop_safe := true
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -334,10 +337,6 @@ func _show_offers() -> void:
 	if _run.over:
 		_end_run()
 		return
-	if GameState.apprentice() and not _demo and not _run.can_continue(gas):   # aprendiz sem saida: acaba o run
-		_run.finish("sem_gas")
-		_end_run()
-		return
 	if GameState.first_hop() and _run.deliveries.is_empty() and not _demo and not _no_auto_hop:   # 1o salto (C1)
 		var first := _first_simple_offer()
 		if first >= 0:
@@ -367,6 +366,7 @@ func _first_simple_offer() -> int:
 func _on_offer_chosen(index: int) -> void:
 	if not _first_hop:
 		Sound.ui("click")
+	_hop_safe = _first_hop or bool(_run.offer_info(index, _flight.lander.gas)["reachable"])
 	var d := _run.take_offer(index)
 	if _first_hop:                                             # perto e na plataforma normal (a maior)
 		d = float(WorldConfig.load_config()["onboarding"]["first_hop"]["distance_m"])
@@ -380,7 +380,7 @@ func _on_offer_chosen(index: int) -> void:
 	# relevo baixo no 1o salto e em todo salto antes da 1a entrega (quem desistiu do 1o nao ganha um mais dificil)
 	_flight.gentle = _first_hop or (GameState.first_hop() and not _demo)
 	_flight.minigame_on = (GameState.shows_minigame() or _demo) and not _first_hop
-	_flight.apprentice = GameState.apprentice() and not _demo
+	_flight.apprentice = _apprentice_hop()
 	Telemetry.event("mission", "%s:%d" % [str(m.get("kind", "simple")), int(d)])
 	# cada missao tem o seu mapa: a tela escurece, o mapa novo nasce e a nave desce do ceu ate a partida
 	var fade_s := float(WorldConfig.load_config()["missions"]["arrival"]["fade_s"])
@@ -419,7 +419,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		Telemetry.event("crash", str(result["reason"]))
-		if GameState.apprentice() and not _demo:                 # aprendiz: tenta o mesmo salto de novo (C2)
+		if _apprentice_hop():                                     # aprendiz: tenta o mesmo salto de novo (C2)
 			_retry_hop(str(result["reason"]))
 			return
 		_run.crash(str(result["reason"]))
@@ -475,12 +475,17 @@ func _on_delivery_finished(result: Dictionary) -> void:
 
 
 func _on_stranded() -> void:
-	if GameState.apprentice() and not _demo and _run != null and not _run.over:
+	if _apprentice_hop() and _run != null and not _run.over:
 		Telemetry.event("crash", "sem_gas")
 		_retry_hop("sem_gas")
 		return
 	_run.finish("sem_gas")
 	_end_run()
+
+
+## O salto atual tem a protecao do aprendiz (repete na batida, para no chao fora da plataforma)?
+func _apprentice_hop() -> bool:
+	return GameState.apprentice() and not _demo and _hop_safe
 
 
 ## Aprendiz (world.json > onboarding): a batida (ou o gas que acabou) nao acaba o run. A tela escurece, a nave volta

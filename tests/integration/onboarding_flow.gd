@@ -120,6 +120,23 @@ func _ready() -> void:
 	await _frames(2)
 	_check(map._coins_label.text == "100" and map._ship.text.ends_with("!"), "Mapa: moedas e '!' na NAVE (%s / %s)" % [
 			map._coins_label.text, map._ship.text])
+	# bug 2026-10-08 ("acabou o gas" com 23 de gas): aprendiz com pouco gas ve o cartao e pode tentar (o run so acaba
+	# com o tanque vazio); pedido que o gas nao alcancava nao repete na batida (acaba como para todo mundo)
+	GameState.stars = 2
+	main._on_launch_requested()
+	await _frames(3)
+	main._flight.lander.gas = 3.0
+	main._show_offers()
+	await _frames(2)
+	_check(not main._run.over and main._offers.visible, "aprendiz com pouco gas: cartao aberto, run continua")
+	main._on_offer_chosen(0)
+	await _wait_ready(main)
+	_check(not main._hop_safe and not main._flight.apprentice, "pedido fora do alcance: sem protecao do aprendiz")
+	main._flight.lander.state = Lander.State.FLYING
+	main._flight.lander.crash_now("vertical_rapido")
+	await _until(func() -> bool: return main._run.over)
+	_check(main._run.over, "pedido fora do alcance: a batida acaba o run")
+	main._summary.visible = false
 	# veterano: batida acaba o run
 	GameState.stars = int(WorldConfig.load_config()["onboarding"]["apprentice_stars"])
 	main._on_launch_requested()

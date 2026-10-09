@@ -251,7 +251,8 @@ Planejados (`godot-dev`):
   → `Hud.show_retry`; passou de `retries_per_hop` ou sem gás → "Veja como!": `Flight.guided` + `retry_mission` +
   `Hud.show_guide` (piloto automático no mesmo salto; a entrega vale); o guia também falhou (`_guided`) →
   `Flight.reset_to_start` + `Hud.show_other_mission` + cartão de novo, sem o 1º salto automático); antes da 1ª entrega
-  todo salto é `gentle`; fim do aprendiz → `Hud.show_graduation` + jingle milestone; aprendiz sem pedido alcançável → fim do run; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
+  todo salto é `gentle`; fim do aprendiz → `Hud.show_graduation` + jingle milestone; a proteção vale só no salto cujo pedido o gás alcançava
+  na escolha (`_hop_safe`, `_apprentice_hop()`): o run do aprendiz também só acaba com o tanque vazio; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
 - `Flight.retry_mission(gas)` repete o último `begin_mission` (mesma seed); `gentle` = relevo baixo sem crista nem
   paisagem; `guided` = `set_target` liga um `Autopilot` e `_unhandled_input` (motor/girar) o desliga e emite
   `took_over`; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).

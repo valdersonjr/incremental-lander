@@ -171,7 +171,8 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
 - **Aprendiz** (menos de 5 entregas no jogo): bater ou ficar sem gás **não acaba o run**. A nave volta para a partida
   do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Depois de 2 repetições
   (ou sem gás) o salto não repete mais: a nave volta para a partida e o cartão abre ("OUTRA MISSÃO!") — missão difícil
-  demais nunca prende o jogador; sem nenhum pedido ao alcance, o run acaba.
+  demais nunca prende o jogador. O run do aprendiz também só acaba com o tanque vazio: um pedido que o gás não
+  alcançava na escolha pode ser tentado, mas sem a proteção (bater ou ficar sem gás nele acaba o run).
   **Revisão (validação contra os mais vendidos, 2026-10-08)**: depois das repetições (ou sem gás) vem o **"Veja como!"**
   (Super Guide do New Super Mario Bros. Wii): o piloto automático voa o mesmo salto, apertar o motor ou girar devolve a
   nave e a entrega vale; só se o guia também falhar o cartão abre. Antes da 1ª entrega todo salto tem relevo baixo
