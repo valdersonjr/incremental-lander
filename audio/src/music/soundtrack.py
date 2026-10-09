@@ -309,22 +309,26 @@ THEME_LEADS = {"C": (_lead_marimba, -4, 0.18), "D": (_lead_ocarina, -6, 0.22), "
                "F": (_lead_harp, -6, 0.2)}
 
 
-def theme(option: str = "A") -> np.ndarray:
+def theme(option: str = "A", bpm: float = THEME_BPM, drums: str = "full") -> np.ndarray:
     """Tema do gatinho. A = caixinha de música (sino + violãozinho + baixo + bumbo/chocalho leves);
-    B = chiptune fofo (pulso com vibrato + 'pom-pá' de pulso + bateria de chip)."""
-    song = Song(bpm=THEME_BPM, bars=len(THEME_CHORDS))
+    B = chiptune fofo (pulso com vibrato + 'pom-pá' de pulso + bateria de chip). bpm/drums: andamento e bateria
+    ("full" | "soft" = só o bumbo bem baixo | "none") — a Noite de história pediu o tema mais lento (ninar)."""
+    song = Song(bpm=bpm, bars=len(THEME_CHORDS))
     mel = _theme_melody()
     if option in THEME_LEADS:                                # mesmo arranjo da A, só troca o instrumento da melodia
         make, db, wet = THEME_LEADS[option]
         song.add("melodia", make(), mel, gain_db=db,
-                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.25, mix_=wet, pingpong=True))
+                 fx=lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.25, mix_=wet, pingpong=True))
         song.add("violao", inst_pluck(cutoff0=3500, cutoff1=500, tau=0.18, osc="pulse"), _theme_strum(False),
                  gain_db=-15, pan=-0.2)
-        song.add("bumbo", drum_kick(f0=110, f1=50, tau=0.08), "x.......x.......", drum=True, gain_db=-13)
-        song.add("chocalho", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-22)
+        if drums != "none":
+            song.add("bumbo", drum_kick(f0=110, f1=50, tau=0.08), "x.......x.......", drum=True,
+                     gain_db=-13 if drums == "full" else -19)
+        if drums == "full":
+            song.add("chocalho", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-22)
     elif option == "A":
         song.add("melodia", inst_bell(ratio=3.5, index=2.0, tau=0.45), mel, gain_db=-4,
-                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.25, mix_=0.2, pingpong=True))
+                 fx=lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.25, mix_=0.2, pingpong=True))
         song.add("dobra", inst_pulse(duty=0.5, a=0.01, d=0.1, s=0.3, r=0.1), mel, gain_db=-20)   # corpo médio
         song.add("violao", inst_pluck(cutoff0=3500, cutoff1=500, tau=0.18, osc="pulse"), _theme_strum(False),
                  gain_db=-15, pan=-0.2)
@@ -332,7 +336,7 @@ def theme(option: str = "A") -> np.ndarray:
         song.add("chocalho", drum_hat(), "..x...x...x...x.", drum=True, gain_db=-22)
     else:
         song.add("melodia", inst_pulse(duty=0.25, a=0.006, d=0.12, s=0.55, r=0.1, vib=0.18), mel, gain_db=-6,
-                 fx=lambda x: delay(x, time=60 / THEME_BPM * 0.75, feedback=0.3, mix_=0.25, pingpong=True))
+                 fx=lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.3, mix_=0.25, pingpong=True))
         song.add("eco", inst_bell(ratio=3.5, index=1.5, tau=0.3), _shift(mel, 12), gain_db=-22)   # brilho em cima
         song.add("pompa", inst_pulse(duty=0.125, a=0.003, d=0.06, s=0.2, r=0.04), _theme_strum(True),
                  gain_db=-16, pan=0.15)
@@ -359,6 +363,9 @@ if __name__ == "__main__":
     if "theme_options" in args:                              # prévia das opções do tema (não exporta)
         for opt in [a for a in args if a in THEME_LEADS] or ("A", "B"):
             save_wav(f"audio/previews/theme_{opt}.wav", theme(opt), "music", loop=True)
+    if "tempo_options" in args:                              # prévia do tema mais lento (Noite de história)
+        for bpm, drums in ((76, "full"), (68, "soft"), (60, "none")):
+            save_wav(f"audio/previews/theme_D_{bpm}.wav", theme("D", bpm, drums), "music", loop=True)
     if "layers" in args or not args:
         for w in LAYERS:
             save_wav(f"{out}layer_{w}.wav", layer(w), "music", loop=True, do_normalize=False)
