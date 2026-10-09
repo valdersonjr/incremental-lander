@@ -225,11 +225,9 @@ def seat() -> tuple:
 
 
 def draw_fisher(cv: Canvas, fr: int) -> None:
-    """Grupo do pescador (anda com a lua): ratinho de companhia, gatinho sentado com as perninhas para fora, varinha,
+    """Grupo do pescador (anda com a lua; o ratinho saiu a pedido do usuário, 2026-10-09): gatinho sentado com as perninhas para fora, varinha,
     linha balançando no compasso e a estrelinha dormindo no anzol."""
     seat_x, seat_y = seat()
-    m = big_mouse(fr, 2)
-    cv.stamp(m, seat_x - 66, seat_y - m.h + 4 - (1 if fr % 8 < 4 else 0))
     cat = ch.body("hold", "float", blink=fr == 15, tail_up=2 if (fr // 4) % 2 else 0, k=tc.HERO_K,
                   breathe=1 if (fr // 4) % 2 else 0)
     cx = seat_x - cat.w // 2

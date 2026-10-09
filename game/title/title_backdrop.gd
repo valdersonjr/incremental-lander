@@ -3,7 +3,7 @@
 ## lua crescente de queijo com o gatinho pescando uma estrelinha (camada de tras), nuvens soltas a deriva e banco de
 ## nuvens (camada da frente), parallax leve pelo mouse (pixel inteiro), estrelas grandes piscando e estrela cadente.
 ## Tudo no tempo da musica (Sound.music_beat): o quadro de cada animacao sai da fase do compasso, nao de um relogio
-## proprio — pescador 1 compasso (linha balanca, gato respira, ratinho cochila), estrelas acendendo em colcheias,
+## proprio — pescador 1 compasso (linha balanca, gato respira), estrelas acendendo em colcheias,
 ## nuvens 4 compassos, estrela cadente sempre no 1o tempo.
 class_name TitleBackdrop
 extends Control

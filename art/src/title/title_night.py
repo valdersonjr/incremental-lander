@@ -6,8 +6,8 @@ Desenho em art/src/title/title_styles.py (s3_static, draw_fisher); aqui só expo
   assets/bg/title_night_moon.png    lua crescente de queijo (camada "back", com a sobra lateral do parallax)
   assets/bg/title_night_clouds.png  nuvenzinhas lilás soltas (deriva lenta, na frente da lua)
   assets/bg/title_night_bank.png    banco de nuvens contínuo na base (camada da frente)
-  assets/sprites/title_fisher.png   gatinho pescando + ratinho + varinha + linha + estrelinha, "idle" 16 quadros
-                                    (1 compasso: a linha balança, o gato respira, o rabo mexe, o ratinho cochila)
+  assets/sprites/title_fisher.png   gatinho pescando + varinha + linha + estrelinha, "idle" 16 quadros
+                                    (1 compasso: a linha balança, o gato respira, o rabo mexe)
   assets/sprites/title_star.png     estrela cadente (já existente, title_moon.py) — reaproveitada
   assets/bg/title_layout.json       posições (px na tela 640x360) + estrelas grandes que piscam
 Rodar da raiz: python3 art/src/title/title_night.py   (prévia: art/previews/title_night_preview.png)
