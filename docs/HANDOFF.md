@@ -4,6 +4,11 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Tela inicial no ritmo do tema** (usuário: "a tela inicial tá combinando com o ritmo da música?"). `Sound.music_beat()`
+  (posição real + tempo desde a mixagem − latência); TitleBackdrop escolhe o quadro pela fase: gatinho 1 compasso,
+  bandeira 2 tempos, luzinhas da nave 1 compasso, estrelas acendendo em colcheias, nuvens 4 compassos, estrela cadente
+  no 1º tempo; logo sobe 1 px nos tempos 1 e 3. Ocarina + sem vento de fundo (tela inicial sem ambiência, Lua sem ar).
+  Verificado: check, testes, `title_backdrop` (novo `gato_no_ritmo_do_tema`), captura. **Para o usuário**: ver/ouvir.
 - **Tema do gatinho na tela inicial** (usuário: "a tela inicial do gatinho deveria ter uma música, não?"). Tocava a
   faixa calma do Mapa/NAVE, só pad + sino e 83% grave: no notebook parecia muda. Novo `theme.wav` (D maior, 92 BPM,
   24 compassos, melodia cantarolável, baixo com harmônico audível) só na tela inicial; Mapa e NAVE seguem com `title`.

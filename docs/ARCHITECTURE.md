@@ -169,7 +169,9 @@ autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) 
                               # ambiência = mundo atual. Lander: propulsor (turbo: pitch/volume/passa-baixa do bus Engine),
                               # jatinhos de giro (rcs_loop), tosse sem gás, alarme de gás (<15%, baixa após 3 s). Flight: pouso
                               # pela descida (+ landing_heavy), batida fofa/tchibum, loop da mecânica do mundo (_update_env_sound:
-                              # gelo, vento, correntes, bolhas). RunSummary: contagem do dinheiro com tiques + ta-dá/recorde
+                              # gelo, vento, correntes, bolhas). RunSummary: contagem do dinheiro com tiques + ta-dá/recorde.
+                              # music_beat(): batidas da faixa atual pela posição real do áudio (BPM por faixa) — a tela
+                              # inicial (TitleBackdrop/TitleScreen) escolhe quadros e fases por ela (tudo no tempo do tema)
 audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui (feedback_sfx.py, world_loops.py, ui_sfx.py...)
 audio/src/ambience/world_ambience.py # ambiência dos 6 mundos -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
 audio/src/music/soundtrack.py # title (D maior, 32 compassos), flight (D lídio, 48) e layer_<mundo> (16, mono) -> assets/audio/music/

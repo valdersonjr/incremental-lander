@@ -67,6 +67,8 @@ const STREAMS := {
 const MUSIC := {"theme": "res://assets/audio/music/theme.wav", "title": "res://assets/audio/music/title.wav",
 		"flight": "res://assets/audio/music/flight.wav"}
 const LAYER_DIR := "res://assets/audio/music/layer_%s.wav"
+## Andamento de cada faixa (o mesmo dos scripts em audio/src/music/soundtrack.py): relogio musical das animacoes.
+const BPM := {"theme": 92.0, "title": 84.0, "flight": 100.0}
 const AMBIENCE_DIR := "res://assets/audio/ambience/%s.wav"
 ## Cursor: o mais baixo da interface (toca a cada seta; "quase silencioso", padrao de UI).
 const MOVE_DB := -7.0
@@ -137,6 +139,18 @@ func _input(event: InputEvent) -> void:
 func _on_focus_changed(_node: Control) -> void:
 	if Engine.get_process_frames() - _nav_frame <= 1:
 		ui("move", MOVE_DB)
+
+
+## Batidas desde o comeco da faixa que toca (float), pela posicao real do audio (docs do Godot: "Sync the gameplay
+## with audio and music": posicao + tempo desde a ultima mixagem - latencia de saida). Sem musica tocando, um relogio
+## de parede no andamento do tema (as animacoes continuam no mesmo ritmo).
+func music_beat() -> float:
+	var bpm := float(BPM.get(_music_name.get_slice(":", 0), BPM["theme"]))
+	var p := _music[0]
+	if not p.playing:
+		return Time.get_ticks_msec() / 1000.0 * bpm / 60.0
+	var t := p.get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()
+	return maxf(t, 0.0) * bpm / 60.0
 
 
 ## Voltar/fechar/cancelar (desce: o contrario do clique de confirmar).

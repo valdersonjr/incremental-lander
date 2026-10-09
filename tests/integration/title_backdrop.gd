@@ -34,7 +34,11 @@ func _process(_d: float) -> void:
 			var cat := bd.get_node("Front/Cat") as AnimatedSprite2D
 			_check("titulo_visivel", title.visible)
 			_check("sem_voo_atras", _main._flight == null)
-			_check("cena_propria", bd.is_visible_in_tree() and cat.is_playing())
+			_check("cena_propria", bd.is_visible_in_tree())
+			# no ritmo do tema: o quadro do gatinho = fase do compasso (4 tempos) x 16 quadros (+-1 pela latencia)
+			var want := int(fposmod(Sound.music_beat() / 4.0, 1.0) * 16.0)
+			_check("gato_no_ritmo_do_tema", Sound._music_name == "theme" and not cat.is_playing()
+					and (absi(cat.frame - want) <= 1 or absi(cat.frame - want) == 15))
 			_check("gato_no_morro", cat.position.y > 100.0 and cat.position.x > 200.0)
 			_check("menu_na_coluna", (title.get_node("%Menu") as Control).visible
 					and not (title.get_node("%Panel") as Control).visible)

@@ -33,6 +33,19 @@ var _sb_strong := true
 @onready var _sandbox: VBoxContainer = %Sandbox
 
 
+## Logo "respira" com a musica: 1 px acima nos tempos 1 e 3 (meio tempo cada), pixel inteiro.
+var _logo_y := -1.0
+
+
+func _process(_delta: float) -> void:
+	if not visible:
+		return
+	if _logo_y < 0.0:
+		_logo_y = %Logo.position.y
+	var up := fposmod(Sound.music_beat(), 2.0) < 0.5
+	%Logo.position.y = _logo_y - (1.0 if up else 0.0)
+
+
 func _ready() -> void:
 	%Play.pressed.connect(func() -> void: _set_screen(Screen.SAVES))
 	%OptionsButton.pressed.connect(func() -> void: _set_screen(Screen.OPTIONS))
