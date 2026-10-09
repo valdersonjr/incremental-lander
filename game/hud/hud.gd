@@ -345,6 +345,7 @@ func show_verb(verb: String, text: String = "") -> void:
 ## Aprendiz: o salto nao deu depois das tentativas; o cartao abre para escolher outra missao.
 func show_other_mission() -> void:
 	_show_toast("OUTRA MISSÃO!", "essa ficou difícil: escolha outra", &"MoneyLabel")
+	Sound.ui("pop")
 	_set_status(_idle_status())
 
 
@@ -402,12 +403,14 @@ func show_world_name(world_name: String) -> void:
 ## de acertar vem em figura (fantasma + balao do RetryHint) e o aviso e so o titulo; depois, a frase curta lembra.
 func show_retry(reason: String, shown_in_picture: bool = false) -> void:
 	_show_toast("TENTE DE NOVO!", "" if shown_in_picture else UiKit.crash_tip(reason), &"MoneyLabel")
+	Sound.sfx("retry")
 	_set_status(_idle_status())
 
 
 ## Taxi: avisa o passo novo (o passageiro embarcou: agora leve de volta).
 func taxi_step(step: int) -> void:
 	_show_toast("A BORDO!", "agora leve de volta" if step == 2 else "", &"GoodLabel")
+	Sound.sfx("aboard")
 
 
 func _set_speed(label: Label, value: float, limit: float) -> void:

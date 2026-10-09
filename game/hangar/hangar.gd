@@ -169,6 +169,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"ui_cancel"):                # balao aberto: fecha; senao, menu do jogo
 		get_viewport().set_input_as_handled()
 		if _balloon.visible:
+			Sound.back()
 			_close_balloon()
 		else:
 			menu_requested.emit()

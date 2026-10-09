@@ -36,3 +36,8 @@
 <!-- data — decisão — motivo -->
 - 2026-10-01 — propulsor = plasma suave (opção A de `audio/src/sfx/thruster.py`) — usuário: "escolhe qualquer 1"; o usuário prefere não auditar som por som: gerar o pacote seguindo a skill e tocar um resumo para aprovação geral
 - 2026-10-03 — pacote de trilha: ambiência por mundo (cama + eventos esparsos, 24 s), música de título/hangar (D maior 84 BPM) e de voo (D lídio 100 BPM), alarme de gás que baixa após 3 s, jingles de marco/mundo/recomeço/final com a música abaixando −9 dB — aprovado pelo usuário ouvindo o resumo ("Aprovado, integra")
+- 2026-10-09 — auditoria de som aplicada ("conserte tudo"): gramática da interface (mover quase mudo, confirmar
+  sobe, voltar desce, negado plano, balão = pop), pausa abafa música/ambiência, cada coleta com som próprio,
+  intensidade física no pouso e no turbo, batida **fofa** (puf + apito de desenho; a explosão antiga fica guardada),
+  ambiência nos 6 mundos (Lua sem batalha), voo de 115 s + camada do mundo (mesmo tema, instrumento de cada mundo,
+  −24 LUFS, `AudioStreamSynchronized`) — aguarda o usuário ouvir e aprovar

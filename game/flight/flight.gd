@@ -104,6 +104,21 @@ var _shake := 0.0                                  # trauma do tremor de tela (0
 var _shape: Dictionary = {}                        # relevo da missao do mapa (TerrainGen shape; world.json)
 var _bg_ground := 0.0                              # altura media do chao perto da camera - partida (px, suavizada)
 var _bg_origin := 0.0                              # deslocamento do cenario de fundo (px): cada mapa mostra um trecho
+var _env_sound: AudioStreamPlayer                  # loop da mecanica do mundo (gelo, vento, bolhas), volume pela forca
+var _env_level := 0.0                              # 0..1 suavizado
+var _wind_now := 0.0                               # Jardim: vento deste passo e o maximo da estrela (m/s2)
+var _wind_max := 1.0
+
+const ICE_SLIDE := preload("res://assets/audio/sfx/ice_slide.wav")
+const WIND_LOOP := preload("res://assets/audio/sfx/wind_loop.wav")
+const BUBBLES_LOOP := preload("res://assets/audio/sfx/bubbles_loop.wav")
+## Velocidade de deslize (m/s) que soa no volume cheio; o pitch do gelo vai de ICE_PITCH.x a .y com ela.
+const ICE_FULL_MPS := 8.0
+const ICE_PITCH := Vector2(0.8, 1.15)
+## Pouso: volume e pitch pela descida (vy / max_vy); acima de HEAVY_FROM entra a camada de pancada.
+const LAND_DB := Vector2(-9.0, 0.0)
+const LAND_PITCH := Vector2(1.06, 0.94)
+const HEAVY_FROM := 0.6
 
 @onready var lander: Lander = %Lander
 @onready var terrain: Terrain = %Terrain
@@ -128,6 +143,15 @@ func _ready() -> void:
 	retry_hint.name = "RetryHint"
 	retry_hint.flight = self
 	add_child(retry_hint)
+	_env_sound = AudioStreamPlayer.new()
+	_env_sound.bus = &"SFX"
+	add_child(_env_sound)
+
+
+func _exit_tree() -> void:
+	if _env_sound != null:                                     # loop tocando ao fechar o jogo = playback vivo na saida
+		_env_sound.stop()
+		_env_sound.stream = null
 
 
 func _physics_process(delta: float) -> void:
@@ -154,6 +178,44 @@ func _process(delta: float) -> void:
 		var target := TerrainGen.mean_height(terrain.ridge, center.x, float(gf["span_px"])) - float(terrain.pads[0]["y"])
 		_bg_ground = lerpf(_bg_ground, target, 1.0 - exp(-float(gf["speed"]) * delta))
 	backdrop.follow(center + Vector2(_bg_origin, -_bg_ground))
+	_update_env_sound(delta)
+
+
+## Loop da mecanica do mundo: gelo (Sorvete, pela velocidade do deslize), vento (Jardim, pela forca da rajada),
+## correntes (Nuvens, vento mais agudo dentro da corrente) e bolhas (Bolhas, dentro da coluna). Volume suavizado.
+func _update_env_sound(delta: float) -> void:
+	var stream: AudioStream = null
+	var level := 0.0
+	var pitch := 1.0
+	var flying := lander.state == Lander.State.FLYING
+	match planet_id:
+		"sorvete":
+			stream = ICE_SLIDE
+			level = clampf(absf(_slide_v) / ICE_FULL_MPS, 0.0, 1.0) if sliding else 0.0
+			pitch = lerpf(ICE_PITCH.x, ICE_PITCH.y, level)
+		"jardim":
+			stream = WIND_LOOP
+			level = clampf(absf(_wind_now) / maxf(_wind_max, 0.01), 0.0, 1.0) if not _stems.is_empty() else 0.0
+		"nuvens":
+			stream = WIND_LOOP
+			pitch = 1.33
+			level = 1.0 if flying and lander.env_accel.y < 0.0 else 0.0
+		"bolhas":
+			stream = BUBBLES_LOOP
+			level = 1.0 if flying and lander.env_accel.y < 0.0 else 0.0
+	if lander.state == Lander.State.CRASHED:
+		level = 0.0
+	_env_level = lerpf(_env_level, level, clampf(delta * 6.0, 0.0, 1.0))
+	if stream == null or _env_level < 0.02:
+		if _env_sound.playing:
+			_env_sound.stop()
+		return
+	if _env_sound.stream != stream:
+		_env_sound.stream = stream
+	if not _env_sound.playing:
+		_env_sound.play()
+	_env_sound.volume_db = linear_to_db(_env_level)
+	_env_sound.pitch_scale = pitch
 
 
 ## Aprendiz que bateu: a nave pontilhada refaz o movimento certo em cima da plataforma alvo (a camera vai ate la).
@@ -440,8 +502,8 @@ func _float_text(text: String, pos: Vector2) -> void:
 func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 	# poeira (pixel-art: explosion.py): linha 15 do sprite = chao, x 24 = centro do lander
 	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, float(pad["y"]) - 15.0), false)
-	Sound.sfx("landing")
 	var max_vy := float(WorldConfig.load_config()["landing"]["max_vy"])
+	_landing_sound(clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	shake(float(WorldConfig.load_config()["camera"]["land_shake"]) * clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	current_pad_id = int(pad["id"])
 	if current_pad_id == target_pad_id and planet_id == "sorvete" and not _rings.is_empty():
@@ -456,11 +518,18 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 func _on_lander_rested(info: Dictionary) -> void:
 	var ground := TerrainGen.height_at(terrain.ridge, lander.global_position.x)
 	_spawn_fx(DUST_FRAMES, &"puff", Vector2(lander.global_position.x - 24.0, ground - 15.0), false)
-	Sound.sfx("landing")
+	_landing_sound(0.2)
 	_float_text("decole de novo!", lander.global_position - Vector2(0.0, 26.0))
 	rested.emit(info)
 	if lander.gas <= 0.001:
 		stranded.emit()
+
+
+## Pouso com a forca da descida k (0 = pena, 1 = no limite): mais alto e mais grave; forte = camada de pancada.
+func _landing_sound(k: float) -> void:
+	Sound.sfx("landing", lerpf(LAND_DB.x, LAND_DB.y, k), lerpf(LAND_PITCH.x, LAND_PITCH.y, k))
+	if k > HEAVY_FROM:
+		Sound.sfx("landing_heavy", lerpf(-10.0, 0.0, (k - HEAVY_FROM) / (1.0 - HEAVY_FROM)))
 
 
 func _complete_landing(_pad: Dictionary, quality: float, info: Dictionary) -> void:
@@ -475,7 +544,7 @@ func _complete_landing(_pad: Dictionary, quality: float, info: Dictionary) -> vo
 func _on_lander_crashed(reason: String, info: Dictionary) -> void:
 	# a nave some e explode; o resultado so sai depois da explosao (senao o resumo a cobre)
 	lander.visible = false
-	Sound.sfx("crash")
+	Sound.sfx("splash" if reason == "mar" else "crash_soft")   # batida fofa (puf + apito); no mar, tchibum
 	shake(1.0)
 	var fx := _spawn_fx(EXPLOSION_FRAMES, &"boom", lander.global_position, true)
 	await fx.animation_finished
@@ -922,7 +991,7 @@ func _tick_slide() -> void:
 		minigame_got = 1 if q > 0.0 else 0
 		_float_text("no miolo!" if q > 0.66 else ("no alvo!" if q > 0.0 else "fora do alvo"),
 				lander.global_position + Vector2(0, -26))
-		Sound.sfx("star" if q > 0.66 else ("crystal_3" if q > 0.0 else "denied"))
+		Sound.sfx("star" if q > 0.66 else ("target_hit" if q > 0.0 else "oops"))
 		_complete_landing(pad, q, _slide_info)
 
 
@@ -955,8 +1024,9 @@ func _tick_stems() -> void:
 	_wind_t += dt
 	_calm_t = maxf(0.0, _calm_t - dt)
 	var star := maxi(1, int(mission.get("star", 1)))
-	var wind := Minigames.wind_at(_wind_t, float(Minigames.by_star(cfg["wind_mps2"], star)),
-			float(cfg.get("wind_period_s", 5.0)))
+	_wind_max = float(Minigames.by_star(cfg["wind_mps2"], star))
+	var wind := Minigames.wind_at(_wind_t, _wind_max, float(cfg.get("wind_period_s", 5.0)))
+	_wind_now = wind
 	_move_seeds(wind, float(cfg.get("seed_px_per_mps2", 20.0)), dt)
 	lander.env_accel = Vector2(wind if _calm_t <= 0.0 else 0.0, 0.0) if flying else Vector2.ZERO
 	if not flying:
@@ -1026,7 +1096,7 @@ func _tick_claw() -> void:
 		_tow_sprite.texture = MinigameArt.tex("chest")
 		_chest_sprite.hide()
 		minigame_got = 1
-		Sound.sfx("crystal_3")
+		Sound.sfx("chest")
 	if chest_got and not chest_wet:
 		var wet: bool = _tow.pos.x > float(_water["x0"]) and _tow.pos.x < float(_water["x1"]) \
 				and _tow.pos.y > float(_water["y"])
@@ -1199,7 +1269,7 @@ func _tick_gift() -> void:
 	else:
 		_float_text("+" + EconMath.fmt(EconMath.gift_value(planet_id, target_distance_m, stats, "gift")),
 				_gift_pos + Vector2(0, -24))
-	Sound.sfx("crystal_3")
+	Sound.sfx("gas_glug" if gift_kind == "gas" else "gift_coin")
 	_gift_bob.kill()
 	var tw := _gift_sprite.create_tween()
 	tw.tween_property(_gift_sprite, "global_position", lander.global_position, 0.2)
@@ -1329,7 +1399,7 @@ func _rescue() -> void:
 	var tw := _rescue_sprite.create_tween()
 	tw.tween_property(_rescue_sprite, "global_position", lander.global_position, 0.25)
 	tw.tween_callback(_rescue_sprite.hide)
-	Sound.sfx("crystal_3")
+	Sound.sfx("squeak")
 	_float_text("+♥", _rescue_pos + Vector2(0, -20))
 
 
@@ -1348,7 +1418,7 @@ func _mission_failed(kind: String, pic: String, pos: Vector2) -> void:
 		tw.tween_property(s, "position:y", s.position.y - 16.0, 0.8)
 		tw.parallel().tween_property(s, "modulate:a", 0.0, 0.8).set_delay(0.4)
 		tw.tween_callback(s.queue_free)
-	Sound.sfx("denied")
+	Sound.sfx("oops")
 	shake(0.15)
 
 

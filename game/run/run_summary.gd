@@ -7,16 +7,24 @@ signal continue_requested
 
 ## Segundos ate o botao ganhar foco (Espaco do propulsor nao fecha o resumo sem querer; Enter vale na hora).
 const FOCUS_DELAY := 0.4
+## Contagem do dinheiro do run (0 -> total): duracao, intervalo dos tiques (Sound.tally sobe grau a grau) e atraso.
+const COUNT_S := 0.9
+const TICK_S := 0.08
+const COUNT_DELAY := 0.25
 
 @onready var _title: Label = %Title
 @onready var _reason: Label = %Reason
 @onready var _rows: VBoxContainer = %Rows
 @onready var _continue: Button = %Continue
+var _count: Tween
 
 
 func _ready() -> void:
 	_continue.pressed.connect(func() -> void: continue_requested.emit())
-	continue_requested.connect(func() -> void: Sound.ui("click"))
+	continue_requested.connect(func() -> void:
+		Sound.ui("click")
+		if _count != null:                                     # pulou a contagem: sem ta-da atrasado
+			_count.kill())
 
 
 func show_summary(summary: Dictionary) -> void:
@@ -64,6 +72,26 @@ func show_summary(summary: Dictionary) -> void:
 	UiKit.pulse(%Panel, 1.3, 0.25)
 
 
+## Dinheiro do run contando de 0 ate o total com tiques subindo na escala; no fim, ta-da (ou a vinheta de recorde).
+## Sem dinheiro: sem contagem nem festa.
+func _count_up(label: Label, money: float, record: bool) -> void:
+	if _count != null:
+		_count.kill()
+	if money <= 0.0:
+		return
+	label.text = EconMath.fmt(0.0)
+	var ticks := [0]
+	_count = create_tween()
+	_count.tween_interval(COUNT_DELAY)
+	_count.tween_method(func(v: float) -> void:
+		label.text = EconMath.fmt(roundf(v * money) if v < 1.0 else money)
+		var n := int(v * COUNT_S / TICK_S)
+		if n >= int(ticks[0]) and v < 1.0:
+			Sound.tally(int(ticks[0]))
+			ticks[0] = n + 1, 0.0, 1.0, COUNT_S).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	_count.tween_callback(Sound.jingle.bind("record" if record else "summary_end"))
+
+
 ## Recordes (variante "troféus" aprovada): dinheiro do run grande + "NOVO RECORDE!"/recorde; 4 cartões (entregas,
 ## distância, pousos perfeitos, maior entrega) que viram troféu quando passam o recorde. 0 = ainda sem recorde.
 func _add_records(values: Dictionary, start: Dictionary) -> void:
@@ -77,6 +105,7 @@ func _add_records(values: Dictionary, start: Dictionary) -> void:
 	big.text = EconMath.fmt(money)
 	big.theme_type_variation = &"BigMoneyLabel"
 	hero.add_child(big)
+	_count_up(big, money, rec > 0.0 and money > rec)
 	_rows.add_child(hero)
 	var line := HBoxContainer.new()
 	line.alignment = BoxContainer.ALIGNMENT_CENTER

@@ -159,13 +159,20 @@ art/src/bg/moon_scene.py      # fonte da cena da Lua (prévia + --export); art/s
 art/src/bg/anim_util.py       # quadros empilhados (camadas/enfeites animados) + GIF de prévia
 art/src/ui/ui_kit.py          # kit de interface (+ pixel_font.py): fonte BMFont, painéis, botões, barras, ícones, cor por mundo
 assets/ui/                    # font.fnt/.png, icons.png, bar_*.png fixos; <mundo>/ painéis, botões, barra; ui_kit.json
-autoload/sound.gd             # Sound: ui(nome)/sfx(nome) one-shots (8 vozes); music("title"|"flight"|"") e ambience(mundo|"")
-                              # com crossfade de 1,2 s (a mesma faixa não reinicia; um tween por par); jingle("milestone"|
-                              # "unlock"|"goal") um por vez, música abaixa -9 dB (AudioEffectAmplify no bus Music). Main: título/hangar = "title", voo = "flight",
-                              # ambiência = mundo atual. Propulsor e alarme de gás (<15% em voo, baixa após 3 s) no Lander
-audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui
-audio/src/ambience/world_ambience.py # ambiência da Lua -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
-audio/src/music/soundtrack.py # música title (D maior 84 BPM) e flight (D lídio 100 BPM) -> assets/audio/music/
+autoload/sound.gd             # Sound: ui(nome[,db,pitch])/sfx(nome[,db,pitch]) one-shots (8 vozes); music("title"|"flight"|"",
+                              # mundo) e ambience(mundo|"") com crossfade de 1,2 s (a mesma faixa não reinicia; um tween por par);
+                              # o voo = AudioStreamSynchronized(flight.wav + layer_<mundo>.wav). jingle(nome) um por vez, música
+                              # abaixa -9 dB (AudioEffectAmplify no bus Music). Gramática da UI: "move" automático quando o foco
+                              # anda por seta/Tab (Viewport.gui_focus_changed até 1 quadro depois; grab_focus não soa), back(),
+                              # tally(n), preview(bus) do volume, muffle(on) = passa-baixa 700 Hz em Music+Ambience (menu aberto,
+                              # ligado pela visibilidade do PauseMenu). Main: título/hangar = "title", voo = "flight"+mundo,
+                              # ambiência = mundo atual. Lander: propulsor (turbo: pitch/volume/passa-baixa do bus Engine),
+                              # jatinhos de giro (rcs_loop), tosse sem gás, alarme de gás (<15%, baixa após 3 s). Flight: pouso
+                              # pela descida (+ landing_heavy), batida fofa/tchibum, loop da mecânica do mundo (_update_env_sound:
+                              # gelo, vento, correntes, bolhas). RunSummary: contagem do dinheiro com tiques + ta-dá/recorde
+audio/src/sfx/, audio/src/ui/ # fontes dos sons (sound-design) -> assets/audio/sfx|ui (feedback_sfx.py, world_loops.py, ui_sfx.py...)
+audio/src/ambience/world_ambience.py # ambiência dos 6 mundos -> assets/audio/ambience/<mundo>.wav (loops estéreo 24 s)
+audio/src/music/soundtrack.py # title (D maior, 32 compassos), flight (D lídio, 48) e layer_<mundo> (16, mono) -> assets/audio/music/
 audio/src/sfx/progress_sfx.py # gas_alarm (loop) + jingles milestone/unlock/goal -> assets/audio/sfx/
 art/src/ui/app_icon.py        # ícone do jogo -> assets/ui/icon.png (32) + icon_512.png (project.godot config/icon, presets)
 export_presets.cfg            # macOS (universal, .zip), Windows (x86_64, pck embutido), Linux; exclui tests/ trailer/ docs/

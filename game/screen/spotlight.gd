@@ -51,6 +51,7 @@ func point(target: Control, tip_id: String, icon: String, word: String, keys: Ar
 	_word = word
 	_keys = keys
 	_t = 0.0
+	Sound.ui("pop")                                            # balao aparecendo
 	if target is BaseButton:
 		_press_cb = close.bind(true)
 		(target as BaseButton).pressed.connect(_press_cb, CONNECT_ONE_SHOT)

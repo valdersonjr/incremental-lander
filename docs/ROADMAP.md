@@ -214,7 +214,14 @@
   - [x] "PILOTO FORMADO!" diz onde fica o Nivelador; menu do Mapa: "VOLTAR AO MAPA"; balão do destaque por cima
         da tela escura (antes ficava sob o xadrez)
   - [ ] selinho "emprestado" do Nivelador no voo do aprendiz (ficou fora do protótipo; só se o usuário quiser)
-- [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
+- [x] 18.5h Auditoria de som aplicada (2026-10-09; "conserte tudo"; patterns ui-grammar, feedback-sfx, world-loops):
+  - [x] gramática da UI (mover/voltar/balão/contagem) · pausa abafa · prévia de volume no próprio canal
+  - [x] pouso pela descida + pancada · turbo · jatinhos de giro · tosse sem gás · batida fofa · tchibum no mar
+  - [x] sons próprios: baú, galão, presente, ratinho, curling no alvo, regra falhou, A BORDO, TENTE DE NOVO, chegada
+  - [x] resumo: contagem com tiques + ta-dá/recorde · INDEX da biblioteca limpo (sons de mundos antigos)
+  - [ ] o usuário ouvir e aprovar (batida fofa vs explosão antiga; camadas por mundo)
+- [~] 18.6 Som por mundo (sound-design): ambiência dos 6 mundos ✔, sons das mecânicas (gelo/vento/bolhas) ✔, camada
+      musical por mundo ✔ (18.5h); falta o jingle de mundo completo
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;
       sons (sound-design): parada da estrada alcançada, degrau de peça, pouso perfeito

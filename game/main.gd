@@ -321,7 +321,7 @@ func _start_run() -> void:
 		c.theme = ui
 	_flight.start(GameState.current_planet, _run_seed, stats, _demo)
 	_flight.landscapes = GameState.landscapes()
-	Sound.music("flight")
+	Sound.music("flight", GameState.current_planet)        # base do voo + camada do mundo
 	Sound.ambience(GameState.current_planet)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)
@@ -423,6 +423,7 @@ func _show_goal() -> void:
 		_arrived = true
 		_hud.show_world_name(str(EconMath._find("planets", GameState.current_planet).get("name",
 				GameState.current_planet)).to_upper())
+		Sound.jingle("world_arrive")                           # vinheta de chegada (a musica abaixa enquanto toca)
 	if _flight.minigame_total > 0:
 		_hud.show_verb(_flight.minigame_verb(), str(Minigames.spec(GameState.current_planet).get("say", "")))
 	else:

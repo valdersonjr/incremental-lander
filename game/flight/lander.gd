@@ -36,6 +36,15 @@ var ground_rest := false                # aprendiz (world.json > onboarding): po
 const THRUST_START := preload("res://assets/audio/sfx/thruster_start.wav")
 const THRUST_STOP := preload("res://assets/audio/sfx/thruster_stop.wav")
 const GAS_ALARM := preload("res://assets/audio/sfx/gas_alarm.wav")
+const RCS_LOOP := preload("res://assets/audio/sfx/rcs_loop.wav")
+const SPUTTER := preload("res://assets/audio/sfx/sputter.wav")
+## Jatinhos de giro: chiado bem baixo (toca o tempo todo que gira: nao pode cansar).
+const RCS_DB := -15.0
+## Turbo: o loop do propulsor sobe um tom inteiro (2 semitons), ganha volume e o filtro do bus Engine abre.
+const TURBO_PITCH := 1.122
+const TURBO_DB := 2.5
+const ENGINE_CUTOFF := 4000.0
+const TURBO_CUTOFF := 8000.0
 ## Alarme de gas: toca em voo abaixo desta fracao do tanque (mesmo limite da barra vermelha do HUD).
 const ALARM_FRAC := 0.15
 ## Alarme que nao irrita: comeca forte e, depois de ALARM_LOUD_S, cai para ALARM_QUIET_DB (o jogador ja sabe).
@@ -48,6 +57,9 @@ const ALARM_QUIET_DB := -14.0
 var _was_thrusting := false
 var _alarm: AudioStreamPlayer
 var _alarm_t := 0.0
+var _rcs: AudioStreamPlayer
+var _rotating := false
+var _engine_lp: AudioEffectLowPassFilter = null
 
 
 ## Configura a nave (stats do EconMath + planeta da spec) e as plataformas do terreno.
@@ -75,6 +87,14 @@ func _ready() -> void:
 	_alarm.stream = GAS_ALARM
 	_alarm.bus = &"SFX"
 	add_child(_alarm)
+	_rcs = AudioStreamPlayer.new()
+	_rcs.stream = RCS_LOOP
+	_rcs.bus = &"SFX"
+	_rcs.volume_db = RCS_DB
+	add_child(_rcs)
+	var bus := AudioServer.get_bus_index(&"Engine")
+	if bus >= 0 and AudioServer.get_bus_effect_count(bus) > 0:
+		_engine_lp = AudioServer.get_bus_effect(bus, 0) as AudioEffectLowPassFilter
 
 
 func _physics_process(delta: float) -> void:
@@ -93,6 +113,7 @@ func _physics_process(delta: float) -> void:
 			queue_redraw()
 			return
 	rotation += float(controls["rotate"]) * float(cfg["rotate_speed"]) * delta
+	_rotating = absf(float(controls["rotate"])) > 0.05
 	var dt_m := delta * float(cfg["time_scale"])
 	params["drag"] = LanderPhysics.drag_at(float(params["planet_drag"]), altitude_m(), cfg) + env_drag
 	params["extra_accel"] = env_accel
@@ -104,7 +125,11 @@ func _physics_process(delta: float) -> void:
 				* (float(cfg["abilities"]["turbo_mult"]) if turbo_on else 1.0)
 	var r := LanderPhysics.step(vel_m, rotation, controls["thrust"], gas, p, dt_m)
 	vel_m = r["velocity"]
+	var had_gas := gas > 0.0
 	gas = r["gas"]
+	if had_gas and gas <= 0.0 and controls["thrust"]:          # acabou o gas com o motor ligado: o motor tosse
+		_thrust_fx.stream = SPUTTER                            # (no lugar do corte: sem gas o _update nao toca o stop)
+		_thrust_fx.play()
 	thrusting = float(r["gas_used"]) > 0.0
 	flight_time_m += dt_m
 	# recovery_as_collision=true: encostado e descendo devagar tambem conta como toque (senao o pouso lento nunca e detectado)
@@ -149,9 +174,12 @@ func _exit_tree() -> void:
 	for p: AudioStreamPlayer2D in [_thrust_loop, _thrust_fx]:
 		p.stop()
 		p.stream = null
-	if _alarm != null:
-		_alarm.stop()
-		_alarm.stream = null
+	for p: AudioStreamPlayer in [_alarm, _rcs]:
+		if p != null:
+			p.stop()
+			p.stream = null
+	if _engine_lp != null:
+		_engine_lp.cutoff_hz = ENGINE_CUTOFF
 
 
 func _update_thrust_sound() -> void:
@@ -167,11 +195,25 @@ func _update_thrust_sound() -> void:
 		_off_time += get_process_delta_time()
 		if _thrust_loop.playing and _off_time > 0.12:
 			_thrust_loop.stop()
-			_thrust_fx.stream = THRUST_STOP
-			_thrust_fx.play()
+			if gas > 0.0:                                      # sem gas quem fala e a tosse (sputter)
+				_thrust_fx.stream = THRUST_STOP
+				_thrust_fx.play()
 	if state == State.CRASHED and _thrust_loop.playing:
 		_thrust_loop.stop()
 	_was_thrusting = thrusting
+	# Turbo: mais agudo, mais alto e mais brilhante (desliza para nao "pular")
+	var turbo := turbo_on and thrusting
+	var k := clampf(get_process_delta_time() * 10.0, 0.0, 1.0)
+	_thrust_loop.pitch_scale = lerpf(_thrust_loop.pitch_scale, TURBO_PITCH if turbo else 1.0, k)
+	_thrust_loop.volume_db = lerpf(_thrust_loop.volume_db, TURBO_DB if turbo else 0.0, k)
+	if _engine_lp != null:
+		_engine_lp.cutoff_hz = lerpf(_engine_lp.cutoff_hz, TURBO_CUTOFF if turbo else ENGINE_CUTOFF, k)
+	# jatinhos de giro: so em voo
+	var rcs := _rotating and state == State.FLYING
+	if rcs and not _rcs.playing:
+		_rcs.play()
+	elif not rcs and _rcs.playing:
+		_rcs.stop()
 
 
 ## Altura (m do modelo) dos pes acima do relevo logo abaixo (0 sem terreno conhecido).

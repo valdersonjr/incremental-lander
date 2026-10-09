@@ -44,6 +44,7 @@ var _tab_buttons: Dictionary = {}           # Tab -> Button
 
 func _ready() -> void:
 	visible = false
+	visibility_changed.connect(func() -> void: Sound.muffle(visible))   # aberto = musica e ambiencia abafadas
 	%Continue.pressed.connect(close)
 	%MenuButton.pressed.connect(func() -> void:
 		Sound.ui("click")
@@ -133,7 +134,7 @@ func _fill_keys() -> void:
 func close() -> void:
 	if not visible:
 		return
-	Sound.ui("click")
+	Sound.back()
 	visible = false
 	get_tree().paused = false
 	closed.emit()
@@ -149,7 +150,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_close_saves()
 		elif _confirm_new_game:                                # Esc primeiro desiste da confirmacao
 			_confirm_new_game = false
-			Sound.ui("click")
+			Sound.back()
 			_show_new_game()
 		else:
 			close()
@@ -172,7 +173,7 @@ func _open_saves() -> void:
 
 func _close_saves(sound: bool = true) -> void:
 	if sound:
-		Sound.ui("click")
+		Sound.back()
 	%SavesView.visible = false
 	%Columns.visible = true
 	%Continue.visible = true

@@ -243,7 +243,7 @@ static func volume_row(bus: String) -> HBoxContainer:
 		b.pressed.connect(func() -> void:
 			GameState.set_volume(bus, snappedf(GameState.volume(bus) + step, VOLUME_STEP))
 			SaveManager.request_save()
-			Sound.ui("click")
+			Sound.preview(bus)                                 # amostra no proprio canal: ouve o volume novo
 			show.call())
 		row.add_child(b)
 		if step < 0.0:

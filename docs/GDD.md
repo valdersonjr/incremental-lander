@@ -222,6 +222,11 @@ Script: `balance/sims/2026-10-06-v11-moon-only.py`.
 - **Som**: retro-synth espacial 100% sintetizado, escala em D, loudness por categoria, via skill
   `sound-design` (`references/style-guide.md`). Trilha: música calma de menu/hangar (D maior) e de voo (D lídio),
   ambiência da Lua, alarme de gás baixo que não irrita, jingles de marco/liberação/conquista.
+  **Auditoria de som (2026-10-09)**: cada mundo com ambiência própria e a mesma música de voo (~2 min) com uma
+  camada do mundo (o tema muda de instrumento: sinos, marimba, bolhas, flautinha, celesta, sopro); gramática de menu
+  (mover quase mudo, confirmar sobe, voltar desce, balão "pop"), pausa abafa a música, cada coleta com som próprio,
+  pouso e turbo com intensidade, jatinhos de giro, motor tossindo sem gás, sons das mecânicas (gelo, vento, bolhas),
+  contagem do resumo com tiques e vinheta; batida **fofa** (puf + apito de desenho) para o público infantil.
 
 ## 11. Técnico
 Godot 4.7.2 (renderer Compatibility) · desktop (Mac/PC/Linux; presets em export_presets.cfg) · teclado (teclas

@@ -62,6 +62,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _screen == Screen.SAVES and _slots.cancel_confirm():   # Esc primeiro desiste de apagar
 			return
 		if _screen != Screen.MENU:
+			Sound.back()
 			_set_screen(Screen.MENU)
 
 

@@ -4,6 +4,20 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Auditoria de som aplicada (ROADMAP 18.5h; adianta 18.6)** — usuário pediu a validação contra os melhores jogos e
+  depois "conserte tudo". Feito: gramática da UI (`move` automático na seta/Tab, `Sound.back()`, `pop` nos balões,
+  `Sound.tally` na contagem), pausa abafa música/ambiência (`Sound.muffle` pela visibilidade do PauseMenu), prévia do
+  volume no próprio canal; pouso pela descida + `landing_heavy`; turbo (pitch/volume/passa-baixa do bus Engine),
+  jatinhos de giro, tosse do motor sem gás; batida **fofa** `crash_soft` (a `crash.wav` antiga ficou guardada) e
+  `splash` no mar; sons próprios no lugar do `crystal_3` (baú, galão, presente, ratinho, curling) e `oops` nas regras
+  que falham; "TENTE DE NOVO"/"A BORDO"/"OUTRA MISSÃO"; vinheta de chegada no mundo; resumo com contagem + ta-dá/recorde;
+  ambiência nos 6 mundos (Lua sem a batalha antiga); loops de gelo/vento/correntes/bolhas; título 91 s, voo 115 s +
+  camada musical por mundo (`AudioStreamSynchronized`). Fontes: `audio/src/sfx/feedback_sfx.py`, `world_loops.py`,
+  `ui/ui_sfx.py`, `ambience/world_ambience.py`, `music/soundtrack.py`; padrões `ui-grammar`, `feedback-sfx`,
+  `world-loops` (INDEX limpo). Verificado: check (102), 111 testes, 16 integrações (nova `sound_flow`), paridade 43,
+  demo 1500 quadros. **Para o usuário**: ouvir a prévia (`audio/previews/*_reel.wav`, tocada no fim da sessão) e jogar;
+  aprovar a batida fofa (voltar à explosão = `crash_soft` → `crash` no `Flight._on_lander_crashed`) e as camadas.
+  **Próximo**: retorno do usuário; jingle de mundo completo (resto do 18.6).
 - **Começo pelo Mapa + menus explicados (ROADMAP 18.5g)** (usuário: "jogado no voo"; "menus não explicados").
   Novo jogo → Mapa com "Voe!" → 1º salto já aceito; nome do mundo (★ LUA ★) em toda chegada; fim do run do aprendiz
   volta ao Mapa. NAVE ganhou o botão **MAPA** (ícone de planeta `pin`, ao lado do DECOLAR). Destaques em fila de até

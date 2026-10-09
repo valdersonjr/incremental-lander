@@ -373,6 +373,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
+		Sound.back()
 		visible = false
 		menu_requested.emit()
 	elif event.is_action_pressed(&"confirm") or event.is_action_pressed(&"ui_accept"):
