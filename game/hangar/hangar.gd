@@ -14,6 +14,8 @@ signal launch_requested
 signal title_requested
 ## MAPA/Esc: voltar ao Mapa.
 signal menu_requested
+## Aba aberta pelo jogador (a Main mostra o passeio da 1a vez de AJUDAS/REPUTACAO).
+signal tab_opened(t: Tab)
 
 enum Tab { SHIP, REPUTATION, ASSISTS, FLEET }
 
@@ -76,6 +78,36 @@ func first_affordable_buy() -> Button:
 		var bt := b as Button
 		if str(bt.get_meta(&"focus_key", "")).begins_with("buy:") and not bt.disabled and not bt.is_queued_for_deletion():
 			return bt
+	return null
+
+
+## Alvos dos passeios da 1a vez (Main): "card:<id>" cartao (peca ou ajuda), "pips:<id>" bolinhas do degrau,
+## "ship" desenho da nave, "tabs" abas, "launch" DECOLAR (se da para decolar), "assist_owned"/"assist_locked" 1o cartao
+## de ajuda que o jogador tem / que ainda vai chegar, "rep" 1o cartao de ratinho e "rep_bar" a barra dele.
+func tour_target(id: String) -> Control:
+	match id:
+		"ship":
+			return _ship_view
+		"tabs":
+			return _tabs if _tabs.visible else null
+		"launch":
+			return null if _launch.disabled else _launch
+	for c: Node in _body.find_children("*", "", true, false):
+		if c.is_queued_for_deletion() or not c is Control:
+			continue
+		var key := str(c.get_meta(&"row_key", ""))
+		if id.begins_with("card:") and key == "up:" + id.substr(5):
+			return c
+		if id.begins_with("pips:") and str(c.get_meta(&"tour", "")) == id:
+			return c
+		if id in ["assist_owned", "assist_locked"] and c.has_meta(&"assist_owned") \
+				and bool(c.get_meta(&"assist_owned")) == (id == "assist_owned"):
+			return c
+		if id == "rep" and key.begins_with("rep:"):
+			return c
+		if id == "rep_bar" and key.begins_with("rep:"):
+			var bars := c.find_children("*", "ProgressBar", true, false)
+			return bars[0] if not bars.is_empty() else null
 	return null
 
 
@@ -280,6 +312,7 @@ func _set_tab(t: Tab) -> void:
 	_tab = t
 	_close_balloon()
 	refresh()
+	tab_opened.emit(t)
 
 
 func _cycle_tab(step: int) -> void:
@@ -411,6 +444,7 @@ func _part_card(id: String) -> PanelContainer:
 	names.add_child(does)
 	var pips := HBoxContainer.new()
 	pips.add_theme_constant_override(&"separation", 2)
+	pips.set_meta(&"tour", "pips:" + id)
 	box.add_child(pips)
 	for i in RoadText.STAGE:
 		pips.add_child(_pip(i < in_st, i == in_st and not maxed))
@@ -684,6 +718,7 @@ func _assist_card(id: String) -> PanelContainer:
 	card.theme_type_variation = &"SlimPanel"
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.set_meta(&"row_key", "up:" + id)
+	card.set_meta(&"assist_owned", owned)
 	card.mouse_filter = Control.MOUSE_FILTER_PASS
 	card.tooltip_text = str(RoadText.ASSIST_TIP.get(id, ""))
 	var box := VBoxContainer.new()

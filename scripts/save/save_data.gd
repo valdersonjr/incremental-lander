@@ -20,10 +20,11 @@ const SAVE_VERSION := 6
 ## Recordes pessoais guardados (GameState.RECORDS; saves antigos sem recordes comecam vazios).
 ## Dicas do comeco: motor e girar (Coach), "tente de novo" em figura (RetryHint: so na 1a batida do jogo; o id
 ## guarda o motivo dela) e os destaques de 1a visita (Spotlight: cartao, NAVE + botao MAPA, Mapa, abas novas da NAVE,
-## liga/desliga das ajudas, 2o mundo).
+## liga/desliga das ajudas, 2o mundo) e os passeios da 1a vez (2026-10-09: Mapa, NAVE, abas AJUDAS e REPUTACAO;
+## spot_back/spot_assists/spot_toggle/spot_tab_rep ficam so para saves antigos: nao sao mais mostrados).
 const TIP_IDS := ["thrust", "rotate", "crash_vertical_rapido", "crash_fora_da_plataforma", "crash_horizontal_rapido",
 		"crash_inclinado", "crash_sem_gas", "spot_offer", "spot_ship", "spot_map", "spot_back", "spot_assists",
-		"spot_toggle", "spot_tab_rep", "spot_tab_fleet", "spot_world2"]
+		"spot_toggle", "spot_tab_rep", "spot_tab_fleet", "spot_world2", "tour_map", "tour_ship", "tour_assists", "tour_rep"]
 const RECORD_IDS := ["run_money", "run_deliveries", "run_distance", "run_perfect", "best_delivery"]
 
 

@@ -3,7 +3,7 @@
 ## baixo, sem minijogo, nome do mundo no alto) ->
 ## aprendiz bate e tenta o mesmo salto de novo (run continua, gas do comeco do salto) -> pouso devagar fora da
 ## plataforma para no chao -> falhou o limite de tentativas: "Veja como!"
-## (desligado) -> volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> destaques de 1a visita (cartao, NAVE: Compre! -> Mapa!) -> fim do run com dinheiro vai para a NAVE (so PECAS,
+## (desligado) -> volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> passeios da 1a vez (Mapa ate o VOAR; NAVE ate o Compre!; sem 'Mapa!') -> fim do run com dinheiro vai para a NAVE (so PECAS,
 ## sem x10/MAX) -> botao MAPA volta ao Mapa, que mostra moedas e "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
 extends Node
 
@@ -26,7 +26,21 @@ func _ready() -> void:
 	await _frames(3)
 	var map := main.find_child("WorldMap", true, false) as WorldMap
 	_check(map.visible and main._run == null, "jogo novo deveria abrir o Mapa (mapa=%s)" % map.visible)
-	_check(main._spotlight.visible and main._spotlight._target == map._fly, "jogo novo: destaque em VOAR")
+	# 1a vez no Mapa: passeio (mundos, Estrada, moedas/estrelas, NAVE) que termina no VOAR
+	_check(main._spotlight.visible and main._spotlight._target == map._worlds_area and not main._spotlight._act,
+			"jogo novo: passeio do Mapa comeca nos mundos")
+	var seen: Array = []
+	for i in 6:
+		if main._spotlight._act:
+			break
+		seen.append(main._spotlight._target)
+		main._spotlight._next_step()                           # clique avanca (o alvo nao e apertado)
+		await _frames(1)
+	_check(seen.has(map._road) and seen.has(map._counts_area) and seen.has(map._ship),
+			"passeio do Mapa mostra Estrada, moedas/estrelas e NAVE (%d passos)" % seen.size())
+	_check(main._spotlight.visible and main._spotlight._target == map._fly and main._spotlight._act,
+			"passeio do Mapa termina no VOAR")
+	_check(map.visible and main._run == null, "passeio nao aperta nada sozinho")
 	map._fly.pressed.emit()
 	await _frames(3)
 	_check(main._run != null and not map.visible and not main._offers.visible, "VOAR: 1o salto ja aceito, sem cartao")
@@ -111,12 +125,19 @@ func _ready() -> void:
 	await _frames(4)
 	var hangar: Hangar = main._hangar
 	_check(hangar.visible, "fim do run com dinheiro deveria abrir a NAVE")
-	_check(main._spotlight.visible and main._spotlight._target == hangar.first_affordable_buy(),
-			"1a NAVE com dinheiro: destaque na peca que da para comprar")
+	_check(main._spotlight.visible and main._spotlight._target == hangar.tour_target("card:thrust"),
+			"1a NAVE: passeio comeca no cartao da peca")
 	_check(not hangar._tabs.visible and not hangar._bulk_box.visible, "1a visita a NAVE: so PECAS, sem x10/MAX")
-	hangar.first_affordable_buy().pressed.emit()               # comprou: o 2o passo mostra o caminho de volta
+	for i in 5:
+		if main._spotlight._act:
+			break
+		main._spotlight._next_step()
+		await _frames(1)
+	_check(main._spotlight.visible and main._spotlight._target == hangar.first_affordable_buy(),
+			"passeio da NAVE termina no 'Compre!' da peca que da para comprar")
+	hangar.first_affordable_buy().pressed.emit()               # comprou: nada de "Mapa!" (nao ha o que fazer la)
 	await _frames(4)
-	_check(main._spotlight.visible and main._spotlight._target == hangar.map_button(), "NAVE: depois da compra, 'Mapa!'")
+	_check(not main._spotlight.visible, "NAVE: depois da compra, nenhum destaque mandando ao Mapa")
 	GameState.resources["credits"] = 100.0
 	hangar.map_button().pressed.emit()
 	await _frames(4)

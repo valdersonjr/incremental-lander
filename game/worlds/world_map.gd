@@ -27,6 +27,8 @@ var _card_name: Label
 var _card_info: Label
 var _road: RoadView
 var _toast: Label
+var _counts_area: Control                           # moedas + estrelas (alvo do passeio da 1a vez)
+var _worlds_area: Control                           # fileira de planetas (alvo do passeio da 1a vez)
 var _bob := 0.0
 var _traveling := false
 
@@ -59,6 +61,14 @@ func _ready() -> void:
 	_coins_label.theme_type_variation = &"MoneyLabel"
 	coins_row.add_child(_coins_label)
 	add_child(coins_row)
+	_counts_area = Control.new()                               # so marca o retangulo (passeio); nao pega clique
+	_counts_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_counts_area.position = Vector2(496, 6)
+	_counts_area.size = Vector2(134, 20)
+	add_child(_counts_area)
+	_worlds_area = Control.new()
+	_worlds_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_worlds_area)
 	_build_card()
 	_toast = Label.new()
 	_toast.theme_type_variation = &"MoneyLabel"
@@ -127,6 +137,28 @@ func _build_card() -> void:
 ## Planetinha do mundo id (destaque do 2o mundo); null se nao esta no Mapa.
 func world_box(id: String) -> Control:
 	return _nodes[id]["box"] if _nodes.has(id) else null
+
+
+## Alvos do passeio da 1a vez no Mapa (Main): fileira de mundos, Estrada, moedas/estrelas, NAVE e VOAR.
+func tour_target(id: String) -> Control:
+	match id:
+		"worlds":
+			var r := Rect2()
+			for n: Dictionary in _nodes.values():
+				var box := n["box"] as Control
+				r = box.get_rect() if r.size == Vector2.ZERO else r.merge(box.get_rect())
+			_worlds_area.position = r.position
+			_worlds_area.size = r.size
+			return _worlds_area if r.size != Vector2.ZERO else null
+		"road":
+			return _road
+		"counts":
+			return _counts_area
+		"ship":
+			return _ship
+		"fly":
+			return _fly
+	return null
 
 
 ## O Mapa esta fazendo a viagem (mundo completo -> novo): sem destaque por cima.

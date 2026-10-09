@@ -4,6 +4,9 @@
 ## Cada destaque aparece uma vez (dica salva em GameState.tips). So em menus, nunca no voo. A Main encadeia no maximo
 ## 2 passos por tela (art/previews/menus_intro/menus_intro.html): closed(acted) diz se o jogador apertou o alvo.
 ## Alvo que nao e botao (planetinha do Mapa): clicar dentro da luz conta como apertar.
+## Passeio (tour, prototipo aprovado art/previews/map_tour/index.html, opcao A): varios baloes em sequencia, um por
+## elemento da tela, cada um com figura + frase curta e "1/4"; clique ou tecla avanca (o alvo NAO e apertado), Esc pula
+## tudo; o ultimo passo pode ser de acao (como point: "Voe!", "Compre!"). Uma vez so (tip_id).
 class_name Spotlight
 extends Control
 
@@ -24,6 +27,11 @@ var _keys: Array = []                              # teclas desenhadas no balao 
 var _press_cb := Callable()
 var _dims: Array[ColorRect] = []
 var _t := 0.0
+var _lines: Array[String] = []                     # frase do passo do passeio (vazio = point com 1 palavra)
+var _steps: Array = []                             # passos do passeio [{target: Callable, icon, lines, act}]
+var _si := -1                                      # passo atual do passeio
+var _act := true                                   # passo de acao (alvo apertavel) ou so de explicacao
+var _blocker: ColorRect                            # cobre a luz nos passos de explicacao (clique avanca, nao aperta)
 
 
 func _ready() -> void:
@@ -38,6 +46,12 @@ func _ready() -> void:
 		r.gui_input.connect(_on_dim_input)
 		add_child(r)
 		_dims.append(r)
+	_blocker = ColorRect.new()
+	_blocker.color = Color(0, 0, 0, 0)
+	_blocker.mouse_filter = Control.MOUSE_FILTER_STOP
+	_blocker.visible = false
+	_blocker.gui_input.connect(_on_dim_input)
+	add_child(_blocker)
 
 
 ## Destaca target (uma vez por tip_id). icon = nome no atlas infantil (UiKit.kid), word = 1 palavra, keys = teclas
@@ -50,6 +64,9 @@ func point(target: Control, tip_id: String, icon: String, word: String, keys: Ar
 	_icon = UiKit.kid(icon)
 	_word = word
 	_keys = keys
+	_lines = []
+	_act = true
+	_blocker.visible = false
 	_t = 0.0
 	Sound.ui("pop")                                            # balao aparecendo
 	if target is BaseButton:
@@ -61,9 +78,83 @@ func point(target: Control, tip_id: String, icon: String, word: String, keys: Ar
 	return true
 
 
+## Passeio: steps = [{"target": Callable que devolve o Control, "icon": nome UiKit.kid, "lines": Array[String],
+## "act": bool}]. Passos com alvo ausente/invisivel sao pulados. Devolve true se mostrou (closed(acted) no fim).
+func tour(steps: Array, tip_id: String) -> bool:
+	if steps.is_empty() or GameState.tip_done(tip_id):
+		return false
+	GameState.learn_tip(tip_id)
+	_steps = steps
+	_si = -1
+	Telemetry.event("tour", tip_id)
+	return _next_step()
+
+
+## Proximo passo do passeio (pula os sem alvo); acabou = fecha. Devolve false se nao havia passo para mostrar.
+func _next_step() -> bool:
+	_disconnect_press()
+	while true:
+		_si += 1
+		if _si >= _steps.size():
+			var had := visible
+			_steps = []
+			close(false)
+			return had
+		var st: Dictionary = _steps[_si]
+		var target: Control = (st["target"] as Callable).call()
+		if target == null or not is_instance_valid(target) or not target.is_visible_in_tree():
+			continue
+		_target = target
+		_icon = UiKit.kid(str(st.get("icon", "")))
+		_lines.assign(st.get("lines", []))
+		_word = ""
+		_keys = []
+		_act = bool(st.get("act", false))
+		_blocker.visible = not _act
+		_t = 0.0
+		Sound.ui("pop")
+		if _act and target is BaseButton:
+			_press_cb = close.bind(true)
+			(target as BaseButton).pressed.connect(_press_cb, CONNECT_ONE_SHOT)
+		visible = true
+		_layout()
+		queue_redraw()
+		return true
+	return false
+
+
+## O alvo do passo sumiu (a tela refez os botoes, ex.: NAVE depois de um refresh): procura de novo o alvo do MESMO
+## passo; se ele nao existe mais, segue para o proximo.
+func _retarget() -> void:
+	_disconnect_press()
+	var st: Dictionary = _steps[_si]
+	var target: Control = (st["target"] as Callable).call()
+	if target == null or not is_instance_valid(target) or not target.is_visible_in_tree():
+		_next_step()
+		return
+	_target = target
+	if _act and target is BaseButton:
+		_press_cb = close.bind(true)
+		(target as BaseButton).pressed.connect(_press_cb, CONNECT_ONE_SHOT)
+	_layout()
+
+
+func _in_tour() -> bool:
+	return not _steps.is_empty()
+
+
+func _disconnect_press() -> void:
+	if _target != null and is_instance_valid(_target) and _target is BaseButton and _press_cb.is_valid() \
+			and (_target as BaseButton).pressed.is_connected(_press_cb):
+		(_target as BaseButton).pressed.disconnect(_press_cb)
+	_press_cb = Callable()
+
+
 func close(acted: bool = false) -> void:
 	if _target == null and not visible:
 		return
+	_steps = []
+	_blocker.visible = false
 	if _target != null and is_instance_valid(_target) and _target is BaseButton and _press_cb.is_valid() \
 			and (_target as BaseButton).pressed.is_connected(_press_cb):
 		(_target as BaseButton).pressed.disconnect(_press_cb)
@@ -74,7 +165,16 @@ func close(acted: bool = false) -> void:
 
 
 ## Alvo que nao e botao: o clique dentro da luz segue para ele (escolhe o planetinha) e fecha o destaque.
+## Passeio: tecla avanca o passo de explicacao; Esc pula o passeio inteiro.
 func _input(event: InputEvent) -> void:
+	if visible and _in_tour() and event.is_pressed() and not event.is_echo() \
+			and (event is InputEventKey or event is InputEventJoypadButton):
+		get_viewport().set_input_as_handled()
+		if event.is_action_pressed(&"ui_cancel"):
+			close(false)
+		elif not _act:
+			_next_step()
+		return
 	if not visible or _target == null or _target is BaseButton or not is_instance_valid(_target):
 		return
 	var mb := event as InputEventMouseButton
@@ -85,7 +185,10 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	if _target == null or not is_instance_valid(_target) or not _target.is_visible_in_tree():
-		close()
+		if _in_tour():
+			_retarget()                                        # tela reconstruida: o mesmo passo acha o alvo novo
+		else:
+			close()
 		return
 	_t += delta
 	_layout()
@@ -101,6 +204,8 @@ func _layout() -> void:
 	for i in 4:
 		_dims[i].position = rects[i].position
 		_dims[i].size = rects[i].size.max(Vector2.ZERO)
+	_blocker.position = h.position
+	_blocker.size = h.size
 
 
 func _hole() -> Rect2:
@@ -112,7 +217,10 @@ func _hole() -> Rect2:
 func _on_dim_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed:
 		accept_event()
-		close()
+		if _in_tour() and not _act:
+			_next_step()                                       # passeio: clique em qualquer lugar avanca
+		else:
+			close()
 
 
 func _draw() -> void:
@@ -125,10 +233,18 @@ func _draw() -> void:
 	# balao em cima do alvo (embaixo se nao couber), com a ponta apontando o centro
 	var font := get_theme_default_font()
 	var fs := UiKit.FONT_SIZE
-	var tw := font.get_string_size(_word, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var texts: Array[String] = []
+	if _lines.is_empty():
+		texts.append(_word)
+	else:
+		texts.assign(_lines)
+	var tw := 0.0
+	for s: String in texts:
+		tw = maxf(tw, font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x)
+	var count := "%d/%d" % [_si + 1, _steps.size()] if _in_tour() and not _act else ""
 	var kw := _keys.size() * 16.0 + (4.0 if not _keys.is_empty() else 0.0)
 	var bw := roundf(maxf(64.0, tw + 40.0) + kw)
-	var bh := 32.0
+	var bh := maxf(32.0, 10.0 + texts.size() * 12.0 + (8.0 if count != "" else 0.0))
 	var up := h.position.y - 12.0 - bh >= 0.0
 	var cx := clampf(h.get_center().x, bw * 0.5 + 6.0, size.x - bw * 0.5 - 6.0)
 	var bob := roundf(sin(_t * 4.0) * 1.5)
@@ -145,8 +261,17 @@ func _draw() -> void:
 		draw_rect(Rect2(tx - 3.0, b.position.y - 2.0, 6.0, 3.0), WHITE)
 		draw_rect(Rect2(tx - 1.0, b.position.y - 5.0, 2.0, 2.0), INK)
 	if _icon != null:
-		draw_texture(_icon, b.position + Vector2(5.0, 4.0))
-	draw_string(font, Vector2(b.position.x + 32.0, b.position.y + 20.0), _word, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
+		draw_texture(_icon, b.position + Vector2(5.0, roundf((bh - 24.0) * 0.5)))
+	if _lines.is_empty():
+		draw_string(font, Vector2(b.position.x + 32.0, b.position.y + 20.0), _word, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
+	else:
+		for j in texts.size():
+			draw_string(font, Vector2(b.position.x + 32.0, b.position.y + 14.0 + j * 12.0), texts[j],
+					HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
+	if count != "":                                            # contador do passeio (clique avanca)
+		var cw := font.get_string_size(count, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		draw_string(font, Vector2(b.end.x - cw - 5.0, b.end.y - 3.0), count, HORIZONTAL_ALIGNMENT_LEFT, -1, fs,
+				Color("#9babb2"))
 	for i in _keys.size():                                     # teclinha: tampa clara com a letra
 		var k := Rect2(b.end.x - kw + i * 16.0, b.position.y + 9.0, 13.0, 13.0)
 		draw_rect(k, INK)
@@ -162,6 +287,8 @@ func _draw() -> void:
 		var kx := font.get_string_size(key_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string(font, Vector2(roundf(k.get_center().x - kx * 0.5), k.position.y + 10.0), key_s,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
+	if not _act:                                               # explicacao: sem maozinha (nao e para apertar)
+		return
 	# maozinha tocando o centro do alvo
 	var press := 0.0 if fmod(_t, 1.0) < 0.5 else 3.0
 	var hp := (h.get_center() + Vector2(2.0, -2.0 + press)).round()

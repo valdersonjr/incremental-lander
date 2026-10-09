@@ -169,7 +169,7 @@ Na PROGRESSÃO, a faixa de recordes (troféu + os 5 números) fica embaixo da na
 Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg (pesquisa: Andersen 2012, Passalacqua 2020, SDT, Hodent,
 Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world.json > onboarding` (não é economia).
 - **Jogo novo abre o Mapa** (revisão 2026-10-09; antes começava voando e o jogador "caía" no voo sem saber onde
-  estava): só a Lua aberta e o destaque em VOAR ("Voe!"). VOAR → o 1º salto já vem aceito (perto, 160 m; plataforma
+  estava): só a Lua aberta e o **passeio do Mapa** (abaixo) que termina em VOAR ("Voe!"). VOAR → o 1º salto já vem aceito (perto, 160 m; plataforma
   normal; chão quase plano; sem minijogo), sem a conversa da missão, e o aviso grande diz "Pouse! na plataforma do outro
   lado". **Toda chegada num mundo** mostra o nome dele no alto (★ LUA ★) por ~1,4 s. O fim do run volta ao Mapa (ou à
   NAVE se dá para comprar), também para o aprendiz.
@@ -189,7 +189,15 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
   (pedido do usuário); nas seguintes, "TENTE DE NOVO!" com a frase curta.
   **Sem "Veja como!"** (desligado a pedido do usuário: o jogo não pilota sozinho; `onboarding.guide` false): passou das
   repetições → cartão para escolher outra missão.
-- **Destaques de 1ª visita** (só em menus, no máximo 2 passos por tela, cada um uma vez; protótipo aprovado
+- **Passeios da 1ª vez** (revisão 2026-10-09, pedido do usuário: "explicar tudo no mapa de antemão"; protótipo
+  `art/previews/map_tour/index.html`, opção A): na 1ª vez que cada tela aparece, um balão por elemento (figura + frase
+  curta + "1/4"), clique ou tecla avança, Esc pula, uma vez só. **Mapa**: mundos → Estrada → moedas/estrelas → NAVE →
+  "Voe!" (ou "Melhore!" na NAVE se já dá para comprar). **NAVE**: cartão da peça → 10 bolinhas = 1 degrau (a peça
+  cresce no desenho) → abas (Q/E) → "Compre!" (ou "Decole!"). **AJUDAS** (ao abrir a aba): o que são e que vêm pela
+  Estrada → LIGADA/DESLIGADA → a que ainda vai chegar. **REPUTAÇÃO** (ao abrir): o ratinho gosta mais a cada entrega →
+  barra cheia = pedidos pagam mais. Regra da revisão: **dica só aponta ação que dá para fazer** — saíram "Mapa!" (NAVE),
+  "Ajuda!" + "Liga/desliga" e o "Novo!" da REPUTAÇÃO; o "Novo!" da FROTA só quando dá para comprar o 1º drone.
+- **Destaques de 1ª visita (histórico; o que segue valendo: "Aceite!", "Compre!", 2º mundo)** (só em menus, no máximo 2 passos por tela, cada um uma vez; protótipo aprovado
   `art/previews/menus_intro/menus_intro.html`): tela escura em xadrez menos o botão, moldura dourada, balão com figura
   + 1 palavra (e teclas, quando ensinam atalho) e mãozinha tocando. 1º cartão → ACEITAR MISSÃO ("Aceite!"); 1º Mapa →
   NAVE com "!" ("Melhore!") ou VOAR ("Voe!"); NAVE → a peça que dá para comprar ("Compre!") e depois o botão **MAPA**

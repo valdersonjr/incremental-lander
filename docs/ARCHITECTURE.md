@@ -296,6 +296,11 @@ Planejados (`godot-dev`):
   BATEU 0,5 s → fantasma → tela escura → `retry_mission` + `Hud.show_retry` (só o título) + balão — só na 1ª batida
   de cada motivo (dica `crash_<motivo>` em `GameState.tips`; lista em `SaveData.TIP_IDS`); depois, título + frase. O Coach desenha a
   teclinha ao lado quando o balão está aberto.
+- `Spotlight.tour(steps, tip)` (2026-10-09): passeio de vários balões ({target: Callable, icon, lines, act}); passo de
+  explicação tem um `_blocker` sobre a luz (clique avança sem apertar o alvo), tecla avança, Esc pula; o último pode
+  ser de ação; alvo refeito pela tela (refresh da NAVE) é procurado de novo (`_retarget`). `Main._map_tour/_ship_tour`
+  e `_on_tab_opened` (sinal `Hangar.tab_opened`); alvos `WorldMap.tour_target(id)` e `Hangar.tour_target(id)`
+  (card:/pips:/tabs/launch/assist_owned/assist_locked/rep/rep_bar). Dicas `tour_map/tour_ship/tour_assists/tour_rep`.
 - `Spotlight` (`game/screen/spotlight.gd`, filho do GUI): `point(alvo, tip, ícone, palavra)` uma vez por dica
   (`spot_offer/spot_ship/spot_map` em `SaveData.TIP_IDS`); 4 `ColorRect` com `UiKit.dim_rect` em volta do alvo pegam o
   clique de fora (fecha); o `pressed` do alvo fecha; some se o alvo some. `Main._point(target_fn, ...)` espera 2

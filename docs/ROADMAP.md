@@ -242,6 +242,8 @@
   - [ ] o usuário jogar a v19 (e religar a telemetria: não grava desde 03/10; na web não chega ao disco)
   - [ ] etapa 2 — mundos em escada (pagamento e distância crescendo; ofertas acompanhando o alcance), objetivos depois
         dos 6 mundos, 3 desafios ativos (estilo Jetpack Joyride) com protótipo de tela antes
+- [x] 16.8 Passeios da 1ª vez (2026-10-09): Mapa, NAVE, AJUDAS e REPUTAÇÃO explicados na 1ª aparição (opção A do
+      protótipo `art/previews/map_tour/index.html`); revisão das dicas: só apontam ação possível
 - [ ] 16.6 Aprovação do usuário jogando → depois, fase de economia (estrelas por parada, preços sem o upgrade de
       Reputação, Gasolina/Eficiência pouco compradas, marcos alinhados aos degraus)
 

@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--retry=<motivo>: fantasma + balao do tente de novo] [--spot: destaques de 1a visita [--map] [--ship [--buy|--assists]] [--tips_done=a,b]] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--retry=<motivo>: fantasma + balao do tente de novo] [--spot: destaques e passeios de 1a visita [--map] [--ship [--buy|--assists]] [--tab=assists|rep] [--tour_step=N] [--tips_done=a,b]] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -8,8 +8,9 @@ const MAIN := preload("res://game/main.tscn")
 
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
-	if not "--spot" in args:                                   # destaques de 1a visita so com --spot
-		GameState.tips.append_array(SaveData.TIP_IDS.filter(func(id: String) -> bool: return id.begins_with("spot_")))
+	if not "--spot" in args:                                   # destaques e passeios de 1a visita so com --spot
+		GameState.tips.append_array(SaveData.TIP_IDS.filter(func(id: String) -> bool:
+				return id.begins_with("spot_") or id.begins_with("tour_")))
 	for a in args:                                             # --tips_done=a,b: destaques ja vistos
 		if a.begins_with("--tips_done="):
 			GameState.tips.append_array(a.get_slice("=", 1).split(","))
@@ -97,6 +98,17 @@ func _ready() -> void:
 		var target: Control = main._spotlight._target
 		if target is BaseButton:
 			(target as BaseButton).pressed.emit()
+	for a in args:                                             # --tab=assists|rep: abre a aba (passeio da 1a vez)
+		if a.begins_with("--tab="):
+			await get_tree().create_timer(0.2).timeout
+			main._spotlight.close()
+			var h := main.find_child("Hangar", true, false) as Hangar
+			h._set_tab(Hangar.Tab.ASSISTS if a.get_slice("=", 1) == "assists" else Hangar.Tab.REPUTATION)
+	for a in args:                                             # --tour_step=N: avanca N passos do passeio aberto
+		if a.begins_with("--tour_step="):
+			await get_tree().create_timer(0.4).timeout
+			for i in int(a.get_slice("=", 1)):
+				main._spotlight._next_step()
 	if "--hangar_menu" in args:
 		main._on_continue()
 		(main.find_child("Hangar", true, false) as Hangar).menu_requested.emit()

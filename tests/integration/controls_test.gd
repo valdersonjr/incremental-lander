@@ -26,6 +26,7 @@ func _ready() -> void:
 		SaveManager.delete_slot(n)
 	SaveManager.new_game(1)
 	GameState.stars = 5
+	GameState.tips.append_array(["tour_map", "tour_ship", "tour_assists", "tour_rep"])   # veterano: passeios vistos
 	SaveManager.save_game()
 	_main = MAIN.instantiate()
 	_main.process_mode = Node.PROCESS_MODE_PAUSABLE            # o jogo pausa como no executavel (o teste nao)

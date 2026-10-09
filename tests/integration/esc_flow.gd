@@ -16,6 +16,8 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	SaveManager.set_dir("user://itest_esc")
 	GameState.runs_done = 1                                    # com progresso (v17: Jogar sempre leva ao Mapa)
+	GameState.tips.append_array(["tour_map", "tour_ship", "tour_assists", "tour_rep"])   # veterano: passeios vistos
+	# (o passeio usa o Esc para pular; o onboarding_flow cobre o passeio)
 	_main = MAIN.instantiate()
 	_main.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(_main)

@@ -68,7 +68,8 @@ func _ready() -> void:
 	_hangar = HANGAR_SCENE.instantiate()
 	_gui.add_child(_hangar)
 	_hangar.visible = false
-	_hangar.launch_requested.connect(_on_launch_requested)   # DECOLAR na NAVE = voar no mundo escolhido no Mapa
+	_hangar.launch_requested.connect(_on_launch_requested)
+	_hangar.tab_opened.connect(_on_tab_opened)                # AJUDAS/REPUTACAO: passeio da 1a vez   # DECOLAR na NAVE = voar no mundo escolhido no Mapa
 	_world_map = WorldMap.new()
 	_world_map.name = "WorldMap"
 	_world_map.fly_requested.connect(_on_world_chosen)
@@ -248,7 +249,7 @@ func _open_map(travel_from: String = "") -> void:
 		# 2o mundo aberto: o planetinha novo + as setas que trocam de mundo (depois da viagem, na proxima visita)
 		_point(_world_map.world_box.bind(opened[1]), "spot_world2", "star_on", "Novo!", ["←", "→"])
 	else:
-		_point(func() -> Control: return _world_map.spotlight_target()[0], "spot_map", "", "")
+		_map_hint()
 	Sound.music("title")
 	Sound.ambience(GameState.current_planet)
 
@@ -540,18 +541,52 @@ func _point(target_fn: Callable, tip: String, icon: String, word: String, keys: 
 	return _spotlight.point(target, tip, icon, word, keys)
 
 
-## Destaques da NAVE (prototipo art/previews/menus_intro/menus_intro.html): no maximo MAX_TIPS_PER_SCREEN por visita,
-## na ordem: "Compre!" (da para comprar), "Mapa!" (o caminho de volta), aba AJUDAS ("Ajuda!") seguida do liga/desliga,
-## abas novas (REPUTACAO, FROTA sem cadeado) com as teclas Q/E. Fechar clicando fora encerra a fila da visita.
+## Passeio da 1a vez no Mapa (prototipo aprovado art/previews/map_tour/index.html, opcao A; pedido do usuario: "explicar
+## tudo no mapa de antemao"): mundos, Estrada, moedas/estrelas, NAVE e termina na acao do "Voe!" (ou "Melhore!" na NAVE
+## quando ja da para comprar). Substitui o "Mapa!" da NAVE (mandava ao Mapa sem nada para fazer). Devolve true se mostrou.
+func _map_tour() -> bool:
+	if _demo or Sandbox.active() or GameState.tip_done("tour_map") or _world_map.traveling():
+		return false
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var final: Array = _world_map.spotlight_target()               # [botao, icone, palavra]
+	var steps: Array = [
+		_step(_world_map.tour_target.bind("worlds"), "lock", ["Cada planeta é um mundo.", "Complete um para abrir o próximo."]),
+		_step(_world_map.tour_target.bind("road"), "star_on", ["Cada entrega dá 1 estrela.", "A navezinha anda e ganha os prêmios."]),
+		_step(_world_map.tour_target.bind("counts"), "coins", ["Moedas compram peças da nave.", "Estrelas andam na Estrada."]),
+	]
+	if final[0] != _world_map.tour_target("ship"):
+		steps.append(_step(_world_map.tour_target.bind("ship"), "coin", ["NAVE: melhore sua nave aqui."]))
+	steps.append(_step(func() -> Control: return final[0], str(final[1]), [str(final[2])], true))
+	GameState.learn_tip("spot_map")                                # o "Voe!" ja esta no fim do passeio
+	_gui.move_child(_spotlight, -1)
+	_gui.move_child(_pause, -1)
+	return _spotlight.tour(steps, "tour_map")
+
+
+## Mapa: passeio na 1a vez; depois, o "Voe!"/"Melhore!" de uma palavra (se ainda nao visto).
+func _map_hint() -> void:
+	if not await _map_tour():
+		_point(func() -> Control: return _world_map.spotlight_target()[0], "spot_map", "", "")
+
+
+## Passo de passeio (Spotlight.tour).
+static func _step(target: Callable, icon: String, lines: Array, act: bool = false) -> Dictionary:
+	return {"target": target, "icon": icon, "lines": lines, "act": act}
+
+
+## Dicas da NAVE. 1a visita: passeio (pecas, bolinhas do degrau, abas) que termina no "Compre!" (ou "Decole!").
+## Depois, so dicas com ACAO possivel (revisao 2026-10-09: "Mapa!", "Ajuda!"+"Liga/desliga" e o "Novo!" da REPUTACAO
+## mandavam a lugares sem nada para fazer e sairam; AJUDAS e REPUTACAO se explicam quando abertas, _on_tab_opened):
+## "Compre!" e a FROTA quando da para comprar o 1o drone. No maximo MAX_TIPS_PER_SCREEN por visita.
 func _hangar_tips() -> void:
+	if await _ship_tour():
+		return
 	var steps: Array = []
 	if GameState.can_afford_any():
 		steps.append([_hangar.first_affordable_buy, "spot_ship", "coin", "Compre!", []])
-	steps.append([_hangar.map_button, "spot_back", "pin", "Mapa!", []])
-	steps.append([_hangar.tab_button.bind(Hangar.Tab.ASSISTS), "spot_assists", "arrow", "Ajuda!", []])
-	steps.append([_hangar.first_assist_toggle, "spot_toggle", "check", "Liga/desliga", []])
-	steps.append([_hangar.tab_button.bind(Hangar.Tab.REPUTATION), "spot_tab_rep", "heart_on", "Novo!", ["Q", "E"]])
-	steps.append([_hangar.tab_button.bind(Hangar.Tab.FLEET), "spot_tab_fleet", "drone", "Novo!", ["Q", "E"]])
+	if GameState.amount("credits") >= float(EconMath.upgrade_cost("fleet", int(GameState.levels.get("fleet", 0)))["credits"]):
+		steps.append([_hangar.tab_button.bind(Hangar.Tab.FLEET), "spot_tab_fleet", "drone", "Novo!", ["Q", "E"]])
 	var shown := 0
 	for st: Array in steps:
 		if shown >= MAX_TIPS_PER_SCREEN or not _hangar.visible:
@@ -564,6 +599,61 @@ func _hangar_tips() -> void:
 		var acted: bool = await _spotlight.closed
 		if not acted:
 			return
+
+
+## Passeio da 1a NAVE (pedido do usuario 2026-10-09: "faltou explicacao para o menu de upgrade da nave").
+func _ship_tour() -> bool:
+	if _demo or Sandbox.active() or GameState.tip_done("tour_ship"):
+		return false
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if not _hangar.visible:
+		return false
+	var steps: Array = [
+		_step(_hangar.tour_target.bind("card:thrust"), "coin", ["Peças da nave: compre com moedas.", "Cada uma melhora um jeito de voar."]),
+		_step(_hangar.tour_target.bind("pips:thrust"), "star_on", ["10 bolinhas = 1 degrau:", "a peça cresce no desenho da nave!"]),
+		_step(_hangar.tour_target.bind("tabs"), "arrow", ["Mais telas nas abas", "(Q e E também trocam)."]),
+	]
+	if _hangar.first_affordable_buy() != null:
+		steps.append(_step(_hangar.first_affordable_buy, "coin", ["Compre!"], true))
+		GameState.learn_tip("spot_ship")                       # o "Compre!" ja esta no fim do passeio
+	else:
+		steps.append(_step(_hangar.tour_target.bind("launch"), "flame_b", ["Decole!"], true))
+	_gui.move_child(_spotlight, -1)
+	_gui.move_child(_pause, -1)
+	if not _spotlight.tour(steps, "tour_ship"):
+		return false
+	await _spotlight.closed
+	return true
+
+
+## Aba da NAVE aberta: AJUDAS e REPUTACAO se explicam na 1a vez (passeio curto, so explicacao).
+func _on_tab_opened(t: Hangar.Tab) -> void:
+	if _demo or Sandbox.active():
+		return
+	var steps: Array = []
+	var tip := ""
+	match t:
+		Hangar.Tab.ASSISTS:
+			tip = "tour_assists"
+			steps = [
+				_step(_hangar.tour_target.bind("assist_owned"), "arrow", ["Ajudas mostram o caminho e o pouso.", "Elas chegam pela Estrada."]),
+				_step(_hangar.first_assist_toggle, "check", ["LIGADA: aparece no voo.", "Desligue para mais desafio."]),
+				_step(_hangar.tour_target.bind("assist_locked"), "lock", ["Esta ainda vai chegar:", "veja as estrelas que faltam."]),
+			]
+		Hangar.Tab.REPUTATION:
+			tip = "tour_rep"
+			steps = [
+				_step(_hangar.tour_target.bind("rep"), "heart_on", ["Cada ratinho gosta mais de você", "a cada entrega cumprida."]),
+				_step(_hangar.tour_target.bind("rep_bar"), "coins", ["Encheu a barra:", "os pedidos dele pagam mais!"]),
+			]
+	if tip == "" or GameState.tip_done(tip):
+		return
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_gui.move_child(_spotlight, -1)
+	_gui.move_child(_pause, -1)
+	_spotlight.tour(steps, tip)
 
 
 ## O salto atual tem a protecao do aprendiz (repete na batida, para no chao fora da plataforma)?

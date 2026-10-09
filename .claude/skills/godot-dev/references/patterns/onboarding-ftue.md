@@ -27,3 +27,16 @@ Data: 2026-10-08 · Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNS
   `flight_ui_preview` já faz isso (`--new` = jogador novo); `controls_test` grava um jogo veterano antes.
 - `SaveManager.delete_slot` do jogo em uso trava o autosave: para gravar um save de teste use `new_game(n)` + `save_game()`.
 - A demo (`--demo`) começa com 0 estrelas: não tratar como aprendiz (minijogo ligado, sem retry).
+
+## Passeios da 1ª vez (2026-10-09)
+- Usuário: o "Mapa!" da NAVE mandava ao Mapa sem nada para fazer → **dica só aponta ação possível**; telas se explicam
+  na 1ª aparição com passeio (opção A do protótipo `art/previews/map_tour/index.html`). Revisão achou o mesmo erro em
+  "Ajuda!"+"Liga/desliga" (pedia para desligar a ajuda recém-ganha), "Novo!" da REPUTAÇÃO (aba só informativa) e
+  FROTA quando o 1º drone não cabe no bolso.
+- `Spotlight.tour`: passo de explicação precisa de um bloqueador sobre a luz (senão o clique aperta o botão destacado);
+  a tela que se refaz (NAVE.refresh) troca os nós → re-procurar o alvo do mesmo passo antes de pular.
+- Armadilha: `var a: Array[String] = cond ? lista_tipada : [x]` dá SCRIPT ERROR em tempo de execução (lista sem tipo);
+  `assign`/`append`. Só aparece desenhando (testes headless não chamam `_draw`) → validar com captura.
+- Testes de veterano (esc_flow, controls_test) marcam `tour_*` como vistos: o passeio usa o Esc para pular.
+- Captura: abas abrem por último na prévia → `--frames 110` para ver o passo avançado (`--tab=`, `--tour_step=N`).
+

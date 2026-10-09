@@ -4,6 +4,14 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Passeios da 1ª vez (ROADMAP 16.8)** — usuário: o "Mapa!" da NAVE mandava ao Mapa sem nada para fazer; faltava explicar
+  a NAVE e as AJUDAS. Protótipo `art/previews/map_tour/index.html` → opção A (passeio). `Spotlight.tour` (balões em
+  sequência, clique/tecla avança, Esc pula, último passo = ação). Mapa (mundos → Estrada → moedas/estrelas → NAVE →
+  Voe!), NAVE (peça → bolinhas/degrau → abas → Compre!/Decole!), AJUDAS e REPUTAÇÃO ao abrir a aba. Revisão de todos
+  os fluxos: saíram "Mapa!", "Ajuda!"+"Liga/desliga", "Novo!" da REPUTAÇÃO; FROTA só quando dá para comprar.
+  Corrigido também um erro de tipo no balão que só aparecia desenhando. Verificado: check (104), 116 testes, 16
+  integrações (onboarding_flow cobre os passeios; esc_flow/controls_test como veteranos), capturas de todos os passos
+  (`art/previews/map_tour/game/`). **Para o usuário**: ver no jogo (saves existentes também verão o passeio uma vez).
 - **Auditoria da progressão — etapa 1 aplicada (economia v19; ROADMAP 16.7)**. Usuário jogou e achou: progressão
   fraca, "só pousar", missão longa dominante, peças fortes demais, ordem da Estrada estranha; pediu pesquisa. Relatório
   com medição + referências (apps de transporte, Euro Truck, AdCap, Lunar Lander Beyond, Jetpack Joyride):
