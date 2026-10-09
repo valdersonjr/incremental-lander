@@ -1,67 +1,75 @@
 {
-  "notes": "Gerado por art/src/title/title_moon.py (pixel-art). Posi\u00e7\u00f5es = canto de cima-esquerdo dos sprites, em px na tela 640x360. Camadas: sky (fixa), clouds, back, front (parallax).",
-  "cat": [
-    325,
-    139
+  "notes": "Gerado por art/src/title/title_night.py (pixel-art). Posi\u00e7\u00f5es = canto de cima-esquerdo, px na tela 640x360. Camadas: sky (fixa), back (lua + pescador), front (nuvens soltas + banco). O quadro de cada anima\u00e7\u00e3o sai da batida da m\u00fasica (TitleBackdrop).",
+  "fisher": [
+    386,
+    152
   ],
-  "flag": [
-    446,
-    193
-  ],
-  "lander": [
-    478,
-    180
-  ],
+  "clouds_y": -14,
   "star": [
-    372,
-    14
+    250,
+    18
   ],
   "twinkle": [
     [
+      365,
+      36
+    ],
+    [
+      316,
+      88
+    ],
+    [
       437,
-      59
-    ],
-    [
-      308,
-      26
-    ],
-    [
-      268,
-      82
-    ],
-    [
-      361,
-      26
-    ],
-    [
-      360,
-      99
-    ],
-    [
-      558,
-      10
-    ],
-    [
-      533,
-      83
-    ],
-    [
-      405,
-      98
-    ],
-    [
-      356,
-      39
-    ],
-    [
-      477,
       24
+    ],
+    [
+      492,
+      77
+    ],
+    [
+      431,
+      162
+    ],
+    [
+      442,
+      121
+    ],
+    [
+      332,
+      100
+    ],
+    [
+      254,
+      70
+    ],
+    [
+      306,
+      54
+    ],
+    [
+      385,
+      43
+    ],
+    [
+      467,
+      75
+    ],
+    [
+      292,
+      135
+    ],
+    [
+      546,
+      43
+    ],
+    [
+      570,
+      133
     ]
   ],
   "layer_pad": 8,
-  "cloud_drift_px": 3,
+  "cloud_drift_px": 2,
   "parallax_px": {
-    "clouds": 2,
     "back": 3,
     "front": 6
   }

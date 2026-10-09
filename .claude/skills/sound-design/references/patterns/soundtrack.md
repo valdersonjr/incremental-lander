@@ -18,7 +18,8 @@
   25% com vibrato + eco de sino uma oitava acima, "pom-pá" de pulso nos contratempos, bateria de chip) —
   `THEME_PICK` no script. **Escolhida: D ocarina/flauta** (usuário, "MUUUITO melhor"): seno 80% + triângulo 20%,
   vibrato 5 Hz/0,18 st entrando após 0,18 s, sopro de ruído rosa em banda (0,8–2,5× a nota) no ataque, ataque 40 ms,
-  −6 dB, eco 0,22. As outras opções do mesmo arranjo (C marimba, E piano elétrico FM, F harpa) ficam no script.
+  −6 dB, eco 0,22. **Andamento 68 BPM e só o bumbo bem baixo** (usuário, com a tela Noite de história: "tem que
+  diminuir um pouco o ritmo"; comparou 92/76/68/60 com a cena no navegador). `theme(opt, bpm, drums)`. As outras opções do mesmo arranjo (C marimba, E piano elétrico FM, F harpa) ficam no script.
 - **2026-10-09 (auditoria)**: título 16 → 32 compassos (~91 s, parte B Gmaj7–A7–F#m7–Bm7); voo 16 → 48 compassos
   (~115 s, 3 blocos sobre a mesma progressão: A / A' com melodia nova e chimbal ativo / A'' sem bumbo nos 4 primeiros,
   arpejo invertido e a melodia antiga no fim); **camada do mundo** = contramelodia esparsa (tempos 2 e 4, nota longa

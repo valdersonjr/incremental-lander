@@ -1,9 +1,9 @@
-## Cena propria da tela de titulo (arte: art/src/title/title_moon.py -> assets/bg/title_*.png, assets/sprites/title_*,
-## posicoes em assets/bg/title_layout.json). Nao usa o mapa de voo: ceu fixo, nuvens a deriva, morros de tras e
-## morro-palco da frente com parallax leve pelo mouse (pixel inteiro), gatinho heroi acenando/respirando, bandeira,
-## nave com luzinhas, estrelas cintilando e estrela cadente de vez em quando. Sem camera nem fisica.
+## Cena propria da tela de titulo "Noite de historia" (aprovada 2026-10-09; arte: art/src/title/title_night.py ->
+## assets/bg/title_night_*.png, assets/sprites/title_fisher*, posicoes em assets/bg/title_layout.json). Ceu noturno fixo,
+## lua crescente de queijo com o gatinho pescando uma estrelinha (camada de tras), nuvens soltas a deriva e banco de
+## nuvens (camada da frente), parallax leve pelo mouse (pixel inteiro), estrelas grandes piscando e estrela cadente.
 ## Tudo no tempo da musica (Sound.music_beat): o quadro de cada animacao sai da fase do compasso, nao de um relogio
-## proprio — gatinho 1 compasso, bandeira 2 tempos, luzinhas da nave 1 compasso, estrelas acendendo em colcheias,
+## proprio — pescador 1 compasso (linha balanca, gato respira, ratinho cochila), estrelas acendendo em colcheias,
 ## nuvens 4 compassos, estrela cadente sempre no 1o tempo.
 class_name TitleBackdrop
 extends Control
@@ -12,7 +12,7 @@ const LAYOUT_PATH := "res://assets/bg/title_layout.json"
 ## Ciclos em batidas (4/4): deriva das nuvens (vai e volta), cintilar das estrelas e cada animacao do cenario.
 const CLOUD_BEATS := 16.0
 const TWINKLE_BEATS := 4.0
-const ANIM_BEATS := {"Cat": 4.0, "Flag": 2.0, "Lander": 4.0}
+const ANIM_BEATS := {"Fisher": 4.0}
 ## Quanto o parallax segue o mouse por segundo (suaviza; 1 = instantaneo).
 const PARALLAX_FOLLOW := 3.0
 ## Compassos entre estrelas cadentes (sorteado; ela cai no 1o tempo do compasso).
@@ -28,9 +28,9 @@ var _look := Vector2.ZERO                  # -1..1: para onde o mouse puxa a cen
 var _next_star_bar := 0
 var _anims: Dictionary = {}                # nome -> AnimatedSprite2D (quadro escolhido pela fase da musica)
 
-@onready var _clouds: TextureRect = $Clouds
-@onready var _back: TextureRect = $Back
+@onready var _back: Control = $Back
 @onready var _front: Control = $Front
+@onready var _clouds: TextureRect = $Front/Clouds
 @onready var _star: AnimatedSprite2D = $Star
 @onready var _twinkle: Control = $Twinkle
 
@@ -38,9 +38,9 @@ var _anims: Dictionary = {}                # nome -> AnimatedSprite2D (quadro es
 func _ready() -> void:
 	_layout = JSON.parse_string(FileAccess.get_file_as_string(LAYOUT_PATH))
 	_pad = int(_layout["layer_pad"])
-	for n: String in ["Cat", "Flag", "Lander"]:
+	for n: String in ANIM_BEATS:
 		var p: Array = _layout[n.to_lower()]
-		var spr := $Front.get_node(n) as AnimatedSprite2D
+		var spr := $Back.get_node(n) as AnimatedSprite2D          # anda com a lua (nao escorrega no parallax)
 		spr.position = Vector2(float(p[0]) + _pad, float(p[1]))
 		spr.pause()                                             # o quadro vem da musica (_sync_anims)
 		_anims[n] = spr
@@ -91,7 +91,7 @@ func _sync_anims() -> void:
 func _place_layers() -> void:
 	var px: Dictionary = _layout["parallax_px"]
 	var drift := float(_layout["cloud_drift_px"]) * sin(TAU * _beat / CLOUD_BEATS)
-	_clouds.position = (Vector2(drift, 0.0) - _look * float(px["clouds"])).round()
+	_clouds.position = Vector2(_pad + drift, float(_layout["clouds_y"])).round()   # dentro da frente (parallax dela)
 	_back.position = (Vector2(-_pad, 0) - _look * float(px["back"])).round()
 	_front.position = (Vector2(-_pad, 0) - _look * float(px["front"])).round()
 

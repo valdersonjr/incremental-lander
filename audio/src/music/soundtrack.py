@@ -1,5 +1,5 @@
 """Trilha (padrão: patterns/soundtrack.md). Faixas em loop, -18 LUFS (o bus Music fica -6 dB no jogo):
-  theme  — TEMA DO GATINHO, só na tela inicial (2026-10-09): D maior, 92 BPM, 24 compassos A B A', melodia
+  theme  — TEMA DO GATINHO, só na tela inicial (2026-10-09): D maior, 68 BPM (era 92) e bumbo bem leve, 24 compassos A B A', melodia
            cantarolável (motivo de 2 compassos pergunta/resposta), baixo com harmônico audível no notebook.
   title  — Mapa e NAVE (era também a tela inicial): D maior, 84 BPM, 32 compassos (~91 s; era 16): A A' + B (IV-V-iii-vi) + volta.
            Pad + sino FM esparso + baixo triângulo, sem bateria (calma: muito tempo no hangar).
@@ -190,7 +190,8 @@ def layer(world: str) -> np.ndarray:
 
 # --- tema do gatinho (tela inicial) ------------------------------------------------------------------------------
 
-THEME_BPM = 92
+THEME_BPM = 68          # 2026-10-09: era 92; com a tela "Noite de história" o usuário escolheu 68 (canção de ninar)
+THEME_DRUMS = "soft"    # só o bumbo bem baixinho
 # 24 compassos: A (tema) · B (sobe, resposta) · A' (tema com final novo). I-IV-vi-V em D maior, cantarolável.
 THEME_CHORDS = ["D", "G", "Bm", "A", "D", "G", "A", "D",
                 "G", "A", "F#m", "Bm", "G", "A", "D", "D",
@@ -348,7 +349,7 @@ def theme(option: str = "A", bpm: float = THEME_BPM, drums: str = "full") -> np.
 
 
 THEME_PICK = "D"        # escolhida pelo usuário ouvindo as 6 no navegador (2026-10-09): ocarina/flauta
-TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK)}
+TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK, THEME_BPM, THEME_DRUMS)}
 
 if __name__ == "__main__":
     out = "assets/audio/music/" if "--export" in sys.argv else "audio/previews/"

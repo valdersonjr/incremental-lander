@@ -68,7 +68,7 @@ const MUSIC := {"theme": "res://assets/audio/music/theme.wav", "title": "res://a
 		"flight": "res://assets/audio/music/flight.wav"}
 const LAYER_DIR := "res://assets/audio/music/layer_%s.wav"
 ## Andamento de cada faixa (o mesmo dos scripts em audio/src/music/soundtrack.py): relogio musical das animacoes.
-const BPM := {"theme": 92.0, "title": 84.0, "flight": 100.0}
+const BPM := {"theme": 68.0, "title": 84.0, "flight": 100.0}
 const AMBIENCE_DIR := "res://assets/audio/ambience/%s.wav"
 ## Cursor: o mais baixo da interface (toca a cada seta; "quase silencioso", padrao de UI).
 const MOVE_DB := -7.0

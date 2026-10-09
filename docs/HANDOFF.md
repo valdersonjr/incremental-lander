@@ -4,6 +4,13 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Tela inicial nova: "Noite de história"** (usuário achou a Vitrine "pacata e não tão bonitinha"; 4 estilos no
+  navegador `art/previews/title_styles/index.html` → escolheu a Noite; tema mais lento → 68 BPM em
+  `title_styles/noite.html`). Gatinho sentado na lua crescente de queijo pescando uma estrelinha que dorme, ratinho de
+  companhia, céu noturno, banco de nuvens. `art/src/title/title_night.py` (desenho em `title_styles.py`), TitleBackdrop
+  reestruturado (Back = lua + pescador; Front = nuvens + banco), tudo no compasso do tema (68 BPM, `Sound.BPM`).
+  Verificado: check, testes, `title_backdrop` (`pescador_na_lua`, `gato_no_ritmo_do_tema`), captura no jogo.
+  **Para o usuário**: rodar e aprovar. Os assets da Vitrine ficaram no projeto (a NAVE usa `title_lander.png`).
 - **Tela inicial no ritmo do tema** (usuário: "a tela inicial tá combinando com o ritmo da música?"). `Sound.music_beat()`
   (posição real + tempo desde a mixagem − latência); TitleBackdrop escolhe o quadro pela fase: gatinho 1 compasso,
   bandeira 2 tempos, luzinhas da nave 1 compasso, estrelas acendendo em colcheias, nuvens 4 compassos, estrela cadente

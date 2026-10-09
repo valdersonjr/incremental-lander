@@ -214,20 +214,20 @@ def s3_static():
     return cv, moon, clouds, bank
 
 
-def s3(fr: int, static) -> Canvas:
-    sky, moon, clouds, bank = static
-    cv = sky.copy()
-    rng = random.Random(7)
-    for i in range(14):                                         # estrelas grandes piscando em colcheias
-        x, y = rng.randrange(200, W), rng.randrange(6, 200)
-        if (fr // 2 + i * 5) % 8 < 2:
-            mc.sparkle(cv, x, y, 2)
-        else:
-            cv.px(x, y, "white")
-    cv.stamp(moon)
+TWINKLE3 = [(random.Random(7 + i).randrange(200, W), random.Random(70 + i).randrange(6, 200)) for i in range(14)]
+
+
+def seat() -> tuple:
+    """Ponto onde o gatinho senta: o fundo de dentro da crescente."""
     _, (bx, by, br) = MOON3
-    seat_x = 452
-    seat_y = int(by + math.sqrt(br * br - (seat_x - bx) ** 2))  # fundo de dentro da crescente (onde senta)
+    sx = 452
+    return sx, int(by + math.sqrt(br * br - (sx - bx) ** 2))
+
+
+def draw_fisher(cv: Canvas, fr: int) -> None:
+    """Grupo do pescador (anda com a lua): ratinho de companhia, gatinho sentado com as perninhas para fora, varinha,
+    linha balançando no compasso e a estrelinha dormindo no anzol."""
+    seat_x, seat_y = seat()
     m = big_mouse(fr, 2)
     cv.stamp(m, seat_x - 66, seat_y - m.h + 4 - (1 if fr % 8 < 4 else 0))
     cat = ch.body("hold", "float", blink=fr == 15, tail_up=2 if (fr // 4) % 2 else 0, k=tc.HERO_K,
@@ -251,6 +251,18 @@ def s3(fr: int, static) -> Canvas:
     cv.stamp(star, end[0] - 7, end[1])
     if fr % 4 == 0:
         mc.sparkle(cv, end[0] + 9, end[1] - 2, 2)
+
+
+def s3(fr: int, static) -> Canvas:
+    sky, moon, clouds, bank = static
+    cv = sky.copy()
+    for i, (x, y) in enumerate(TWINKLE3):                       # estrelas grandes piscando em colcheias
+        if (fr // 2 + i * 5) % 8 < 2:
+            mc.sparkle(cv, x, y, 2)
+        else:
+            cv.px(x, y, "white")
+    cv.stamp(moon)
+    draw_fisher(cv, fr)
     cv.stamp(bank)
     cv.stamp(clouds, round(2 * math.sin(math.tau * fr / 16)), -14)
     return cv

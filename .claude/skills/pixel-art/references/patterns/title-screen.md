@@ -71,6 +71,13 @@ Pedido: "lista vertical, com horas jogadas, gold, estrela (sem barra de progress
 - Texto sobre a arte: contorno `ink` de 4 (outline_size) nos rótulos — legível sem escurecer a arte.
 - Exportar no tamanho exato do cartão e mostrar sem escalar (TextureRect KEEP_CENTERED num Control com clip).
 
+## APROVADA: Noite de história (2026-10-09) — substitui a Vitrine no jogo
+Usuário: "Gostei da noite de história" (+ tema a 68 BPM). `art/src/title/title_night.py` exporta em camadas:
+`assets/bg/title_night_sky.png` (fixa), `assets/bg/title_night_moon.png` (back, com sobra de 8 px), grupo do pescador
+`assets/sprites/title_fisher.png` (16 quadros, recortado na caixa-união; fica DENTRO da camada back para não escorregar
+da lua no parallax), `assets/bg/title_night_clouds.png` + `assets/bg/title_night_bank.png` (front). Estrela cadente
+reaproveitada. A Vitrine (`title_moon.py`) agora grava `title_vitrine_layout.json` para não sobrescrever o layout.
+
 ## 4 estilos novos (2026-10-09)
 Pedido: "tela inicial bastante pacata e não tanto bonitinha — 1 melhoria na atual + 3 novas, estilos diferentes, no
 navegador". `art/src/title/title_styles.py` → `art/previews/title_styles/index.html` (abas, tema tocando, quadro =

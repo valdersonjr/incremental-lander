@@ -172,7 +172,7 @@ def export() -> dict:
         "cloud_drift_px": 3,
         "parallax_px": {"clouds": 2, "back": 3, "front": 6},
     }
-    with open("assets/bg/title_layout.json", "w") as f:
+    with open("assets/bg/title_vitrine_layout.json", "w") as f:
         json.dump(layout, f, indent=2)
     return layout
 
