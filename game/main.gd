@@ -42,6 +42,7 @@ var _taxi_gift_pay := 0.0
 ## mesmo salto de novo com ele) e se o salto e o 1o do jogo (ja aceito, relevo baixo, sem minijogo).
 var _hop_gas := 0.0
 var _first_hop := false
+var _arrived := false                              # o nome do mundo ja apareceu neste run
 var _retries := 0                                  # tentativas repetidas do salto atual (aprendiz)
 var _no_auto_hop := false                          # o aprendiz desistiu do 1o salto: escolhe no cartao
 var _guided := false                               # o "Veja como!" ja voou este salto (falhou de novo -> cartao)
@@ -51,6 +52,7 @@ var _hop_safe := true
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
+const MAX_TIPS_PER_SCREEN := 2                     # destaques de 1a visita em fila na mesma tela
 
 @onready var _world: Node2D = %World
 @onready var _gui: CanvasLayer = %GUI
@@ -81,12 +83,12 @@ func _ready() -> void:
 		SaveManager.load_slot(slot)
 		Telemetry.event("load")
 		_on_title_play())
-	# jogo novo comeca VOANDO (auditoria dos primeiros minutos C1): o Mapa e a escolha de missao vem depois
+	# jogo novo abre o Mapa (2026-10-09, usuario: "jogado no voo"): destaque em VOAR; o 1o salto ja vem aceito
 	_title.new_game_requested.connect(func(slot: int) -> void:
 		SaveManager.new_game(slot)
 		Telemetry.event("new_game")
 		_title.visible = false
-		_start_run())
+		_open_map())
 	_title.sandbox_requested.connect(func(planet_id: String, strong: bool) -> void:
 		Sandbox.begin(planet_id, strong)
 		_title.visible = false
@@ -115,7 +117,7 @@ func _ready() -> void:
 	_pause.new_game_requested.connect(func() -> void:
 		SaveManager.new_game()
 		Telemetry.event("new_game")
-		_start_run())
+		_open_map())
 	# verificacao (demo/dev/--no_title) vai direto ao voo; o jogo normal abre no menu inicial
 	if _demo or _args.has("no_title") or _args.keys().any(func(k: String) -> bool: return k.begins_with("dev_")):
 		_start_run()
@@ -186,8 +188,7 @@ func _open_hangar() -> void:
 			c.visible = false
 	Telemetry.event("nave")
 	_hangar.open()
-	if GameState.can_afford_any():
-		_point(_hangar.first_affordable_buy, "spot_ship", "coin", "Compre!")
+	_hangar_tips()
 	Sound.music("title")                                       # hangar = menu: a mesma musica calma do titulo
 	Sound.ambience(GameState.current_planet)
 
@@ -234,7 +235,12 @@ func _open_map(travel_from: String = "") -> void:
 	_gui.move_child(_world_map, -1)
 	_gui.move_child(_pause, -1)
 	_world_map.open(travel_from)
-	_point(func() -> Control: return _world_map.spotlight_target()[0], "spot_map", "", "")
+	var opened := GameState.worlds()
+	if opened.size() >= 2 and not GameState.tip_done("spot_world2") and travel_from == "" and not Sandbox.active():
+		# 2o mundo aberto: o planetinha novo + as setas que trocam de mundo (depois da viagem, na proxima visita)
+		_point(_world_map.world_box.bind(opened[1]), "spot_world2", "star_on", "Novo!", ["←", "→"])
+	else:
+		_point(func() -> Control: return _world_map.spotlight_target()[0], "spot_map", "", "")
 	Sound.music("title")
 	Sound.ambience(GameState.current_planet)
 
@@ -285,6 +291,7 @@ func _start_run() -> void:
 	_worlds_before = GameState.worlds().size()
 	_first_hop = false
 	_no_auto_hop = false
+	_arrived = false
 	_clear_run()
 	var stats := GameState.ship_stats()
 	_run = RunState.create(GameState.current_planet, stats, _run_seed, GameState.missions_unlocked(),
@@ -412,6 +419,10 @@ func _on_offer_chosen(index: int) -> void:
 
 ## Aviso grande do comeco do salto: o verbo do minijogo com o que fazer (A5); sem minijogo, "Pouse!".
 func _show_goal() -> void:
+	if not _arrived:                                           # chegada no mundo: o nome dele no alto (1a missao do run)
+		_arrived = true
+		_hud.show_world_name(str(EconMath._find("planets", GameState.current_planet).get("name",
+				GameState.current_planet)).to_upper())
 	if _flight.minigame_total > 0:
 		_hud.show_verb(_flight.minigame_verb(), str(Minigames.spec(GameState.current_planet).get("say", "")))
 	else:
@@ -477,9 +488,21 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		Telemetry.event("graduated")
 		var tg := _hud.create_tween()
 		tg.tween_interval(1.8 if rep_up else 0.9)
-		tg.tween_callback(_hud.show_graduation)
+		tg.tween_callback(_hud.show_graduation.bind(_graduation_line()))
 		tg.tween_callback(Sound.jingle.bind("milestone"))
 	_show_offers()
+
+
+## 2a linha do "PILOTO FORMADO!": a ajuda emprestada ao aprendiz agora e dele (fica na NAVE) ou volta na Estrada.
+func _graduation_line() -> String:
+	var lent: Array = WorldConfig.load_config()["onboarding"].get("lent_assists", [])
+	if lent.is_empty():
+		return ""
+	var id := str(lent[0])
+	var name := str(EconMath._find("upgrades", id).get("name", id))
+	if int(GameState.levels.get(id, 0)) >= 1:
+		return "%s: agora é seu, na NAVE" % name
+	return "%s: ganhe de volta na Estrada" % name
 
 
 func _on_stranded() -> void:
@@ -492,10 +515,10 @@ func _on_stranded() -> void:
 
 
 ## Destaque de 1a visita (Spotlight, uma vez por tip): espera o layout e acende o botao de target_fn(). Mapa: icone e
-## palavra vem do proprio Mapa (NAVE com "!" ou VOAR). Fora no demo e no modo livre.
-func _point(target_fn: Callable, tip: String, icon: String, word: String) -> void:
+## palavra vem do proprio Mapa (NAVE com "!" ou VOAR). Fora no demo e no modo livre. Devolve true se mostrou.
+func _point(target_fn: Callable, tip: String, icon: String, word: String, keys: Array = []) -> bool:
 	if _demo or Sandbox.active() or GameState.tip_done(tip):
-		return
+		return false
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var target: Control = target_fn.call()
@@ -505,7 +528,33 @@ func _point(target_fn: Callable, tip: String, icon: String, word: String) -> voi
 		word = str(info[2])
 	_gui.move_child(_spotlight, -1)
 	_gui.move_child(_pause, -1)
-	_spotlight.point(target, tip, icon, word)
+	return _spotlight.point(target, tip, icon, word, keys)
+
+
+## Destaques da NAVE (prototipo art/previews/menus_intro/menus_intro.html): no maximo MAX_TIPS_PER_SCREEN por visita,
+## na ordem: "Compre!" (da para comprar), "Mapa!" (o caminho de volta), aba AJUDAS ("Ajuda!") seguida do liga/desliga,
+## abas novas (REPUTACAO, FROTA sem cadeado) com as teclas Q/E. Fechar clicando fora encerra a fila da visita.
+func _hangar_tips() -> void:
+	var steps: Array = []
+	if GameState.can_afford_any():
+		steps.append([_hangar.first_affordable_buy, "spot_ship", "coin", "Compre!", []])
+	steps.append([_hangar.map_button, "spot_back", "pin", "Mapa!", []])
+	steps.append([_hangar.tab_button.bind(Hangar.Tab.ASSISTS), "spot_assists", "arrow", "Ajuda!", []])
+	steps.append([_hangar.first_assist_toggle, "spot_toggle", "check", "Liga/desliga", []])
+	steps.append([_hangar.tab_button.bind(Hangar.Tab.REPUTATION), "spot_tab_rep", "heart_on", "Novo!", ["Q", "E"]])
+	steps.append([_hangar.tab_button.bind(Hangar.Tab.FLEET), "spot_tab_fleet", "drone", "Novo!", ["Q", "E"]])
+	var shown := 0
+	for st: Array in steps:
+		if shown >= MAX_TIPS_PER_SCREEN or not _hangar.visible:
+			return
+		if GameState.tip_done(str(st[1])):
+			continue
+		if not await _point(st[0], str(st[1]), str(st[2]), str(st[3]), st[4]):
+			continue
+		shown += 1
+		var acted: bool = await _spotlight.closed
+		if not acted:
+			return
 
 
 ## O salto atual tem a protecao do aprendiz (repete na batida, para no chao fora da plataforma)?
@@ -598,7 +647,7 @@ func _end_run() -> void:
 
 
 ## Fim do run (auditoria dos primeiros minutos A1): mundo completo -> Mapa com a viagem; da para comprar uma peca ->
-## NAVE (a peca que da pulsa); aprendiz sem compra -> voa de novo; senao o Mapa. Demo: hangar (compra) -> decola.
+## NAVE (a peca que da pulsa); senao o Mapa (tambem o aprendiz, 2026-10-09: o Mapa e a casa). Demo: hangar -> decola.
 func _on_continue() -> void:
 	_summary.visible = false
 	_hud.visible = false
@@ -610,8 +659,6 @@ func _on_continue() -> void:
 			GameState.select_world(opened[_worlds_before])        # o mundo novo ja escolhido
 		if travel == "" and GameState.can_afford_any() and not Sandbox.active():
 			_open_hangar()
-		elif travel == "" and GameState.apprentice():
-			_on_launch_requested()
 		else:
 			_open_map(travel)
 		return

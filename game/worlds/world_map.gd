@@ -124,6 +124,16 @@ func _build_card() -> void:
 
 
 ## Destaque de 1a visita: a NAVE se ela tem "!" (da para comprar), senao VOAR. [botao, icone infantil, palavra]
+## Planetinha do mundo id (destaque do 2o mundo); null se nao esta no Mapa.
+func world_box(id: String) -> Control:
+	return _nodes[id]["box"] if _nodes.has(id) else null
+
+
+## O Mapa esta fazendo a viagem (mundo completo -> novo): sem destaque por cima.
+func traveling() -> bool:
+	return _traveling
+
+
 func spotlight_target() -> Array:
 	if _ship.text.ends_with("!"):
 		return [_ship, "coins", "Melhore!"]

@@ -3,7 +3,19 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-08)
+## Estado atual (2026-10-09)
+- **Começo pelo Mapa + menus explicados (ROADMAP 18.5g)** (usuário: "jogado no voo"; "menus não explicados").
+  Novo jogo → Mapa com "Voe!" → 1º salto já aceito; nome do mundo (★ LUA ★) em toda chegada; fim do run do aprendiz
+  volta ao Mapa. NAVE ganhou o botão **MAPA** (ícone de planeta `pin`, ao lado do DECOLAR). Destaques em fila de até
+  2 por tela: Compre! → Mapa!, Ajuda! → Liga/desliga, abas novas com Q/E, 2º mundo com ← →. "PILOTO FORMADO!" diz onde
+  fica o Nivelador. Menu do Mapa: "VOLTAR AO MAPA". Bug visual corrigido: o balão do destaque ficava sob a tela
+  escura. Protótipo aprovado: `art/previews/menus_intro/menus_intro.html`. Verificado: check (101), 111 testes +
+  15 integrações (`onboarding_flow`: Mapa → VOAR → nome do mundo → Compre! → Mapa! → botão MAPA → aprendiz volta ao
+  Mapa; `slots_flow` atualizado), paridade 43, demo 900 quadros, capturas `flight_ui_preview -- --no_title --spot
+  [--new] --map | --ship [--buy|--assists] [--tips_done=...] [--dev_stars=N]`.
+  **Para o usuário**: jogar um jogo novo e aprovar o ritmo; o ícone do botão MAPA é o planetinha que já existia (pedir
+  um ícone de mapa via pixel-art se ficar estranho). Fora: selinho "emprestado" no voo.
+  **Próximo**: retorno do usuário; depois 18.6 som por mundo.
 - **Aprendiz menos insistente + destaques de 1ª visita** (reclamação do usuário: tutorial a cada batida e o jogo
   pilotando sozinho). Fantasma/balão só na 1ª batida do jogo; "Veja como!" desligado (`onboarding.guide` false);
   `Spotlight` (balão C, um passo por tela) no 1º cartão (ACEITAR), 1ª NAVE com dinheiro (peça) e 1º Mapa (NAVE "!" ou

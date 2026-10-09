@@ -245,14 +245,21 @@ Planejados (`godot-dev`):
 - `GameState.apprentice()` (estrelas < apprentice_stars), `first_hop()` (0 estrelas), `shows_minigame/records/
   reputation/bulk()` (revelação por etapas), `tips` + `tip_done/learn_tip` (salvo; campo opcional do save v6),
   `can_afford_any()` (alguma peça da aba PEÇAS).
-- `Main`: jogo novo (menu ou pausa) → `_start_run()` direto; `_show_offers` no 1º salto aceita sozinho o pedido mais
+- `Main`: jogo novo (menu ou pausa) → `_open_map()` (2026-10-09; VOAR → `_start_run()`); `_show_goal` mostra o nome do
+  mundo na 1ª missão do run (`_arrived`, `Hud.show_world_name`); destaques via `_point(target_fn, tip, icon, word,
+  keys) -> bool` (aguardável) e `_hangar_tips()` (fila de até `MAX_TIPS_PER_SCREEN` = 2: spot_ship, spot_back,
+  spot_assists → spot_toggle, spot_tab_rep, spot_tab_fleet; `Spotlight.closed(acted)` decide se segue); Mapa:
+  spot_world2 (`WorldMap.world_box`) ou spot_map; `_graduation_line()` = 2ª linha do "PILOTO FORMADO!".
+  `Spotlight`: `point(..., keys)` desenha teclas no balão (setas desenhadas), alvo que não é botão fecha com clique na luz,
+  sinal `closed(acted)`. `Hangar`: botão `%Map` (= Esc, `menu_requested`), `map_button()`, `tab_button(t)`,
+  `first_assist_toggle()`. Antes (2026-10-08): `_show_offers` no 1º salto aceita sozinho o pedido mais
   perto (`_first_simple_offer`, distância `first_hop.distance_m`); `_on_offer_chosen` liga `Flight.gentle/minigame_on/
   apprentice` e guarda `_hop_gas`; batida/`stranded` do aprendiz → `_retry_hop` (tela escura → `Flight.retry_mission`
   → `Hud.show_retry`; passou de `retries_per_hop` ou sem gás → "Veja como!": `Flight.guided` + `retry_mission` +
   `Hud.show_guide` (piloto automático no mesmo salto; a entrega vale); o guia também falhou (`_guided`) →
   `Flight.reset_to_start` + `Hud.show_other_mission` + cartão de novo, sem o 1º salto automático); antes da 1ª entrega
   todo salto é `gentle`; fim do aprendiz → `Hud.show_graduation` + jingle milestone; a proteção vale só no salto cujo pedido o gás alcançava
-  na escolha (`_hop_safe`, `_apprentice_hop()`): o run do aprendiz também só acaba com o tanque vazio; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; aprendiz → voa; senão Mapa.
+  na escolha (`_hop_safe`, `_apprentice_hop()`): o run do aprendiz também só acaba com o tanque vazio; `_on_continue`: mundo completo → Mapa (viagem); dá para comprar → NAVE; senão Mapa (aprendiz também, 2026-10-09).
 - `Flight.retry_mission(gas)` repete o último `begin_mission` (mesma seed); `gentle` = relevo baixo sem crista nem
   paisagem; `guided` = `set_target` liga um `Autopilot` e `_unhandled_input` (motor/girar) o desliga e emite
   `took_over`; sinal `rested` (aprendiz parou no chão). `Lander.ground_rest` + sinal `rested` (pouso devagar fora).

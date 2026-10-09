@@ -23,9 +23,13 @@ func _ready() -> void:
 	# novo jogo no espaco 2
 	title.new_game_requested.emit(2)
 	await _frames(3)
-	# jogo novo comeca voando (auditoria dos primeiros minutos C1): o 1o salto ja aceito, sem Mapa
-	if SaveManager.slot != 2 or title.visible or map.visible or main._run == null or main._offers.visible:
-		fails.append("novo jogo no espaco 2 deveria comecar voando (slot=%d mapa=%s)" % [SaveManager.slot, map.visible])
+	# jogo novo abre o Mapa (2026-10-09); VOAR = 1o salto ja aceito
+	if SaveManager.slot != 2 or title.visible or not map.visible:
+		fails.append("novo jogo no espaco 2 deveria abrir o Mapa (slot=%d mapa=%s)" % [SaveManager.slot, map.visible])
+	map._fly.pressed.emit()
+	await _frames(3)
+	if main._run == null or main._offers.visible:
+		fails.append("VOAR no jogo novo deveria comecar voando no 1o salto")
 	GameState.runs_done = 5
 	GameState.resources["credits"] = 321.0
 	GameState.stars = 4

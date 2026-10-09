@@ -1,6 +1,6 @@
 ## Previa da interface do voo (HUD, ofertas, rodape, pausa) sobre o jogo real, sem o menu inicial.
 ## gdtool.py capture res://tests/visual/flight_ui_preview.tscn --frames 40 --every 39 -- --no_title [--pause]
-## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--retry=<motivo>: fantasma + balao do tente de novo] [--spot: destaques de 1a visita] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
+## [--new: jogador novo (1o salto ja aceito, treinador sem texto) [--meter: caindo perto do chao] [--guide: Veja como! (piloto automatico depois das tentativas)]] [--graduate: aviso PILOTO FORMADO!] [--no_lander: fundo limpo] [--retry=<motivo>: fantasma + balao do tente de novo] [--spot: destaques de 1a visita [--map] [--ship [--buy|--assists]] [--tips_done=a,b]] [--sandbox] [--missions] [--no_offers] [--select=slot] [--peek=kind] [--accept] [--hangar] [--hangar_menu [--confirm]: fim do run -> hangar -> Esc (menu do jogo)] [--delivered | --crashed] [--rep] [--records] [--world=<id>] [--dev_levels=thrust:20]. O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -9,7 +9,10 @@ const MAIN := preload("res://game/main.tscn")
 func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if not "--spot" in args:                                   # destaques de 1a visita so com --spot
-		GameState.tips.append_array(["spot_offer", "spot_ship", "spot_map"])
+		GameState.tips.append_array(SaveData.TIP_IDS.filter(func(id: String) -> bool: return id.begins_with("spot_")))
+	for a in args:                                             # --tips_done=a,b: destaques ja vistos
+		if a.begins_with("--tips_done="):
+			GameState.tips.append_array(a.get_slice("=", 1).split(","))
 	if not "--new" in args:                                    # veterano (o cartao de missoes); --new = jogador novo
 		GameState.stars = maxi(GameState.stars, int(WorldConfig.load_config()["onboarding"]["apprentice_stars"]))
 	if "--rep" in args:                                        # reputacao com o mineiro no nivel 2
@@ -75,7 +78,7 @@ func _ready() -> void:
 			(n as CanvasItem).visible = false
 		(main.find_child("Hud", true, false) as CanvasItem).visible = false
 	if "--graduate" in args:                                   # aviso de fim do aprendiz
-		main._hud.show_graduation()
+		main._hud.show_graduation(main._graduation_line())
 	if "--accept" in args:                                     # joinha + comemoracao (sem partir)
 		offers._on_accept()
 	if "--no_offers" in args:                                  # so o mapa (fundo das maquetes da janela de conversa)
@@ -85,8 +88,17 @@ func _ready() -> void:
 		(main.find_child("PauseMenu", true, false) as PauseMenu).open()
 	if "--hangar" in args:
 		main._on_continue()
+	if "--map" in args:                                        # Mapa (jogo novo: destaque em VOAR; 2 mundos: "Novo!")
+		main._open_map()
+	if "--ship" in args:                                       # NAVE direto (destaques da NAVE com --spot)
+		main._open_hangar()
+	if "--buy" in args or "--assists" in args:                 # aperta o alvo do 1o destaque (2o passo aparece)
+		await get_tree().create_timer(0.3).timeout
+		var target: Control = main._spotlight._target
+		if target is BaseButton:
+			(target as BaseButton).pressed.emit()
 	if "--hangar_menu" in args:
 		main._on_continue()
-		(main.find_child("Hangar", true, false) as Hangar)._request_menu()
+		(main.find_child("Hangar", true, false) as Hangar).menu_requested.emit()
 		if "--confirm" in args:
 			(main.find_child("PauseMenu", true, false) as PauseMenu)._on_new_game()

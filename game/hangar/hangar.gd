@@ -3,7 +3,7 @@
 ## navezinha e cada parada libera sozinha (GameState._check_road). Abas: NAVE (nave grande com as pecas que crescem +
 ## 4 cartoes de peca em degraus de 10, compradas com moedas; habilidades e recordes no meio), AJUDAS (ligar/desligar;
 ## as que faltam mostram o lugar na estrada), FROTA (cadeado ate a parada; drones e Piloto automatico).
-## Esc (sem botao na tela) pede o menu do jogo (menu_requested: a Main esconde e abre o PauseMenu no modo HANGAR).
+## MAPA (embaixo, ao lado do DECOLAR) ou Esc voltam ao Mapa (menu_requested: a Main abre o Mapa).
 ## Q/E trocam de aba, Enter decola (ou ativa o botao com foco). Ao abrir depois de um voo, a navezinha anda ate as
 ## estrelas novas e cada parada nova faz festa (ratinho ★1 = telinha "Novo amiguinho!"). Numeros: GameState/EconMath.
 class_name Hangar
@@ -12,7 +12,7 @@ extends Control
 signal launch_requested
 ## Voltar ao menu inicial (contrato mantido; hoje o pedido sai do menu do jogo, PauseMenu.title_requested).
 signal title_requested
-## Esc: abrir o menu do jogo fora da tela.
+## MAPA/Esc: voltar ao Mapa.
 signal menu_requested
 
 enum Tab { SHIP, REPUTATION, ASSISTS, FLEET }
@@ -44,12 +44,18 @@ var _toast_tween: Tween = null
 @onready var _road: RoadView = %Road
 @onready var _body: MarginContainer = %Body
 @onready var _launch: Button = %Launch
+@onready var _map: Button = %Map
 @onready var _balloon: PanelContainer = %Balloon
 @onready var _toast: PanelContainer = %Toast
 
 
 func _ready() -> void:
 	_launch.pressed.connect(func() -> void: launch_requested.emit())
+	_map.icon = UiKit.kid("pin")
+	_map.add_theme_constant_override(&"icon_max_width", 14)
+	_map.pressed.connect(func() -> void:
+		Sound.ui("click")
+		menu_requested.emit())
 	launch_requested.connect(func() -> void: Sound.ui("click"))
 	_intro = MISSION_INTRO.instantiate()
 	add_child(_intro)
@@ -71,6 +77,32 @@ func first_affordable_buy() -> Button:
 		if str(bt.get_meta(&"focus_key", "")).begins_with("buy:") and not bt.disabled and not bt.is_queued_for_deletion():
 			return bt
 	return null
+
+
+## Botao MAPA (volta ao Mapa; destaque de 1a visita).
+func map_button() -> Button:
+	return _map
+
+
+## Botao da aba t (destaques de 1a visita); null se a aba nao aparece ou, na FROTA, ainda tem cadeado.
+func tab_button(t: Tab) -> Button:
+	for b: Node in _tabs.get_children():
+		if b.get_meta(&"tab", -1) == t and not b.is_queued_for_deletion() and not bool(b.get_meta(&"locked", false)):
+			return b as Button
+	return null
+
+
+## LIGADA/DESLIGADA da ajuda mais nova que o jogador tem (a Setinha gratis por ultimo); null fora da aba AJUDAS.
+func first_assist_toggle() -> Button:
+	var found: Button = null
+	for b: Node in _body.find_children("*", "Button", true, false):
+		var key := str(b.get_meta(&"focus_key", ""))
+		if key.begins_with("assist:") and not b.is_queued_for_deletion():
+			if key != "assist:" + GameState.ASSIST_FREE:
+				found = b as Button
+			elif found == null:
+				found = b as Button
+	return found
 
 
 ## Mostra a PROGRESSAO atualizada na aba NAVE; a navezinha anda ate as estrelas de agora e as paradas novas festejam.
@@ -212,6 +244,8 @@ func _fill_tabs() -> void:
 				b.add_theme_color_override(c, UiKit.color("gold"))
 		if locked:
 			UiKit.set_locked(b)
+		b.set_meta(&"tab", t)
+		b.set_meta(&"locked", locked)
 		b.pressed.connect(func() -> void: _set_tab(t))
 		_tabs.add_child(b)
 

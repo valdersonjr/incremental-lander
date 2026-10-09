@@ -207,6 +207,13 @@
   - [x] retorno em figura em vez de texto: o usuário escolheu a recomendação B+C do protótipo
         `art/previews/dicas/dicas.html` → `RetryHint` (fantasma na plataforma + balão na nave até decolar), placeholder em `_draw`
   - [ ] arte final do fantasma/balão (pixel-art), se o usuário quiser
+- [x] 18.5g Começo pelo Mapa + menus explicados (2026-10-09; usuário: "jogado no voo", "os menus não são explicados";
+      protótipo aprovado `art/previews/menus_intro/menus_intro.html`; GDD §8, DECISIONS):
+  - [x] jogo novo abre o Mapa ("Voe!"); nome do mundo na chegada; fim do run do aprendiz volta ao Mapa
+  - [x] botão MAPA na NAVE + "Mapa!"; AJUDAS ("Ajuda!" → "Liga/desliga"); abas novas com Q/E; 2º mundo com ← →
+  - [x] "PILOTO FORMADO!" diz onde fica o Nivelador; menu do Mapa: "VOLTAR AO MAPA"; balão do destaque por cima
+        da tela escura (antes ficava sob o xadrez)
+  - [ ] selinho "emprestado" do Nivelador no voo do aprendiz (ficou fora do protótipo; só se o usuário quiser)
 - [ ] 18.6 Som por mundo (sound-design): ambiência, sons dos minijogos, jingle de mundo completo (o usuário vê depois)
 - [ ] 16.5 Arte (pixel-art): peças que crescem por degrau (chama, tanque, bocal, pés: 3–4 versões cada, encaixadas no
       `lander.png`), ícones da estrada que faltam (Estabilizador, ajudas, troféu "Lua completa"), selo de Reputação;

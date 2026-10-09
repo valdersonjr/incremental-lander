@@ -9,6 +9,7 @@ class_name Hud
 extends Control
 
 const TOAST_SECONDS := 2.5
+const WORLD_NAME_S := 1.4                       # nome do mundo na chegada (some sozinho)
 
 var flight: Flight = null
 var run: RunState = null
@@ -39,6 +40,9 @@ var _rec_value: Dictionary = {}                 # id -> Label do valor no placar
 var _rec_best: Dictionary = {}                  # id -> Label "/recorde" (ou do recorde do dinheiro)
 var _rec_beaten: Dictionary = {}                # id -> ja passou o recorde neste run (pulsa/toca uma vez)
 var _money_bar: ProgressBar = null
+var _world_banner: PanelContainer = null        # nome do mundo na chegada (show_world_name)
+var _world_label: Label = null
+var _world_tween: Tween = null
 var _rec_grid: GridContainer = null              # 4 recordes (grade 2x2): so depois do 1o run (onboarding)
 var _rec_bar: HBoxContainer = null               # barra ate o recorde de dinheiro: idem
 @onready var _cargo_row: Control = %CargoRow
@@ -351,8 +355,47 @@ func show_guide() -> void:
 
 
 ## Fim do aprendiz (world.json > onboarding.apprentice_stars entregas): daqui em diante bater acaba a viagem.
-func show_graduation() -> void:
+## extra = 2a linha (o Nivelador emprestado: agora mora na NAVE ou volta na Estrada).
+func show_graduation(extra: String = "") -> void:
 	_show_toast("PILOTO FORMADO!", "agora é pra valer: bater acaba a viagem", &"GoodLabel")
+	_toast_extra.text = extra
+	_toast_extra.visible = extra != ""
+
+
+## Chegada no mundo (comeco do run): o nome do mundo no alto por WORLD_NAME_S, junto do aviso do salto. Some sozinho.
+func show_world_name(world_name: String) -> void:
+	if _world_banner == null:
+		_world_banner = PanelContainer.new()
+		_world_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override(&"separation", 6)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_world_banner.add_child(row)
+		for i in 3:
+			if i == 1:
+				_world_label = Label.new()
+				_world_label.theme_type_variation = &"TitleLabel"
+				_world_label.add_theme_color_override(&"font_color", get_theme_color(&"font_color", &"MoneyLabel"))
+				row.add_child(_world_label)
+			else:
+				var star := TextureRect.new()
+				star.texture = UiKit.kid("star_on")
+				star.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+				star.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+				star.custom_minimum_size = Vector2(12, 12)
+				row.add_child(star)
+		add_child(_world_banner)
+	_world_label.text = world_name
+	_world_banner.reset_size()
+	_world_banner.position = Vector2(roundf((size.x - _world_banner.size.x) * 0.5), 6.0)
+	_world_banner.modulate.a = 1.0
+	_world_banner.visible = true
+	if _world_tween != null:
+		_world_tween.kill()
+	_world_tween = create_tween()
+	_world_tween.tween_interval(WORLD_NAME_S)
+	_world_tween.tween_property(_world_banner, "modulate:a", 0.0, 0.4)
+	_world_tween.tween_callback(func() -> void: _world_banner.visible = false)
 
 
 ## Aprendiz: a nave bateu (ou o gas acabou) e o mesmo salto recomeca. Na 1a batida do tipo (shown_in_picture) o jeito

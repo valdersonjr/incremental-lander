@@ -166,8 +166,11 @@ Na PROGRESSÃO, a faixa de recordes (troféu + os 5 números) fica embaixo da na
 ## 8. Primeiros minutos (auditoria FTUE, 2026-10-08)
 Relatório: https://claude.ai/artifact/Eme3BchGnN7iMng1rGbNSg (pesquisa: Andersen 2012, Passalacqua 2020, SDT, Hodent,
 Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world.json > onboarding` (não é economia).
-- **Jogo novo começa voando**: o 1º salto já vem aceito (perto, 160 m; plataforma normal; chão quase plano; sem
-  minijogo) e o aviso grande diz "Pouse! na plataforma do outro lado". O Mapa e a escolha de missão vêm depois.
+- **Jogo novo abre o Mapa** (revisão 2026-10-09; antes começava voando e o jogador "caía" no voo sem saber onde
+  estava): só a Lua aberta e o destaque em VOAR ("Voe!"). VOAR → o 1º salto já vem aceito (perto, 160 m; plataforma
+  normal; chão quase plano; sem minijogo), sem a conversa da missão, e o aviso grande diz "Pouse! na plataforma do outro
+  lado". **Toda chegada num mundo** mostra o nome dele no alto (★ LUA ★) por ~1,4 s. O fim do run volta ao Mapa (ou à
+  NAVE se dá para comprar), também para o aprendiz.
 - **Aprendiz** (menos de 5 entregas no jogo): bater ou ficar sem gás **não acaba o run**. A nave volta para a partida
   do mesmo salto com o gás do começo dele e o aviso "TENTE DE NOVO!" diz o jeito de acertar. Depois de 2 repetições
   (ou sem gás) o salto não repete mais: a nave volta para a partida e o cartão abre ("OUTRA MISSÃO!") — missão difícil
@@ -184,9 +187,14 @@ Daniel Cook, Nintendo, Pecorella, NN/g, Budge, Toca Boca). Regras em `data/world
   (pedido do usuário); nas seguintes, "TENTE DE NOVO!" com a frase curta.
   **Sem "Veja como!"** (desligado a pedido do usuário: o jogo não pilota sozinho; `onboarding.guide` false): passou das
   repetições → cartão para escolher outra missão.
-- **Destaques de 1ª visita** (só em menus, um passo por tela, uma vez): tela escura em xadrez menos o botão, moldura
-  dourada, balão com figura + 1 palavra e mãozinha tocando. 1º cartão → ACEITAR MISSÃO ("Aceite!"); 1ª NAVE com
-  dinheiro → a peça que dá para comprar ("Compre!"); 1º Mapa → NAVE com "!" ("Melhore!") ou VOAR ("Voe!"). Clicar fora fecha. Pousar devagar e reto
+- **Destaques de 1ª visita** (só em menus, no máximo 2 passos por tela, cada um uma vez; protótipo aprovado
+  `art/previews/menus_intro/menus_intro.html`): tela escura em xadrez menos o botão, moldura dourada, balão com figura
+  + 1 palavra (e teclas, quando ensinam atalho) e mãozinha tocando. 1º cartão → ACEITAR MISSÃO ("Aceite!"); 1º Mapa →
+  NAVE com "!" ("Melhore!") ou VOAR ("Voe!"); NAVE → a peça que dá para comprar ("Compre!") e depois o botão **MAPA**
+  ("Mapa!", novo, ao lado do DECOLAR: antes só o Esc voltava); aba AJUDAS quando aparece ("Ajuda!") → LIGADA
+  ("Liga/desliga"); abas novas REPUTAÇÃO e FROTA ("Novo!" + teclas Q/E); 2º mundo aberto → o planetinha ("Novo!" +
+  setas ← →). "PILOTO FORMADO!" diz onde fica o Nivelador (é seu, na NAVE; ou ganhe de volta na Estrada). Clicar fora
+  fecha (e encerra a fila daquela visita). Pousar devagar e reto
   fora da plataforma para a nave no chão ("decole de novo!"). Pedidos que o gás não alcança ficam escondidos.
 - **Ensinar sem texto, só quando falta** (Coach): parado na partida → teclinha do motor "apertando" em cima da nave;
   no ar sem girar → as teclinhas de girar. Somem no 1º uso e nunca voltam. **Medidor de descida** ao lado da nave

@@ -1,9 +1,10 @@
 ## Teste de integracao dos PRIMEIROS MINUTOS (auditoria FTUE, 2026-10-08; world.json > onboarding), numa pasta propria
-## (user://itest_onboarding). Jogo novo comeca voando no 1o salto ja aceito (perto, relevo baixo, sem minijogo) ->
+## (user://itest_onboarding). Jogo novo abre o Mapa com destaque em VOAR -> VOAR = 1o salto ja aceito (perto, relevo
+## baixo, sem minijogo, nome do mundo no alto) ->
 ## aprendiz bate e tenta o mesmo salto de novo (run continua, gas do comeco do salto) -> pouso devagar fora da
 ## plataforma para no chao -> falhou o limite de tentativas: "Veja como!"
-## (desligado) -> volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> destaques de 1a visita (cartao, NAVE, Mapa) -> fim do run com dinheiro vai para a NAVE (so PECAS, sem x10/MAX) -> Mapa mostra moedas e
-## "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
+## (desligado) -> volta ao cartao de missoes (relevo baixo antes da 1a entrega) -> destaques de 1a visita (cartao, NAVE: Compre! -> Mapa!) -> fim do run com dinheiro vai para a NAVE (so PECAS,
+## sem x10/MAX) -> botao MAPA volta ao Mapa, que mostra moedas e "!" na NAVE -> veterano que bate acaba o run. Imprime ONBOARDING_TEST OK ou FALHOU.
 extends Node
 
 const MAIN := preload("res://game/main.tscn")
@@ -24,9 +25,16 @@ func _ready() -> void:
 	title.new_game_requested.emit(1)
 	await _frames(3)
 	var map := main.find_child("WorldMap", true, false) as WorldMap
-	_check(main._run != null and not map.visible and not main._offers.visible, "jogo novo deveria comecar voando")
+	_check(map.visible and main._run == null, "jogo novo deveria abrir o Mapa (mapa=%s)" % map.visible)
+	_check(main._spotlight.visible and main._spotlight._target == map._fly, "jogo novo: destaque em VOAR")
+	map._fly.pressed.emit()
+	await _frames(3)
+	_check(main._run != null and not map.visible and not main._offers.visible, "VOAR: 1o salto ja aceito, sem cartao")
+	_check(not main._spotlight.visible, "VOAR: o destaque fecha")
 	_check(main._first_hop, "1o salto deveria estar marcado")
 	await _wait_ready(main)
+	_check(main._arrived and main._hud._world_label != null and main._hud._world_label.text == "LUA",
+			"chegada: nome do mundo no alto")
 	var flight: Flight = main._flight
 	var first_m := float(WorldConfig.load_config()["onboarding"]["first_hop"]["distance_m"])
 	_check(flight.gentle and is_equal_approx(flight.target_distance_m, first_m), "1o salto: perto e relevo baixo")
@@ -106,11 +114,28 @@ func _ready() -> void:
 	_check(main._spotlight.visible and main._spotlight._target == hangar.first_affordable_buy(),
 			"1a NAVE com dinheiro: destaque na peca que da para comprar")
 	_check(not hangar._tabs.visible and not hangar._bulk_box.visible, "1a visita a NAVE: so PECAS, sem x10/MAX")
-	main._open_map()
+	hangar.first_affordable_buy().pressed.emit()               # comprou: o 2o passo mostra o caminho de volta
 	await _frames(4)
-	_check(main._spotlight.visible and main._spotlight._target == map._ship, "1o Mapa: destaque na NAVE com '!'")
+	_check(main._spotlight.visible and main._spotlight._target == hangar.map_button(), "NAVE: depois da compra, 'Mapa!'")
+	GameState.resources["credits"] = 100.0
+	hangar.map_button().pressed.emit()
+	await _frames(4)
+	_check(map.visible and not hangar.visible, "botao MAPA volta ao Mapa")
+	_check(not main._spotlight.visible, "Mapa de novo: o destaque do VOAR nao volta")
 	_check(map._coins_label.text == "100" and map._ship.text.ends_with("!"), "Mapa: moedas e '!' na NAVE (%s / %s)" % [
 			map._coins_label.text, map._ship.text])
+	# aprendiz sem dinheiro: o fim do run volta ao Mapa (nao voa de novo direto)
+	main._on_launch_requested()
+	await _frames(3)
+	GameState.resources["credits"] = 0.0
+	main._run.finish("sem_gas")
+	main._end_run()
+	await _frames(2)
+	GameState.resources["credits"] = 0.0
+	main._on_continue()
+	await _frames(3)
+	_check(map.visible and not main._hangar.visible and not main._run_active,
+			"aprendiz sem compra: fim do run volta ao Mapa (mapa=%s)" % map.visible)
 	# bug 2026-10-08 ("acabou o gas" com 23 de gas): aprendiz com pouco gas ve o cartao e pode tentar (o run so acaba
 	# com o tanque vazio); pedido que o gas nao alcancava nao repete na batida (acaba como para todo mundo)
 	GameState.stars = 2

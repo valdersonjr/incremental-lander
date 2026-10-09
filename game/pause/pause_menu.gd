@@ -100,7 +100,7 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	_fill_keys()
 	var hangar := mode == Mode.HANGAR
 	%Title.text = "MENU" if hangar else "PAUSA"
-	%Continue.text = "VOLTAR À NAVE" if hangar else "CONTINUAR"
+	%Continue.text = "VOLTAR AO MAPA" if hangar else "CONTINUAR"
 	var sandbox := Sandbox.active()                            # no sandbox: sair dele; nunca apagar o jogo salvo
 	if sandbox:
 		%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)"
