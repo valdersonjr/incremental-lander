@@ -9,8 +9,8 @@
   festa da NAVE e do Mapa; `unlock` fica só no 1º drone), `part_step` (catraca + boing + sinos) quando a peça sobe de
   degrau (milestone continua nos marcos), `Sound.perfect(sequência)` no pouso perfeito (sobe 0/2/4/7/9 semitons;
   `combo_2..5` apagados). Fonte `audio/src/sfx/step_sfx.py`, pattern step-sfx. Verificado: check (104), 116 testes,
-  16 integrações (sound_flow: parada, perfeito 1 e 3), test_audio_assets (79 ok), demo. **Próximo**: 16.6 (aprovação
-  do usuário jogando) — sugerir redeploy no Vercel para ele jogar a versão nova.
+  16 integrações (sound_flow: parada, perfeito 1 e 3), test_audio_assets (79 ok), demo. **Publicado no Vercel**
+  (commit 3a68b8f; hashes conferidos e autoteste de áudio na URL pública). **Próximo**: 16.6 — o usuário joga e aprova.
 - **Peças que crescem por degrau (ROADMAP 16.5, parte de arte)** — aprovadas pelo usuário na página interativa
   `art/previews/lander_parts/index.html` ("Boa, gostei"). Gasolina = bolotas nos ombros do disco; Eficiência = bocal
   sino → anel aqua → anel dourado + aletas; Resistência = sapata redonda → mola → almofada; Motor = chama maior.
