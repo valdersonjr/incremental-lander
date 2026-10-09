@@ -37,9 +37,11 @@ func test_linhas_do_hangar_mostram_proximo_valor() -> void:
 	assert_true("thrust" in ids and "tank" in ids)
 	assert_true("fleet" in ids, "frota liberada por creditos")
 	assert_false("autopilot" in ids, "piloto automatico exige 1 drone")
+	var tank_eff: Dictionary = EconMath._find("upgrades", "tank")["effect"]   # efeito do proximo nivel, pela spec
 	for r: Dictionary in rows:
 		if r["id"] == "tank":
-			assert_almost(r["next"], r["current"] * 1.12, 1e-6)
+			var want: float = r["current"] + tank_eff["value"] if tank_eff["op"] == "add" else r["current"] * tank_eff["value"]
+			assert_almost(r["next"], want, 1e-6)
 
 
 func test_alcance_cresce_com_tanque() -> void:
@@ -59,9 +61,10 @@ func test_decolar_exige_motor_e_alcance() -> void:
 
 
 func test_marco_de_upgrade_para_o_jingle() -> void:
-	assert_true(Purchases.milestone_crossed("thrust", 24, 25), "nivel 25 = marco")
-	assert_true(Purchases.milestone_crossed("thrust", 10, 60), "comprar max passando dois marcos")
-	assert_false(Purchases.milestone_crossed("thrust", 25, 26))
+	var every := int(EconMath._find("upgrades", "thrust")["milestones"][0]["every"])   # v19: 10 (o degrau)
+	assert_true(Purchases.milestone_crossed("thrust", every - 1, every), "nivel %d = marco" % every)
+	assert_true(Purchases.milestone_crossed("thrust", 1, every * 2 + 1), "comprar max passando dois marcos")
+	assert_false(Purchases.milestone_crossed("thrust", every, every + 1))
 	assert_false(Purchases.milestone_crossed("gear", 0, 30), "sem marcos na spec")
 	assert_false(Purchases.milestone_crossed("thrust", 5, 5), "nada comprado")
 

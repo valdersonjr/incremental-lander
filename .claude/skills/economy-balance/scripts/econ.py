@@ -356,9 +356,11 @@ def crash_prob(planet: dict, stats: dict, quality: float) -> float:
 
 
 def contract_pay(E: dict, planet: dict, d: float, stats: dict) -> float:
+    """Pagamento-base: pay_base x (pay_fixed + (d/unidade)^distance_exp) x mundo x nave. v19: pay_fixed = taxa fixa
+    por entrega (como o bonus aditivo por corrida dos apps de transporte: devolve valor as entregas curtas)."""
     C = E["contracts"]
-    return C["pay_base"] * (d / C.get("distance_unit", 100.0)) ** C["distance_exp"] * planet.get("pay_mult", 1.0) \
-        * stats.get("pay_mult", 1.0)
+    return C["pay_base"] * (C.get("pay_fixed", 0.0) + (d / C.get("distance_unit", 100.0)) ** C["distance_exp"]) \
+        * planet.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
 
 
 # --- Variedade das entregas (v7): plataformas com multiplicador (cristais sairam na v9) ---

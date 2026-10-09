@@ -44,6 +44,28 @@
 4. Objetivos ativos (3 desafios por vez, estilo Jetpack Joyride) e eventos/variações no voo da Lua.
 5. Reordenar a Estrada pela necessidade (gás no começo, Turbo nos mundos pesados, ajuda para Bolhas).
 
+## Etapa 1 aplicada (v19, 2026-10-09; usuário: "aprovo")
+| Mudança | Antes (v18) | Depois (v19) |
+|---|---|---|
+| Pagamento | `9,5 × (d/100)^1,1` | `43 × (0,3 + (d/100)^0,7)` (taxa fixa = bônus aditivo por corrida) |
+| Plataformas | ×1,5 / ×2,2 | ×1,25 / ×1,5 |
+| Tanque / eficiência | ×1,12 / ×1,07 por nível | +8 / +0,15 por nível |
+| Marcos | ×1,5 a cada 25 | ×1,25 a cada 10 (o degrau visual) |
+| Cansaço do run | 1,7 | 2,0 |
+| Estrada | — | Dá pra chegar? na Lua 5★; Sombra/Rastro nas Nuvens; Turbo/Nivelador nos Cogumelos |
+- Medido (engaged, 6 h, seed 1): run do modelo ~23 min → ~4–5 min; intervalo mediano entre compras 19,5 → 5,6 min
+  (p90 27 → 8 min); longe+apertada 17× → ~2,7× por gás; mundos 3,2 → 2,8 h.
+- **Previsões que erraram (lição)**:
+  - d^0,5 (pagamento acompanhando o gás) equilibrou a escolha, mas zerou o valor de tanque/eficiência na renda por
+    minuto (tudo paga igual por segundo; gás a mais só alonga o run) → d^0,7: longe ~2× dinheiro/min, perto ~4–5×
+    estrelas/min (troca visível).
+  - Preço crescendo mais devagar NÃO encurtou as esperas (6,0 → 6,55 min) e nem pagamento ×1,3 (6,1): no modelo as
+    compras só acontecem entre runs → o intervalo entre compras ≈ duração do run. A alavanca é o run mais curto
+    (cansaço 2,0 → 5,6 min) e, depois, conteúdo (desafios/objetivos).
+- Limite conhecido: as ofertas têm faixas fixas do mundo (100 m–15 km); depois que a nave alcança o "longe", tanque e
+  eficiência só dão mais entregas por run. Ofertas acompanhando o alcance + mundos com faixas maiores = etapa 2.
+- Telemetria: o voo real leva ~1,8× o tempo do modelo (dados de 30/09–03/10); a telemetria não grava desde 03/10.
+
 ## Fontes
 - https://joeldignam.substack.com/p/the-timeless-game-design-of-squad — escolhas sem estratégia dominante
 - https://www.slideshare.net/slideshow/game-balancing-66908546/66908546 — risco/recompensa assimétrico equilibrado

@@ -148,7 +148,8 @@ static func fleet_income_per_s(avg_player_income_per_s: float, stats: Dictionary
 static func contract_pay(planet_id: String, distance: float, stats: Dictionary, quality: float) -> float:
 	var c: Dictionary = spec["contracts"]
 	var pl := _find("planets", planet_id)
-	var pay: float = c["pay_base"] * pow(distance / c.get("distance_unit", 100.0), c["distance_exp"])
+	# v19: pay_fixed = taxa fixa por entrega (valor das entregas curtas); 0 = so a parte da distancia
+	var pay: float = c["pay_base"] * (c.get("pay_fixed", 0.0) + pow(distance / c.get("distance_unit", 100.0), c["distance_exp"]))
 	pay *= pl.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
 	var q := clampf(quality, 0.0, 1.0)
 	return pay * (1.0 + c.get("quality_bonus", 0.5) * pow(q, c.get("quality_exp", 1.0)))

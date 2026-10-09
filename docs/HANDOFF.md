@@ -4,6 +4,19 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Auditoria da progressão — etapa 1 aplicada (economia v19; ROADMAP 16.7)**. Usuário jogou e achou: progressão
+  fraca, "só pousar", missão longa dominante, peças fortes demais, ordem da Estrada estranha; pediu pesquisa. Relatório
+  com medição + referências (apps de transporte, Euro Truck, AdCap, Lunar Lander Beyond, Jetpack Joyride):
+  `balance/reports/2026-10-09-auditoria-progressao/index.html`; usuário aprovou o pacote. v19: pagamento = 43 × (0,3 +
+  (d/100)^0,7), plataformas ×1,25/×1,5, tanque +8 e eficiência +0,15 por nível (aditivos), marcos ×1,25 a cada degrau
+  de 10, cansaço do run 2,0, Estrada reordenada (Dá pra chegar? na Lua; Sombra/Rastro nas Nuvens; Turbo/Nivelador nos
+  Cogumelos). Medido: longe+apertada 17× → ~2,7× por gás; run do modelo ~23 → ~4–5 min; intervalo entre compras
+  19,5 → 5,6 min; MC 3×3 mundos 2,6/2,8/3,1 h (expert/engaged/casual). Verificado: paridade 43, 116 testes (2 testes
+  de compras passaram a ler a spec), 16 integrações, demo, captura do cartão (perto +154; longe "falta gás" no começo).
+  **Pendências**: (1) o usuário jogar a v19 — não publicada no Vercel ainda; (2) telemetria só grava em build de
+  desenvolvimento: para calibrar, uma sessão local (o voo real leva ~1,8× o modelo); (3) **etapa 2**: mundos em escada
+  (ofertas acompanhando o alcance, faixas maiores), objetivos depois dos 6 mundos, 3 desafios ativos — protótipo de tela
+  numa página antes.
 - **Sons do progresso (fecha o ROADMAP 16.5)** — usuário escolheu "tudo letra A" na página `audio/previews/step/index.html`
   (atual/A/B, sozinho e no jogo): `road_stop` (xilofone curto) em toda parada nova da Estrada (Sound._on_road_reached,
   festa da NAVE e do Mapa; `unlock` fica só no 1º drone), `part_step` (catraca + boing + sinos) quando a peça sobe de

@@ -235,6 +235,13 @@
       Estrada ✔ (2026-10-09, `assist_icons.py`; Estabilizador, troféu e selo de Reputação já tinham arte);
       sons (sound-design) ✔ (2026-10-09, opção A de cada numa página no navegador; pattern step-sfx): parada da estrada
       alcançada (xilofone curto), degrau de peça (catraca + boing + sinos), pouso perfeito (ding duplo que sobe)
+- [~] 16.7 Auditoria da progressão (2026-10-09; usuário: progressão fraca, "só pousar", missão longa dominante, peças
+      fortes demais, ordem da Estrada; relatório `balance/reports/2026-10-09-auditoria-progressao/index.html`):
+  - [x] etapa 1 — economia v19: distância equilibrada (taxa fixa + d^0,7), plataformas ×1,25/×1,5, gás escasso
+        (tanque/eficiência aditivos), marcos ×1,25 no degrau, cansaço 2,0, Estrada pela necessidade
+  - [ ] o usuário jogar a v19 (e religar a telemetria: não grava desde 03/10; na web não chega ao disco)
+  - [ ] etapa 2 — mundos em escada (pagamento e distância crescendo; ofertas acompanhando o alcance), objetivos depois
+        dos 6 mundos, 3 desafios ativos (estilo Jetpack Joyride) com protótipo de tela antes
 - [ ] 16.6 Aprovação do usuário jogando → depois, fase de economia (estrelas por parada, preços sem o upgrade de
       Reputação, Gasolina/Eficiência pouco compradas, marcos alinhados aos degraus)
 

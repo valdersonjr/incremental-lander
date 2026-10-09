@@ -24,14 +24,16 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
 → resumo do run → [Hangar/loja] comprar upgrades → …
 ```
 - **Bata seu recorde (v15, 2026-10-07)**: o run **não tem teto de entregas**. Termina só quando o **tanque esvazia de
-  verdade** (ou em batida; o que já foi ganho fica): pedido que parece longe demais fica em vermelho, mas pode ser tentado. A nave "cansa": cada missão do run gasta **1,7×** o gás da
+  verdade** (ou em batida; o que já foi ganho fica): pedido que parece longe demais fica em vermelho, mas pode ser tentado. A nave "cansa": cada missão do run gasta **2×** (v19; era 1,7×) o gás da
   anterior (`contracts.run_fatigue`; o galão devolve gás ÷ o mesmo fator) — o run sempre acaba, e Gasolina/Eficiência
   viram "mais entregas por run". A meta é do jogador: bater os próprios recordes (dinheiro do run em destaque).
 - Entregas **se renovam**: a cada entrega feita, uma nova oferta aparece (o gás é sempre o limite).
-- Pagamento cresce com a distância (`d^1.1`), custo em gás cresce com `sqrt(g·d)` → ir mais longe
-  compensa, mas exige gás num salto só.
+- **Pagamento (v19, auditoria da progressão 2026-10-09)**: taxa fixa por entrega + distância suave
+  (`pay_base × (0,3 + (d/100)^0,7)`); o gás cresce com `sqrt(g·d)`. Longe rende ~2× mais dinheiro por minuto, perto
+  rende ~4–5× mais **estrelas** por minuto (entrega rápida) — troca visível "longe = dinheiro, perto = Estrada". Antes
+  (`d^1,1`) longe + apertada pagava 17× por gás e nenhuma outra escolha fazia sentido.
 - **Variedade das entregas (v7, 2026-10-03)** — cada oferta é uma escolha de risco, não só de distância:
-  - **Plataformas**: normal ×1 · **estreita ×1,5** · **apertada ×2,2** (padrão Lunar Lander: alvo pequeno paga mais).
+  - **Plataformas**: normal ×1 · **estreita ×1,25** · **apertada ×1,5** (v19; prêmio de risco — padrão Lunar Lander: alvo pequeno paga mais).
   - **Reputação por ratinho** (v14, substitui o Combo; padrão Death Stranding/Stardew): cada ratinho (tipo de pedido)
     tem **3 corações** permanentes = **+10% / +20% / +30%** nos pedidos **dele**. Missão com a regra cumprida = 1 ponto,
     com **pouso perfeito** (reto e macio: inclinação ≤ 25% e V.vert ≤ 40% do limite, `world.json > landing.perfect`) =
@@ -59,7 +61,7 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
   | Dupla | duas regras juntas: 1 + soma dos extras (teto ×3) | | |
   **Pedidos (v12.1)**: **um pedido por ratinho** — o mineiro (Simples) oferece perto, médio e longe; cada ratinho
   liberado traz 1 pedido; entregou, o mesmo ratinho repõe. No cartão o jogador **escolhe o tamanho da plataforma**
-  (normal ×1 · estreita ×1,5 · apertada ×2,2) e a **dificuldade** (estrelas liberadas); falhar a ★3 paga bem menos
+  (normal ×1 · estreita ×1,25 · apertada ×1,5) e a **dificuldade** (estrelas liberadas); falhar a ★3 paga bem menos
   (×0,3) que a ★1 (×0,6). Teclado: cima/baixo = plataforma, Shift + cima/baixo = estrela; o jogo lembra a última escolha
   de cada ratinho.
   **Tela de escolha = janela de conversa (2026-10-07)**: no alto, a **fila com todos os ratinhos** do planeta, sempre na
@@ -137,14 +139,14 @@ A tela entre runs (antes "Oficina") mostra **toda a progressão desde o início*
 | Upgrade | Efeito | Observação |
 |---|---|---|
 | Motor | +0,6 m/s² por nível | vence gravidades maiores, menos perda por gravidade |
-| Gasolina (tanque) | ×1,12 gás por nível | alcance |
-| Eficiência (bocais) | ×1,07 Δv por gás | alcance |
+| Gasolina (tanque) | +8 de gás por nível (v19; era ×1,12: o gás virava infinito) | alcance e entregas por run |
+| Eficiência (bocais) | +0,15 Δv por gás por nível (v19; era ×1,07) | alcance |
 | Resistência (trem de pouso) | reduz batidas (retorno decrescente) | — |
 | Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | vem pela Estrada (v13) |
 | Turbo (habilidade) | segurar Shift: empuxo ×2 | vem pela Estrada (v13) |
 | Frota de drones | cada drone rende uma fração (8% → ~17% com o Piloto automático) da **sua** renda média | 8M créditos (v11), liberada pela Estrada (v13); até 10 |
 | Piloto automático | melhora a fração da frota | 16M; liberado pela Estrada e pede 1 drone |
-| **Marcos** | a cada 25 níveis de Motor/Gasolina/Eficiência: pagamento ×1,5 (a alinhar aos degraus de 10 na fase de economia) | estilo AdVenture Capitalist |
+| **Marcos** | a cada **degrau** (10 níveis) de Motor/Gasolina/Eficiência: pagamento ×1,25 (v19) — o salto visível junto da peça crescendo no desenho; cada nível sozinho rende pouco | estilo AdVenture Capitalist |
 
 ## 6b. Painel de bordo — árvore de ajudas de voo (v9, 2026-10-05)
 Compras **de informação**, não de potência: mostram, não pilotam (o pouso continua na mão do jogador; o pagamento não
