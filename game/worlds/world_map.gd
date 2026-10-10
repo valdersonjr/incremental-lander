@@ -29,6 +29,8 @@ var _road: RoadView
 var _toast: Label
 var _counts_area: Control                           # moedas + estrelas (alvo do passeio da 1a vez)
 var _worlds_area: Control                           # fileira de planetas (alvo do passeio da 1a vez)
+var _balloon: StopBalloon                           # balao da parada clicada na Estrada (a Estrada mora so no Mapa)
+var _seen_stars: Dictionary = {}                    # mundo -> estrelas da ultima visita (a navezinha anda dai)
 var _bob := 0.0
 var _traveling := false
 
@@ -69,7 +71,10 @@ func _ready() -> void:
 	_worlds_area = Control.new()
 	_worlds_area.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_worlds_area)
+	_balloon = StopBalloon.new()
+	add_child(_balloon)
 	_build_card()
+	_road.stop_pressed.connect(_toggle_stop)                 # clique numa parada: balao (a Estrada so existe aqui)
 	_toast = Label.new()
 	_toast.theme_type_variation = &"MoneyLabel"
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -183,13 +188,54 @@ func open(travel_from: String = "") -> void:
 	_ship.text = "NAVE  !" if shop else "NAVE"             # da para comprar uma peca: chama atencao (A1)
 	if shop:
 		UiKit.pulse(_ship, 1.3, 0.4)
+	_close_stop()
 	var cur := GameState.current_planet if GameState.current_planet in GameState.worlds() else "luna"
 	if travel_from != "" and _nodes.has(travel_from):
 		_travel(travel_from, cur)
 	else:
 		_select(cur, false)
-	_celebrate_news()
+	# a navezinha anda na Estrada ate as estrelas de agora (antes so na NAVE); depois as paradas novas festejam
+	var from := int(_seen_stars.get(cur, -1))
+	var now := GameState.stars_in()
+	_seen_stars[cur] = now
+	if travel_from == "" and from >= 0 and from < now:
+		_road.rebuild(from, true)
+		get_tree().create_timer(0.6).timeout.connect(_celebrate_news)
+	else:
+		_celebrate_news()
 	_fly.grab_focus()
+
+
+## Clique numa parada da Estrada: balao com o que ela traz e quanto falta (clicar de novo ou fora fecha).
+func _toggle_stop(stop_id: String) -> void:
+	if _balloon.visible and _road.selected == stop_id:
+		_close_stop()
+		return
+	Sound.ui("click")
+	_road.selected = stop_id
+	_road.rebuild()
+	var a := _road.stop_anchor(stop_id) + _road.get_global_position() - get_global_position()
+	a.y -= RoadView.TOP + RoadView.BUBBLE                      # ancora na base da bolinha: o balao fica ACIMA dela
+	move_child(_balloon, -1)                                   # por cima do cartao do mundo
+	if not _balloon.show_stop(stop_id, a, size, true):
+		_road.selected = ""
+
+
+func _close_stop() -> void:
+	if _balloon == null or not _balloon.visible:
+		return
+	_balloon.visible = false
+	_road.selected = ""
+	_road.rebuild()
+
+
+func _input(event: InputEvent) -> void:
+	if not visible or not _balloon.visible:
+		return
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed and not _balloon.get_global_rect().has_point(mb.global_position) \
+			and not _road.get_global_rect().has_point(mb.global_position):
+		_close_stop()
 
 
 ## Viagem (mundo completo): a navezinha sai do mundo completo e voa pelo pontilhado ate o novo.
@@ -364,6 +410,7 @@ static func _star_icon(px: int) -> TextureRect:
 
 
 func _select(id: String, click: bool = true) -> void:
+	_close_stop()
 	_sel = id
 	GameState.select_world(id)
 	_card_name.text = _planet_name(id)
@@ -406,6 +453,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		Sound.back()
+		if _balloon.visible:                                   # Esc fecha o balao da parada antes do menu
+			_close_stop()
+			return
 		visible = false
 		menu_requested.emit()
 	elif event.is_action_pressed(&"confirm") or event.is_action_pressed(&"ui_accept"):

@@ -4,6 +4,11 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-09)
+- **Estrada das Estrelas só no Mapa** — usuário: a barra aparecia em todos os menus (alto da NAVE, nas 4 abas, + Mapa).
+  Agora só no Mapa: balão da parada (`scripts/ui/stop_balloon.gd`, acima da parada), navezinha andando até as estrelas
+  novas e festa das paradas novas (o Mapa já tinha `_celebrate_news`). NAVE: `SHOW_ROAD = false` esconde o painel e não
+  festeja (voltar = true). Verificado: check (105), 116 testes, 16 integrações, demo, capturas (NAVE sem a faixa; balão
+  no Mapa — `world_map_preview -- --sel=<parada>`). Também publicado no Vercel antes disso: os passeios da 1ª vez.
 - **Passeios da 1ª vez (ROADMAP 16.8)** — usuário: o "Mapa!" da NAVE mandava ao Mapa sem nada para fazer; faltava explicar
   a NAVE e as AJUDAS. Protótipo `art/previews/map_tour/index.html` → opção A (passeio). `Spotlight.tour` (balões em
   sequência, clique/tecla avança, Esc pula, último passo = ação). Mapa (mundos → Estrada → moedas/estrelas → NAVE →

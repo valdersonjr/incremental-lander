@@ -1,5 +1,5 @@
 ## Previa do Mapa das estrelas (v16). Uso: gdtool.py capture res://tests/visual/world_map_preview.tscn --frames 60
-## [-- --all | --travel]: estado de exemplo com a Lua visitada (recorde), Nuvens aberto sem visita e o resto fechado (--all: todos
+## [-- --all | --travel | --sel=<parada>]: estado de exemplo com a Lua visitada (recorde), Nuvens aberto sem visita e o resto fechado (--all: todos
 ## abertos, Bolhas visitado). O SaveManager se desliga em tests/visual/ (nunca grava o save real).
 extends Node
 
@@ -33,3 +33,7 @@ func _ready() -> void:
 		map.open("luna")
 	else:
 		map.open()
+	for a in OS.get_cmdline_user_args():                       # --sel=id: balao da parada clicada na Estrada
+		if a.begins_with("--sel="):
+			await get_tree().create_timer(0.3).timeout
+			map._toggle_stop(a.get_slice("=", 1))

@@ -18,6 +18,7 @@ signal menu_requested
 signal tab_opened(t: Tab)
 
 enum Tab { SHIP, REPUTATION, ASSISTS, FLEET }
+const SHOW_ROAD := false                # Estrada no alto da NAVE (desligada: so no Mapa)
 
 const MISSION_INTRO := preload("res://game/run/mission_intro.tscn")
 const TAB_INFO := [[Tab.SHIP, "PEÇAS", "thrust"], [Tab.REPUTATION, "REPUTAÇÃO", "kid:heart_on"],
@@ -68,7 +69,7 @@ func _ready() -> void:
 			_launch.grab_focus())
 	_road.stop_pressed.connect(_toggle_balloon)
 	Events.road_reached.connect(func(id: String) -> void:
-		if visible and not _news.has(id):                      # alcancou com a tela aberta (ex.: estrelas de dev)
+		if SHOW_ROAD and visible and not _news.has(id):        # alcancou com a tela aberta (ex.: estrelas de dev)
 			_news.append(id))
 
 
@@ -137,13 +138,18 @@ func first_assist_toggle() -> Button:
 	return found
 
 
-## Mostra a PROGRESSAO atualizada na aba NAVE; a navezinha anda ate as estrelas de agora e as paradas novas festejam.
+## Mostra a NAVE atualizada. A Estrada das Estrelas mora so no Mapa desde 2026-10-09 (usuario: "essa barra de
+## progressao em todos os menus... precisa so em 1 lugar"): SHOW_ROAD = false esconde a faixa do alto e deixa a festa
+## das paradas novas para o Mapa (trocar de lugar = true aqui).
 func open() -> void:
 	_tab = Tab.SHIP
 	visible = true
 	_balloon.visible = false
 	_road.selected = ""
+	%RoadPanel.visible = SHOW_ROAD
 	refresh()
+	if not SHOW_ROAD:
+		return
 	var from := _seen_stars if _seen_stars >= 0 and _seen_stars < GameState.stars_in() else -1
 	_road.rebuild(from, true)
 	_seen_stars = GameState.stars_in()
