@@ -51,6 +51,7 @@ var _track_best: Label = null
 var _pending := 0.0                              # moedas no ar + marcos a receber no proximo pouso (Main)
 var _live_row: HBoxContainer = null              # "+N a receber": cresce voando, so entra no banco ao pousar
 var _live: Label = null
+var _live_hint: Label = null
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -170,6 +171,7 @@ func _build_track_row() -> void:
 	_live.theme_type_variation = &"BigMoneyLabel"
 	_live_row.add_child(_live)
 	var hint := Label.new()
+	_live_hint = hint
 	hint.theme_type_variation = &"DimLabel"
 	hint.text = "a receber: pouse!"
 	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -190,8 +192,10 @@ func _update_track() -> void:
 	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and dist > best else &"ValueLabel"
 	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
 	var live := _pending + flight.track_live_gain()
-	_live_row.modulate.a = 1.0 if live > 0.0 else 0.0
+	_live_row.modulate.a = 1.0 if live >= 1.0 else 0.0
 	_live.text = "+" + (str(int(live)) if live < 1000.0 else EconMath.fmt(live))
+	var combo := EconMath.track_combo_mult(run.track_streak) if run != null else 1.0
+	_live_hint.text = "a receber: pouse! sequência %s" % UiKit.mult_text(combo) if combo > 1.001 else "a receber: pouse!"
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
@@ -499,9 +503,11 @@ func _on_delivery_finished(result: Dictionary) -> void:
 func show_delivery(entry: Dictionary) -> void:
 	var gain := float(entry["rewards"].get("credits", 0.0))
 	var text := "+%s   qualidade %d%%" % [EconMath.fmt(gain), int(float(entry["quality"]) * 100.0)]
-	if entry.has("accum"):                                     # v22: acumulado x pouso = o que entrou no banco
-		text = "%s %s = +%s" % [EconMath.fmt(float(entry["accum"])), UiKit.mult_text(float(entry["land_mult"])),
-				EconMath.fmt(gain)]
+	if entry.has("accum"):                                     # v27: (acumulado + pouso) x nota x sequencia = banco
+		var raw := float(entry["accum"]) + float(entry.get("land_bonus", 0.0))
+		var combo := float(entry.get("combo", 1.0))
+		text = "%s %s%s = +%s" % [EconMath.fmt(raw), UiKit.mult_text(float(entry["land_mult"])),
+				(" sequência " + UiKit.mult_text(combo)) if combo > 1.001 else "", EconMath.fmt(gain)]
 	var parts: Array[String] = []
 	if float(entry.get("mult", 1.0)) > 1.0:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))

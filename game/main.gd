@@ -827,6 +827,7 @@ func _retry_track(reason: String) -> void:
 	if flight != _flight or _run == null or _run.over:
 		return
 	_set_pending(0.0)                                          # o que estava a receber se perdeu na batida
+	_run.track_streak = 0                                      # e a sequencia de pousos zera
 	_flight.track_retry(_hop_gas)
 	_hud.show_retry(reason, false)
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)

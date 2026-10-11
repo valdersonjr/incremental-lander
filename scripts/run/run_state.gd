@@ -18,6 +18,7 @@ var rep_points: Dictionary = {}           # Reputacao por ratinho (v14): tipo ->
                                           # run; complete_delivery soma; o Main devolve ao GameState a cada entrega)
 var perfect_streak := 0                   # pousos perfeitos seguidos neste run (som do pouso perfeito)
 var perfect_count := 0                    # pousos perfeitos neste run (recorde run_perfect)
+var track_streak := 0                     # v27 (pista): pousos seguidos sem bater (sequencia multiplica o banco)
 var distance_flown := 0.0                 # metros entregues neste run (taxi soma os 2 trechos; recorde run_distance)
 var best_delivery := 0.0                  # maior pagamento de uma entrega neste run (recorde best_delivery)
 var offer_dirs: Array[int] = []          # lado de cada oferta: 1 = direita, -1 = esquerda
@@ -256,12 +257,16 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 func complete_track_landing(from_m: float, x_m: float, skipped: int, quality: float, tier: String, gas_used: float,
 		perfect: bool) -> Dictionary:
 	var accum := EconMath.track_accum(planet_id, from_m, x_m, stats)
+	var bonus := EconMath.track_land_bonus(planet_id, x_m, stats)
 	var land := EconMath.track_land_mult(quality, tier)
-	var rewards := _add_earned(accum * land)
+	var combo := EconMath.track_combo_mult(track_streak)
+	var rewards := _add_earned((accum + bonus) * land * combo)
+	track_streak += 1
 	var st := EconMath.landing_stars(quality)
 	deliveries.append({"distance": x_m, "quality": quality, "gas_used": gas_used, "rewards": rewards, "tier": tier,
 			"mult": float(EconMath.pad_tier(tier)["mult"]), "skipped": skipped, "perfect": perfect, "stars": st,
-			"accum": accum, "land_mult": land, "mission": EconMath.simple_mission(), "failed": [], "rep": 1.0})
+			"accum": accum, "land_bonus": bonus, "land_mult": land, "combo": combo, "mission": EconMath.simple_mission(),
+			"failed": [], "rep": 1.0})
 	perfect_streak = perfect_streak + 1 if perfect else 0
 	perfect_count += 1 if perfect else 0
 	distance_flown = maxf(distance_flown, x_m)

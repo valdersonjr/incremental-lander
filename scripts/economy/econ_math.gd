@@ -392,10 +392,24 @@ static func track_land_mult(quality: float, tier_id: String = "normal") -> float
 	return (1.0 + float(c.get("quality_bonus", 0.5)) * pow(q, float(c.get("quality_exp", 1.0)))) * float(pad_tier(tier_id)["mult"])
 
 
-## Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: acumulado x multiplicador do pouso.
+## v27: bonus FIXO de cada pouso (land_bonus x pagamento-base em x).
+static func track_land_bonus(planet_id: String, x: float, stats: Dictionary) -> float:
+	return float(track_spec(planet_id).get("land_bonus", 0.0)) * track_base(planet_id, x, stats)
+
+
+## v27: sequencia de pousos — o n-esimo pouso seguido (0 = o 1o) multiplica por min(max, 1 + step x n).
+static func track_combo_mult(n: int) -> float:
+	var c: Dictionary = spec["contracts"]["track"].get("combo", {})
+	if c.is_empty():
+		return 1.0
+	return minf(float(c.get("max", 1.0)), 1.0 + float(c.get("step", 0.0)) * maxi(n, 0))
+
+
+## Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: (acumulado + bonus do pouso) x multiplicador do pouso
+## (a sequencia multiplica por fora: RunState).
 static func track_pay(planet_id: String, x0: float, x1: float, stats: Dictionary, quality: float,
 		tier_id: String = "normal") -> float:
-	return track_accum(planet_id, x0, x1, stats) * track_land_mult(quality, tier_id)
+	return (track_accum(planet_id, x0, x1, stats) + track_land_bonus(planet_id, x1, stats)) * track_land_mult(quality, tier_id)
 
 
 ## Moedas no ar de um salto que termina em x, coletando a fracao frac.

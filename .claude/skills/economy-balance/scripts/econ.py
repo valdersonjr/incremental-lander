@@ -807,10 +807,23 @@ def track_land_mult(E: dict, q: float, tier_id: str = "normal") -> float:
     return (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) * pad_tier(E, tier_id)["mult"]
 
 
+def track_combo_mult(E: dict, n: int) -> float:
+    """v27: SEQUENCIA de pousos — o n-esimo pouso seguido (0 = o 1o da viagem) multiplica o banco por
+    min(max, 1 + step x n). Bater zera. Faz pousar nas plataformas valer mais que voar km sem pousar."""
+    c = E["contracts"]["track"].get("combo") or {}
+    return min(c.get("max", 1.0), 1.0 + c.get("step", 0.0) * max(n, 0)) if c else 1.0
+
+
+def track_land_bonus(E: dict, planet: dict, x: float, stats: dict) -> float:
+    """v27: bonus FIXO de cada pouso (land_bonus x pagamento-base em x): quem pousa mais vezes ganha mais bonus (voar
+    km sem pousar e mais barato em gas, entao so o metro nao premia o pouso)."""
+    return track_spec(E, planet).get("land_bonus", 0.0) * track_base(E, planet, x, stats)
+
+
 def track_pay(E: dict, planet: dict, x0: float, x1: float, stats: dict, q: float, tier_id: str = "normal") -> float:
-    """Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: acumulado x multiplicador do pouso. Pular uma
-    plataforma ja paga mais sozinho (mais metros acumulados)."""
-    return track_accum(E, planet, x0, x1, stats) * track_land_mult(E, q, tier_id)
+    """Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: (acumulado + bonus do pouso) x multiplicador do pouso.
+    Pular uma plataforma paga mais metros, mas um bonus a menos."""
+    return (track_accum(E, planet, x0, x1, stats) + track_land_bonus(E, planet, x1, stats)) * track_land_mult(E, q, tier_id)
 
 
 def track_coins(E: dict, planet: dict, x: float, stats: dict, frac: float) -> float:
@@ -877,8 +890,33 @@ def track_hop(E: dict, planet: dict, d: float, stats: dict, prof: Profile) -> tu
 TRACK_LOOKAHEAD = 40      # plataformas a frente que o piloto do modelo considera (arremesso de varios km)
 
 
+_TRACK_K_CACHE: dict = {}
+TRACK_STYLES = (1, 2, 3, 5, TRACK_LOOKAHEAD)   # quantas plataformas a frente o jogador aceita mirar (estilo de jogo)
+
+
 def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
                   log: list | None) -> RunResult:
+    """v27: o jogador escolhe o ESTILO da viagem (mirar ate k plataformas a frente) pelo que rende mais moedas por
+    minuto no run esperado — o piloto guloso nao enxerga o valor futuro da sequencia de pousos."""
+    key = (id(E), planet["id"], tuple(sorted((k, round(v, 9)) for k, v in stats.items())), prof.name, prof.skill,
+           prof.waste, prof.hover_s)
+    k = _TRACK_K_CACHE.get(key)
+    if k is None:
+        best = None
+        for kk in TRACK_STYLES:
+            r = _do_run_track_k(E, planet, stats, prof, None, True, None, kk)
+            rate = r.rewards.get("credits", 0.0) / max(r.time_s, 1e-9)
+            if best is None or rate > best[0]:
+                best = (rate, kk)
+        k = best[1]
+        if len(_TRACK_K_CACHE) > 100000:
+            _TRACK_K_CACHE.clear()
+        _TRACK_K_CACHE[key] = k
+    return _do_run_track_k(E, planet, stats, prof, rng, expected, log, k)
+
+
+def _do_run_track_k(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
+                    log: list | None, max_skip: int) -> RunResult:
     """Viagem na pista: em cada plataforma o piloto escolhe pousar na proxima ou pular uma (maior valor esperado por
     gas, pesando o risco de bater); acaba quando nenhuma das duas cabe no gas (ou bateu)."""
     T = track_spec(E, planet)
@@ -896,7 +934,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
     fails = 0
     while True:
         best = None
-        for skip in range(TRACK_LOOKAHEAD):                  # v26: arremessos longos tambem sao testados
+        for skip in range(max_skip):                         # v26: arremessos longos tambem sao testados
             j = i + 1 + skip
             if j >= len(pads):
                 break
@@ -907,7 +945,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
                 continue
             q_mu = _q_on_tier(prof.skill, tier, prof.skill)
             pc = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
-            ev = track_pay(E, planet, x, xj, stats, q_mu, tid) * (1 - pc) ** CRASH_RISK_K
+            ev = track_pay(E, planet, x, xj, stats, q_mu, tid) * track_combo_mult(E, n) * (1 - pc) ** CRASH_RISK_K
             if best is None or ev / g_need > best[0]:
                 best = (ev / g_need, j, xj - x, g_need, tier, skip)
         if best is None:
@@ -922,7 +960,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
-        pay = track_pay(E, planet, x, pads[j][0], stats, q, tier["id"]) + track_coins(E, planet, pads[j][0], stats, prof.skill)
+        pay = track_pay(E, planet, x, pads[j][0], stats, q, tier["id"]) * track_combo_mult(E, n) + track_coins(E, planet, pads[j][0], stats, prof.skill)
         if expected:
             pay *= (1 - pc)
             st_ = 1 + _p_good(prof, tier, S.get("good", 0.6)) + _p_good(prof, tier, S.get("perfect", 0.85))
@@ -1390,6 +1428,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     prof.attempts = prof.delivered = 0                         # contadores do novato: jogo novo
     _FEEL = E                                                  # physics.feel desta spec (teto do empuxo sentido)
     _INCOME_CACHE.clear()
+    _TRACK_K_CACHE.clear()
     rng = random.Random(seed)
     res = SimResult(prof.name, seed)
     money = {r["id"]: float(r.get("start", 0.0)) for r in E["resources"]}

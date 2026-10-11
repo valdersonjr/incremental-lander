@@ -1663,7 +1663,8 @@ func _refresh_pay_tags() -> void:
 	_pay_tags.clear()
 	for i in range(_track_last + 1, mini(_track_last + 1 + PAY_TAGS_AHEAD, terrain.pads.size())):
 		var p: Dictionary = terrain.pads[i]
-		var pay := EconMath.track_accum(planet_id, track_banked_m, track_pad_m(i), stats)   # o acumulado ao chegar nela
+		var pay := EconMath.track_accum(planet_id, track_banked_m, track_pad_m(i), stats) \
+				+ EconMath.track_land_bonus(planet_id, track_pad_m(i), stats)   # acumulado ao chegar + bonus do pouso
 		var panel := PanelContainer.new()                      # placa escura: legivel em qualquer ceu
 		panel.theme = UiKit.theme_for(planet_id)
 		panel.theme_type_variation = &"SlimPanel"

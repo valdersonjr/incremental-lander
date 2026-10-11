@@ -28,6 +28,8 @@
   no jogo todo, compras a cada ~7,7 min (esperas de 7–12 min perto de 0,9 h). Calibrar com o próximo teste.
   Sem gás para a próxima plataforma (estimativa do piloto ideal + galões no caminho, folga 10%) = fim da viagem na
   hora ("O GÁS NÃO DÁ!"), e o aprendiz só repete o salto se o gás do começo dele alcança (`Flight.track_can_reach`).
+  **v26–v27**: velocidade máxima 45 m/s (aviso "velocidade máxima!"), bônus fixo por pouso + sequência de pousos
+  (HUD "a receber: pouse! sequência ×1,4"; aviso "124 ×2,9 = +358"). Modelo agora testa arremessos e estilos.
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

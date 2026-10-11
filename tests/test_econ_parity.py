@@ -45,6 +45,8 @@ P = {
               track_coins(E, planets["luna"], 800.0, st, 0.72), track_marker_bonus(E, planets["bolhas"], 750.0, st)],
     "track_cans": track_cans(track_spec(E, planets["luna"]), 3000.0),
     "track_markers": track_markers(E, planets["luna"], 240.0, 1010.0),
+    "track_v27": [track_land_bonus(E, planets["luna"], 900.0, st), track_combo_mult(E, 0), track_combo_mult(E, 3),
+                  track_combo_mult(E, 40)],
     "landing_stars": [landing_stars(E, 0.3), landing_stars(E, 0.7), landing_stars(E, 0.9)],
     "minigame_pay": [minigame_pay(E, planets["luna"], 900.0, st, 0.5), minigame_pay(E, planets["nuvens"], 900.0, st, 1.0)],
     "minigame_pay_star": [minigame_pay(E, planets["luna"], 900.0, st, 0.8, 3),

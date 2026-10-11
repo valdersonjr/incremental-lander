@@ -80,3 +80,11 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   mediano 11 min, mundos mais lentos (Nuvens 1,9 h, Cogumelos 5,6 h). ACHADO: voar reto segurando a altura custa
   g/v por metro — mais barato que pousar em cada plataforma (200 m custam ~3,5× mais por km) — então o voo de cruzeiro
   domina; pendente: recompensar os pousos (proposta: sequência de pousos multiplica) e re-ajustar o ritmo.
+- v27 (2026-10-11) — o pouso vale mais que voar km sem pousar: bônus FIXO por pouso `track.land_bonus` 3 × base(x),
+  metro mais barato (`per_m_ref` 175 → 800) e SEQUÊNCIA de pousos `track.combo` (+0,2 por pouso seguido, até ×3; bater
+  zera); o modelo escolhe o estilo da viagem (mirar até k plataformas, `TRACK_STYLES`) pelo que rende por minuto —
+  motivo: com a velocidade máxima, voar reto segurando a altura custa g/v por metro (~3,5× menos que pousar a cada
+  200 m) e o ouro por metro cresce com a distância: o cruzeiro de km dominava (sequência sozinha, mesmo ×5, não
+  mudava o estilo) — medido (screen 10 h): pousos por viagem (mediana) engajado 3 → 11, casual 7, expert 18; mundos
+  (engajado) 0,63/1,15/1,77/2,27/2,74 h, casual até 5,4 h, expert 1,8 h; intervalo mediano 8–11 min (limitado pela
+  duração da viagem; expert ~12 min por viagem). Script `balance/sims/2026-10-11-v27-combo.py`.

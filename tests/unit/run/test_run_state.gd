@@ -73,17 +73,19 @@ func test_pista_sempre_acaba_pelo_gas() -> void:
 func test_pista_paga_o_acumulado_e_estrelas_pela_nota() -> void:
 	var run := RunState.create("luna", stats, 5)
 	var near := run.complete_track_landing(0.0, 200.0, 0, 0.7, "normal", 20.0, false)
+	var raw := EconMath.track_accum("luna", 0.0, 200.0, stats) + EconMath.track_land_bonus("luna", 200.0, stats)
+	assert_almost(float(near["credits"]), raw * EconMath.track_land_mult(0.7), 1e-6, "banco = (acumulado + pouso) x nota")
 	var far := run.complete_track_landing(1000.0, 1200.0, 0, 0.7, "normal", 20.0, false)
 	assert_true(float(far["credits"]) > float(near["credits"]) * 1.5, "200 m la longe valem mais que 200 m no comeco")
-	var skip := run.complete_track_landing(1200.0, 1600.0, 1, 0.7, "normal", 20.0, false)
-	assert_true(float(skip["credits"]) > float(far["credits"]) * 1.8, "o dobro de metros = quase o dobro")
-	var accum := EconMath.track_accum("luna", 0.0, 200.0, stats)
-	assert_true(is_equal_approx(float(near["credits"]), accum * EconMath.track_land_mult(0.7)), "banco = acumulado x pouso")
+	var raw2 := EconMath.track_accum("luna", 1000.0, 1200.0, stats) + EconMath.track_land_bonus("luna", 1200.0, stats)
+	assert_almost(float(far["credits"]), raw2 * EconMath.track_land_mult(0.7) * EconMath.track_combo_mult(1), 1e-6,
+			"2o pouso seguido: sequencia multiplica")
+	assert_eq(run.track_streak, 2)
 	assert_eq(int(run.deliveries[0]["stars"]), 2, "pouso bom = 2 estrelas")
-	run.complete_track_landing(1600.0, 1800.0, 0, 0.95, "normal", 20.0, true)
+	run.complete_track_landing(1200.0, 1400.0, 0, 0.95, "normal", 20.0, true)
 	assert_eq(int(run.deliveries[-1]["stars"]), 3, "pouso perfeito = 3 estrelas")
-	assert_eq(run.stars, 9)
-	assert_eq(run.record_values()["run_distance"], 1800.0)
+	assert_eq(run.stars, 7)
+	assert_eq(run.record_values()["run_distance"], 1400.0)
 
 
 func test_numeros_do_run_para_recordes() -> void:

@@ -36,6 +36,8 @@ func _init() -> void:
 				EconMath.track_marker_bonus("bolhas", 750.0, st)],
 		"track_cans": EconMath.track_cans("luna", 3000.0),
 		"track_markers": EconMath.track_markers("luna", 240.0, 1010.0),
+		"track_v27": [EconMath.track_land_bonus("luna", 900.0, st), EconMath.track_combo_mult(0), EconMath.track_combo_mult(3),
+				EconMath.track_combo_mult(40)],
 		"landing_stars": [EconMath.landing_stars(0.3), EconMath.landing_stars(0.7), EconMath.landing_stars(0.9)],
 		"minigame_pay": [EconMath.minigame_pay("luna", 900.0, st, 0.5), EconMath.minigame_pay("nuvens", 900.0, st, 1.0)],
 		"minigame_pay_star": [EconMath.minigame_pay("luna", 900.0, st, 0.8, 3),
