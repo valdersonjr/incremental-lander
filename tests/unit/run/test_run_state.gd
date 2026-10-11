@@ -47,22 +47,42 @@ func test_sem_teto_e_gas_cresce_por_entrega() -> void:
 	assert_almost(run.mission_gas(m, 800.0), g0 * pow(k, 10), g0 * 1e-6, "gas da missao x fatigue^n")
 
 
-func test_run_sempre_acaba_pelo_gas() -> void:
-	# tanque enorme + galao em todo salto: mesmo assim o gas que cresce acaba com o run
+func test_pista_sempre_acaba_pelo_gas() -> void:
+	# v21: tanque enorme + todos os galoes: o relevo que sobe com a distancia acaba com a viagem
 	var big := EconMath.ship_stats({"thrust": 60, "tank": 80, "efficiency": 60})
-	var run := RunState.create("luna", big, 9)
-	var gas := float(big["tank"])
-	var m := EconMath.simple_mission()
+	var tank := float(big["tank"])
+	var gas := tank
+	var cans := EconMath.track_cans("luna", 1e6)
+	var x := 0.0
+	var ci := 0
 	var n := 0
 	while n < 500:
-		var need := run.mission_gas(m, 600.0)
+		var need := EconMath.estimated_hop_dv("luna", 180.0, big) * EconMath.track_rough("luna", x + 90.0) \
+				/ float(big["efficiency"])
 		if need > gas:
 			break
-		gas = minf(float(big["tank"]), gas - need + EconMath.gift_gas(big, "gas") / run.fatigue())
-		run.complete_delivery(600.0, 0.9, need)
+		gas -= need
+		x += 180.0
+		while ci < cans.size() and cans[ci] <= x:
+			gas = minf(tank, gas + EconMath.track_can_gas(big))
+			ci += 1
 		n += 1
-	assert_true(n < 500, "o run termina (%d entregas)" % n)
-	assert_true(n > 3, "nave forte ainda faz varias entregas (%d)" % n)
+	assert_true(n < 500, "a viagem termina (%d pousos)" % n)
+	assert_true(n > 3, "nave forte ainda faz varios pousos (%d)" % n)
+
+
+func test_pista_paga_mais_longe_e_estrelas_pela_nota() -> void:
+	var run := RunState.create("luna", stats, 5)
+	var near := run.complete_track_landing(200.0, 0, 0.7, "normal", 20.0, false)
+	var far := run.complete_track_landing(1200.0, 0, 0.7, "normal", 20.0, false)
+	assert_true(float(far["credits"]) > float(near["credits"]) * 2.0, "1200 m paga bem mais que 200 m")
+	var skip := run.complete_track_landing(1200.0, 1, 0.7, "normal", 20.0, false)
+	assert_true(float(skip["credits"]) > float(far["credits"]), "pular uma plataforma paga mais")
+	assert_eq(int(run.deliveries[0]["stars"]), 2, "pouso bom = 2 estrelas")
+	run.complete_track_landing(1400.0, 0, 0.95, "normal", 20.0, true)
+	assert_eq(int(run.deliveries[-1]["stars"]), 3, "pouso perfeito = 3 estrelas")
+	assert_eq(run.stars, 9)
+	assert_eq(run.record_values()["run_distance"], 1400.0)
 
 
 func test_numeros_do_run_para_recordes() -> void:

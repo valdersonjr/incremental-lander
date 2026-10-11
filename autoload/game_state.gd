@@ -28,10 +28,10 @@ const ASSIST_FREE := "nav_arrow"
 ## id -> [nome para o jogador, icone 12 px, figura 24 px do cartao do resumo]. A ordem e a da tela (dinheiro primeiro).
 const RECORDS := {
 	"run_money": ["dinheiro numa viagem", "credits", "coin"],
-	"run_deliveries": ["entregas numa viagem", "expedition", "rat"],
+	"run_deliveries": ["pousos numa viagem", "expedition", "rat"],
 	"run_distance": ["distância voada numa viagem", "distance", "arrow"],
 	"run_perfect": ["pousos perfeitos numa viagem", "quality", "check"],
-	"best_delivery": ["maior entrega", "credits", "coins"],
+	"best_delivery": ["maior pouso", "credits", "coins"],
 }
 
 var _fullscreen_applied := false
@@ -344,6 +344,8 @@ func shows_records() -> bool:
 
 
 func shows_reputation() -> bool:
+	if EconMath.is_track():                                    # v21 (pista): Reputacao saiu
+		return false
 	return Sandbox.active() or stars >= int(onboarding().get("reputation_from_stars", 0))
 
 

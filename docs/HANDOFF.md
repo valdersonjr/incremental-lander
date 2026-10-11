@@ -4,6 +4,19 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
+- **Fase 19 "Mais longe" — jogável (usuário escolheu a opção C e aprovou as regras: "pode ser, faz que eu analiso")**.
+  Economia v21 (`contracts.track`; relatório `balance/reports/2026-10-11-v21-track/`) + espelho `EconMath.track_*`
+  (paridade 48). No jogo: a viagem é uma pista fixa por mundo, só para a frente, sem cartão: plataformas em sequência
+  (pulo = +25%), pagamento pela distância do começo, relevo/morros crescendo com a distância (é o que encerra a
+  viagem), galões, moedas no ar, placas a cada 250 m (bônus 1ª vez), bandeira do recorde, estrelas = nota do pouso
+  (1/2/3 → Estrada ×5), HUD com distância + recorde, aprendiz (< 10 estrelas) volta à última plataforma. Verificado:
+  check (106), 123 testes, integrações (onboarding_flow reescrito para a pista; controls/release_fixes adaptados),
+  demo na Lua (7 pousos/1,1 km com galões) e no Jardim, capturas (moedas, placas, "POUSOU! +3 estrelas", "NOVO
+  MARCO!"). **Para o usuário**: jogar e analisar. **Pendências**: 19.4 (mundos na NAVE em vez do Mapa, Estrada como
+  barra, fim de viagem com distância em destaque), 19.5 (ratinhos/minijogos como trechos; arte própria de moeda/placa/
+  bandeira e sons), calibrar `rough_scale`/gás com telemetria (o modelo é chute), tecla E (terminar viagem) sem uso
+  na pista, publicar no Vercel quando o usuário pedir (reteste do amigo). Código antigo (cartão/missões/minijogos)
+  continua no projeto, só não roda no modo pista.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).
   Página `art/previews/clareza/index.html` (publicada: https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): diagnóstico

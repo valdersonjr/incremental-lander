@@ -61,7 +61,7 @@ func _process(_d: float) -> void:
 			hangar.launch_requested.emit()
 		12:
 			var offers: OfferPanel = _main._offers
-			_check("run_comecou", offers.visible)
+			_check("run_comecou", _main._run != null and (offers.visible or _main._flight.track))
 			_check("musica_de_voo", Sound._music_name == "flight:luna" and Sound._ambience_name == "luna" \
 					and Sound._layers[0].playing)              # base + camada do mundo (player gemeo)
 			# alarme de gas: em voo com gas abaixo de 15% toca; pousado nao
@@ -72,14 +72,15 @@ func _process(_d: float) -> void:
 			# E precisa de 2 toques
 			_key(KEY_E)
 		14:
-			_check("um_E_nao_encerra", not _main._run.over and _main._offers.end_armed > 0.0)
+			_check("um_E_nao_encerra", not _main._run.over and (_main._flight.track or _main._offers.end_armed > 0.0))
 			var l: Lander = get_meta(&"lander")
 			_check("alarme_de_gas_toca", l._alarm.playing)
 			l.state = Lander.State.LANDED
 			var gas_before := l.gas                            # pouco gas (nenhum pedido "alcancavel"): o run continua
 			l.gas = 3.0
-			_main._show_offers()
-			_check("gas_pouco_nao_encerra", not _main._run.over and _main._offers.visible)
+			if not _main._flight.track:                        # pista (v21): sem cartao; pouco gas so acaba vazio
+				_main._show_offers()
+			_check("gas_pouco_nao_encerra", not _main._run.over and (_main._flight.track or _main._offers.visible))
 			l.gas = gas_before
 			l.gas = float(l.params["tank"])
 			# relogio do run para com o jogo pausado
@@ -96,7 +97,7 @@ func _process(_d: float) -> void:
 			_check("alarme_para_ao_pousar", not (get_meta(&"lander") as Lander)._alarm.playing)
 			_key(KEY_1)
 		28:
-			_check("tecla_1_nao_vaza", _main._flight.target_pad_id < 0)
+			_check("tecla_1_nao_vaza", _main._flight.track or _main._flight.target_pad_id < 0)
 		31:
 			# Estrada das Estrelas (v13): estrelas acumuladas liberam as paradas sozinhas, sem gastar
 			var stars0 := GameState.stars

@@ -228,7 +228,7 @@ func _fill_resources() -> void:
 	_resources.add_child(money)
 	var stars := HBoxContainer.new()
 	stars.add_theme_constant_override(&"separation", 2)
-	stars.tooltip_text = "estrelas: cada entrega dá 1 e elas andam na estrada"
+	stars.tooltip_text = "estrelas: cada pouso dá 1 a 3 e elas andam na estrada"
 	stars.mouse_filter = Control.MOUSE_FILTER_PASS
 	stars.add_child(_kid_rect("star_on", 18))
 	var n := Label.new()
@@ -959,7 +959,7 @@ func _toggle_balloon(stop_id: String) -> void:
 	if GameState.road_reached.has(stop_id):
 		status.text = "Você já tem!"
 	else:
-		status.text = "Faltam %d estrelas (você tem %d). Cada entrega dá 1." % [need - GameState.stars_in(), GameState.stars_in()]
+		status.text = "Faltam %d estrelas (você tem %d). Cada pouso dá 1 a 3." % [need - GameState.stars_in(), GameState.stars_in()]
 	col.add_child(status)
 	if not GameState.road_reached.has(stop_id):
 		var bar := ProgressBar.new()

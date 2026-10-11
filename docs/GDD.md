@@ -17,6 +17,20 @@ Pilares:
 3. **Sempre algo novo** — tipos de entrega liberados aos poucos, cada um ensina uma regra.
 4. **Duração total é flexível**; qualidade do ritmo > horas.
 
+## 2a. ESTRUTURA ATUAL — "Mais longe" (v21, 2026-10-11; substitui o cartão de missões do §2 no jogo)
+Auditoria de clareza (https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): um jogador experiente não entendeu
+"planeta → mapas → missões". Usuário escolheu a opção C (estilo Hill Climb Racing):
+- **1 tanque = 1 viagem** numa pista fixa por mundo, só para a frente. Sem cartão, sem trocar de mapa.
+- Plataformas em sequência; pousar em qualquer uma à frente paga **pela distância do começo** (× qualidade × tamanho);
+  pular uma e pousar na seguinte = +25%. Para trás não paga.
+- O **relevo sobe** quanto mais longe (morros mais altos = cada salto custa mais gás): é o que encerra a viagem.
+- **Galões** no ar pelo caminho (35% do tanque, cada vez mais espaçados), **moedas no ar** entre as plataformas,
+  **placas a cada 250 m** que pagam na 1ª vez em cada mundo, **bandeira do recorde** no chão.
+- **Estrela = nota do pouso** (1 ok · 2 bom · 3 perfeito); as estrelas andam na Estrada do mundo e abrem o próximo.
+- Batida acaba a viagem (o ganho fica); o aprendiz (< 10 estrelas) volta para a última plataforma.
+- Fora no modo pista: cartão de missões, ratinhos/regras, minijogos, Reputação, presentes, cansaço 2×, bônus de
+  recorde de dinheiro (voltam depois como trechos da pista, um de cada vez). Números: `data/economy.json > contracts.track`.
+
 ## 2. Loop principal
 ```
 [Hangar/loja] → decolar → escolher entrega (distância × pagamento) → voar (salto balístico) →

@@ -158,6 +158,7 @@ func _exit_tree() -> void:
 func _physics_process(delta: float) -> void:
 	camera.global_position = retry_hint.ghost_focus() if _focus_ghost else lander.global_position
 	_tick_mission(delta)
+	_tick_track()
 	_tick_gift()
 	_tick_minigame()
 	_update_pointer()
@@ -507,6 +508,9 @@ func _on_lander_landed(pad: Dictionary, quality: float, info: Dictionary) -> voi
 	_landing_sound(clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	shake(float(WorldConfig.load_config()["camera"]["land_shake"]) * clampf(float(info.get("vy", 0.0)) / max_vy, 0.0, 1.0))
 	current_pad_id = int(pad["id"])
+	if track:
+		_track_landed(pad, quality, info)
+		return
 	if current_pad_id == target_pad_id and planet_id == "sorvete" and not _rings.is_empty():
 		_start_slide(info)                                     # curling: a entrega so fecha quando a nave para
 	elif current_pad_id == target_pad_id:
@@ -1466,3 +1470,222 @@ static func soft_vy_limit(star: int) -> float:
 	var cfg: Dictionary = WorldConfig.load_config()
 	var fr: Array = cfg["missions"]["soft"]["vy_frac"]
 	return float(cfg["landing"]["max_vy"]) * float(fr[clampi(star, 1, fr.size()) - 1])
+
+
+# ---------------------------------------------------------------- v21: pista "Mais longe" (contracts.track)
+## A viagem vai so para a frente numa pista fixa por mundo: plataformas em sequencia (EconMath.track_gap), relevo que
+## sobe com a distancia (TerrainGen rough_px), galoes de gas, moedas no ar, placas de marco e a bandeira do recorde.
+## Pousar em qualquer plataforma a frente paga (track_reached) e a viagem continua; sem cartao entre os pousos.
+signal track_reached(result: Dictionary)
+## Moeda no ar ("coin"), marco novo ("marker") ou galao ("gas"): o Main paga/anota (amount = moedas ou gas).
+signal track_pickup(kind: String, amount: float, at: Vector2)
+
+const TRACK_PADS := 120
+const TRACK_COINS_PER_GAP := 3
+const PICK_RADIUS_PX := 18.0
+const CAN_HEIGHT_M := 46.0
+var track := false
+var track_best_m := 0.0                              # recorde do mundo (bandeira no chao; marcos alem dele pagam)
+var track_far_m := 0.0                               # mais longe nesta viagem (m do comeco)
+var _track_last := 0                                 # ultima plataforma paga (indice em terrain.pads)
+var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
+var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
+var _marks: Array[Dictionary] = []                   # {m, x, node, done}
+var _flag: Node2D = null
+
+
+## Viagem nova na pista do mundo (fixa: mesma seed sempre). best_m = recorde de distancia do mundo.
+func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: float) -> void:
+	track = true
+	planet_id = p_planet_id
+	stats = p_stats
+	_demo = demo
+	track_best_m = best_m
+	track_far_m = 0.0
+	_track_last = 0
+	var t := EconMath.track_spec(planet_id)
+	_reset_map(hash(["track", planet_id, int(t.get("seed", 1))]))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = _seed
+	var x := 0.0
+	for i in TRACK_PADS:
+		x += EconMath.track_gap(planet_id, x, rng.randf())
+		_pad_positions_m.append(x)
+		_pad_tiers.append(EconMath.draw_pad_tier(rng))
+	_shape = {"rough_px": WorldConfig.m_to_px(float(t.get("rough_scale", 1e9))), "rough_cap": 4.0}
+	target_pad_id = 1
+	_rebuild_terrain()
+	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.ridge = terrain.ridge
+	lander.visible = true
+	lander.can_takeoff = true
+	_place_on_start_pad()
+	_spawn_track_props()
+	_track_autopilot()
+
+
+## Aprendiz: volta para a ultima plataforma paga com o gas do comeco do salto (a pista e a mesma).
+func track_retry(gas: float) -> void:
+	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.gas = gas
+	lander.visible = true
+	lander.can_takeoff = true
+	current_pad_id = _track_last
+	var p: Dictionary = terrain.pads[_track_last]
+	var feet := WorldConfig.m_to_px(float(WorldConfig.load_config()["lander"]["feet_offset_m"]))
+	lander.global_position = Vector2(float(p["x"]), float(p["y"]) - feet - 0.5)
+	lander.reset_physics_interpolation()
+	camera.global_position = lander.global_position
+	camera.reset_smoothing()
+	_track_autopilot()
+
+
+## x (m do comeco) da plataforma i.
+func track_pad_m(i: int) -> float:
+	return WorldConfig.px_to_m(float(terrain.pads[i]["x"]))
+
+
+func _track_autopilot() -> void:
+	if not _demo:
+		return
+	var ap := Autopilot.new()
+	ap.target = terrain.pads[mini(_track_last + 1, terrain.pads.size() - 1)]
+	ap.ridge = terrain.ridge
+	lander.autopilot = ap
+
+
+## Pouso na pista: plataforma a frente da ultima paga = pagamento (pulou n plataformas = bonus); atras = so descanso.
+func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
+	var id := int(pad["id"])
+	if id > _track_last:
+		var skipped := id - _track_last - 1
+		_track_last = id
+		target_pad_id = mini(id + 1, terrain.pads.size() - 1)
+		terrain.target_pad_id = target_pad_id
+		Sound.sfx("delivered")
+		var x_m := track_pad_m(id)
+		track_far_m = maxf(track_far_m, x_m)
+		var result := {
+			"planet": planet_id, "distance": x_m, "thrust": stats["thrust"],
+			"efficiency": float(lander.params["efficiency"]), "tank": stats["tank"],
+			"gas_used": info["gas_used"], "hop_time_s": info["flight_time_m"], "quality": quality,
+			"perfect": LandingRules.is_perfect(float(info.get("vy", 0.0)), float(info.get("tilt", 0.0)),
+					WorldConfig.load_config()["landing"]),
+			"tier": str(pad["tier"]), "dir": 1, "mission": EconMath.simple_mission(), "failed": [], "partial": {},
+			"mission_ok": true, "leg": 0, "gift": "", "gift_pay": 0.0, "minigame": [0, 0], "mg_extra": 0.0,
+			"crashed": false, "reason": "", "skipped": skipped,
+			"vy": snappedf(float(info.get("vy", 0.0)), 0.01), "vx": snappedf(float(info.get("vx", 0.0)), 0.01),
+			"tilt": snappedf(float(info.get("tilt", 0.0)), 0.001), "scrapes": int(info.get("scrapes", 0)),
+			"hard": bool(info.get("hard", false)),
+		}
+		Telemetry.record_delivery(result)
+		track_reached.emit(result)
+		_track_autopilot()
+	if lander.gas <= 0.001:
+		stranded.emit()
+
+
+## Galoes no ar sobre o relevo (EconMath.track_cans), 3 moedas em arco em cada trecho, placas de marco e a bandeira.
+func _spawn_track_props() -> void:
+	for n: Dictionary in _cans + _coins + _marks:
+		if is_instance_valid(n.get("sprite", n.get("node"))):
+			(n.get("sprite", n.get("node")) as Node).queue_free()
+	_cans.clear()
+	_coins.clear()
+	_marks.clear()
+	var last_m := track_pad_m(terrain.pads.size() - 1)
+	for c_m: float in EconMath.track_cans(planet_id, last_m):
+		var cx := WorldConfig.m_to_px(c_m)
+		var pos := Vector2(cx, TerrainGen.height_at(terrain.ridge, cx) - WorldConfig.m_to_px(CAN_HEIGHT_M))
+		_cans.append({"pos": pos, "sprite": _prop_sprite(CargoArt.tex("gas_can"), pos), "got": false})
+	for i in terrain.pads.size() - 1:
+		var a: Dictionary = terrain.pads[i]
+		var b: Dictionary = terrain.pads[i + 1]
+		var value := EconMath.track_coins(planet_id, track_pad_m(i + 1), stats, 1.0 / TRACK_COINS_PER_GAP)
+		for k in TRACK_COINS_PER_GAP:
+			var t := (k + 1.0) / (TRACK_COINS_PER_GAP + 1.0)
+			var x := lerpf(float(a["x"]), float(b["x"]), t)
+			var arc := lerpf(float(a["y"]), float(b["y"]), t) - (float(b["x"]) - float(a["x"])) * t * (1.0 - t) * 0.9
+			var pos := Vector2(x, minf(arc, TerrainGen.height_at(terrain.ridge, x) - 30.0))
+			_coins.append({"pos": pos, "sprite": _prop_sprite(UiKit.icon("credits"), pos), "got": false, "value": value})
+	var every := float(EconMath.track_spec(planet_id).get("marker_every", 0.0))
+	if every > 0.0:
+		var m := every
+		while m < last_m:
+			_marks.append({"m": m, "node": _marker_node(m), "done": m <= track_best_m})
+			m += every
+	if track_best_m > 0.0:
+		_flag = _marker_node(track_best_m, true)
+
+
+func _prop_sprite(tex: Texture2D, pos: Vector2) -> Sprite2D:
+	var sp := Sprite2D.new()
+	sp.texture = tex
+	sp.position = pos
+	add_child(sp)
+	move_child(sp, lander.get_index())
+	return sp
+
+
+## Placa de marco (m) no chao; flag = bandeira do recorde do mundo.
+func _marker_node(m: float, flag: bool = false) -> Node2D:
+	var x := WorldConfig.m_to_px(m)
+	var node := Node2D.new()
+	node.position = Vector2(x, TerrainGen.height_at(terrain.ridge, x))
+	var pole := Line2D.new()
+	pole.width = 1.0
+	pole.default_color = UiKit.color("white")
+	pole.points = PackedVector2Array([Vector2.ZERO, Vector2(0, -34 if flag else -22)])
+	node.add_child(pole)
+	var cloth := Polygon2D.new()
+	cloth.color = UiKit.color("red") if flag else (UiKit.color("steel") if m <= track_best_m else UiKit.color("gold"))
+	cloth.polygon = PackedVector2Array([Vector2(1, -34), Vector2(15, -30), Vector2(1, -26)]) if flag \
+			else PackedVector2Array([Vector2(1, -22), Vector2(25, -22), Vector2(25, -13), Vector2(1, -13)])
+	node.add_child(cloth)
+	var l := Label.new()
+	l.theme = UiKit.theme_for(planet_id)
+	l.theme_type_variation = &"DimLabel"
+	l.text = "recorde" if flag else "%d m" % int(m)
+	l.position = Vector2(-20, -48) if flag else Vector2(1, -23)
+	l.size = Vector2(40, 10) if flag else Vector2(24, 10)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	node.add_child(l)
+	add_child(node)
+	move_child(node, lander.get_index())
+	return node
+
+
+## A cada passo: distancia alcancada, galoes, moedas e marcos novos.
+func _tick_track() -> void:
+	if not track or lander.state != Lander.State.FLYING:
+		return
+	var pos := lander.global_position
+	track_far_m = maxf(track_far_m, WorldConfig.px_to_m(pos.x))
+	for c: Dictionary in _cans:
+		if not c["got"] and pos.distance_to(c["pos"]) < PICK_RADIUS_PX:
+			c["got"] = true
+			var add := minf(EconMath.track_can_gas(stats), float(lander.params["tank"]) - lander.gas)
+			lander.gas += add
+			_collect(c["sprite"])
+			Sound.sfx("gas_glug")
+			_float_text("+" + EconMath.fmt(EconMath.track_can_gas(stats)) + " gás", c["pos"] + Vector2(0, -20))
+			track_pickup.emit("gas", add, c["pos"])
+	for c: Dictionary in _coins:
+		if not c["got"] and pos.distance_to(c["pos"]) < PICK_RADIUS_PX:
+			c["got"] = true
+			_collect(c["sprite"])
+			Sound.sfx("gift_coin")
+			track_pickup.emit("coin", float(c["value"]), c["pos"])
+	for mk: Dictionary in _marks:
+		if not mk["done"] and track_far_m >= float(mk["m"]):
+			mk["done"] = true
+			var bonus := EconMath.track_marker_bonus(planet_id, float(mk["m"]), stats)
+			Sound.jingle("milestone")
+			_float_text("%d m! +%s" % [int(mk["m"]), EconMath.fmt(bonus)], (mk["node"] as Node2D).position + Vector2(0, -52))
+			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
+
+
+func _collect(sp: Sprite2D) -> void:
+	var tw := sp.create_tween()
+	tw.tween_property(sp, "global_position", lander.global_position, 0.15)
+	tw.tween_callback(sp.hide)

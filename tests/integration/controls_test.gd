@@ -93,6 +93,12 @@ func _physics_process(_delta: float) -> void:
 		1:
 			if _frames > 30:
 				_key(KEY_W, false)
+				if EconMath.is_track():                             # v21 pista: sem cartao, W ja decola
+					_log.append("W na pista: estado=%s" % Lander.State.keys()[l.state])
+					_hint_ok = l.state == Lander.State.FLYING
+					_step = 2
+					_frames = 0
+					return
 				var panel := _main.find_child("OfferPanel", true, false) as OfferPanel
 				_log.append("W antes de escolher: estado=%s aviso=%s" % [Lander.State.keys()[l.state], panel.hint_flash > 0.0])
 				_hint_ok = panel.hint_flash > 0.0 and l.state == Lander.State.LANDED
@@ -112,7 +118,8 @@ func _physics_process(_delta: float) -> void:
 			if _frames > 40:
 				_key(KEY_W, false)
 				_log.append("W depois de escolher: estado=%s y=%.1f" % [Lander.State.keys()[l.state], l.global_position.y])
-				_sound_ok = (l.find_child("ThrustLoop") as AudioStreamPlayer2D).playing and Sound.played.has("click")
+				_sound_ok = (l.find_child("ThrustLoop") as AudioStreamPlayer2D).playing \
+						and (EconMath.is_track() or Sound.played.has("click"))
 				_log.append("som: propulsor=%s clique=%s" % [(l.find_child("ThrustLoop") as AudioStreamPlayer2D).playing,
 						Sound.played.get("click", 0)])
 				_key(KEY_A, true)

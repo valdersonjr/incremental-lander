@@ -129,6 +129,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _run_active:
 		_run_time += delta
+		if _flight != null and _flight.track and _run != null:
+			_run.note_distance(_flight.track_far_m)
 	_restart_armed = maxf(_restart_armed - delta, 0.0)
 
 
@@ -148,7 +150,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var flying := _flight != null and _flight.lander.state == Lander.State.FLYING and _run != null and not _run.over
 		if flying and _restart_armed <= 0.0 and not _demo:
 			_restart_armed = CONFIRM_SECONDS
-			_hud.confirm_hint("R de novo para recomeçar a viagem (a entrega em voo se perde)", CONFIRM_SECONDS)
+			_hud.confirm_hint("R de novo para recomeçar a viagem", CONFIRM_SECONDS)
 		else:
 			_restart_armed = 0.0
 			_start_run()
@@ -328,7 +330,11 @@ func _start_run() -> void:
 	var ui := UiKit.theme_for(GameState.current_planet)        # cor da interface acompanha o mundo
 	for c: Control in [_hud, _offers, _summary, _pause]:
 		c.theme = ui
-	_flight.start(GameState.current_planet, _run_seed, _flight_stats(stats), _demo)
+	if EconMath.is_track():                                    # v21: pista "Mais longe" (sem cartao entre os pousos)
+		_flight.start_track(GameState.current_planet, _flight_stats(stats), _demo,
+				float(GameState.world_records().get("run_distance", 0.0)))
+	else:
+		_flight.start(GameState.current_planet, _run_seed, _flight_stats(stats), _demo)
 	_flight.landscapes = GameState.landscapes()
 	Sound.music("flight", GameState.current_planet)        # base do voo + camada do mundo
 	Sound.ambience(GameState.current_planet)
@@ -348,7 +354,65 @@ func _start_run() -> void:
 	_hud.set_records(_rec_start)
 	Events.run_started.emit(GameState.current_planet)
 	Telemetry.event("run_start", GameState.current_planet)
+	if _flight.track:
+		_begin_track()
+		return
 	_show_offers()
+
+
+## v21: a viagem na pista comeca direto (nome do mundo + "Mais longe!"); cada pouso a frente paga na hora.
+func _begin_track() -> void:
+	_offers.visible = false
+	_flight.track_reached.connect(_on_track_reached)
+	_flight.track_pickup.connect(_on_track_pickup)
+	_flight.lander.took_off.connect(func() -> void: _hop_gas = _flight.lander.gas)
+	_hop_gas = _flight.lander.gas
+	_hop_safe = true
+	_flight.apprentice = _apprentice_hop()
+	_flight.lander.ground_rest = _flight.apprentice             # aprendiz: pouso devagar fora da plataforma nao bate
+	_arrived = true
+	_hud.show_world_name(str(EconMath._find("planets", GameState.current_planet).get("name",
+			GameState.current_planet)).to_upper())
+	Sound.jingle("world_arrive")
+	var t := _hud.create_tween()
+	t.tween_interval(1.6)
+	t.tween_callback(_hud.show_verb.bind("Mais longe!", "pouse nas plataformas pelo caminho"))
+
+
+## Pouso numa plataforma a frente (Flight.track_reached): paga pela distancia do comeco (+ pulo), estrelas da nota.
+func _on_track_reached(result: Dictionary) -> void:
+	_log("DELIVERY_RESULT ", JSON.stringify(result))
+	Telemetry.event("delivery", "%.2f" % float(result["quality"]))
+	var was_apprentice := GameState.apprentice()
+	var rewards := _run.complete_track_landing(float(result["distance"]), int(result["skipped"]),
+			float(result["quality"]), str(result["tier"]), float(result["gas_used"]), bool(result["perfect"]))
+	var entry: Dictionary = _run.deliveries[-1]
+	GameState.add_stars(int(entry["stars"]))
+	get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
+	GameState.add_rewards(rewards)
+	_note_records()
+	SaveManager.request_save()
+	_hud.show_delivery(entry)
+	if bool(entry.get("perfect", false)):
+		get_tree().create_timer(0.35).timeout.connect(Sound.perfect.bind(_run.perfect_streak))
+	if was_apprentice and not GameState.apprentice() and not _demo:
+		Telemetry.event("graduated")
+		_flight.apprentice = false
+		_flight.lander.ground_rest = false
+		var tg := _hud.create_tween()
+		tg.tween_interval(0.9)
+		tg.tween_callback(_hud.show_graduation.bind(_graduation_line()))
+		tg.tween_callback(Sound.jingle.bind("milestone"))
+
+
+## Moeda no ar / marco novo: entra no ganho da viagem na hora. Galao: so telemetria.
+func _on_track_pickup(kind: String, amount: float, _at: Vector2) -> void:
+	Telemetry.event("pickup", kind)
+	if kind == "gas" or _run == null or _run.over:
+		return
+	GameState.add_rewards(_run.add_bonus(amount))
+	if kind == "marker":
+		_hud.show_verb("NOVO MARCO!", "+" + EconMath.fmt(amount))
 
 
 func _show_offers() -> void:
@@ -449,6 +513,9 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		Telemetry.event("crash", str(result["reason"]))
+		if _flight.track and _apprentice_hop():                  # pista: o aprendiz volta para a ultima plataforma
+			_retry_track(str(result["reason"]))
+			return
 		if _apprentice_hop():                                     # aprendiz: tenta o mesmo salto de novo (C2)
 			_retry_hop(str(result["reason"]))
 			return
@@ -517,6 +584,11 @@ func _graduation_line() -> String:
 
 
 func _on_stranded() -> void:
+	if _flight != null and _flight.track:                      # pista: tanque vazio = fim da viagem
+		if _run != null and not _run.over:
+			_run.finish("sem_gas")
+			_end_run()
+		return
 	if _apprentice_hop() and _run != null and not _run.over:
 		Telemetry.event("crash", "sem_gas")
 		_retry_hop("sem_gas")
@@ -554,7 +626,7 @@ func _map_tour() -> bool:
 	var final: Array = _world_map.spotlight_target()               # [botao, icone, palavra]
 	var steps: Array = [
 		_step(_world_map.tour_target.bind("worlds"), "lock", ["Cada planeta é um mundo.", "Complete um para abrir o próximo."]),
-		_step(_world_map.tour_target.bind("road"), "star_on", ["Cada entrega dá 1 estrela.", "A navezinha anda e ganha os prêmios."]),
+		_step(_world_map.tour_target.bind("road"), "star_on", ["Cada pouso dá 1 a 3 estrelas.", "Junte estrelas para abrir o próximo mundo."]),
 		_step(_world_map.tour_target.bind("counts"), "coins", ["Moedas compram peças da nave.", "Estrelas andam na Estrada."]),
 	]
 	if final[0] != _world_map.tour_target("ship"):
@@ -717,6 +789,23 @@ func _retry_hop(reason: String) -> void:
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
 
 
+## Pista (aprendiz): bateu -> a tela escurece e a nave volta para a ultima plataforma paga com o gas do comeco do salto.
+func _retry_track(reason: String) -> void:
+	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
+	var flight := _flight
+	await get_tree().create_timer(0.5, false).timeout
+	if flight != _flight or _run == null or _run.over:
+		return
+	var tw := _fade.create_tween()
+	tw.tween_property(_fade, "modulate:a", 1.0, fade_s)
+	await tw.finished
+	if flight != _flight or _run == null or _run.over:
+		return
+	_flight.track_retry(_hop_gas)
+	_hud.show_retry(reason, false)
+	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)
+
+
 func _end_run() -> void:
 	_offers.visible = false
 	# duracao do run em segundos do modelo (a frota trabalha enquanto voce voa)
@@ -726,7 +815,8 @@ func _end_run() -> void:
 	GameState.tick_missions_new()
 	var values := _run.record_values()
 	# bonus de recorde (v16): bater o recorde de dinheiro deste mundo (ou a 1a visita) paga uma parte do run
-	var bonus := EconMath.record_bonus(float(values["run_money"]), float(_rec_start.get("run_money", 0.0)))
+	var bonus := 0.0 if EconMath.is_track() else EconMath.record_bonus(float(values["run_money"]),
+			float(_rec_start.get("run_money", 0.0)))
 	if bonus > 0.0:
 		GameState.add_rewards({"credits": bonus})
 	_note_records()

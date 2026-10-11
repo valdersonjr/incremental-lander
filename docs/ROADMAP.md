@@ -121,9 +121,15 @@
 - [x] 19.2 Economia v21 (2026-10-11): `contracts.track` no simulador + espelho `EconMath.track_*` (paridade 48);
       relevo crescente encerra a viagem; MC 3×3: mundos 0,4–2,5 h (engajado), run ~250 s, 1ª compra ~110 s
       (`balance/reports/2026-10-11-v21-track/`)
-- [ ] 19.3 Voo: caminho contínuo por mundo com plataformas em sequência, sem cartão; HUD com distância/recorde;
-      bandeira do recorde e marcos no chão; fim da viagem → NAVE
-- [ ] 19.4 Progressão: estrelas de pouso → barra do próximo mundo; mundos na NAVE; Estrada/Mapa/Reputação recolhidos
+- [x] 19.3 Voo (2026-10-11): `Flight.start_track` = pista fixa por mundo (120 plataformas por `EconMath.track_gap`,
+      relevo e morros crescendo com a distância via `TerrainGen` `rough_px`), pouso em qualquer plataforma à frente
+      paga na hora (`track_reached` → `RunState.complete_track_landing`; pulo = bônus; para trás não paga), galões,
+      3 moedas no ar por trecho, placas a cada 250 m (bônus só além do recorde), bandeira do recorde; Main sem cartão
+      (`_begin_track`: nome do mundo + "Mais longe!"), tanque vazio/batida = fim; aprendiz volta à última plataforma;
+      HUD com distância + recorde; textos "entrega" → "pouso"; Reputação escondida no modo pista
+- [~] 19.4 Progressão: estrelas de pouso já andam na Estrada do mundo (×5) e o passeio do Mapa explica "1 a 3
+      estrelas por pouso"; Reputação/Frota escondidas. **Falta**: mundos na NAVE (Mapa vira fileira), Estrada como barra
+      simples, tela de fim de viagem com a distância em destaque
 - [ ] 19.5 Conteúdo de volta, um de cada vez (ratinhos e minijogos no caminho), arte e sons novos
 - [ ] 19.6 Reteste com o amigo: "o que é uma viagem e o que você ganha?"
 

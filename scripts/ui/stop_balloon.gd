@@ -49,7 +49,7 @@ func show_stop(stop_id: String, anchor: Vector2, area: Vector2, above: bool) -> 
 	if GameState.road_reached.has(stop_id):
 		col.add_child(_label("Você já tem!"))
 	else:
-		col.add_child(_label("Faltam %d estrelas (você tem %d). Cada entrega dá 1." % [need - have, have]))
+		col.add_child(_label("Faltam %d estrelas (você tem %d). Cada pouso dá 1 a 3." % [need - have, have]))
 		var bar := ProgressBar.new()
 		bar.show_percentage = false
 		bar.theme_type_variation = &"XpBar"

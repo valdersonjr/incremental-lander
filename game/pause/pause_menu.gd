@@ -27,7 +27,6 @@ const KEY_TITLES := {
 	"turbo": "turbo",
 }
 const CONTROLS_FIXED := [
-	["números 1 a 9 ou clique", "escolher entrega"],
 	["controle de videogame", "também funciona"],
 ]
 ## Abas do menu (uma secao por vez: menos coisa na tela de uma vez so).
@@ -106,7 +105,7 @@ func open(p_mode: Mode = Mode.FLIGHT) -> void:
 	if sandbox:
 		%MenuLabel.text = "Voltar ao menu inicial (seu jogo salvo volta intacto)"
 	else:
-		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Ao menu inicial (entregas feitas ficam)"
+		%MenuLabel.text = "Voltar ao menu inicial (salva)" if hangar else "Ao menu inicial (as moedas ganhas ficam)"
 	%MenuButton.text = "Sair do modo livre" if sandbox else "Menu inicial"
 	%NewGameRow.visible = hangar and not sandbox                # apagar o jogo so com calma, no hangar
 	%SaveRow.visible = not sandbox                              # o sandbox nunca grava

@@ -47,6 +47,11 @@ game/main.tscn/.gd            # Main → World + GUI; ORQUESTRA O RUN: ofertas �
                               # --dev_levels=id:n,... --dev_credits=N --dev_ore=N --dev_shop=id:n,...
                               # --dev_unlock=a,b --planet=id (validado). Imprime também GOAL_REACHED/PRESTIGE.
                               # Imprime "DELIVERY_RESULT {json}" e "RUN_SUMMARY {json}" (verificação automática)
+                              # v21 PISTA (EconMath.is_track): start_track(planeta, stats, demo, recorde_m) = pista fixa por
+                              # mundo (TRACK_PADS plataformas por EconMath.track_gap, shape rough_px = relevo cresce com x);
+                              # _track_landed: plataforma a frente da ultima paga -> sinal track_reached(result com distance =
+                              # x do comeco, skipped); _tick_track: galoes/moedas/marcos -> track_pickup(kind, amount, at);
+                              # track_retry(gas) (aprendiz); track_far_m/track_best_m (HUD). Main._begin_track liga tudo.
 game/flight/flight.tscn/.gd   # Flight: Terrain + Lander + Camera; start(planeta, seed, stats, demo); begin_mission(seed, d, tier,
                               # dir, missão, stage) = mapa novo + nave descendo do céu (_arrive, Lander.arriving; fundo
                               # deslocado por _bg_origin); set_target(distância) = alvo no mesmo mapa (2º trecho do táxi)

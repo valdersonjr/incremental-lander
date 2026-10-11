@@ -45,6 +45,9 @@ var _world_label: Label = null
 var _world_tween: Tween = null
 var _rec_grid: GridContainer = null              # 4 recordes (grade 2x2): so depois do 1o run (onboarding)
 var _rec_bar: HBoxContainer = null               # barra ate o recorde de dinheiro: idem
+var _track_row: HBoxContainer = null             # v21 (pista): distancia da viagem + recorde do mundo
+var _track_dist: Label = null
+var _track_best: Label = null
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -86,6 +89,8 @@ func _ready() -> void:
 func bind(p_flight: Flight, p_run: RunState) -> void:
 	flight = p_flight
 	run = p_run
+	if flight.track:
+		_build_track_row()
 	flight.delivery_finished.connect(_on_delivery_finished)
 	flight.lander.took_off.connect(func() -> void: _set_status(_idle_status()))   # resultado antigo nao fica no rodape
 	_set_status(_idle_status())
@@ -126,7 +131,42 @@ func _process(delta: float) -> void:
 		_dist_icon.flip_h = dx < 0.0                           # a seta aponta para o lado da plataforma
 	_dist.get_parent().visible = flight.target_pad_id >= 0   # sem alvo a janela de missao ja esta aberta: sem dica repetida
 	_update_score()
+	_update_track()
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
+
+
+## v21 (pista): a distancia e a pontuacao da viagem -> linha grande logo abaixo do dinheiro, com o recorde do mundo.
+func _build_track_row() -> void:
+	_track_row = HBoxContainer.new()
+	_track_row.add_theme_constant_override(&"separation", 4)
+	var ic := TextureRect.new()
+	ic.texture = UiKit.icon("distance")
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	ic.custom_minimum_size = Vector2(12, 12)
+	_track_row.add_child(ic)
+	_track_dist = Label.new()
+	_track_dist.theme_type_variation = &"ValueLabel"
+	_track_row.add_child(_track_dist)
+	var cup := TextureRect.new()
+	cup.texture = UiKit.icon("trophy")
+	cup.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	cup.custom_minimum_size = Vector2(12, 12)
+	_track_row.add_child(cup)
+	_track_best = Label.new()
+	_track_best.theme_type_variation = &"DimLabel"
+	_track_row.add_child(_track_best)
+	_score.add_child(_track_row)
+	_score.move_child(_track_row, 1)
+	_rec_grid.visible = false                                  # a distancia ja esta aqui em destaque
+
+
+func _update_track() -> void:
+	if _track_row == null:
+		return
+	var best := flight.track_best_m
+	_track_dist.text = GameState.record_text("run_distance", flight.track_far_m)
+	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and flight.track_far_m > best else &"ValueLabel"
+	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
@@ -141,7 +181,7 @@ func set_records(start: Dictionary) -> void:
 			l.get_parent().visible = rec > 0.0
 	(_rec_best["run_money"] as Label).get_parent().visible = float(_rec_start.get("run_money", 0.0)) > 0.0
 	# comeco do jogo (onboarding): no 1o run o placar mostra so o dinheiro; os recordes entram depois
-	_rec_grid.visible = GameState.shows_records()
+	_rec_grid.visible = GameState.shows_records() and _track_row == null   # pista: distancia em destaque
 	_rec_bar.visible = _rec_bar.visible and GameState.shows_records()
 
 
@@ -453,10 +493,16 @@ func show_delivery(entry: Dictionary) -> void:
 		parts.append("MINIJOGO COMPLETO!")
 	if bool(entry.get("perfect", false)):
 		parts.append("POUSO PERFEITO!")
+	if int(entry.get("skipped", 0)) > 0:                      # v21 (pista): pulou uma plataforma
+		parts.append("PULOU! +%d%%" % roundi(float(EconMath.track_spec(flight.planet_id).get("skip_bonus", 0.0)) * 100.0))
 	if int(entry.get("rep_pts", 0)) > 0:
 		parts.append("+%d reputação" % int(entry["rep_pts"]))
-	_set_status("ENTREGA! " + text, &"GoodLabel")
-	_show_toast("ENTREGA!", text, &"GoodLabel")
+	var title := "ENTREGA!"
+	if entry.has("stars"):                                     # v21 (pista): pouso + estrelas da nota
+		var n := int(entry["stars"])
+		title = "POUSOU! +%d %s" % [n, "estrela" if n == 1 else "estrelas"]
+	_set_status(title + " " + text, &"GoodLabel")
+	_show_toast(title, text, &"GoodLabel")
 	_toast_extra.text = "  ·  ".join(parts)
 	_toast_extra.visible = not parts.is_empty()
 	_toast_extra.theme_type_variation = &"MoneyLabel"

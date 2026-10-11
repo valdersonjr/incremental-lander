@@ -197,5 +197,5 @@ func _reason_text(reason: String) -> String:
 		var tip := UiKit.crash_tip(why)
 		return UiKit.crash_text(why) + ("\n" + tip if tip != "" else "")
 	return {"sem_gas": "", "encerrado": "",
-			"sem_alcance": "nenhuma entrega ao alcance: melhore a nave"}.get(
+			"sem_alcance": "nenhuma plataforma ao alcance: melhore a nave"}.get(
 			reason, reason)

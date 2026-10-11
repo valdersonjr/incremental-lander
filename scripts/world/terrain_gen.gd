@@ -47,10 +47,14 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 	var x_max := k_max * step
 
 	# relevo de base: de 0 para a direita e de 0 para a esquerda, limitando a inclinacao a partir da ancora
+	# v21 (pista "Mais longe"): rough_px > 0 = o relevo cresce com a distancia (amplitude x track_rough, ate rough_cap)
+	var rough_px := float(shape.get("rough_px", 0.0))
+	var rough_cap := float(shape.get("rough_cap", 4.0))
 	var right := PackedVector2Array()
 	var prev_y := _base_y(noise, 0.0, amp, ridged)
 	for k in range(0, k_max + 1):
-		var y := clampf(_base_y(noise, k * step, amp, ridged), prev_y - max_slope * step, prev_y + max_slope * step)
+		var a_k := amp * (minf(1.0 + k * step / rough_px, rough_cap) if rough_px > 0.0 else 1.0)
+		var y := clampf(_base_y(noise, k * step, a_k, ridged), prev_y - max_slope * step, prev_y + max_slope * step)
 		right.append(Vector2(k * step, y))
 		prev_y = y
 	var left := PackedVector2Array()
@@ -93,6 +97,13 @@ static func generate(seed_value: int, planet_id: String, pad_distances_m: Array[
 				"tier": tiers[i], "lift": lift, "side": pad_side})
 	for i in pads.size() - 1:
 		var crest: Dictionary = cfg["crest"]
+		if rough_px > 0.0:                                     # pista: morro entre TODAS as plataformas, mais alto longe
+			crest = crest.duplicate()
+			var mid_x := (float(pads[i]["x"]) + float(pads[i + 1]["x"])) * 0.5
+			crest["min_distance_m"] = 0.0
+			crest["frac"] = float(shape.get("crest_frac", crest["frac"])) * minf(1.0 + mid_x / rough_px, rough_cap)
+			_add_crest(ridge, pads[i], pads[i + 1], crest, pcfg, pads, 0.5, -1.0, ridged)
+			continue
 		var n := 1
 		if i == 0 and (shape.has("crest_scale") or land.has("crests")):
 			n = int(land.get("crests", 1))

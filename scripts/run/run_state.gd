@@ -251,6 +251,44 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	return rewards
 
 
+## v21 (pista "Mais longe"): pouso na plataforma a x_m metros do comeco, pulando `skipped` plataformas. Paga
+## EconMath.track_pay (distancia do comeco x qualidade x plataforma x pulo) e da as estrelas da nota do pouso.
+## distance_flown = o mais longe que a nave chegou (recorde do mundo).
+func complete_track_landing(x_m: float, skipped: int, quality: float, tier: String, gas_used: float,
+		perfect: bool) -> Dictionary:
+	var pay := EconMath.track_pay(planet_id, x_m, stats, quality, tier, skipped)
+	var rewards := _add_earned(pay)
+	var st := EconMath.landing_stars(quality)
+	deliveries.append({"distance": x_m, "quality": quality, "gas_used": gas_used, "rewards": rewards, "tier": tier,
+			"mult": float(EconMath.pad_tier(tier)["mult"]), "skipped": skipped, "perfect": perfect, "stars": st,
+			"mission": EconMath.simple_mission(), "failed": [], "rep": 1.0})
+	perfect_streak = perfect_streak + 1 if perfect else 0
+	perfect_count += 1 if perfect else 0
+	distance_flown = maxf(distance_flown, x_m)
+	best_delivery = maxf(best_delivery, float(rewards.get("credits", 0.0)))
+	stars += st
+	return rewards
+
+
+## Moedas soltas na pista (moeda no ar, marco): entram no ganho do run sem contar como pouso.
+func add_bonus(amount: float) -> Dictionary:
+	return _add_earned(amount)
+
+
+## Distancia alcancada em voo (m do comeco): o recorde conta ate onde a nave foi, nao so o ultimo pouso.
+func note_distance(x_m: float) -> void:
+	distance_flown = maxf(distance_flown, x_m)
+
+
+func _add_earned(amount: float) -> Dictionary:
+	var rewards := {}
+	var weights: Dictionary = _planet.get("rewards", {"credits": 1.0})
+	for res: String in weights:
+		rewards[res] = amount * float(weights[res])
+		earned[res] = float(earned.get(res, 0.0)) + rewards[res]
+	return rewards
+
+
 ## Numeros do run para os recordes pessoais (GameState.RECORDS): o dinheiro e so o das entregas (+ presentes).
 func record_values() -> Dictionary:
 	return {"run_money": float(earned.get("credits", 0.0)), "run_deliveries": float(deliveries.size()),
