@@ -154,6 +154,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_restart_armed = 0.0
 			_start_run()
+	elif event.is_action_pressed(&"end_run") and _hud != null and _hud.can_end() and not _pause.visible:
+		get_viewport().set_input_as_handled()                  # pista: mesma confirmacao do botao TERMINAR VIAGEM
+		_hud.request_end()
 	elif event.is_action_pressed(&"ui_cancel") and _can_pause():
 		get_viewport().set_input_as_handled()
 		_pause.open()
@@ -339,6 +342,7 @@ func _start_run() -> void:
 	Sound.music("flight", GameState.current_planet)        # faixa do mundo (ou base do voo + camada)
 	Sound.ambience(GameState.current_planet)
 	_hud.bind(_flight, _run)
+	_hud.end_requested.connect(_on_end_requested)
 	_flight.delivery_finished.connect(_on_delivery_finished)
 	_flight.stranded.connect(_on_stranded)
 	_flight.rested.connect(func(_i: Dictionary) -> void: Telemetry.event("rest"))
@@ -609,10 +613,10 @@ func _graduation_line() -> String:
 
 
 func _on_stranded() -> void:
-	if _flight != null and _flight.track:                      # pista: sem gas para a proxima plataforma = fim
+	if _flight != null and _flight.track:                      # pista: tanque vazio de verdade = fim
 		if _run != null and not _run.over:
 			_flight.lander.can_takeoff = false                  # acabou: a nave nao decola mais ate o resumo
-			_run.finish("sem_gas" if _flight.lander.gas <= GAS_EMPTY else "sem_alcance")
+			_run.finish("sem_gas")
 			var flight := _flight
 			await get_tree().create_timer(0.8, false).timeout     # o pouso aparece antes do resumo
 			if flight == _flight and _run != null:                 # (R/menu no meio da espera: nada)

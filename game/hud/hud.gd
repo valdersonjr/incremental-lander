@@ -8,6 +8,9 @@
 class_name Hud
 extends Control
 
+## Pista: o jogador pediu para terminar a viagem (botao TERMINAR VIAGEM ou tecla, confirmados 2 vezes).
+signal end_requested
+
 const TOAST_SECONDS := 2.5
 const WORLD_NAME_S := 1.4                       # nome do mundo na chegada (some sozinho)
 
@@ -58,6 +61,9 @@ var _combo_shown := 0
 var _combo_bar: ColorRect = null                 # risco colorido embaixo do numero (cor da faixa)
 var _combo_t := 0.0
 var _spark_t := 0.0
+var _end_button: Button = null                   # pista: TERMINAR VIAGEM (so com a nave parada no chao)
+var _end_armed := 0.0                            # > 0: o proximo toque termina (confirmacao, some sozinha)
+const END_CONFIRM_S := 2.5
 ## Faixas do multiplicador: a partir de [n] -> cor (paleta da UI). >= 15 = arco-iris (as cores giram).
 const COMBO_TIERS := [[1, "white"], [2, "leaf"], [3, "aqua"], [4, "gold"], [6, "amber"], [8, "coral"], [10, "red"],
 		[15, "violet"]]
@@ -147,6 +153,7 @@ func _process(delta: float) -> void:
 	_dist.get_parent().visible = flight.target_pad_id >= 0   # sem alvo a janela de missao ja esta aberta: sem dica repetida
 	_update_score()
 	_update_track()
+	_update_end_button(delta)
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
 
@@ -273,6 +280,50 @@ func _build_track_row() -> void:
 	_score.move_child(_live_row, 1)
 	_score.move_child(_track_row, 1)
 	_rec_grid.visible = false                                  # a distancia ja esta aqui em destaque
+	_build_end_button()
+
+
+## Pista (2026-10-11): o jogador decide quando parar (no lugar do fim automatico por "o gas nao da", que errava).
+## Canto de baixo a direita; sem foco (Espaco e o motor, nao pode apertar o botao).
+func _build_end_button() -> void:
+	_end_button = Button.new()
+	_end_button.text = "TERMINAR VIAGEM"
+	_end_button.focus_mode = Control.FOCUS_NONE
+	_end_button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 6)
+	_end_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_end_button.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_end_button.visible = false
+	_end_button.pressed.connect(request_end)
+	add_child(_end_button)
+
+
+## Botao ou tecla: 1o toque arma ("TERMINAR? toque de novo"), 2o dentro de END_CONFIRM_S termina.
+func request_end() -> void:
+	if not can_end():
+		return
+	if _end_armed > 0.0:
+		_end_armed = 0.0
+		end_requested.emit()
+		return
+	_end_armed = END_CONFIRM_S
+	Sound.ui("click")
+
+
+## Da para terminar agora? Pista, run em andamento e a nave parada no chao (no ar o salto se perderia).
+func can_end() -> bool:
+	return _end_button != null and flight != null and run != null and not run.over \
+			and flight.lander.state == Lander.State.LANDED
+
+
+func _update_end_button(delta: float) -> void:
+	if _end_button == null:
+		return
+	_end_armed = maxf(_end_armed - delta, 0.0)
+	_end_button.visible = can_end()
+	if not _end_button.visible:
+		_end_armed = 0.0
+	_end_button.text = "TERMINAR? toque de novo" if _end_armed > 0.0 else "TERMINAR VIAGEM"
+	_end_button.theme_type_variation = &"DangerButton" if _end_armed > 0.0 else &""
 
 
 func _update_track() -> void:

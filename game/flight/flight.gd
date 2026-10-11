@@ -526,7 +526,7 @@ func _on_lander_rested(info: Dictionary) -> void:
 	_landing_sound(0.2)
 	_float_text("decole de novo!", lander.global_position - Vector2(0.0, 26.0))
 	rested.emit(info)
-	if lander.gas <= 0.001 or (track and not track_can_reach(lander.gas, lander.global_position.x)):
+	if lander.gas <= 0.001:
 		stranded.emit()
 
 
@@ -1596,8 +1596,9 @@ func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 		_refresh_pay_tags()
 		track_reached.emit(result)
 		_track_autopilot()
-	if lander.gas <= 0.001 or not track_can_reach(lander.gas, lander.global_position.x):
-		stranded.emit()                                        # sem gas para a proxima: fim da viagem
+	if lander.gas <= 0.001:
+		stranded.emit()                                        # tanque vazio: fim da viagem (2026-10-11: a estimativa
+		# "o gas nao da" errava; com gas sobrando o jogador decide no botao TERMINAR VIAGEM)
 
 
 ## O gas alcanca a proxima plataforma a frente saindo de from_px? Estimativa do piloto IDEAL (EconMath.estimated_hop_dv,

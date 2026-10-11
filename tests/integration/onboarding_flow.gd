@@ -76,12 +76,29 @@ func _ready() -> void:
 	main._on_launch_requested()
 	await _frames(3)
 	flight = main._flight
-	# pousou com gas que nao alcanca a proxima plataforma: a viagem acaba sozinha
+	# 2026-10-11: pousou com pouco gas -> a viagem NAO acaba sozinha (a estimativa "o gas nao da" errava);
+	# o jogador termina no botao TERMINAR VIAGEM (2 toques)
 	flight.lander.gas = 0.3
 	var info0 := {"gas_used": 10.0, "flight_time_m": 20.0, "vy": 1.0, "tilt": 0.0}
 	flight._track_landed(flight.terrain.pads[1], 0.7, info0)
+	await _frames(3)
+	_check(not main._run.over, "pouco gas no pouso: a viagem continua")
+	_check(main._hud.can_end() and main._hud._end_button.visible, "nave parada: botao TERMINAR VIAGEM aparece")
+	main._hud.request_end()
+	await _frames(2)
+	_check(not main._run.over and main._hud._end_button.text.begins_with("TERMINAR?"), "1o toque so pede confirmacao")
+	main._hud.request_end()
 	await _until(func() -> bool: return main._run.over and main._summary.visible)
-	_check(main._run.over and main._run.end_reason == "sem_gas", "pousou sem gas para a proxima: fim da viagem (%s)" % main._run.end_reason)
+	_check(main._run.over and main._run.end_reason == "encerrado", "2o toque: fim da viagem (%s)" % main._run.end_reason)
+	main._summary.visible = false
+	main._on_launch_requested()
+	await _frames(3)
+	flight = main._flight
+	# tanque vazio de verdade: a viagem acaba sozinha
+	flight.lander.gas = 0.0
+	flight._track_landed(flight.terrain.pads[0], 0.7, info0)    # a mesma plataforma: nao paga (nao mexe na Estrada)
+	await _until(func() -> bool: return main._run.over and main._summary.visible)
+	_check(main._run.over and main._run.end_reason == "sem_gas", "pousou com tanque vazio: fim da viagem (%s)" % main._run.end_reason)
 	_check(not flight.lander.can_takeoff, "viagem encerrada: a nave nao decola mais")
 	main._summary.visible = false
 	main._on_launch_requested()

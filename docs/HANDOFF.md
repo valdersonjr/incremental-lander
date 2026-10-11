@@ -16,8 +16,7 @@
   demo na Lua (7 pousos/1,1 km com galões) e no Jardim, capturas (moedas, placas, "POUSOU! +3 estrelas", "NOVO
   MARCO!"). **Para o usuário**: jogar e analisar. **Pendências**: 19.4 (mundos na NAVE em vez do Mapa, Estrada como
   barra, fim de viagem com distância em destaque), 19.5 (ratinhos/minijogos como trechos; arte própria de moeda/placa/
-  bandeira e sons), calibrar `rough_scale`/gás com telemetria (o modelo é chute), tecla E (terminar viagem) sem uso
-  na pista, publicar no Vercel quando o usuário pedir (reteste do amigo). Código antigo (cartão/missões/minijogos)
+  bandeira e sons), calibrar `rough_scale`/gás com telemetria (o modelo é chute), publicar no Vercel quando o usuário pedir (reteste do amigo). Código antigo (cartão/missões/minijogos)
   continua no projeto, só não roda no modo pista.
   **Correções depois do 1º teste do usuário**: plaquinha "+N" (pouso bom) em cima das 6 próximas plataformas; ouro
   só no pouso (moedas no ar/marcos ficam "+N ao pousar"; distância = até onde pousou); crash ao aprimorar a nave
@@ -28,8 +27,9 @@
   teto (v23) e gasto por distância (v24) rejeitados; **v25**: tanque base 45, peças Gasolina/Eficiência a 30%, galão
   fixo 12, arremesso aceito como habilidade. Demo: 2 pousos/340 m/~350 de ouro no 1º voo. Modelo: viagem 0,8 → 6,8 km
   no jogo todo, compras a cada ~7,7 min (esperas de 7–12 min perto de 0,9 h). Calibrar com o próximo teste.
-  Sem gás para a próxima plataforma (estimativa do piloto ideal + galões no caminho, folga 10%) = fim da viagem na
-  hora ("O GÁS NÃO DÁ!"), e o aprendiz só repete o salto se o gás do começo dele alcança (`Flight.track_can_reach`).
+  ~~Sem gás para a próxima plataforma = fim na hora ("O GÁS NÃO DÁ!")~~ — **removido 2026-10-11** (a estimativa errava):
+  a viagem só acaba sozinha com o tanque vazio; com a nave parada no chão aparece **TERMINAR VIAGEM** (canto de baixo
+  à direita, 2 toques; tecla E faz o mesmo). O aprendiz ainda só repete o salto se o gás alcança (`Flight.track_can_reach`).
   **v26–v27**: velocidade máxima 45 m/s (aviso "velocidade máxima!"), bônus fixo por pouso + sequência de pousos
   (HUD "a receber: pouse! sequência ×1,4"; aviso "124 ×2,9 = +358"). Modelo agora testa arremessos e estilos.
   **v28 (ideia do usuário)**: metro paga 0,3 fixo e cada plataforma pousada soma +1 no multiplicador da viagem.
