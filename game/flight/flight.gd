@@ -1492,6 +1492,8 @@ var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
 var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
 var _marks: Array[Dictionary] = []                   # {m, x, node, done}
 var _flag: Node2D = null
+var _pay_tags: Dictionary = {}                       # indice da plataforma -> etiqueta "+N" (moedas de um pouso bom)
+const PAY_TAGS_AHEAD := 6
 
 
 ## Viagem nova na pista do mundo (fixa: mesma seed sempre). best_m = recorde de distancia do mundo.
@@ -1521,6 +1523,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 	lander.can_takeoff = true
 	_place_on_start_pad()
 	_spawn_track_props()
+	_refresh_pay_tags()
 	_track_autopilot()
 
 
@@ -1579,6 +1582,7 @@ func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 			"hard": bool(info.get("hard", false)),
 		}
 		Telemetry.record_delivery(result)
+		_refresh_pay_tags()
 		track_reached.emit(result)
 		_track_autopilot()
 	if lander.gas <= 0.001:
@@ -1616,6 +1620,40 @@ func _spawn_track_props() -> void:
 			m += every
 	if track_best_m > 0.0:
 		_flag = _marker_node(track_best_m, true)
+
+
+## Etiqueta "+N" em cima das proximas plataformas (como no prototipo): moedas de um pouso BOM (nota stars.good) nela,
+## ja com o tamanho da plataforma e o bonus de pulo; o aviso do pouso mostra o valor exato. Ultima paga e as de tras
+## somem; mostra so as PAY_TAGS_AHEAD seguintes.
+func _refresh_pay_tags() -> void:
+	for k: int in _pay_tags.keys():
+		(_pay_tags[k] as Node).queue_free()
+	_pay_tags.clear()
+	var q := float(EconMath.spec["contracts"]["track"].get("stars", {}).get("good", 0.6))
+	for i in range(_track_last + 1, mini(_track_last + 1 + PAY_TAGS_AHEAD, terrain.pads.size())):
+		var p: Dictionary = terrain.pads[i]
+		var skipped := 1 if i > _track_last + 1 else 0
+		var pay := EconMath.track_pay(planet_id, track_pad_m(i), stats, q, str(p["tier"]), skipped)
+		var panel := PanelContainer.new()                      # placa escura: legivel em qualquer ceu
+		panel.theme = UiKit.theme_for(planet_id)
+		panel.theme_type_variation = &"SlimPanel"
+		var box := HBoxContainer.new()
+		box.add_theme_constant_override(&"separation", 1)
+		panel.add_child(box)
+		var ic := TextureRect.new()
+		ic.texture = UiKit.icon("credits")
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+		ic.custom_minimum_size = Vector2(12, 12)
+		box.add_child(ic)
+		var l := Label.new()
+		l.theme_type_variation = &"MoneyLabel"
+		l.text = "+" + EconMath.fmt(pay)
+		box.add_child(l)
+		add_child(panel)
+		move_child(panel, lander.get_index())
+		panel.reset_size()
+		panel.position = Vector2(roundf(float(p["x"]) - panel.size.x * 0.5), float(p["y"]) - 72.0)
+		_pay_tags[i] = panel
 
 
 func _prop_sprite(tex: Texture2D, pos: Vector2) -> Sprite2D:
