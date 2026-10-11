@@ -55,6 +55,13 @@ var _live_hint: Label = null
 var _combo_badge: PanelContainer = null          # v28: "x3" grande no alto (multiplicador do proximo pouso)
 var _combo_label: Label = null
 var _combo_shown := 0
+var _combo_bar: ColorRect = null                 # risco colorido embaixo do numero (cor da faixa)
+var _combo_t := 0.0
+var _spark_t := 0.0
+## Faixas do multiplicador: a partir de [n] -> cor (paleta da UI). >= 15 = arco-iris (as cores giram).
+const COMBO_TIERS := [[1, "white"], [2, "leaf"], [3, "aqua"], [4, "gold"], [6, "amber"], [8, "coral"], [10, "red"],
+		[15, "violet"]]
+const RAINBOW := ["red", "amber", "gold", "leaf", "aqua", "violet", "lavender"]
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -161,6 +168,10 @@ func _build_combo_badge() -> void:
 	_combo_label.theme_type_variation = &"BigMoneyLabel"
 	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_combo_label)
+	_combo_bar = ColorRect.new()
+	_combo_bar.custom_minimum_size = Vector2(0, 2)
+	_combo_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_child(_combo_bar)
 	var cap := Label.new()
 	cap.theme_type_variation = &"DimLabel"
 	cap.text = "multiplicador"
@@ -174,8 +185,21 @@ func _update_combo_badge() -> void:
 	var n := run.track_streak if run != null else 0
 	var mult := EconMath.track_combo_mult(n)
 	_combo_label.text = UiKit.mult_text(mult)
+	var c := _combo_color(mult)
+	_combo_label.add_theme_color_override(&"font_color", c)
+	_combo_bar.color = c
 	_combo_badge.reset_size()
-	_combo_badge.position = Vector2(roundf((size.x - _combo_badge.size.x) * 0.5), 4.0)
+	# animacao pela faixa: >= x3 flutua, >= x5 balanca, >= x8 solta faiscas, >= x15 cores girando (_combo_color)
+	var dt := get_process_delta_time()
+	_combo_t += dt
+	var bob := roundf(sin(_combo_t * 4.0) * (1.0 if mult >= 3.0 else 0.0) * (2.0 if mult >= 8.0 else 1.0))
+	var shake := roundf(sin(_combo_t * 23.0)) if mult >= 5.0 else 0.0   # tremidinho de 1 px (sem girar: pixel nitido)
+	_combo_badge.position = Vector2(roundf((size.x - _combo_badge.size.x) * 0.5) + shake, 4.0 + bob)
+	if mult >= 8.0:
+		_spark_t -= dt
+		if _spark_t <= 0.0:
+			_spark_t = maxf(0.05, 0.35 - mult * 0.015)          # quanto maior, mais faiscas
+			_spark(c)
 	if n > _combo_shown:                                       # subiu num pouso: festa
 		UiKit.pulse(_combo_badge, 2.0, 0.45)
 		var tw := create_tween()
@@ -183,6 +207,33 @@ func _update_combo_badge() -> void:
 		tw.tween_property(_combo_label, "modulate", Color.WHITE, 0.35)
 		Sound.jingle("road_stop")
 	_combo_shown = n
+
+
+## Cor da faixa do multiplicador (>= x15: arco-iris girando).
+func _combo_color(mult: float) -> Color:
+	if mult >= 15.0:
+		return UiKit.color(RAINBOW[int(_combo_t * 8.0) % RAINBOW.size()])
+	var name := "white"
+	for t: Array in COMBO_TIERS:
+		if mult >= float(t[0]):
+			name = str(t[1])
+	return UiKit.color(name)
+
+
+## Faisca: quadradinho 2x2 da cor da faixa que sai da placa e some.
+func _spark(c: Color) -> void:
+	var r := ColorRect.new()
+	r.color = c
+	r.size = Vector2(2, 2)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var b := _combo_badge.get_rect()
+	r.position = Vector2(randf_range(b.position.x, b.end.x), randf_range(b.position.y, b.end.y)).round()
+	add_child(r)
+	var dir := Vector2(randf_range(-1.0, 1.0), randf_range(-0.4, 1.0)).normalized() * randf_range(10.0, 22.0)
+	var tw := r.create_tween()
+	tw.tween_property(r, "position", (r.position + dir).round(), 0.5)
+	tw.parallel().tween_property(r, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(r.queue_free)
 
 
 ## v21 (pista): a distancia e a pontuacao da viagem -> linha grande logo abaixo do dinheiro, com o recorde do mundo.

@@ -369,6 +369,8 @@ func _begin_track() -> void:
 	_hop_gas = _flight.lander.gas
 	_hop_safe = true
 	_retries = 0
+	if OS.is_debug_build() and _args.has("dev_streak"):        # dev: comeca com o multiplicador alto (capturas)
+		_run.track_streak = int(_args["dev_streak"])
 	_set_pending(0.0)
 	_flight.apprentice = _apprentice_hop()
 	_flight.lander.ground_rest = _flight.apprentice             # aprendiz: pouso devagar fora da plataforma nao bate
