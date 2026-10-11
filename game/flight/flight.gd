@@ -1495,6 +1495,7 @@ var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
 var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
 var _marks: Array[Dictionary] = []                   # {m, x, node, done}
 var _flag: Node2D = null
+var _vmax_warned := false
 var _pay_tags: Dictionary = {}                       # indice da plataforma -> etiqueta "+N" (moedas de um pouso bom)
 const PAY_TAGS_AHEAD := 6
 
@@ -1522,6 +1523,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 	target_pad_id = 1
 	_rebuild_terrain()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.params["vmax"] = float(t.get("vmax", 0.0))         # v26: velocidade maxima (sem arremesso de 10+ km)
 	lander.ridge = terrain.ridge
 	lander.visible = true
 	lander.can_takeoff = true
@@ -1535,6 +1537,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 func track_retry(gas: float) -> void:
 	_track_unhit_marks()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
+	lander.params["vmax"] = float(EconMath.track_spec(planet_id).get("vmax", 0.0))
 	lander.gas = gas
 	lander.visible = true
 	lander.can_takeoff = true
@@ -1726,6 +1729,10 @@ func _tick_track() -> void:
 		return
 	if lander.state != Lander.State.FLYING:
 		return
+	var vmax := float(lander.params.get("vmax", 0.0))
+	if vmax > 0.0 and lander.vel_m.length() >= vmax - 0.05 and not _vmax_warned:   # 1a vez no limite: avisa
+		_vmax_warned = true
+		_float_text("velocidade máxima!", lander.global_position + Vector2(0, 22))
 	var pos := lander.global_position
 	track_far_m = maxf(track_far_m, WorldConfig.px_to_m(pos.x))
 	for c: Dictionary in _cans:

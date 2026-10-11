@@ -842,7 +842,23 @@ def track_hop(E: dict, planet: dict, d: float, stats: dict, prof: Profile) -> tu
     """(delta-v, tempo) de um salto de d metros na pista. v22b: TETO de voo (track.ceiling_m acima do chao): o arco de
     45 graus sobe d/4; se passar do teto, a nave sobe so ate o teto e o resto e velocidade horizontal (custo ~linear em
     d: acaba com o "arremesso" de km por quase nada de gas, medido no jogo em 2026-10-11)."""
-    H = track_spec(E, planet).get("ceiling_m", 0.0)
+    T = track_spec(E, planet)
+    vmax = T.get("vmax", 0.0)
+    if vmax > 0 and math.sqrt(planet["gravity"] * d) > vmax:
+        # v26: VELOCIDADE MAXIMA. Lancamento a 45 graus no limite (alcance vmax^2/g); o resto do caminho a nave segura
+        # a altura com o motor (custo g por segundo a mais no ar): custo ~linear em d, sem o arremesso de 10+ km
+        g, a = planet["gravity"], stats["thrust"]
+        if a <= g * 1.05:
+            return math.inf, math.inf
+        a = felt_thrust(_FEEL, a, g)
+        vx = vmax / math.sqrt(2)
+        t_ball = 2 * vx / g
+        t_air = d / vx
+        dv = (2 * vmax * (1 + 0.707 * g / a) + g * (t_air - t_ball)) * (1 + planet.get("drag", 0.0)) * prof.waste
+        dv *= 1 + planet.get("hazard", {}).get("dv", 0.0) * (1 - min(prof.skill, 1.0)) * 2
+        dv += 2 * g * prof.hover_s
+        return dv, t_air + 2 * vmax / a + prof.hop_overhead_s
+    H = T.get("ceiling_m", 0.0)
     if H <= 0 or d <= 4 * H:
         return hop_dv(planet, d, stats, prof), hop_time(planet, d, stats, prof)
     g, a = planet["gravity"], stats["thrust"]
@@ -856,6 +872,9 @@ def track_hop(E: dict, planet: dict, d: float, stats: dict, prof: Profile) -> tu
     dv *= 1 + planet.get("hazard", {}).get("dv", 0.0) * (1 - min(prof.skill, 1.0)) * 2
     dv += 2 * g * prof.hover_s
     return dv, t_air + 2 * v0 / a + prof.hop_overhead_s
+
+
+TRACK_LOOKAHEAD = 40      # plataformas a frente que o piloto do modelo considera (arremesso de varios km)
 
 
 def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
@@ -877,7 +896,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
     fails = 0
     while True:
         best = None
-        for skip in range(6):                                # v22b: arremesso longo tambem e opcao
+        for skip in range(TRACK_LOOKAHEAD):                  # v26: arremessos longos tambem sao testados
             j = i + 1 + skip
             if j >= len(pads):
                 break

@@ -72,3 +72,11 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   40); engajado: 1ª compra 75 s, intervalo mediano 7,7 min (p90 16), mundos 0,73/1,59/2,61/3,47/4,36 h; casual até
   7,2 h; expert 2,6 h (viagem ~7 min: pilotar bem rende). Avisos: esperas de 7–12 min perto de 0,9 h. Script
   `balance/sims/2026-10-11-v25-final.py`.
+- v26 (2026-10-11) — velocidade máxima `track.vmax` 45 m/s (física do lander limita |v|; modelo `track_hop` com vmax:
+  alcance balístico vmax²/g, além disso a nave segura a altura = g por segundo) + piloto do modelo olha
+  `TRACK_LOOKAHEAD` 40 plataformas à frente — motivo: jogando, o usuário arremessou 12,8 km em 3 pousos e fez 370 mil
+  na 9ª viagem (~7,6 min); o modelo olhava só 6 plataformas e não via isso — medido (screen 10 h): sem vmax o modelo
+  agora também estoura (expert nível 20: 15 km, 338 mil por viagem); com vmax 45: 8 km / 118 mil; engajado intervalo
+  mediano 11 min, mundos mais lentos (Nuvens 1,9 h, Cogumelos 5,6 h). ACHADO: voar reto segurando a altura custa
+  g/v por metro — mais barato que pousar em cada plataforma (200 m custam ~3,5× mais por km) — então o voo de cruzeiro
+  domina; pendente: recompensar os pousos (proposta: sequência de pousos multiplica) e re-ajustar o ritmo.

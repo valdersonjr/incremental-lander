@@ -23,8 +23,12 @@ static func step(velocity: Vector2, rotation: float, thrusting: bool, gas: float
 		accel += Vector2.UP.rotated(rotation) * thrust * (burn_time / dt)
 	accel += params.get("extra_accel", Vector2.ZERO) as Vector2
 	accel -= velocity * float(params.get("drag", 0.0))
+	var v := velocity + accel * dt
+	var vmax := float(params.get("vmax", 0.0))                 # v26 (pista): velocidade maxima da nave
+	if vmax > 0.0 and v.length() > vmax:
+		v = v.limit_length(vmax)
 	return {
-		"velocity": velocity + accel * dt,
+		"velocity": v,
 		"gas": maxf(0.0, gas - gas_used),
 		"gas_used": gas_used,
 		"dv": dv,

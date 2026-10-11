@@ -62,3 +62,17 @@ func test_empuxo_sentido_tem_teto() -> void:
 	var big := EconMath.felt_thrust(50.0, 1.62) - 1.62
 	assert_true(big <= float(f["max"]) + 1e-6 and big > float(f["knee"]), "motor forte sente no maximo max")
 	assert_true(EconMath.felt_thrust(16.0, 1.62) > EconMath.felt_thrust(10.0, 1.62), "degrau maior ainda sente mais")
+
+
+func test_velocidade_maxima_limita_a_nave() -> void:
+	# v26 (pista): com vmax, motor ligado nao passa do limite (o arremesso de 10+ km saia barato)
+	var p := {"gravity": 1.62, "thrust": 30.0, "efficiency": 3.0, "vmax": 45.0}
+	var v := Vector2(30.0, -30.0)
+	for i in 120:
+		v = LanderPhysics.step(v, 0.6, true, 100.0, p, 1.0 / 60.0)["velocity"]
+	assert_true(v.length() <= 45.0 + 1e-6, "velocidade %.2f <= 45" % v.length())
+	p.erase("vmax")
+	var free := Vector2(30.0, -30.0)
+	for i in 120:
+		free = LanderPhysics.step(free, 0.6, true, 100.0, p, 1.0 / 60.0)["velocity"]
+	assert_true(free.length() > 45.0, "sem vmax continua acelerando")
