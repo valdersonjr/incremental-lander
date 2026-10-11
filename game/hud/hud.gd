@@ -191,7 +191,7 @@ func _update_track() -> void:
 	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
 	var live := _pending + flight.track_live_gain()
 	_live_row.modulate.a = 1.0 if live > 0.0 else 0.0
-	_live.text = "+" + EconMath.fmt(live)
+	_live.text = "+" + (str(int(live)) if live < 1000.0 else EconMath.fmt(live))
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
@@ -499,6 +499,9 @@ func _on_delivery_finished(result: Dictionary) -> void:
 func show_delivery(entry: Dictionary) -> void:
 	var gain := float(entry["rewards"].get("credits", 0.0))
 	var text := "+%s   qualidade %d%%" % [EconMath.fmt(gain), int(float(entry["quality"]) * 100.0)]
+	if entry.has("accum"):                                     # v22: acumulado x pouso = o que entrou no banco
+		text = "%s %s = +%s" % [EconMath.fmt(float(entry["accum"])), UiKit.mult_text(float(entry["land_mult"])),
+				EconMath.fmt(gain)]
 	var parts: Array[String] = []
 	if float(entry.get("mult", 1.0)) > 1.0:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))
@@ -521,7 +524,7 @@ func show_delivery(entry: Dictionary) -> void:
 	if float(entry.get("bonus", 0.0)) > 0.0:                  # moedas no ar + marcos, pagos no pouso
 		parts.append("moedas e marcos +%s" % EconMath.fmt(float(entry["bonus"])))
 	if int(entry.get("skipped", 0)) > 0:                      # v21 (pista): pulou uma plataforma
-		parts.append("PULOU! +%d%%" % roundi(float(EconMath.track_spec(flight.planet_id).get("skip_bonus", 0.0)) * 100.0))
+		parts.append("PULOU UMA!")
 	if int(entry.get("rep_pts", 0)) > 0:
 		parts.append("+%d reputação" % int(entry["rep_pts"]))
 	var title := "ENTREGA!"

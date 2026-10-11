@@ -251,17 +251,17 @@ func complete_delivery(distance: float, quality: float, gas_used: float, failed:
 	return rewards
 
 
-## v21 (pista "Mais longe"): pouso na plataforma a x_m metros do comeco, pulando `skipped` plataformas. Paga
-## EconMath.track_pay (distancia do comeco x qualidade x plataforma x pulo) e da as estrelas da nota do pouso.
-## distance_flown = o mais longe que a nave chegou (recorde do mundo).
-func complete_track_landing(x_m: float, skipped: int, quality: float, tier: String, gas_used: float,
+## v22 (pista "Mais longe"): pouso que leva para o banco o ouro acumulado de from_m ate x_m (m do comeco) x nota x
+## plataforma (EconMath.track_pay) e da as estrelas da nota. distance_flown = fronteira paga (recorde do mundo).
+func complete_track_landing(from_m: float, x_m: float, skipped: int, quality: float, tier: String, gas_used: float,
 		perfect: bool) -> Dictionary:
-	var pay := EconMath.track_pay(planet_id, x_m, stats, quality, tier, skipped)
-	var rewards := _add_earned(pay)
+	var accum := EconMath.track_accum(planet_id, from_m, x_m, stats)
+	var land := EconMath.track_land_mult(quality, tier)
+	var rewards := _add_earned(accum * land)
 	var st := EconMath.landing_stars(quality)
 	deliveries.append({"distance": x_m, "quality": quality, "gas_used": gas_used, "rewards": rewards, "tier": tier,
 			"mult": float(EconMath.pad_tier(tier)["mult"]), "skipped": skipped, "perfect": perfect, "stars": st,
-			"mission": EconMath.simple_mission(), "failed": [], "rep": 1.0})
+			"accum": accum, "land_mult": land, "mission": EconMath.simple_mission(), "failed": [], "rep": 1.0})
 	perfect_streak = perfect_streak + 1 if perfect else 0
 	perfect_count += 1 if perfect else 0
 	distance_flown = maxf(distance_flown, x_m)

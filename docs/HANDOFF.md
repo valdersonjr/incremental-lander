@@ -20,6 +20,8 @@
   **Correções depois do 1º teste do usuário**: plaquinha "+N" (pouso bom) em cima das 6 próximas plataformas; ouro
   só no pouso (moedas no ar/marcos ficam "+N ao pousar"; distância = até onde pousou); crash ao aprimorar a nave
   (`ShipView._draw`: ternário com Array[Rect2] — bug antigo, só aparece com tela; teste novo `buy_flow` + captura).
+  **Ouro acumulado (v22)**: o painel de cima mostra "+N a receber" crescendo com o chão novo (fronteira paga
+  `track_banked_m`), o pouso paga acumulado × nota × plataforma; plaquinhas mostram o acumulado ao chegar em cada uma.
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

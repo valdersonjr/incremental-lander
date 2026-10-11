@@ -710,7 +710,8 @@ class RunResult:
 # ---------------------------------------------------------------------------
 # v21 — pista "Mais longe" (contracts.track; padrao Hill Climb Racing). Espelho GDScript: EconMath.track_*.
 # A viagem vai so para a frente: plataformas em sequencia com vaos que crescem com a distancia; cada pouso paga
-# pela distancia DO COMECO (x); pular uma plataforma e pousar na seguinte paga +skip_bonus; galoes de gas no
+# pelos metros AVANCADOS desde o ultimo pouso (acumulado que cresce com a distancia do comeco; v21b) x nota x
+# tamanho da plataforma; pular uma = mais metros; galoes de gas no
 # caminho (cada vez mais espacados); moedas no ar (coin_frac do pagamento-base, coletadas na fracao da habilidade);
 # marcos a cada marker_every m pagam marker_mult x pagamento-base na 1a vez (por mundo); estrelas = nota do pouso
 # (1 + bom + perfeito). Sem cansaco do run, sem presentes, sem bonus de recorde de dinheiro.
@@ -783,13 +784,31 @@ def track_can_gas(E: dict, stats: dict) -> float:
     return E["contracts"]["track"].get("can_frac", 0.0) * stats["tank"]
 
 
-def track_pay(E: dict, planet: dict, x: float, stats: dict, q: float, tier_id: str = "normal", skipped: int = 0) -> float:
-    """Pagamento de um pouso na plataforma a x metros do comeco: base(x) x qualidade x plataforma x (1 + pulo)."""
+def track_accum(E: dict, planet: dict, x0: float, x1: float, stats: dict) -> float:
+    """v21b: ouro ACUMULADO voando para a frente de x0 ate x1 (o placar 'a receber' do HUD; nunca cai):
+    integral de track_base(x)/per_m_ref dx (cada per_m_ref metros perto de x valem 1 pagamento-base de x).
+    Forma fechada: B x M x [f (x1-x0) + u/(e+1) ((x1/u)^(e+1) - (x0/u)^(e+1))] / per_m_ref."""
+    if x1 <= x0:
+        return 0.0
+    C = E["contracts"]
+    T = track_spec(E, planet)
+    u, e, f = T.get("pay_unit", C.get("distance_unit", 100.0)), C["distance_exp"], C.get("pay_fixed", 0.0)
+    m = C["pay_base"] * planet.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
+    integral = f * (x1 - x0) + u / (e + 1) * ((x1 / u) ** (e + 1) - (max(x0, 0.0) / u) ** (e + 1))
+    return m * integral / T.get("per_m_ref", 175.0)
+
+
+def track_land_mult(E: dict, q: float, tier_id: str = "normal") -> float:
+    """Multiplicador do pouso sobre o acumulado: qualidade (1 + bonus q^exp) x tamanho da plataforma."""
     C = E["contracts"]
     q = min(1.0, max(0.0, q))
-    sk = track_spec(E, planet).get("skip_bonus", 0.0) * min(max(skipped, 0), 1)
-    return track_base(E, planet, x, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
-        * pad_tier(E, tier_id)["mult"] * (1.0 + sk)
+    return (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) * pad_tier(E, tier_id)["mult"]
+
+
+def track_pay(E: dict, planet: dict, x0: float, x1: float, stats: dict, q: float, tier_id: str = "normal") -> float:
+    """Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: acumulado x multiplicador do pouso. Pular uma
+    plataforma ja paga mais sozinho (mais metros acumulados)."""
+    return track_accum(E, planet, x0, x1, stats) * track_land_mult(E, q, tier_id)
 
 
 def track_coins(E: dict, planet: dict, x: float, stats: dict, frac: float) -> float:
@@ -847,7 +866,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
                 continue
             q_mu = _q_on_tier(prof.skill, tier, prof.skill)
             pc = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
-            ev = track_pay(E, planet, xj, stats, q_mu, tid, skip) * (1 - pc) ** CRASH_RISK_K
+            ev = track_pay(E, planet, x, xj, stats, q_mu, tid) * (1 - pc) ** CRASH_RISK_K
             if best is None or ev / g_need > best[0]:
                 best = (ev / g_need, j, xj - x, g_need, tier, skip)
         if best is None:
@@ -862,7 +881,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
         q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
         q = _q_on_tier(q, tier, prof.skill)
         pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
-        pay = track_pay(E, planet, pads[j][0], stats, q, tier["id"], skip) + track_coins(E, planet, pads[j][0], stats, prof.skill)
+        pay = track_pay(E, planet, x, pads[j][0], stats, q, tier["id"]) + track_coins(E, planet, pads[j][0], stats, prof.skill)
         if expected:
             pay *= (1 - pc)
             st_ = 1 + _p_good(prof, tier, S.get("good", 0.6)) + _p_good(prof, tier, S.get("perfect", 0.85))

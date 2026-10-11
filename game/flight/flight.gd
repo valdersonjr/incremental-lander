@@ -1488,6 +1488,9 @@ var track := false
 var track_best_m := 0.0                              # recorde do mundo (bandeira no chao; marcos alem dele pagam)
 var track_far_m := 0.0                               # mais longe nesta viagem (m do comeco)
 var _track_last := 0                                 # ultima plataforma paga (indice em terrain.pads)
+## v22: fronteira ja paga (m do comeco). O acumulado "a receber" e o chao NOVO alem dela (track_far_m - banked);
+## o mesmo metro nunca paga duas vezes.
+var track_banked_m := 0.0
 var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
 var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
 var _marks: Array[Dictionary] = []                   # {m, x, node, done}
@@ -1504,6 +1507,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 	_demo = demo
 	track_best_m = best_m
 	track_far_m = 0.0
+	track_banked_m = 0.0
 	_track_last = 0
 	var t := EconMath.track_spec(planet_id)
 	_reset_map(hash(["track", planet_id, int(t.get("seed", 1))]))
@@ -1558,7 +1562,8 @@ func _track_autopilot() -> void:
 	lander.autopilot = ap
 
 
-## Pouso na pista: plataforma a frente da ultima paga = pagamento (pulou n plataformas = bonus); atras = so descanso.
+## Pouso na pista: plataforma a frente da ultima paga = o acumulado (fronteira -> mais longe que a nave foi) entra no
+## banco x nota x plataforma; atras = so descanso (o acumulado continua esperando).
 func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 	var id := int(pad["id"])
 	if id > _track_last:
@@ -1569,8 +1574,10 @@ func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 		Sound.sfx("delivered")
 		var x_m := track_pad_m(id)
 		track_far_m = maxf(track_far_m, x_m)
+		var from_m := track_banked_m
+		track_banked_m = track_far_m
 		var result := {
-			"planet": planet_id, "distance": x_m, "thrust": stats["thrust"],
+			"planet": planet_id, "distance": track_banked_m, "from_m": from_m, "pad_m": x_m, "thrust": stats["thrust"],
 			"efficiency": float(lander.params["efficiency"]), "tank": stats["tank"],
 			"gas_used": info["gas_used"], "hop_time_s": info["flight_time_m"], "quality": quality,
 			"perfect": LandingRules.is_perfect(float(info.get("vy", 0.0)), float(info.get("tilt", 0.0)),
@@ -1630,11 +1637,9 @@ func _refresh_pay_tags() -> void:
 	for k: int in _pay_tags.keys():
 		(_pay_tags[k] as Node).queue_free()
 	_pay_tags.clear()
-	var q := float(EconMath.spec["contracts"]["track"].get("stars", {}).get("good", 0.6))
 	for i in range(_track_last + 1, mini(_track_last + 1 + PAY_TAGS_AHEAD, terrain.pads.size())):
 		var p: Dictionary = terrain.pads[i]
-		var skipped := 1 if i > _track_last + 1 else 0
-		var pay := EconMath.track_pay(planet_id, track_pad_m(i), stats, q, str(p["tier"]), skipped)
+		var pay := EconMath.track_accum(planet_id, track_banked_m, track_pad_m(i), stats)   # o acumulado ao chegar nela
 		var panel := PanelContainer.new()                      # placa escura: legivel em qualquer ceu
 		panel.theme = UiKit.theme_for(planet_id)
 		panel.theme_type_variation = &"SlimPanel"
@@ -1648,7 +1653,7 @@ func _refresh_pay_tags() -> void:
 		box.add_child(ic)
 		var l := Label.new()
 		l.theme_type_variation = &"MoneyLabel"
-		l.text = "+" + EconMath.fmt(pay)
+		l.text = "+" + (str(int(pay)) if pay < 1000.0 else EconMath.fmt(pay))
 		box.add_child(l)
 		add_child(panel)
 		move_child(panel, lander.get_index())
@@ -1724,19 +1729,12 @@ func _tick_track() -> void:
 			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
 
 
-## Quanto um pouso BOM renderia se a nave pousasse onde esta agora (cresce voando para a frente): o HUD mostra isso +
-## o que esta a receber; so entra no banco ao pousar numa plataforma (o valor certo vem da plataforma e da nota).
+## Ouro acumulado desde o ultimo pouso (chao novo alem da fronteira; so cresce): o HUD mostra isso + moedas/marcos.
+## Entra no banco ao pousar na proxima plataforma, x nota x plataforma.
 func track_live_gain() -> float:
-	if not track or lander.state != Lander.State.FLYING or terrain.pads.is_empty():
+	if not track:
 		return 0.0
-	var x := lander.global_position.x
-	var last: Dictionary = terrain.pads[_track_last]
-	if x <= float(last["x"]) + float(last["half_width"]):
-		return 0.0
-	var nxt: Dictionary = terrain.pads[mini(_track_last + 1, terrain.pads.size() - 1)]
-	var skipped := 1 if x > float(nxt["x"]) + float(nxt["half_width"]) else 0
-	var q := float(EconMath.spec["contracts"]["track"].get("stars", {}).get("good", 0.6))
-	return EconMath.track_pay(planet_id, WorldConfig.px_to_m(x), stats, q, "normal", skipped)
+	return EconMath.track_accum(planet_id, track_banked_m, track_far_m, stats)
 
 
 ## Pousou: os marcos passados nesta viagem foram pagos (nao pagam de novo neste mundo).
@@ -1748,7 +1746,7 @@ func track_confirm_marks() -> void:
 
 ## Bateu/acabou o gas no ar: os marcos passados e nao pousados voltam a valer.
 func _track_unhit_marks() -> void:
-	track_far_m = track_pad_m(_track_last)
+	track_far_m = track_banked_m
 	for mk: Dictionary in _marks:
 		if not mk["done"]:
 			mk["hit"] = false

@@ -385,7 +385,7 @@ func _on_track_reached(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))
 	Telemetry.event("delivery", "%.2f" % float(result["quality"]))
 	var was_apprentice := GameState.apprentice()
-	var rewards := _run.complete_track_landing(float(result["distance"]), int(result["skipped"]),
+	var rewards := _run.complete_track_landing(float(result["from_m"]), float(result["distance"]), int(result["skipped"]),
 			float(result["quality"]), str(result["tier"]), float(result["gas_used"]), bool(result["perfect"]))
 	var entry: Dictionary = _run.deliveries[-1]
 	if _pending > 0.0:                                         # moedas no ar + marcos: pagos agora, no pouso

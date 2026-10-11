@@ -318,7 +318,7 @@ static func run_fatigue_mult(n: int) -> float:
 
 # ---------------------------------------------------------------- v21: pista "Mais longe"
 ## Pista so para a frente (contracts.track; padrao Hill Climb Racing): plataformas em sequencia, pouso paga pela
-## distancia DO COMECO, pular uma paga +skip_bonus, relevo sobe com a distancia, galoes de gas, moedas no ar,
+## distancia DO COMECO (v22: acumulado por metro avancado x nota), relevo sobe com a distancia, galoes de gas, moedas no ar,
 ## marcos na 1a vez por mundo, estrelas = nota do pouso. Espelho de econ.py track_*.
 static func is_track() -> bool:
 	return not spec["contracts"].get("track", {}).is_empty()
@@ -367,14 +367,32 @@ static func track_can_gas(stats: Dictionary) -> float:
 	return float(spec["contracts"]["track"].get("can_frac", 0.0)) * float(stats["tank"])
 
 
-## Pouso na plataforma a x m do comeco: base(x) x qualidade x plataforma x (1 + skip_bonus se pulou uma).
-static func track_pay(planet_id: String, x: float, stats: Dictionary, quality: float, tier_id: String = "normal",
-		skipped: int = 0) -> float:
+## v22: ouro ACUMULADO voando para a frente de x0 ate x1 (placar "a receber"; nunca cai): integral de
+## track_base(x)/per_m_ref dx. Espelho de econ.track_accum.
+static func track_accum(planet_id: String, x0: float, x1: float, stats: Dictionary) -> float:
+	if x1 <= x0:
+		return 0.0
+	var c: Dictionary = spec["contracts"]
+	var t := track_spec(planet_id)
+	var u := float(t.get("pay_unit", c.get("distance_unit", 100.0)))
+	var e := float(c["distance_exp"])
+	var f := float(c.get("pay_fixed", 0.0))
+	var m := float(c["pay_base"]) * float(_find("planets", planet_id).get("pay_mult", 1.0)) * float(stats.get("pay_mult", 1.0))
+	var integral := f * (x1 - x0) + u / (e + 1.0) * (pow(x1 / u, e + 1.0) - pow(maxf(x0, 0.0) / u, e + 1.0))
+	return m * integral / float(t.get("per_m_ref", 175.0))
+
+
+## Multiplicador do pouso sobre o acumulado: qualidade (1 + bonus q^exp) x tamanho da plataforma.
+static func track_land_mult(quality: float, tier_id: String = "normal") -> float:
 	var c: Dictionary = spec["contracts"]
 	var q := clampf(quality, 0.0, 1.0)
-	var sk := float(track_spec(planet_id).get("skip_bonus", 0.0)) * clampi(skipped, 0, 1)
-	return track_base(planet_id, x, stats) * (1.0 + float(c.get("quality_bonus", 0.5)) * pow(q, float(c.get("quality_exp", 1.0)))) \
-			* float(pad_tier(tier_id)["mult"]) * (1.0 + sk)
+	return (1.0 + float(c.get("quality_bonus", 0.5)) * pow(q, float(c.get("quality_exp", 1.0)))) * float(pad_tier(tier_id)["mult"])
+
+
+## Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: acumulado x multiplicador do pouso.
+static func track_pay(planet_id: String, x0: float, x1: float, stats: Dictionary, quality: float,
+		tier_id: String = "normal") -> float:
+	return track_accum(planet_id, x0, x1, stats) * track_land_mult(quality, tier_id)
 
 
 ## Moedas no ar de um salto que termina em x, coletando a fracao frac.

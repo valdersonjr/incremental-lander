@@ -44,3 +44,10 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   mundos (engajado) 0,4/1,15/1,9/2,6/3,1 → 0,37/0,89/1,42/1,95/2,46 h (casual 4,6 h, expert 1,5 h); batida 5 → 9–15%
   dos runs (bater acaba a viagem); ~1/3 dos pousos pulam uma plataforma; marcos 7–16% das moedas. Script
   `balance/sims/2026-10-11-v21-track.py`.
+- v22 (2026-10-11) — ouro acumulado por metro (v21b): o pouso paga `track_accum` (integral de `track_base(x)/per_m_ref`
+  de onde decolou até onde pousou; `per_m_ref` 175) × `track_land_mult` (nota × plataforma); sai `skip_bonus` (pular
+  já paga mais metros) — motivo: usuário quer ver "o quanto eu já fiz até agora, pra pousar na próxima" (placar que
+  só cresce e entra no banco no pouso) — medido (screen 6 h): 1ª compra 114 → 95 s (engajado); intervalo mediano
+  5,0 → 4,8 min; run 252 → 290 s; mundos (engajado) 0,37/0,89/1,42/1,95/2,46 → 0,43/1,1/1,71/2,27/2,85 h; o piloto do
+  modelo pula mais (~1/3 → ~5/6 dos pousos: salto longo gasta menos gás por metro; as estrelas por pouso e o risco
+  seguram no jogo — observar na telemetria). Script `balance/sims/2026-10-11-v21b-accum.py`.
