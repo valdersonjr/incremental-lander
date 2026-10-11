@@ -52,6 +52,9 @@ var _pending := 0.0                              # moedas no ar + marcos a receb
 var _live_row: HBoxContainer = null              # "+N a receber": cresce voando, so entra no banco ao pousar
 var _live: Label = null
 var _live_hint: Label = null
+var _combo_badge: PanelContainer = null          # v28: "x3" grande no alto (multiplicador do proximo pouso)
+var _combo_label: Label = null
+var _combo_shown := 0
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -95,6 +98,7 @@ func bind(p_flight: Flight, p_run: RunState) -> void:
 	run = p_run
 	if flight.track:
 		_build_track_row()
+		_build_combo_badge()
 	flight.delivery_finished.connect(_on_delivery_finished)
 	flight.lander.took_off.connect(func() -> void: _set_status(_idle_status()))   # resultado antigo nao fica no rodape
 	_set_status(_idle_status())
@@ -142,6 +146,43 @@ func _process(delta: float) -> void:
 ## Moedas no ar + marcos passados, pagos no proximo pouso (somam no "+N a receber").
 func set_pending(amount: float) -> void:
 	_pending = amount
+
+
+## v28: placa grande "x3" no alto, centralizada: o multiplicador que o proximo pouso vai usar (sobe +1 a cada
+## plataforma pousada). Quando sobe: pulo, brilho e o xilofone da Estrada.
+func _build_combo_badge() -> void:
+	_combo_badge = PanelContainer.new()
+	_combo_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", -2)
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_combo_badge.add_child(col)
+	_combo_label = Label.new()
+	_combo_label.theme_type_variation = &"BigMoneyLabel"
+	_combo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_combo_label)
+	var cap := Label.new()
+	cap.theme_type_variation = &"DimLabel"
+	cap.text = "multiplicador"
+	cap.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(cap)
+	add_child(_combo_badge)
+	move_child(_combo_badge, 0)                                # atras dos avisos
+
+
+func _update_combo_badge() -> void:
+	var n := run.track_streak if run != null else 0
+	var mult := EconMath.track_combo_mult(n)
+	_combo_label.text = UiKit.mult_text(mult)
+	_combo_badge.reset_size()
+	_combo_badge.position = Vector2(roundf((size.x - _combo_badge.size.x) * 0.5), 4.0)
+	if n > _combo_shown:                                       # subiu num pouso: festa
+		UiKit.pulse(_combo_badge, 2.0, 0.45)
+		var tw := create_tween()
+		tw.tween_property(_combo_label, "modulate", Color(1.6, 1.6, 1.6), 0.08)
+		tw.tween_property(_combo_label, "modulate", Color.WHITE, 0.35)
+		Sound.jingle("road_stop")
+	_combo_shown = n
 
 
 ## v21 (pista): a distancia e a pontuacao da viagem -> linha grande logo abaixo do dinheiro, com o recorde do mundo.
@@ -196,6 +237,7 @@ func _update_track() -> void:
 	_live.text = "+" + (str(int(live)) if live < 1000.0 else EconMath.fmt(live))
 	var combo := EconMath.track_combo_mult(run.track_streak) if run != null else 1.0
 	_live_hint.text = "a receber %s: pouse!" % UiKit.mult_text(combo)   # v28: x plataformas pousadas na viagem
+	_update_combo_badge()
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
