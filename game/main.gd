@@ -385,6 +385,8 @@ func _begin_track() -> void:
 
 ## Pouso numa plataforma a frente (Flight.track_reached): paga pela distancia do comeco (+ pulo), estrelas da nota.
 func _on_track_reached(result: Dictionary) -> void:
+	if _run == null or _run.over:                              # viagem ja encerrada: nada mais conta
+		return
 	_log("DELIVERY_RESULT ", JSON.stringify(result))
 	Telemetry.event("delivery", "%.2f" % float(result["quality"]))
 	var was_apprentice := GameState.apprentice()
@@ -532,7 +534,7 @@ func _on_delivery_finished(result: Dictionary) -> void:
 		Telemetry.event("crash", str(result["reason"]))
 		if _flight.track and _apprentice_hop() \
 				and _retries < int(WorldConfig.load_config()["onboarding"]["retries_per_hop"]) \
-				and _flight.track_can_reach(_hop_gas, _flight.track_last_px()):   # so repete se ainda da para chegar
+				and _flight.track_can_reach(_hop_gas, _flight.track_last_px(), Flight.REACH_RETRY):   # so se da para chegar
 			_retry_track(str(result["reason"]))                  # pista: o aprendiz volta para a ultima plataforma
 			return
 		if _flight.track:                                        # pista: passou das tentativas (ou veterano) = fim
@@ -609,6 +611,7 @@ func _graduation_line() -> String:
 func _on_stranded() -> void:
 	if _flight != null and _flight.track:                      # pista: sem gas para a proxima plataforma = fim
 		if _run != null and not _run.over:
+			_flight.lander.can_takeoff = false                  # acabou: a nave nao decola mais ate o resumo
 			_run.finish("sem_gas" if _flight.lander.gas <= GAS_EMPTY else "sem_alcance")
 			var flight := _flight
 			await get_tree().create_timer(0.8, false).timeout     # o pouso aparece antes do resumo

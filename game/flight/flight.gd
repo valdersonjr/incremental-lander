@@ -1601,9 +1601,15 @@ func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 
 
 ## O gas alcanca a proxima plataforma a frente saindo de from_px? Estimativa do piloto IDEAL (EconMath.estimated_hop_dv,
-## sem desperdicio) com folga de 10%, somando os galoes ainda nao pegos no caminho. Falso = impossivel de verdade:
+## sem desperdicio) x margin, somando os galoes ainda nao pegos no caminho. Falso = impossivel de verdade:
 ## a viagem acaba em vez de oferecer "tente de novo" (bug 2026-10-11: tanque quase vazio repetia o salto).
-func track_can_reach(gas: float, from_px: float) -> bool:
+## margin = gas do piloto ideal x margin: REACH_LAND ao pousar (fim da viagem), REACH_RETRY no "tente de novo" do
+## aprendiz (2026-10-11, 2a vez: com 0,9 o jogo deixava tentar saltos que nenhum jogador faz com aquele gas).
+const REACH_LAND := 1.2
+const REACH_RETRY := 1.5
+
+
+func track_can_reach(gas: float, from_px: float, margin: float = REACH_LAND) -> bool:
 	var target: Dictionary = terrain.pads[mini(_track_last + 1, terrain.pads.size() - 1)]
 	var tx := float(target["x"])
 	var d_m := absf(WorldConfig.px_to_m(tx - from_px))
@@ -1613,7 +1619,7 @@ func track_can_reach(gas: float, from_px: float) -> bool:
 	for c: Dictionary in _cans:
 		if not c["got"] and (c["pos"] as Vector2).x > lo and (c["pos"] as Vector2).x < hi:
 			gas += EconMath.track_can_gas(stats)
-	return gas >= need * 0.9
+	return gas >= need * margin
 
 
 ## x (px) da ultima plataforma paga (de onde o aprendiz recomeca).

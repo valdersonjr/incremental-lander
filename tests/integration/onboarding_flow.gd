@@ -64,7 +64,9 @@ func _ready() -> void:
 	_check(absf(flight.lander.global_position.x - float(flight.terrain.pads[0]["x"])) < 2.0,
 			"aprendiz: de volta na ultima plataforma")
 	# bug 2026-10-11 (2): gas do comeco do salto nao alcanca a proxima plataforma -> bater acaba a viagem (sem repetir)
-	main._hop_gas = 0.5
+	# gas que o piloto ideal alcancaria, mas um jogador nao: tambem nao repete (2a correcao)
+	var d_m := WorldConfig.px_to_m(float(flight.terrain.pads[1]["x"]) - flight.track_last_px())
+	main._hop_gas = EconMath.estimated_hop_dv("luna", d_m, flight.stats) / float(flight.lander.params["efficiency"]) * 1.1
 	var r0: int = main._retries
 	flight.lander.state = Lander.State.FLYING
 	flight.lander.crash_now("vertical_rapido")
@@ -80,6 +82,7 @@ func _ready() -> void:
 	flight._track_landed(flight.terrain.pads[1], 0.7, info0)
 	await _until(func() -> bool: return main._run.over and main._summary.visible)
 	_check(main._run.over and main._run.end_reason == "sem_gas", "pousou sem gas para a proxima: fim da viagem (%s)" % main._run.end_reason)
+	_check(not flight.lander.can_takeoff, "viagem encerrada: a nave nao decola mais")
 	main._summary.visible = false
 	main._on_launch_requested()
 	await _frames(3)
