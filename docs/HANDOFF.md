@@ -17,6 +17,10 @@
   bandeira e sons), calibrar `rough_scale`/gás com telemetria (o modelo é chute), tecla E (terminar viagem) sem uso
   na pista, publicar no Vercel quando o usuário pedir (reteste do amigo). Código antigo (cartão/missões/minijogos)
   continua no projeto, só não roda no modo pista.
+  **Correções depois do 1º teste do usuário**: plaquinha "+N" (pouso bom) em cima das 6 próximas plataformas; ouro
+  só no pouso (moedas no ar/marcos ficam "+N ao pousar"; distância = até onde pousou); crash ao aprimorar a nave
+  (`ShipView._draw`: ternário com Array[Rect2] — bug antigo, só aparece com tela; teste novo `buy_flow` + captura).
+  Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).
   Página `art/previews/clareza/index.html` (publicada: https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): diagnóstico

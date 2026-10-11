@@ -48,6 +48,7 @@ var _rec_bar: HBoxContainer = null               # barra ate o recorde de dinhei
 var _track_row: HBoxContainer = null             # v21 (pista): distancia da viagem + recorde do mundo
 var _track_dist: Label = null
 var _track_best: Label = null
+var _track_pending: Label = null                 # moedas no ar + marcos a receber no proximo pouso
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -135,6 +136,14 @@ func _process(delta: float) -> void:
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
 
+## Moedas no ar + marcos passados, pagos no proximo pouso ("+N ao pousar"); 0 = some.
+func set_pending(amount: float) -> void:
+	if _track_pending == null:
+		return
+	_track_pending.visible = amount > 0.0
+	_track_pending.text = "  +%s ao pousar" % EconMath.fmt(amount)
+
+
 ## v21 (pista): a distancia e a pontuacao da viagem -> linha grande logo abaixo do dinheiro, com o recorde do mundo.
 func _build_track_row() -> void:
 	_track_row = HBoxContainer.new()
@@ -155,6 +164,10 @@ func _build_track_row() -> void:
 	_track_best = Label.new()
 	_track_best.theme_type_variation = &"DimLabel"
 	_track_row.add_child(_track_best)
+	_track_pending = Label.new()
+	_track_pending.theme_type_variation = &"MoneyLabel"
+	_track_pending.visible = false
+	_track_row.add_child(_track_pending)
 	_score.add_child(_track_row)
 	_score.move_child(_track_row, 1)
 	_rec_grid.visible = false                                  # a distancia ja esta aqui em destaque
@@ -164,8 +177,9 @@ func _update_track() -> void:
 	if _track_row == null:
 		return
 	var best := flight.track_best_m
-	_track_dist.text = GameState.record_text("run_distance", flight.track_far_m)
-	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and flight.track_far_m > best else &"ValueLabel"
+	var dist := run.distance_flown if run != null else 0.0     # distancia = ate onde POUSOU
+	_track_dist.text = GameState.record_text("run_distance", dist)
+	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and dist > best else &"ValueLabel"
 	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
 
 
@@ -493,6 +507,8 @@ func show_delivery(entry: Dictionary) -> void:
 		parts.append("MINIJOGO COMPLETO!")
 	if bool(entry.get("perfect", false)):
 		parts.append("POUSO PERFEITO!")
+	if float(entry.get("bonus", 0.0)) > 0.0:                  # moedas no ar + marcos, pagos no pouso
+		parts.append("moedas e marcos +%s" % EconMath.fmt(float(entry["bonus"])))
 	if int(entry.get("skipped", 0)) > 0:                      # v21 (pista): pulou uma plataforma
 		parts.append("PULOU! +%d%%" % roundi(float(EconMath.track_spec(flight.planet_id).get("skip_bonus", 0.0)) * 100.0))
 	if int(entry.get("rep_pts", 0)) > 0:

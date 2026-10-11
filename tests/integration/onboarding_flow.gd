@@ -76,9 +76,22 @@ func _ready() -> void:
 	await _frames(2)
 	_check(float(main._run.deliveries[-1]["rewards"]["credits"]) > pay1 and int(main._run.deliveries[-1]["skipped"]) == 1,
 			"pular uma plataforma paga mais")
+	# moeda no ar / marco: so paga no proximo POUSO (bug 2026-10-11: "so por andar pra frente ja ganho gold")
+	var before := GameState.amount("credits")
+	main._on_track_pickup("marker", 50.0, Vector2.ZERO)
+	await _frames(1)
+	_check(is_equal_approx(GameState.amount("credits"), before) and is_equal_approx(main._pending, 50.0),
+			"marco passado: fica a receber, nao paga voando")
+	flight._track_landed(flight.terrain.pads[4], 0.7, info)
+	await _frames(2)
+	_check(is_equal_approx(main._pending, 0.0) and float(main._run.deliveries[-1].get("bonus", 0.0)) == 50.0,
+			"pousou: o que estava a receber entra")
+	main._on_track_pickup("coin", 30.0, Vector2.ZERO)
+	var after_land := GameState.amount("credits")
 	flight._track_landed(flight.terrain.pads[1], 0.9, info)      # voltar para tras nao paga
 	await _frames(1)
-	_check(main._run.deliveries.size() == 2, "plataforma para tras nao paga de novo")
+	_check(main._run.deliveries.size() == 3 and is_equal_approx(GameState.amount("credits"), after_land),
+			"plataforma para tras nao paga (nem o que estava a receber)")
 	# fim do run com dinheiro para uma peca: CONTINUAR vai para a NAVE (1a visita: so PECAS, x1)
 	main._run.finish("sem_gas")
 	main._end_run()

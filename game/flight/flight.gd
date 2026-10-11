@@ -1529,6 +1529,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 
 ## Aprendiz: volta para a ultima plataforma paga com o gas do comeco do salto (a pista e a mesma).
 func track_retry(gas: float) -> void:
+	_track_unhit_marks()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
 	lander.gas = gas
 	lander.visible = true
@@ -1714,13 +1715,28 @@ func _tick_track() -> void:
 			_collect(c["sprite"])
 			Sound.sfx("gift_coin")
 			track_pickup.emit("coin", float(c["value"]), c["pos"])
-	for mk: Dictionary in _marks:
-		if not mk["done"] and track_far_m >= float(mk["m"]):
-			mk["done"] = true
+	for mk: Dictionary in _marks:                              # marco: so vale ao POUSAR depois dele (Main guarda)
+		if not mk["done"] and not mk.get("hit", false) and track_far_m >= float(mk["m"]):
+			mk["hit"] = true
 			var bonus := EconMath.track_marker_bonus(planet_id, float(mk["m"]), stats)
 			Sound.jingle("milestone")
-			_float_text("%d m! +%s" % [int(mk["m"]), EconMath.fmt(bonus)], (mk["node"] as Node2D).position + Vector2(0, -52))
+			_float_text("%d m! pouse: +%s" % [int(mk["m"]), EconMath.fmt(bonus)], (mk["node"] as Node2D).position + Vector2(0, -52))
 			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
+
+
+## Pousou: os marcos passados nesta viagem foram pagos (nao pagam de novo neste mundo).
+func track_confirm_marks() -> void:
+	for mk: Dictionary in _marks:
+		if mk.get("hit", false):
+			mk["done"] = true
+
+
+## Bateu/acabou o gas no ar: os marcos passados e nao pousados voltam a valer.
+func _track_unhit_marks() -> void:
+	track_far_m = track_pad_m(_track_last)
+	for mk: Dictionary in _marks:
+		if not mk["done"]:
+			mk["hit"] = false
 
 
 func _collect(sp: Sprite2D) -> void:

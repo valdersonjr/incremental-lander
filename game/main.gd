@@ -49,6 +49,8 @@ var _guided := false                               # o "Veja como!" ja voou este
 ## O salto atual esta coberto pelo aprendiz (o gas alcancava o pedido na escolha). Pedido longe demais pode ser
 ## tentado (o run so acaba com o tanque vazio), mas sem repeticao: senao o gas do comeco voltaria para sempre.
 var _hop_safe := true
+## v21 (pista): moedas no ar e marcos passados nesta viagem, pagos so no proximo POUSO (bateu antes = perdeu).
+var _pending := 0.0
 ## Segundos restantes para o 2o toque de R confirmar o reinicio no meio de um salto.
 var _restart_armed := 0.0
 const CONFIRM_SECONDS := 2.0
@@ -129,8 +131,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _run_active:
 		_run_time += delta
-		if _flight != null and _flight.track and _run != null:
-			_run.note_distance(_flight.track_far_m)
 	_restart_armed = maxf(_restart_armed - delta, 0.0)
 
 
@@ -368,6 +368,7 @@ func _begin_track() -> void:
 	_flight.lander.took_off.connect(func() -> void: _hop_gas = _flight.lander.gas)
 	_hop_gas = _flight.lander.gas
 	_hop_safe = true
+	_set_pending(0.0)
 	_flight.apprentice = _apprentice_hop()
 	_flight.lander.ground_rest = _flight.apprentice             # aprendiz: pouso devagar fora da plataforma nao bate
 	_arrived = true
@@ -387,6 +388,12 @@ func _on_track_reached(result: Dictionary) -> void:
 	var rewards := _run.complete_track_landing(float(result["distance"]), int(result["skipped"]),
 			float(result["quality"]), str(result["tier"]), float(result["gas_used"]), bool(result["perfect"]))
 	var entry: Dictionary = _run.deliveries[-1]
+	if _pending > 0.0:                                         # moedas no ar + marcos: pagos agora, no pouso
+		var extra := _run.add_bonus(_pending)
+		GameState.add_rewards(extra)
+		entry["bonus"] = _pending
+		_flight.track_confirm_marks()
+		_set_pending(0.0)
 	GameState.add_stars(int(entry["stars"]))
 	get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
@@ -405,14 +412,20 @@ func _on_track_reached(result: Dictionary) -> void:
 		tg.tween_callback(Sound.jingle.bind("milestone"))
 
 
-## Moeda no ar / marco novo: entra no ganho da viagem na hora. Galao: so telemetria.
+## Moeda no ar / marco novo: fica "a receber" ate o proximo pouso. Galao: so telemetria.
 func _on_track_pickup(kind: String, amount: float, _at: Vector2) -> void:
 	Telemetry.event("pickup", kind)
 	if kind == "gas" or _run == null or _run.over:
 		return
-	GameState.add_rewards(_run.add_bonus(amount))
+	_set_pending(_pending + amount)
 	if kind == "marker":
-		_hud.show_verb("NOVO MARCO!", "+" + EconMath.fmt(amount))
+		_hud.show_verb("NOVO MARCO!", "pouse para ganhar +" + EconMath.fmt(amount))
+
+
+func _set_pending(v: float) -> void:
+	_pending = v
+	if _hud != null and is_instance_valid(_hud):
+		_hud.set_pending(v)
 
 
 func _show_offers() -> void:
@@ -801,6 +814,7 @@ func _retry_track(reason: String) -> void:
 	await tw.finished
 	if flight != _flight or _run == null or _run.over:
 		return
+	_set_pending(0.0)                                          # o que estava a receber se perdeu na batida
 	_flight.track_retry(_hop_gas)
 	_hud.show_retry(reason, false)
 	_fade.create_tween().tween_property(_fade, "modulate:a", 0.0, fade_s)

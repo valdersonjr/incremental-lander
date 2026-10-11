@@ -55,8 +55,11 @@ func _draw() -> void:
 	draw_texture_rect(_body, Rect2(o, Vector2(W, H)), false)
 	if hl == "":
 		return
-	var boxes: Array[Rect2] = [Rect2(fr.position + Vector2(28, 0), Vector2(24, 24 + 8 * int(t["thrust"])))] \
-			if hl == "thrust" else ShipArt.poster_boxes(hl, t)
+	var boxes: Array[Rect2] = []                               # Array[Rect2] tipado (ternario devolvia Array cru: erro)
+	if hl == "thrust":
+		boxes.append(Rect2(fr.position + Vector2(28, 0), Vector2(24, 24 + 8 * int(t["thrust"]))))
+	else:
+		boxes.assign(ShipArt.poster_boxes(hl, t))
 	for box: Rect2 in boxes:
 		if hl != "thrust":
 			box.position += o
