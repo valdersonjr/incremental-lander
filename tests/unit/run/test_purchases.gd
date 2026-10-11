@@ -62,13 +62,13 @@ func test_decolar_exige_motor_e_alcance() -> void:
 	assert_true(Purchases.can_launch("luna", base), "nave inicial decola na Lua")
 
 
-func test_marco_de_upgrade_para_o_jingle() -> void:
-	var every := int(EconMath._find("upgrades", "thrust")["milestones"][0]["every"])   # v19: 10 (o degrau)
-	assert_true(Purchases.milestone_crossed("thrust", every - 1, every), "nivel %d = marco" % every)
-	assert_true(Purchases.milestone_crossed("thrust", 1, every * 2 + 1), "comprar max passando dois marcos")
-	assert_false(Purchases.milestone_crossed("thrust", every, every + 1))
-	assert_false(Purchases.milestone_crossed("gear", 0, 30), "sem marcos na spec")
-	assert_false(Purchases.milestone_crossed("thrust", 5, 5), "nada comprado")
+func test_pecas_nao_tem_marco_de_pagamento() -> void:
+	# v29 (usuario): o pagamento nao sobe com o degrau das pecas -> sem marcos na spec, sem jingle de marco
+	for id: String in ["thrust", "tank", "efficiency", "gear"]:
+		assert_true((EconMath._find("upgrades", id).get("milestones", []) as Array).is_empty(), "%s sem marco" % id)
+		assert_false(Purchases.milestone_crossed(id, 1, 30), "%s: comprar varios niveis nao passa marco" % id)
+	assert_eq(float(EconMath.ship_stats({"thrust": 40, "tank": 40, "efficiency": 40}).get("pay_mult", 1.0)), 1.0,
+			"pagamento igual com as pecas no 40")
 
 
 func test_bloqueados_mostram_o_que_vem_e_somem_ao_liberar() -> void:
