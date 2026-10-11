@@ -195,7 +195,7 @@ func _update_track() -> void:
 	_live_row.modulate.a = 1.0 if live >= 1.0 else 0.0
 	_live.text = "+" + (str(int(live)) if live < 1000.0 else EconMath.fmt(live))
 	var combo := EconMath.track_combo_mult(run.track_streak) if run != null else 1.0
-	_live_hint.text = "a receber: pouse! sequência %s" % UiKit.mult_text(combo) if combo > 1.001 else "a receber: pouse!"
+	_live_hint.text = "a receber %s: pouse!" % UiKit.mult_text(combo)   # v28: x plataformas pousadas na viagem
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
@@ -506,8 +506,8 @@ func show_delivery(entry: Dictionary) -> void:
 	if entry.has("accum"):                                     # v27: (acumulado + pouso) x nota x sequencia = banco
 		var raw := float(entry["accum"]) + float(entry.get("land_bonus", 0.0))
 		var combo := float(entry.get("combo", 1.0))
-		text = "%s %s%s = +%s" % [EconMath.fmt(raw), UiKit.mult_text(float(entry["land_mult"])),
-				(" sequência " + UiKit.mult_text(combo)) if combo > 1.001 else "", EconMath.fmt(gain)]
+		text = "%s  pouso %s  plataformas %s = +%s" % [EconMath.fmt(raw), UiKit.mult_text(float(entry["land_mult"])),
+				UiKit.mult_text(combo), EconMath.fmt(gain)]
 	var parts: Array[String] = []
 	if float(entry.get("mult", 1.0)) > 1.0:
 		parts.append("plataforma " + UiKit.mult_text(float(entry["mult"])))

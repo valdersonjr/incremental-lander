@@ -76,7 +76,7 @@ func test_pista_paga_o_acumulado_e_estrelas_pela_nota() -> void:
 	var raw := EconMath.track_accum("luna", 0.0, 200.0, stats) + EconMath.track_land_bonus("luna", 200.0, stats)
 	assert_almost(float(near["credits"]), raw * EconMath.track_land_mult(0.7), 1e-6, "banco = (acumulado + pouso) x nota")
 	var far := run.complete_track_landing(1000.0, 1200.0, 0, 0.7, "normal", 20.0, false)
-	assert_true(float(far["credits"]) > float(near["credits"]) * 1.5, "200 m la longe valem mais que 200 m no comeco")
+	assert_true(float(far["credits"]) > float(near["credits"]) * 1.5, "2o pouso: multiplicador x2 (metro tem valor fixo)")
 	var raw2 := EconMath.track_accum("luna", 1000.0, 1200.0, stats) + EconMath.track_land_bonus("luna", 1200.0, stats)
 	assert_almost(float(far["credits"]), raw2 * EconMath.track_land_mult(0.7) * EconMath.track_combo_mult(1), 1e-6,
 			"2o pouso seguido: sequencia multiplica")

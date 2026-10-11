@@ -30,6 +30,7 @@
   hora ("O GÁS NÃO DÁ!"), e o aprendiz só repete o salto se o gás do começo dele alcança (`Flight.track_can_reach`).
   **v26–v27**: velocidade máxima 45 m/s (aviso "velocidade máxima!"), bônus fixo por pouso + sequência de pousos
   (HUD "a receber: pouse! sequência ×1,4"; aviso "124 ×2,9 = +358"). Modelo agora testa arremessos e estilos.
+  **v28 (ideia do usuário)**: metro paga 0,3 fixo e cada plataforma pousada soma +1 no multiplicador da viagem.
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

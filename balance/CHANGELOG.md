@@ -88,3 +88,9 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   mudava o estilo) — medido (screen 10 h): pousos por viagem (mediana) engajado 3 → 11, casual 7, expert 18; mundos
   (engajado) 0,63/1,15/1,77/2,27/2,74 h, casual até 5,4 h, expert 1,8 h; intervalo mediano 8–11 min (limitado pela
   duração da viagem; expert ~12 min por viagem). Script `balance/sims/2026-10-11-v27-combo.py`.
+- v28 (2026-10-11) — ideia do usuário: "por distância ganha um valor fixo não tão alto, mas ganha um multiplicador por
+  plataforma pousada": `track.per_m` 0,3 por metro (fixo, não cresce com a distância), `combo.step` 1 sem teto (cada
+  pouso soma +1 no multiplicador da viagem: ×1, ×2, ×3…), sai `land_bonus` — medido (screen 10 h): estilo vencedor
+  "pousar seguido" (k ≤ 5) a partir do meio do jogo (+0,25 e +0,5 por pouso ainda perdiam para o cruzeiro); engajado
+  1ª compra 75 s, intervalo mediano 8,8 min, viagem 4,5 min, 7 pousos/viagem, mundos 0,69/1,42/2,4/3,32/3,92 h;
+  casual até 7,2 h; expert 2,35 h (11 pousos, ~8 min). Script `balance/sims/2026-10-11-v28-flat.py`.

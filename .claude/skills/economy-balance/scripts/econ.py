@@ -794,6 +794,8 @@ def track_accum(E: dict, planet: dict, x0: float, x1: float, stats: dict) -> flo
         return 0.0
     C = E["contracts"]
     T = track_spec(E, planet)
+    if T.get("per_m", 0.0) > 0:                 # v28: valor FIXO por metro (o multiplicador vem dos pousos)
+        return T["per_m"] * (x1 - x0) * planet.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
     u, e, f = T.get("pay_unit", C.get("distance_unit", 100.0)), C["distance_exp"], C.get("pay_fixed", 0.0)
     m = C["pay_base"] * planet.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
     integral = f * (x1 - x0) + u / (e + 1) * ((x1 / u) ** (e + 1) - (max(x0, 0.0) / u) ** (e + 1))
@@ -811,7 +813,7 @@ def track_combo_mult(E: dict, n: int) -> float:
     """v27: SEQUENCIA de pousos — o n-esimo pouso seguido (0 = o 1o da viagem) multiplica o banco por
     min(max, 1 + step x n). Bater zera. Faz pousar nas plataformas valer mais que voar km sem pousar."""
     c = E["contracts"]["track"].get("combo") or {}
-    return min(c.get("max", 1.0), 1.0 + c.get("step", 0.0) * max(n, 0)) if c else 1.0
+    return min(c.get("max", 1e12), 1.0 + c.get("step", 0.0) * max(n, 0)) if c else 1.0
 
 
 def track_land_bonus(E: dict, planet: dict, x: float, stats: dict) -> float:

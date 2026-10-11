@@ -377,6 +377,9 @@ static func track_accum(planet_id: String, x0: float, x1: float, stats: Dictiona
 		return 0.0
 	var c: Dictionary = spec["contracts"]
 	var t := track_spec(planet_id)
+	if float(t.get("per_m", 0.0)) > 0.0:                      # v28: valor FIXO por metro (o multiplicador vem dos pousos)
+		return float(t["per_m"]) * (x1 - x0) * float(_find("planets", planet_id).get("pay_mult", 1.0)) \
+				* float(stats.get("pay_mult", 1.0))
 	var u := float(t.get("pay_unit", c.get("distance_unit", 100.0)))
 	var e := float(c["distance_exp"])
 	var f := float(c.get("pay_fixed", 0.0))
@@ -402,7 +405,7 @@ static func track_combo_mult(n: int) -> float:
 	var c: Dictionary = spec["contracts"]["track"].get("combo", {})
 	if c.is_empty():
 		return 1.0
-	return minf(float(c.get("max", 1.0)), 1.0 + float(c.get("step", 0.0)) * maxi(n, 0))
+	return minf(float(c.get("max", 1e12)), 1.0 + float(c.get("step", 0.0)) * maxi(n, 0))
 
 
 ## Pouso a x1 depois de decolar (ou pousar por ultimo) em x0: (acumulado + bonus do pouso) x multiplicador do pouso
