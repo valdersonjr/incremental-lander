@@ -368,7 +368,8 @@ func _show_offers() -> void:
 			return
 	Telemetry.event("offers")
 	_offers.show_offers(_run, gas)
-	_point(_offers.accept_button, "spot_offer", "check", "Aceite!")
+	# o cartao todo fica aceso (ler a missao e escolher distancia/plataforma antes de aceitar); maozinha no botao
+	_point(_offers.accept_button, "spot_offer", "check", "Aceite!", [], _offers.card)
 	if _demo:
 		await get_tree().create_timer(0.5).timeout
 		var i := _run.best_offer(_flight.lander.gas)
@@ -526,7 +527,8 @@ func _on_stranded() -> void:
 
 ## Destaque de 1a visita (Spotlight, uma vez por tip): espera o layout e acende o botao de target_fn(). Mapa: icone e
 ## palavra vem do proprio Mapa (NAVE com "!" ou VOAR). Fora no demo e no modo livre. Devolve true se mostrou.
-func _point(target_fn: Callable, tip: String, icon: String, word: String, keys: Array = []) -> bool:
+func _point(target_fn: Callable, tip: String, icon: String, word: String, keys: Array = [],
+		area_fn: Callable = Callable()) -> bool:
 	if _demo or Sandbox.active() or GameState.tip_done(tip):
 		return false
 	await get_tree().process_frame
@@ -538,7 +540,7 @@ func _point(target_fn: Callable, tip: String, icon: String, word: String, keys: 
 		word = str(info[2])
 	_gui.move_child(_spotlight, -1)
 	_gui.move_child(_pause, -1)
-	return _spotlight.point(target, tip, icon, word, keys)
+	return _spotlight.point(target, tip, icon, word, keys, area_fn.call() if area_fn.is_valid() else null)
 
 
 ## Passeio da 1a vez no Mapa (prototipo aprovado art/previews/map_tour/index.html, opcao A; pedido do usuario: "explicar

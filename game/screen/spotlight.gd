@@ -21,6 +21,7 @@ const HAND := ["..xx......", "..xwx.....", "..xwx.....", "..xwxxx...", "..xwxwxx
 		"xwwwwwwwwx", ".xwwwwwwwx", ".xwwwwwwx.", "..xwwwwwx.", "..xxxxxxx."]
 
 var _target: Control = null
+var _area: Control = null                          # point com area: a luz cobre a area toda (le e mexe), sem balao
 var _icon: Texture2D = null
 var _word := ""
 var _keys: Array = []                              # teclas desenhadas no balao (ex.: Q/E das abas), so desta vez
@@ -55,12 +56,14 @@ func _ready() -> void:
 
 
 ## Destaca target (uma vez por tip_id). icon = nome no atlas infantil (UiKit.kid), word = 1 palavra, keys = teclas
-## no balao. Devolve true se mostrou.
-func point(target: Control, tip_id: String, icon: String, word: String, keys: Array = []) -> bool:
+## no balao. area (opcional): a luz cobre a area inteira (ex.: o cartao da missao, para ler e escolher antes de
+## aceitar); o alvo ganha so a moldura e a maozinha, sem balao por cima. Devolve true se mostrou.
+func point(target: Control, tip_id: String, icon: String, word: String, keys: Array = [], area: Control = null) -> bool:
 	if target == null or GameState.tip_done(tip_id) or not target.is_visible_in_tree():
 		return false
 	GameState.learn_tip(tip_id)                                # fechou sem fazer? nao volta (nao insiste)
 	_target = target
+	_area = area
 	_icon = UiKit.kid(icon)
 	_word = word
 	_keys = keys
@@ -81,6 +84,7 @@ func point(target: Control, tip_id: String, icon: String, word: String, keys: Ar
 ## Passeio: steps = [{"target": Callable que devolve o Control, "icon": nome UiKit.kid, "lines": Array[String],
 ## "act": bool}]. Passos com alvo ausente/invisivel sao pulados. Devolve true se mostrou (closed(acted) no fim).
 func tour(steps: Array, tip_id: String) -> bool:
+	_area = null
 	if steps.is_empty() or GameState.tip_done(tip_id):
 		return false
 	GameState.learn_tip(tip_id)
@@ -159,6 +163,7 @@ func close(acted: bool = false) -> void:
 			and (_target as BaseButton).pressed.is_connected(_press_cb):
 		(_target as BaseButton).pressed.disconnect(_press_cb)
 	_target = null
+	_area = null
 	_press_cb = Callable()
 	visible = false
 	closed.emit(acted)
@@ -195,9 +200,9 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-## Luz no alvo: 4 retangulos escuros em volta do buraco.
+## Luz no alvo (ou na area): 4 retangulos escuros em volta do buraco.
 func _layout() -> void:
-	var h := _hole()
+	var h := _light()
 	var s := size
 	var rects := [Rect2(0, 0, s.x, h.position.y), Rect2(0, h.end.y, s.x, s.y - h.end.y),
 			Rect2(0, h.position.y, h.position.x, h.size.y), Rect2(h.end.x, h.position.y, s.x - h.end.x, h.size.y)]
@@ -212,6 +217,15 @@ func _hole() -> Rect2:
 	var r := _target.get_global_rect()
 	r.position -= global_position
 	return r.grow(PAD)
+
+
+## Parte da tela que fica acesa: a area (se houver e estiver visivel) ou o proprio alvo.
+func _light() -> Rect2:
+	if _area != null and is_instance_valid(_area) and _area.is_visible_in_tree():
+		var r := _area.get_global_rect()
+		r.position -= global_position
+		return r.grow(PAD)
+	return _hole()
 
 
 func _on_dim_input(event: InputEvent) -> void:
@@ -230,6 +244,9 @@ func _draw() -> void:
 	var pulse := 1.0 if fmod(_t, 0.8) < 0.4 else 0.0
 	_frame(h.grow(2.0 + pulse), INK)
 	_frame(h.grow(1.0 + pulse), GOLD)
+	if _area != null and is_instance_valid(_area):            # area acesa: so moldura + maozinha (nada cobre a area)
+		_draw_hand(h)
+		return
 	# balao em cima do alvo (embaixo se nao couber), com a ponta apontando o centro
 	var font := get_theme_default_font()
 	var fs := UiKit.FONT_SIZE
@@ -289,7 +306,11 @@ func _draw() -> void:
 				HORIZONTAL_ALIGNMENT_LEFT, -1, fs, INK)
 	if not _act:                                               # explicacao: sem maozinha (nao e para apertar)
 		return
-	# maozinha tocando o centro do alvo
+	_draw_hand(h)
+
+
+## Maozinha tocando o centro do alvo h.
+func _draw_hand(h: Rect2) -> void:
 	var press := 0.0 if fmod(_t, 1.0) < 0.5 else 3.0
 	var hp := (h.get_center() + Vector2(2.0, -2.0 + press)).round()
 	for j in HAND.size():

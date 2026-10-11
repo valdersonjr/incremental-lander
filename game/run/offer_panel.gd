@@ -170,6 +170,11 @@ func accept_button() -> Button:
 	return _accept
 
 
+## Janela do cartao da missao (o destaque de 1a visita acende o cartao inteiro, nao so o botao).
+func card() -> Control:
+	return _window
+
+
 ## Centro (tela) do botao ACEITAR MISSAO (teste de controles).
 func accept_button_center() -> Vector2:
 	return _accept.get_global_rect().get_center()

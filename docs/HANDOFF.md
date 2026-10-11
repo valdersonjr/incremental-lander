@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
+- **Destaque "Aceite!" deixa ler a missão** — usuário: a tela escurecia o cartão e o balão cobria as opções, sem dar
+  para ver o que estava aceitando. `Spotlight.point(..., area)`: a luz cobre o cartão inteiro (`OfferPanel.card()`),
+  dá para ler e escolher distância/plataforma; o botão ganha só a moldura dourada e a maozinha (sem balão). Verificado:
+  check, 122 testes, 17 integrações, captura do cartão.
 - **Auditoria do voo aplicada (ROADMAP 16.9; economia v20)** — usuário: o controle e o pouso são o foco e têm que
   ser divertidos; pediu validação profissional + pesquisa ("faz o que precisar") e que **a nave só evolua quando o
   degrau sobe**. Relatório: https://claude.ai/artifact/WueWN5jGevt2U69BmCSQz3. Feito: giro com rampa + ímã do em pé
