@@ -4,6 +4,8 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
+- **Música da Lua trocada** pela "Passeio no queijo" (`flight_luna.wav`; `Sound.music("flight", mundo)` usa
+  `flight_<mundo>.wav` quando existe, senão base + camada). Outros mundos seguem com o voo antigo + camada.
 - **Fase 19 "Mais longe" — jogável (usuário escolheu a opção C e aprovou as regras: "pode ser, faz que eu analiso")**.
   Economia v21 (`contracts.track`; relatório `balance/reports/2026-10-11-v21-track/`) + espelho `EconMath.track_*`
   (paridade 48). No jogo: a viagem é uma pista fixa por mundo, só para a frente, sem cartão: plataformas em sequência

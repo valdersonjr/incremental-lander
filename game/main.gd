@@ -336,7 +336,7 @@ func _start_run() -> void:
 	else:
 		_flight.start(GameState.current_planet, _run_seed, _flight_stats(stats), _demo)
 	_flight.landscapes = GameState.landscapes()
-	Sound.music("flight", GameState.current_planet)        # base do voo + camada do mundo
+	Sound.music("flight", GameState.current_planet)        # faixa do mundo (ou base do voo + camada)
 	Sound.ambience(GameState.current_planet)
 	_hud.bind(_flight, _run)
 	_flight.delivery_finished.connect(_on_delivery_finished)

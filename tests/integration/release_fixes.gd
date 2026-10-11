@@ -63,7 +63,8 @@ func _process(_d: float) -> void:
 			var offers: OfferPanel = _main._offers
 			_check("run_comecou", _main._run != null and (offers.visible or _main._flight.track))
 			_check("musica_de_voo", Sound._music_name == "flight:luna" and Sound._ambience_name == "luna" \
-					and Sound._layers[0].playing)              # base + camada do mundo (player gemeo)
+					and Sound._music[0].playing and not Sound._layers[0].playing \
+					and Sound._music[0].stream.resource_path.ends_with("flight_luna.wav"))   # faixa propria da Lua, sem camada
 			# alarme de gas: em voo com gas abaixo de 15% toca; pousado nao
 			var l: Lander = _main._flight.lander
 			l.state = Lander.State.FLYING

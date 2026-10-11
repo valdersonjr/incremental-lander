@@ -353,12 +353,294 @@ def theme(option: str = "A", bpm: float = THEME_BPM, drums: str = "full") -> np.
 
 
 THEME_PICK = "D"        # escolhida pelo usuário ouvindo as 6 no navegador (2026-10-09): ocarina/flauta
-TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK, THEME_BPM, THEME_DRUMS)}
+# --- voo da Lua (2026-10-09) ------------------------------------------------------------------------------------
+# Usuário: "gostaria de mudar essa música do primeiro planeta que fica tocando". A base do voo (arpejo chip constante
+# + chimbal, loop de 115 s) cansa. Pesquisa (pattern luna-flight): música cozy de jogo = contenção, fica no fundo;
+# loop longo (> 2 min) com A-B-A' e RESPIROS (tirar e devolver instrumentos); melodia com pausas. Forma de 44
+# compassos: intro (pad) · A (motivo do tema do gatinho) · A' (sinos respondem) · B (melodia nova) · respiro (pad +
+# sininhos, sem baixo/percussão) · A'' (resolve). Três "vestidos": A ocarina sonhadora, B lo-fi, C caixinha de música.
+LUNA_SECTIONS = [("intro", ["D", "Gmaj7", "D", "A"]),
+                 ("A", ["D", "Gmaj7", "Bm7", "A", "D", "Gmaj7", "Em7", "A"]),
+                 ("A2", ["D", "Gmaj7", "Bm7", "A", "D", "Gmaj7", "Em7", "A"]),
+                 ("B", ["G", "A", "F#m", "Bm", "G", "A", "D", "D"]),
+                 ("pausa", ["D", "Gmaj7", "Bm7", "A", "D", "Gmaj7", "Em7", "A"]),
+                 ("A3", ["D", "Gmaj7", "Bm7", "A", "D", "Gmaj7", "Em7", "A"])]
+LUNA_TONES = {"D": ["D", "F#", "A", "E"], "Gmaj7": ["G", "B", "D", "F#"], "Bm7": ["B", "D", "F#", "A"],
+              "A": ["A", "C#", "E", "B"], "Em7": ["E", "G", "B", "D"], "F#m": ["F#", "A", "C#", "E"],
+              "G": ["G", "B", "D", "A"], "Bm": ["B", "D", "F#", "C#"]}
+LUNA_OPTS = {"A": ("Ocarina sonhadora", 80.0), "B": ("Lo-fi da Lua", 82.0), "C": ("Caixinha de música", 72.0)}
+_REST = (".", 16)
+_MEL_A = [[("F#5", 4), ("A5", 4), ("B5", 2), ("A5", 2), ("F#5", 4)], [_REST],
+          [("D5", 4), ("F#5", 4), ("E5", 8)], [_REST],
+          [("F#5", 4), ("A5", 4), ("B5", 2), ("A5", 2), ("D6", 4)], [("B5", 8), ("A5", 8)],
+          [("G5", 4), ("F#5", 4), ("E5", 8)], [_REST]]
+_MEL_B = [[("B5", 6), ("A5", 2), ("G5", 8)], [("A5", 6), ("G5", 2), ("F#5", 8)],
+          [("A5", 4), ("C#6", 4), ("A5", 4), ("F#5", 4)], [("B5", 12), (".", 4)],
+          [("D6", 4), ("B5", 4), ("G5", 4), ("B5", 4)], [("C#6", 4), ("A5", 4), ("E5", 4), ("A5", 4)],
+          [("F#5", 4), ("A5", 4), ("D6", 8)], [_REST]]
+_MEL_A3_END = [("E5", 4), ("F#5", 4), ("D5", 8)]                # o A'' resolve na tônica
+_ANSWER = [[_REST], [("B5", 4), ("A5", 4), (".", 8)], [_REST], [("A5", 4), ("E5", 4), (".", 8)],   # sinos no A'
+           [_REST], [_REST], [_REST], [("C#6", 4), ("A5", 4), (".", 8)]]
+_SPARKS = [[("D6", 8), (".", 8)], [_REST], [("F#6", 8), (".", 8)], [_REST], [("A5", 8), (".", 8)], [_REST],
+           [("B5", 8), (".", 8)], [_REST]]                     # respiro: sininhos esparsos
+
+
+def _luna_parts() -> dict:
+    """Partes por compasso (strings de 16 passos) da forma inteira: melodia, resposta, pad, baixo, arpejo, chords."""
+    mel, ans, pad, bass, arp, chord_hits, sec_of = [], [], [], [], [], [], []
+    for name, chords in LUNA_SECTIONS:
+        for i, c in enumerate(chords):
+            sec_of.append(name)
+            r, t, f, x = LUNA_TONES[c]
+            if name in ("A", "A2", "A3"):
+                bar = _MEL_A[i] if not (name == "A3" and i == 7) else _MEL_A3_END
+            elif name == "B":
+                bar = _MEL_B[i]
+            else:
+                bar = [_REST]
+            mel.append(_bar(*bar))
+            ans.append(_bar(*(_ANSWER[i] if name == "A2" else _SPARKS[i] if name == "pausa" else [_REST])))
+            lo = f"{r}3" if r in ("D", "E", "F#") else f"{r}2" if r in ("G", "A", "B") else f"{r}3"
+            pad.append(held(f"{r}3+{t}3+{f}3+{x}4", 1))
+            if name in ("intro", "pausa"):
+                bass.append(_bar((lo, 16)) if name == "pausa" and i % 2 == 0 else _bar(_REST))
+            else:
+                bass.append(_bar((lo, 8), (f"{f}2" if f in ("A", "B", "G") else f"{f}3", 8)))
+            if name in ("A2", "B", "A3"):
+                arp.append(_bar((f"{r}4", 4), (f"{t}4", 4), (f"{f}4", 4), (f"{t}4", 4)))
+            else:
+                arp.append(_bar(_REST))
+            chord_hits.append(_bar((".", 2), (f"{r}4+{t}4+{f}4", 4), (".", 6), (f"{t}4+{f}4+{x}4", 4))
+                              if name not in ("intro", "pausa") else _bar(_REST))
+    j = " ".join
+    return {"mel": j(mel), "ans": j(ans), "pad": j(pad), "bass": j(bass), "arp": j(arp), "hits": j(chord_hits),
+            "sec": sec_of}
+
+
+def _luna_drums(sec: list[str], groove: dict) -> dict:
+    """Bateria por seção: groove = {nome: {secao: padrao de 16}}; sem entrada = silêncio naquele compasso."""
+    return {k: "".join(v.get(name, "................") for name in sec) for k, v in groove.items()}
+
+
+def flight_luna(opt: str = "A") -> np.ndarray:
+    bpm = LUNA_OPTS[opt][1]
+    P = _luna_parts()
+    song = Song(bpm=bpm, bars=len(P["sec"]))
+    eco = lambda w: (lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.25, mix_=w, pingpong=True))
+    song.add("pad", inst_pad(voices=3, detune=10, cutoff=1400, a=0.8, r=1.4, osc="tri"), P["pad"], gain_db=-15)
+    song.add("baixo", _bass_inst(r=0.2), P["bass"], gain_db=-11)
+    if opt == "A":
+        song.add("melodia", _lead_ocarina(), P["mel"], gain_db=-5, fx=eco(0.22))
+        song.add("sinos", inst_bell(ratio=3.5, index=1.6, tau=0.5), P["ans"], gain_db=-12, fx=eco(0.25))
+        song.add("marimba", _lead_marimba(), P["arp"], gain_db=-15, pan=-0.15)
+        dr = _luna_drums(P["sec"], {"bumbo": {"A2": "x.......x.......", "B": "x.......x.......", "A3": "x.......x......."},
+                                    "chocalho": {"B": "..x...x...x...x."}})
+        song.add("bumbo", drum_kick(f0=110, f1=55, tau=0.08), dr["bumbo"], drum=True, gain_db=-16)
+        song.add("chocalho", drum_hat(), dr["chocalho"], drum=True, gain_db=-25)
+    elif opt == "B":
+        song.add("melodia", inst_bell(ratio=3.5, index=1.8, tau=0.45), P["mel"], gain_db=-6, fx=eco(0.2))
+        song.add("sinos", inst_bell(ratio=3.5, index=1.2, tau=0.4), P["ans"], gain_db=-14, fx=eco(0.25))
+        song.add("piano", _lead_epiano(), P["hits"], gain_db=-13, pan=-0.1)
+        lofi = {"A": "x.....x...x.....", "A2": "x.....x...x.....", "B": "x.....x...x.....", "A3": "x.....x...x....."}
+        dr = _luna_drums(P["sec"], {"bumbo": lofi,
+                                    "caixa": {k: "....x.......x..." for k in ("A", "A2", "B", "A3")},
+                                    "chimbal": {k: "x.x.x.x.x.x.x.x." for k in ("A2", "B", "A3")}})
+        song.add("bumbo", drum_kick(f0=100, f1=50, tau=0.09), dr["bumbo"], drum=True, gain_db=-15)
+        song.add("caixa", drum_snare(tone=180, tau=0.05), dr["caixa"], drum=True, gain_db=-21)
+        song.add("chimbal", drum_hat(), dr["chimbal"], drum=True, gain_db=-27)
+    else:
+        song.add("melodia", inst_bell(ratio=3.5, index=2.2, tau=0.55), P["mel"], gain_db=-5, fx=eco(0.25))
+        song.add("sinos", _inst_celesta(), _shift(P["ans"], -12), gain_db=-14, fx=eco(0.3))
+        song.add("harpa", _lead_harp(), P["arp"], gain_db=-13, pan=0.12)
+    return song.render(loop=True, master_fx=lambda x: highpass(lowpass(reverb(x, size=0.7, damp=0.5, mix_=0.22),
+                                                                       10000), 35))
+
+
+# --- canções de ninar de domínio público (2026-10-09, prévia para o usuário escolher a melodia do voo da Lua) -----
+# Melodias conferidas em partitura (Wikipédia, código LilyPond: Twinkle, Brahms Op. 49 nº 4, Frère Jacques) ou sabidas
+# de cor (Au clair de la lune, 4 frases). Todas em Ré maior, tocadas por NÓS (só a melodia, sem letra nem gravação
+# de terceiros). Compasso: 16 passos (4/4) ou 12 (3/4: Brahms). Notas: (nota, passos); "." = pausa.
+LULLABIES = {
+    "twinkle": {"name": "Brilha, brilha, estrelinha", "bpm": 84.0, "steps": 16, "bars": [
+        [("D5", 4), ("D5", 4), ("A5", 4), ("A5", 4)], [("B5", 4), ("B5", 4), ("A5", 8)],
+        [("G5", 4), ("G5", 4), ("F#5", 4), ("F#5", 4)], [("E5", 4), ("E5", 4), ("D5", 8)],
+        [("A5", 4), ("A5", 4), ("G5", 4), ("G5", 4)], [("F#5", 4), ("F#5", 4), ("E5", 8)],
+        [("A5", 4), ("A5", 4), ("G5", 4), ("G5", 4)], [("F#5", 4), ("F#5", 4), ("E5", 8)],
+        [("D5", 4), ("D5", 4), ("A5", 4), ("A5", 4)], [("B5", 4), ("B5", 4), ("A5", 8)],
+        [("G5", 4), ("G5", 4), ("F#5", 4), ("F#5", 4)], [("E5", 4), ("E5", 4), ("D5", 8)]],
+        "chords": ["D", "G", "G", "A", "D", "D", "D", "A", "D", "G", "G", "A"]},
+    "clair": {"name": "Au clair de la lune (À luz da Lua)", "bpm": 84.0, "steps": 16, "bars": [
+        [("D5", 4), ("D5", 4), ("D5", 4), ("E5", 4)], [("F#5", 8), ("E5", 8)],
+        [("D5", 4), ("F#5", 4), ("E5", 4), ("E5", 4)], [("D5", 16)],
+        [("D5", 4), ("D5", 4), ("D5", 4), ("E5", 4)], [("F#5", 8), ("E5", 8)],
+        [("D5", 4), ("F#5", 4), ("E5", 4), ("E5", 4)], [("D5", 16)],
+        [("E5", 4), ("E5", 4), ("E5", 4), ("E5", 4)], [("B4", 8), ("B4", 8)],
+        [("E5", 4), ("D5", 4), ("C#5", 4), ("B4", 4)], [("A4", 16)],
+        [("D5", 4), ("D5", 4), ("D5", 4), ("E5", 4)], [("F#5", 8), ("E5", 8)],
+        [("D5", 4), ("F#5", 4), ("E5", 4), ("E5", 4)], [("D5", 16)]],
+        "chords": ["D", "D", "A", "D", "D", "D", "A", "D", "Em7", "Em7", "A", "A", "D", "D", "A", "D"]},
+    "jacques": {"name": "Frère Jacques (Dorme, João)", "bpm": 88.0, "steps": 16, "canon": True, "bars": [
+        [("D5", 4), ("E5", 4), ("F#5", 4), ("D5", 4)], [("D5", 4), ("E5", 4), ("F#5", 4), ("D5", 4)],
+        [("F#5", 4), ("G5", 4), ("A5", 8)], [("F#5", 4), ("G5", 4), ("A5", 8)],
+        [("A5", 2), ("B5", 2), ("A5", 2), ("G5", 2), ("F#5", 4), ("D5", 4)],
+        [("A5", 2), ("B5", 2), ("A5", 2), ("G5", 2), ("F#5", 4), ("D5", 4)],
+        [("D5", 4), ("A4", 4), ("D5", 8)], [("D5", 4), ("A4", 4), ("D5", 8)]],
+        "chords": ["D", "D", "D", "D", "D", "D", "D", "D"]},
+    "brahms": {"name": "Canção de ninar de Brahms", "bpm": 80.0, "steps": 12, "bars": [
+        [("A5", 6), ("F#5", 2), ("F#5", 4)], [("A5", 4), (".", 4), ("F#5", 2), ("A5", 2)],
+        [("D6", 4), ("C#6", 6), ("B5", 2)], [("B5", 4), ("A5", 4), ("E5", 2), ("F#5", 2)],
+        [("G5", 4), ("E5", 4), ("E5", 2), ("F#5", 2)], [("G5", 4), (".", 4), ("E5", 2), ("G5", 2)],
+        [("C#6", 2), ("B5", 2), ("A5", 4), ("C#6", 4)], [("D6", 4), (".", 4), ("D5", 2), ("D5", 2)],
+        [("D6", 8), ("B5", 2), ("G5", 2)], [("A5", 8), ("F#5", 2), ("D5", 2)],
+        [("G5", 4), ("A5", 4), ("B5", 4)], [("A5", 8), ("D5", 2), ("D5", 2)],
+        [("D6", 8), ("B5", 2), ("G5", 2)], [("A5", 8), ("F#5", 2), ("D5", 2)],
+        [("G5", 4), ("F#5", 4), ("E5", 4)], [("D5", 8), ("F#5", 2), ("F#5", 2)]],
+        "chords": ["D", "D", "A", "A", "A", "A", "A", "D", "G", "D", "A", "D", "G", "D", "A", "D"]},
+}
+
+
+def _tokens(bar: list) -> str:
+    out = []
+    for note_, n in bar:
+        out += ["."] * n if note_ == "." else [note_] + ["-"] * (n - 1)
+    return " ".join(out)
+
+
+def lullaby(key: str, reps: int = 2) -> np.ndarray:
+    """Prévia da canção de ninar: melodia na ocarina, marimba nos acordes (semínimas), pad e baixo; reps voltas.
+    Frère Jacques: na 2ª volta a marimba repete a melodia em cânone (2 compassos atrás)."""
+    L = LULLABIES[key]
+    st, bpm = L["steps"], L["bpm"]
+    mel = " ".join(_tokens(b) for b in L["bars"])
+    pad, bass, arp = [], [], []
+    for c in L["chords"]:
+        r, t, f, x = LUNA_TONES[c]
+        pad.append(" ".join([f"{r}3+{t}3+{f}3"] + ["-"] * (st - 1)))
+        lo = f"{r}2" if r in ("G", "A", "B") else f"{r}3"
+        half = st // 2
+        bass.append(" ".join([lo] + ["-"] * (half - 1) + [lo] + ["-"] * (st - half - 1)))
+        notes = [f"{r}4", f"{t}4", f"{f}4", f"{t}4"][: st // 4]
+        arp.append(" ".join(" ".join([n] + ["-"] * 3) for n in notes))
+    total = len(L["bars"]) * st * reps
+    song = Song(bpm=bpm, bars=total // 16)
+    rep = lambda s_: " ".join([s_] * reps)
+    song.add("melodia", _lead_ocarina(), rep(mel), gain_db=-5,
+             fx=lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.22, mix_=0.2, pingpong=True))
+    song.add("pad", inst_pad(voices=3, detune=10, cutoff=1400, a=0.6, r=1.2, osc="tri"), rep(" ".join(pad)), gain_db=-15)
+    song.add("baixo", _bass_inst(r=0.2), rep(" ".join(bass)), gain_db=-12)
+    if L.get("canon"):
+        lag = " ".join(["."] * (2 * st))
+        canon = (" ".join(["."] * len(L["bars"]) * st) + " " + mel).split()[: total]
+        canon = " ".join(canon[: len(L["bars"]) * st] + (lag + " " + mel).split()[: total - len(L["bars"]) * st])
+        song.add("marimba", _lead_marimba(), canon, gain_db=-9, pan=-0.2)
+    else:
+        song.add("marimba", _lead_marimba(), rep(" ".join(arp)), gain_db=-15, pan=-0.15)
+    return song.render(loop=True, master_fx=lambda x: highpass(lowpass(reverb(x, size=0.7, damp=0.5, mix_=0.22),
+                                                                       10000), 35))
+
+
+# --- voo da Lua: "Passeio no queijo" (2026-10-11, escolhida pelo usuário entre 3 na rodada 2) ---------------
+# Substitui flight + layer_luna só na Lua ("irritante com o tempo": arpejo sem parar, sino FM agudo, camada de
+# 38 s). Violão abafado + ocarina, melodia nova, 86 BPM, 44 compassos (~2 min); sem arpejo contínuo, tudo < 3 kHz.
+# Prévias da rodada: audio/previews/luna2/ (ninar, noite, passeio).
+
+def felt_piano() -> Instrument:
+    """Piano de feltro: FM 1:1 de índice baixo caindo + 2º harmônico curto + martelinho de ruído, passa-baixa 2,4 kHz."""
+    def play_(f, dur, vel):
+        total = max(dur, 1.4) + 0.3
+        body = fm(f, total, ratio=1.0, index=0.9 * decay(total, 0.25)) * decay(total, 1.1)
+        h2 = sine(f * 2, total) * decay(total, 0.35) * 0.22
+        hammer = lowpass(noise(total, "pink", int(f) % 91), f * 3) * decay(total, 0.012) * 0.08
+        return fade(lowpass(body + h2 + hammer, 2400), 0.002, 0.08) * vel
+    return play_
+
+
+def nylon() -> Instrument:
+    """Violãozinho: pulso com passa-baixa fechando rápido, bem abafado."""
+    return inst_pluck(cutoff0=2200, cutoff1=350, tau=0.3, osc="pulse")
+
+
+def bars_of(pattern: str) -> list[str]:
+    t = pattern.split()
+    return [" ".join(t[i:i + 16]) for i in range(0, len(t), 16)]
+
+
+def tones(c: str) -> tuple[str, str, str, str]:
+    return tuple(LUNA_TONES[c])
+
+
+def low(r: str) -> str:
+    return f"{r}2" if r in ("G", "A", "B", "F#", "E") else f"{r}3"
+
+
+def _luna_master(x: np.ndarray, lp: float = 7000) -> np.ndarray:
+    return highpass(lowpass(reverb(x, size=0.75, damp=0.55, mix_=0.25), lp), 35)
+
+
+# --- 3: passeio no queijo (violão + ocarina) ---------------------------------------------------------------------
+
+P3_A = ([("D", [("A4", 4), ("D5", 4), ("F#5", 6), ("E5", 2)]), ("A", [("E5", 8), ("C#5", 4), (".", 4)]),
+         ("Bm", [("D5", 4), ("F#5", 4), ("B5", 6), ("A5", 2)]), ("G", [("G5", 12), (".", 4)]),
+         ("D", [("A5", 4), ("F#5", 4), ("D5", 4), ("F#5", 4)]), ("A", [("E5", 4), ("C#5", 4), ("A4", 8)]),
+         ("G", [("B4", 4), ("D5", 4), ("G5", 4), ("F#5", 4)]), ("A", [("E5", 12), (".", 4)])])
+P3_A2 = P3_A[:5] + [("G", [("B4", 4), ("D5", 4), ("G5", 8)]), ("A", [("E5", 4), ("C#5", 4), ("A4", 4), ("C#5", 4)]),
+                    ("D", [("D5", 12), (".", 4)])]
+P3_B = [("G", [("B5", 6), ("A5", 2), ("G5", 8)]), ("A", [("A5", 6), ("G5", 2), ("E5", 8)]),
+        ("F#m", [("F#5", 4), ("A5", 4), ("C#6", 4), ("A5", 4)]), ("Bm", [("B5", 12), (".", 4)]),
+        ("Em7", [("G5", 4), ("E5", 4), ("B4", 4), ("E5", 4)]), ("A", [("C#5", 4), ("E5", 4), ("A5", 8)]),
+        ("D", [("F#5", 4), ("E5", 4), ("D5", 4), ("A4", 4)]), ("D", [("D5", 8), (".", 8)])]
+
+
+def passeio() -> np.ndarray:
+    bpm = 86
+    gtr_only = lambda cs: [(c, None) for c in cs]
+    form = ([("intro", x) for x in gtr_only(["D", "A", "G", "A"])] + [("A", x) for x in P3_A]
+            + [("A2", x) for x in P3_A2] + [("B", x) for x in P3_B]
+            + [("resp", x) for x in gtr_only(["G", "A", "Bm", "A"])] + [("A2b", x) for x in P3_A2]
+            + [("outro", x) for x in gtr_only(["G", "A", "D", "D"])])
+    oca, pno, gtr, bass, shk = [], [], [], [], []
+    for sec, (c, m) in form:
+        r, t, f, x = tones(c)
+        bar_m = _bar(*m) if m else _bar(_REST)
+        oca.append(bar_m if sec in ("A", "B", "A2b") else _bar(_REST))
+        pno.append(bar_m if sec == "A2" else _shift_oct(bar_m) if sec == "A2b" else _bar(_REST))
+        chord_ = f"{r}3+{t}3+{f}3" if r in ("D", "E", "F#") else f"{r}2+{t}3+{f}3"
+        gtr.append(_bar((".", 4), (chord_, 4), (".", 4), (chord_, 4)))
+        bass.append(_bar((low(r), 4), (".", 4), (f"{f}2" if f in ("A", "B", "G") else f"{f}3", 4), (".", 4)))
+        shk.append("..x...x...x...x." if sec in ("B", "A2b") else "................")
+    song = Song(bpm=bpm, bars=len(form))
+    eco = lambda x: delay(x, time=60 / bpm * 0.75, feedback=0.2, mix_=0.15, pingpong=True)
+    song.add("violao", nylon(), " ".join(gtr), gain_db=-12, pan=-0.2)
+    song.add("baixo", _bass_inst(r=0.15), " ".join(bass), gain_db=-12)
+    song.add("ocarina", _lead_ocarina(), " ".join(oca), gain_db=-6, pan=0.1, fx=eco)
+    song.add("piano", felt_piano(), " ".join(pno), gain_db=-10, fx=eco)
+    song.add("chocalho", drum_hat(), "".join(shk), drum=True, gain_db=-30)
+    return song.render(loop=True, master_fx=_luna_master)
+
+
+def _shift_oct(bar: str) -> str:
+    """Uma oitava abaixo (piano dobrando a ocarina na última volta)."""
+    names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    out = []
+    for tok in bar.split():
+        if tok in (".", "-"):
+            out.append(tok)
+        else:
+            m = midi(tok) - 12
+            out.append(f"{names[m % 12]}{m // 12 - 1}")
+    return " ".join(out)
+
+
+
+LUNA_PICK = "A"
+TRACKS = {"title": title, "flight": flight, "theme": lambda: theme(THEME_PICK, THEME_BPM, THEME_DRUMS),
+          "flight_luna": passeio}
 
 if __name__ == "__main__":
     out = "assets/audio/music/" if "--export" in sys.argv else "audio/previews/"
     # caminhos literais (o pre-commit liga cada asset ao script-fonte):
     # assets/audio/music/title.wav assets/audio/music/flight.wav assets/audio/music/theme.wav
+    # assets/audio/music/flight_luna.wav
     # assets/audio/music/layer_luna.wav assets/audio/music/layer_cogumelos.wav assets/audio/music/layer_bolhas.wav
     # assets/audio/music/layer_jardim.wav assets/audio/music/layer_sorvete.wav assets/audio/music/layer_nuvens.wav
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -368,6 +650,12 @@ if __name__ == "__main__":
     if "theme_options" in args:                              # prévia das opções do tema (não exporta)
         for opt in [a for a in args if a in THEME_LEADS] or ("A", "B"):
             save_wav(f"audio/previews/theme_{opt}.wav", theme(opt), "music", loop=True)
+    if "luna_options" in args:                               # prévia das 3 opções do voo da Lua (não exporta)
+        for opt in "ABC":
+            save_wav(f"audio/previews/luna/flight_luna_{opt}.wav", flight_luna(opt), "music", loop=True)
+    if "lullabies" in args:                                  # prévia das canções de ninar (não exporta)
+        for k in LULLABIES:
+            save_wav(f"audio/previews/luna/ninar_{k}.wav", lullaby(k), "music", loop=True)
     if "tempo_options" in args:                              # prévia do tema mais lento (Noite de história)
         for bpm, drums in ((76, "full"), (68, "soft"), (60, "none")):
             save_wav(f"audio/previews/theme_D_{bpm}.wav", theme("D", bpm, drums), "music", loop=True)

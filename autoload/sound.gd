@@ -106,8 +106,10 @@ const PRIORITY := {
 const MUSIC := {"theme": "res://assets/audio/music/theme.wav", "title": "res://assets/audio/music/title.wav",
 		"flight": "res://assets/audio/music/flight.wav"}
 const LAYER_DIR := "res://assets/audio/music/layer_%s.wav"
+## Voo com faixa propria do mundo (substitui base + camada): a Lua toca "Passeio no queijo" (2026-10-11).
+const WORLD_FLIGHT_DIR := "res://assets/audio/music/flight_%s.wav"
 ## Andamento de cada faixa (o mesmo dos scripts em audio/src/music/soundtrack.py): relogio musical das animacoes.
-const BPM := {"theme": 68.0, "title": 84.0, "flight": 100.0}
+const BPM := {"theme": 68.0, "title": 84.0, "flight": 100.0, "flight:luna": 86.0}
 const AMBIENCE_DIR := "res://assets/audio/ambience/%s.wav"
 ## Cursor: o mais baixo da interface (toca a cada seta; "quase silencioso", padrao de UI).
 const MOVE_DB := -7.0
@@ -235,7 +237,7 @@ func _on_focus_changed(_node: Control) -> void:
 ## with audio and music": posicao + tempo desde a ultima mixagem - latencia de saida). Sem musica tocando, um relogio
 ## de parede no andamento do tema (as animacoes continuam no mesmo ritmo).
 func music_beat() -> float:
-	var bpm := float(BPM.get(_music_name.get_slice(":", 0), BPM["theme"]))
+	var bpm := float(BPM.get(_music_name, BPM.get(_music_name.get_slice(":", 0), BPM["theme"])))
 	var p := _music[0]
 	if not p.playing:
 		return Time.get_ticks_msec() / 1000.0 * bpm / 60.0
@@ -313,12 +315,16 @@ func _exit_tree() -> void:
 
 
 ## Musica de fundo (loop) com crossfade; "" silencia. A mesma que ja toca continua de onde estava. O voo leva o mundo:
-## base + camada do mundo tocando juntas (sem camada = so a base).
+## faixa propria do mundo (flight_<mundo>.wav) se existir; senao base + camada do mundo juntas (sem camada = so a base).
 func music(name: String, world: String = "") -> void:
 	var key := "%s:%s" % [name, world] if name == "flight" else name
 	if key == _music_name:
 		return
 	_music_name = key
+	var own_path := WORLD_FLIGHT_DIR % world
+	if name == "flight" and world != "" and ResourceLoader.exists(own_path):
+		_crossfade(0, _load(own_path), null)
+		return
 	var base: AudioStream = _load(MUSIC[name]) if MUSIC.has(name) else null
 	var layer_path := LAYER_DIR % world
 	var layer: AudioStream = null

@@ -69,3 +69,17 @@
 
 ## Auditoria v2 (2026-10-09)
 - title e flight: baixo = `_bass_inst` (o do tema: triângulo + harmônico de pulso) e −3 dB; voo com bumbo 140→55 Hz −10 dB; passa-alta 35 Hz no master. Grave < 120 Hz: title 68% → 50%, flight 72% → 52%; perda no notebook 4,4/5,8 → 3,3/4,0 dB. Tema da ocarina e camadas intactos. A camada toca num player gêmeo (não mais AudioStreamSynchronized). Ver `mix-system`.
+
+## Fadiga da música da Lua (2026-10-11, rodada 2 — escolhida "3 passeio" → `passeio()` em soundtrack.py, asset flight_luna.wav)
+Usuário: "a música da lua de queijo é muito irritante com o tempo"; o tema do gatinho (lento, poucas notas) agrada.
+Medido em voo + layer_luna: arpejo contínuo (~3,6 ataques/s por 115 s), sino FM ratio 3,5 com 19% > 3 kHz, camada
+de 38 s (repete ~16x em 10 min), lídio (E maior) sem resolver. Regras anti-fadiga aplicadas nas opções:
+- nada de ostinato que nunca para; seções tiram e devolvem instrumentos (contraste; loop curto não tem espaço para isso);
+- timbres "eletrônicos tocados como acústicos" (Totaka/Animal Crossing): piano de feltro (FM 1:1 índice 0,9 + LP 2,4k),
+  ocarina, violão abafado; nada inarmônico como lead; energia > 3 kHz ≈ 0;
+- silêncio como parte da música (C418/Minecraft); material nem plano demais nem com "marcos" fortes repetidos.
+Opções: 1 ninar (tema em piano de feltro, 70 BPM) · 2 noite (ambiente, 64 BPM, 3 min) · 3 passeio (violão+ocarina, 86 BPM).
+Aviso "energia muda na emenda" da 3 é o baixo no tempo 1 (a onda na emenda é contínua) — aceito.
+Fontes: https://world.hey.com/thome/game-101-reducing-music-fatigue-d0214e31 ·
+https://www.gamedeveloper.com/audio/rethinking-the-audio-loop-in-games ·
+https://gameplay.co/animal-crossing-music-new-horizons-scruffy-youtube/ · https://craftdex.net/articles/the-c418-and-minecraft-music
