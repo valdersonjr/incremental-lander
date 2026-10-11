@@ -1724,6 +1724,21 @@ func _tick_track() -> void:
 			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
 
 
+## Quanto um pouso BOM renderia se a nave pousasse onde esta agora (cresce voando para a frente): o HUD mostra isso +
+## o que esta a receber; so entra no banco ao pousar numa plataforma (o valor certo vem da plataforma e da nota).
+func track_live_gain() -> float:
+	if not track or lander.state != Lander.State.FLYING or terrain.pads.is_empty():
+		return 0.0
+	var x := lander.global_position.x
+	var last: Dictionary = terrain.pads[_track_last]
+	if x <= float(last["x"]) + float(last["half_width"]):
+		return 0.0
+	var nxt: Dictionary = terrain.pads[mini(_track_last + 1, terrain.pads.size() - 1)]
+	var skipped := 1 if x > float(nxt["x"]) + float(nxt["half_width"]) else 0
+	var q := float(EconMath.spec["contracts"]["track"].get("stars", {}).get("good", 0.6))
+	return EconMath.track_pay(planet_id, WorldConfig.px_to_m(x), stats, q, "normal", skipped)
+
+
 ## Pousou: os marcos passados nesta viagem foram pagos (nao pagam de novo neste mundo).
 func track_confirm_marks() -> void:
 	for mk: Dictionary in _marks:

@@ -48,7 +48,9 @@ var _rec_bar: HBoxContainer = null               # barra ate o recorde de dinhei
 var _track_row: HBoxContainer = null             # v21 (pista): distancia da viagem + recorde do mundo
 var _track_dist: Label = null
 var _track_best: Label = null
-var _track_pending: Label = null                 # moedas no ar + marcos a receber no proximo pouso
+var _pending := 0.0                              # moedas no ar + marcos a receber no proximo pouso (Main)
+var _live_row: HBoxContainer = null              # "+N a receber": cresce voando, so entra no banco ao pousar
+var _live: Label = null
 @onready var _cargo_row: Control = %CargoRow
 @onready var _cargo_icon: TextureRect = %CargoIcon
 @onready var _cargo_bar: ProgressBar = %CargoBar
@@ -136,12 +138,9 @@ func _process(delta: float) -> void:
 	_update_reputation(str(flight.mission.get("kind", "simple")) if flight.target_pad_id >= 0 else "")
 
 
-## Moedas no ar + marcos passados, pagos no proximo pouso ("+N ao pousar"); 0 = some.
+## Moedas no ar + marcos passados, pagos no proximo pouso (somam no "+N a receber").
 func set_pending(amount: float) -> void:
-	if _track_pending == null:
-		return
-	_track_pending.visible = amount > 0.0
-	_track_pending.text = "  +%s ao pousar" % EconMath.fmt(amount)
+	_pending = amount
 
 
 ## v21 (pista): a distancia e a pontuacao da viagem -> linha grande logo abaixo do dinheiro, com o recorde do mundo.
@@ -164,11 +163,20 @@ func _build_track_row() -> void:
 	_track_best = Label.new()
 	_track_best.theme_type_variation = &"DimLabel"
 	_track_row.add_child(_track_best)
-	_track_pending = Label.new()
-	_track_pending.theme_type_variation = &"MoneyLabel"
-	_track_pending.visible = false
-	_track_row.add_child(_track_pending)
 	_score.add_child(_track_row)
+	_live_row = HBoxContainer.new()
+	_live_row.add_theme_constant_override(&"separation", 3)
+	_live = Label.new()
+	_live.theme_type_variation = &"BigMoneyLabel"
+	_live_row.add_child(_live)
+	var hint := Label.new()
+	hint.theme_type_variation = &"DimLabel"
+	hint.text = "a receber: pouse!"
+	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_live_row.add_child(hint)
+	_live_row.modulate.a = 0.0                                 # sem tremer o painel: aparece/some pela opacidade
+	_score.add_child(_live_row)
+	_score.move_child(_live_row, 1)
 	_score.move_child(_track_row, 1)
 	_rec_grid.visible = false                                  # a distancia ja esta aqui em destaque
 
@@ -181,6 +189,9 @@ func _update_track() -> void:
 	_track_dist.text = GameState.record_text("run_distance", dist)
 	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and dist > best else &"ValueLabel"
 	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
+	var live := _pending + flight.track_live_gain()
+	_live_row.modulate.a = 1.0 if live > 0.0 else 0.0
+	_live.text = "+" + EconMath.fmt(live)
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).
