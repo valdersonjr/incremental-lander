@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 24,
-    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo). v12.1: um pedido por ratinho; jogador escolhe plataforma e estrela. v13: PROGRESSAO - estrada das estrelas (progression.road; estrelas acumuladas liberam ratinhos, habilidades, ajudas, Frota e Piloto) e Reputacao +10% apos pouso perfeito (contracts.reputation substitui combo); sai o upgrade Reputacao por creditos. Numeros provisorios. v14: Reputacao por ratinho (contracts.reputation.levels: 5/15/30 pontos -> +10/20/30% nos pedidos daquele ratinho; cumprida = 1, pouso perfeito = 2); sai o +10% na entrega seguinte. v15: run sem teto de entregas (sai max_per_run); contracts.run_fatigue 1,7 = gas do salto x 1,7^n (n = entregas ja feitas no run), galao devolve gas / 1,7^n; o run acaba pelo gas (ou batida) e o jogador tenta bater os recordes. v15 (paisagens): 5 paradas type landscape na Estrada (land_serra 8, land_vale 20, land_planalto 37, land_crateras 56, land_degraus 78 estrelas; rascunho) liberam paisagens do relevo (world.json terrain.landscapes); sem efeito na economia do modelo. v16: 5 mundos paralelos (nuvens, bolhas, cogumelos, sorvete, jardim; planets[].road = liberado por parada 'world_<id>' da Estrada em 24/44/66/88/110 estrelas, rascunho); pay_mult de cada mundo = 1,15 x renda da Lua com a nave do fim do jogo; contracts.record_bonus {frac .15, first_frac .4}: bater o recorde de dinheiro do run num mundo paga 15% do run (1a visita 40%). v17: minijogos — um pedido-assinatura por mundo (planets[].mission: luna simple/trilha, nuvens passenger/fila, cogumelos soft/quique, sorvete fast/curling, jardim heavy/Flappy, bolhas tow/garra), ordem do mais facil ao mais dificil; progression.roads.<mundo> = Estrada por mundo (estrelas feitas NELE; ultima parada 'complete' libera o proximo mundo); saem progression.road e as paradas world_*; simple ganha 3 estrelas (1/1,15/1,3) e nos simple2/3; heavy ganha fail_mult/fail_p (vaos do Flappy); passenger sem leg2 (estrelas = mais carneirinhos); luna.mission_bonus .15 (queijinhos da trilha). v19 (auditoria da progressao, aprovada pelo usuario): pagamento = pay_base x (pay_fixed .3 + (d/100)^0,7) (antes d^1,1: longe+apertada pagava 17x por gas); plataformas estreita x1,25 / apertada x1,5 (premio de risco); tanque +8/nivel e eficiencia +0,15/nivel (aditivos: o gas volta a ser escasso); marcos x1,25 a cada 10 niveis (o degrau em que a peca cresce); run_fatigue 2,0; Estrada reordenada pela necessidade (Da pra chegar? na Lua 5, Sombra e Rastro nas Nuvens, Turbo e Nivelador nos Cogumelos). v20 (auditoria do voo): Motor/Gasolina/Eficiencia/Resistencia so melhoram ao completar o degrau (effect.step 10; as bolinhas do meio sao parcelas); physics.feel = teto suave do empuxo sentido no voo (aceleracao liquida ate 3,5 igual, depois -> 8 m/s2). v21 (auditoria de clareza, opcao C 'Mais longe' escolhida pelo usuario): contracts.track = pista so para a frente; plataformas em sequencia (vao gap), pouso paga track_base(x do comeco; pay_unit) x qualidade x plataforma x (1 + skip_bonus se pulou uma); relevo sobe com x (rough_scale; Nuvens 220) e faz a viagem acabar; galoes de gas (can_first/can_every/can_scale, can_frac do tanque); moedas no ar (coin_frac); marcos a cada marker_every m pagam marker_mult x base na 1a vez por mundo; estrelas = nota do pouso (1 + bom + perfeito; stars.good/perfect); Estradas x5 (estrelas por pouso ~2); run_fatigue 1 (sem cansaco); presentes, missoes, reputacao e bonus de recorde de dinheiro ignorados no modo pista. v22 (v21b, pedido do usuario 'sempre mostrar o gold acumulado'): o pouso paga o ACUMULADO dos metros avancados desde o ultimo pouso (track_accum = integral de track_base/per_m_ref, per_m_ref 175) x nota x plataforma (track_land_mult); sai skip_bonus (pular ja paga mais metros); o HUD mostra o acumulado crescendo. v23 (v22b): TETO de voo track.ceiling_m 60 acima do ponto mais alto do relevo ao redor (jogo: acima dele o motor nao sobe e um vento empurra para baixo); o modelo calcula o salto com o teto (track_hop) e o piloto pode mirar ate 6 plataformas a frente (arremesso). Motivo: no jogo o usuario arremessou 2,9 km com 51 de gas e fez ~8 mil no 1o voo. v24: sai o teto de voo (usuario: 'nao poder sair de perto do chao ficou horrivel'); no jogo o GASTO de gas cresce com a distancia do comeco (eficiencia / track_rough(x), HUD 'gasto xN') = o que o modelo ja supunha (rough_scale); antes o relevo era o unico efeito no jogo e o arremesso saia barato."
+    "version": 25,
+    "notes": "v7: v6 + variedade nas entregas (plataformas normal/estreita/apertada com multiplicador, combo de pousos bons, cristais no arco); pay_base x0.85. Unidades: m, m/s, m/s2, gas. v7.1: perigos por mundo (planet.hazard: dv extra x (1-skill) x 2, crash somado). v9: sem cristais (contracts.pickups) e sem Refinaria; pay_base 9,5; arvore de ajudas de voo (upgrades assist: compra unica, persistente, requires_upgrade; nao mudam a fisica). v10: presentes no alto do morro (contracts.gifts): encostar devagar pega gas ou creditos. v11: so a Lua (sem prestigio, sem Silvania/Docelandia/Quarto, sem Expedicao e minerio); Frota/Piloto automatico por creditos (8M / 16M, piloto exige 1 drone); jogo sem objetivo final por enquanto. v12: missoes abstratas com estrelas (contracts.missions substitui contracts.cargo). v12.1: um pedido por ratinho; jogador escolhe plataforma e estrela. v13: PROGRESSAO - estrada das estrelas (progression.road; estrelas acumuladas liberam ratinhos, habilidades, ajudas, Frota e Piloto) e Reputacao +10% apos pouso perfeito (contracts.reputation substitui combo); sai o upgrade Reputacao por creditos. Numeros provisorios. v14: Reputacao por ratinho (contracts.reputation.levels: 5/15/30 pontos -> +10/20/30% nos pedidos daquele ratinho; cumprida = 1, pouso perfeito = 2); sai o +10% na entrega seguinte. v15: run sem teto de entregas (sai max_per_run); contracts.run_fatigue 1,7 = gas do salto x 1,7^n (n = entregas ja feitas no run), galao devolve gas / 1,7^n; o run acaba pelo gas (ou batida) e o jogador tenta bater os recordes. v15 (paisagens): 5 paradas type landscape na Estrada (land_serra 8, land_vale 20, land_planalto 37, land_crateras 56, land_degraus 78 estrelas; rascunho) liberam paisagens do relevo (world.json terrain.landscapes); sem efeito na economia do modelo. v16: 5 mundos paralelos (nuvens, bolhas, cogumelos, sorvete, jardim; planets[].road = liberado por parada 'world_<id>' da Estrada em 24/44/66/88/110 estrelas, rascunho); pay_mult de cada mundo = 1,15 x renda da Lua com a nave do fim do jogo; contracts.record_bonus {frac .15, first_frac .4}: bater o recorde de dinheiro do run num mundo paga 15% do run (1a visita 40%). v17: minijogos — um pedido-assinatura por mundo (planets[].mission: luna simple/trilha, nuvens passenger/fila, cogumelos soft/quique, sorvete fast/curling, jardim heavy/Flappy, bolhas tow/garra), ordem do mais facil ao mais dificil; progression.roads.<mundo> = Estrada por mundo (estrelas feitas NELE; ultima parada 'complete' libera o proximo mundo); saem progression.road e as paradas world_*; simple ganha 3 estrelas (1/1,15/1,3) e nos simple2/3; heavy ganha fail_mult/fail_p (vaos do Flappy); passenger sem leg2 (estrelas = mais carneirinhos); luna.mission_bonus .15 (queijinhos da trilha). v19 (auditoria da progressao, aprovada pelo usuario): pagamento = pay_base x (pay_fixed .3 + (d/100)^0,7) (antes d^1,1: longe+apertada pagava 17x por gas); plataformas estreita x1,25 / apertada x1,5 (premio de risco); tanque +8/nivel e eficiencia +0,15/nivel (aditivos: o gas volta a ser escasso); marcos x1,25 a cada 10 niveis (o degrau em que a peca cresce); run_fatigue 2,0; Estrada reordenada pela necessidade (Da pra chegar? na Lua 5, Sombra e Rastro nas Nuvens, Turbo e Nivelador nos Cogumelos). v20 (auditoria do voo): Motor/Gasolina/Eficiencia/Resistencia so melhoram ao completar o degrau (effect.step 10; as bolinhas do meio sao parcelas); physics.feel = teto suave do empuxo sentido no voo (aceleracao liquida ate 3,5 igual, depois -> 8 m/s2). v21 (auditoria de clareza, opcao C 'Mais longe' escolhida pelo usuario): contracts.track = pista so para a frente; plataformas em sequencia (vao gap), pouso paga track_base(x do comeco; pay_unit) x qualidade x plataforma x (1 + skip_bonus se pulou uma); relevo sobe com x (rough_scale; Nuvens 220) e faz a viagem acabar; galoes de gas (can_first/can_every/can_scale, can_frac do tanque); moedas no ar (coin_frac); marcos a cada marker_every m pagam marker_mult x base na 1a vez por mundo; estrelas = nota do pouso (1 + bom + perfeito; stars.good/perfect); Estradas x5 (estrelas por pouso ~2); run_fatigue 1 (sem cansaco); presentes, missoes, reputacao e bonus de recorde de dinheiro ignorados no modo pista. v22 (v21b, pedido do usuario 'sempre mostrar o gold acumulado'): o pouso paga o ACUMULADO dos metros avancados desde o ultimo pouso (track_accum = integral de track_base/per_m_ref, per_m_ref 175) x nota x plataforma (track_land_mult); sai skip_bonus (pular ja paga mais metros); o HUD mostra o acumulado crescendo. v23 (v22b): TETO de voo track.ceiling_m 60 acima do ponto mais alto do relevo ao redor (jogo: acima dele o motor nao sobe e um vento empurra para baixo); o modelo calcula o salto com o teto (track_hop) e o piloto pode mirar ate 6 plataformas a frente (arremesso). Motivo: no jogo o usuario arremessou 2,9 km com 51 de gas e fez ~8 mil no 1o voo. v24: sai o teto de voo (usuario: 'nao poder sair de perto do chao ficou horrivel'); no jogo o GASTO de gas cresce com a distancia do comeco (eficiencia / track_rough(x), HUD 'gasto xN') = o que o modelo ja supunha (rough_scale); antes o relevo era o unico efeito no jogo e o arremesso saia barato. v25 (usuario: 'dificulta o maximo sem deixar o jogo ruim; o arremesso e habilidade'): sem teto e sem gasto por distancia; tanque base 45; Gasolina +2,4 e Eficiencia +0,045 por nivel (30% da forca: tanque x eficiencia multiplicavam e a viagem ia a 20-50 km); galao fixo can_gas 12 (fracao do tanque nunca acabava); track.hill_scale = relevo crescente so no jogo (o modelo nao cobra gas por distancia)."
   },
   "physics": {
     "mode": "arcade",
@@ -25,7 +25,7 @@
   "ship": {
     "base": {
       "thrust": 4.0,
-      "tank": 100.0,
+      "tank": 45.0,
       "efficiency": 3.0,
       "pay_mult": 1.0,
       "gear": 1.0,
@@ -75,7 +75,7 @@
       "effect": {
         "stat": "tank",
         "op": "add",
-        "value": 8.0,
+        "value": 2.4,
         "step": 10
       },
       "cost": {
@@ -100,7 +100,7 @@
       "effect": {
         "stat": "efficiency",
         "op": "add",
-        "value": 0.15,
+        "value": 0.045,
         "step": 10
       },
       "cost": {
@@ -409,10 +409,7 @@
         "crash": 0.02
       },
       "mission": "passenger",
-      "partial_frac_model": 0.6,
-      "track": {
-        "rough_scale": 220
-      }
+      "partial_frac_model": 0.6
     },
     {
       "id": "cogumelos",
@@ -913,12 +910,10 @@
         220
       ],
       "seed": 7,
-      "rough_scale": 450,
       "pay_unit": 400,
       "can_first": 350,
       "can_every": 450,
       "can_scale": 1000,
-      "can_frac": 0.35,
       "can_pick": 0.5,
       "coin_frac": 0.1,
       "marker_every": 250,
@@ -927,7 +922,9 @@
         "good": 0.6,
         "perfect": 0.85
       },
-      "per_m_ref": 175.0
+      "per_m_ref": 175.0,
+      "hill_scale": 450,
+      "can_gas": 12.0
     }
   },
   "profiles_override": {},

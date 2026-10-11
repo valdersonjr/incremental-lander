@@ -23,8 +23,9 @@
   **Ouro acumulado (v22)**: o painel de cima mostra "+N a receber" crescendo com o chão novo (fronteira paga
   `track_banked_m`), o pouso paga acumulado × nota × plataforma; plaquinhas mostram o acumulado ao chegar em cada uma.
   Fim do "tente de novo" infinito (máx. 2 por salto). Contra o arremesso (2,9 km com 51 de gás no teste do usuário):
-  o teto de voo (v23) foi rejeitado ("horrível"); v24 = gasto de gás cresce com a distância (HUD "gasto ×N").
-  Demo: 3 pousos/492 m/~470 de ouro no 1º voo. Calibrar `rough_scale` com o próximo teste do usuário.
+  teto (v23) e gasto por distância (v24) rejeitados; **v25**: tanque base 45, peças Gasolina/Eficiência a 30%, galão
+  fixo 12, arremesso aceito como habilidade. Demo: 2 pousos/340 m/~350 de ouro no 1º voo. Modelo: viagem 0,8 → 6,8 km
+  no jogo todo, compras a cada ~7,7 min (esperas de 7–12 min perto de 0,9 h). Calibrar com o próximo teste.
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

@@ -1518,7 +1518,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 		x += EconMath.track_gap(planet_id, x, rng.randf())
 		_pad_positions_m.append(x)
 		_pad_tiers.append(EconMath.draw_pad_tier(rng))
-	_shape = {"rough_px": WorldConfig.m_to_px(float(t.get("rough_scale", 1e9))), "rough_cap": 4.0}
+	_shape = {"rough_px": WorldConfig.m_to_px(float(t.get("hill_scale", 1e9))), "rough_cap": 4.0}
 	target_pad_id = 1
 	_rebuild_terrain()
 	lander.setup(stats, _planet_spec(planet_id), terrain.pads)
@@ -1699,17 +1699,10 @@ func _marker_node(m: float, flag: bool = false) -> Node2D:
 	return node
 
 
-## v24: o GASTO de gas cresce com a distancia do comeco (eficiencia / EconMath.track_rough(x)): ir longe custa cada
-## vez mais, inclusive no "arremesso" alto (o modelo da economia ja supunha isso). O HUD mostra "gasto xN".
-func track_gas_mult() -> float:
-	return EconMath.track_rough(planet_id, maxf(0.0, WorldConfig.px_to_m(lander.global_position.x))) if track else 1.0
-
-
 ## A cada passo: distancia alcancada, galoes, moedas e marcos novos.
 func _tick_track() -> void:
 	if not track:
 		return
-	lander.params["efficiency"] = float(stats["efficiency"]) / track_gas_mult()
 	if lander.state != Lander.State.FLYING:
 		return
 	var pos := lander.global_position

@@ -780,8 +780,10 @@ def track_cans(T: dict, x_max: float) -> list[float]:
 
 
 def track_can_gas(E: dict, stats: dict) -> float:
-    """Gas que um galao devolve (fracao do tanque)."""
-    return E["contracts"]["track"].get("can_frac", 0.0) * stats["tank"]
+    """Gas que um galao devolve: v25 can_gas fixo (fracao do tanque fazia o tanque grande nunca acabar); senao
+    can_frac x tanque."""
+    T = E["contracts"]["track"]
+    return T["can_gas"] if "can_gas" in T else T.get("can_frac", 0.0) * stats["tank"]
 
 
 def track_accum(E: dict, planet: dict, x0: float, x1: float, stats: dict) -> float:
@@ -881,7 +883,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
                 break
             xj, tid = pads[j]
             tier = pad_tier(E, tid)
-            g_need = track_hop(E, planet, xj - x, stats, prof)[0] * track_rough(E, planet, (x + xj) / 2) / eff
+            g_need = track_hop(E, planet, xj - x, stats, prof)[0] * track_rough(E, planet, (x + xj) / 2) / eff   # v25: rough so se a spec tiver rough_scale
             if g_need > gas:
                 continue
             q_mu = _q_on_tier(prof.skill, tier, prof.skill)

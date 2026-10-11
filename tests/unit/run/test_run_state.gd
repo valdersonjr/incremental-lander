@@ -48,7 +48,7 @@ func test_sem_teto_e_gas_cresce_por_entrega() -> void:
 
 
 func test_pista_sempre_acaba_pelo_gas() -> void:
-	# v21: tanque enorme + todos os galoes: o relevo que sobe com a distancia acaba com a viagem
+	# v25: tanque enorme + todos os galoes (fixos, cada vez mais espacados): a viagem acaba
 	var big := EconMath.ship_stats({"thrust": 60, "tank": 80, "efficiency": 60})
 	var tank := float(big["tank"])
 	var gas := tank
@@ -57,8 +57,7 @@ func test_pista_sempre_acaba_pelo_gas() -> void:
 	var ci := 0
 	var n := 0
 	while n < 500:
-		var need := EconMath.estimated_hop_dv("luna", 180.0, big) * EconMath.track_rough("luna", x + 90.0) \
-				/ float(big["efficiency"])
+		var need := EconMath.estimated_hop_dv("luna", 180.0, big) / float(big["efficiency"])
 		if need > gas:
 			break
 		gas -= need

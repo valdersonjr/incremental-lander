@@ -63,3 +63,12 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   no jogo só o relevo crescia, e o arremesso (2,9 km com 51 de gás) não pagava esse custo — medido (screen 6 h, igual
   à linha "sem teto" do script v22b): engajado 1ª compra 80 s, intervalo mediano 5,8 min, run 273 s, mundos
   0,68/1,65/2,57/3,38/4,27 h; 1º voo do modelo: 1 pouso ~950 m, ~570 moedas.
+- v25 (2026-10-11) — "dificulta o máximo sem deixar o jogo ruim; o arremesso é habilidade do jogador": sem teto e sem
+  gasto por distância (v24 rejeitada); tanque base 100 → 45; Gasolina +8 → +2,4 e Eficiência +0,15 → +0,045 por nível
+  (30%); galão fixo `can_gas` 12 (antes 35% do tanque); `rough_scale` → `hill_scale` (só o relevo do jogo). Achado:
+  sem custo por distância, tanque × eficiência se multiplicam e a viagem ia a 23 km (nível 20) / 52 km (nível 40);
+  galão por fração do tanque dobrava isso; pay_base não muda o intervalo entre compras (o limite é a duração da
+  viagem). Medido (screen 10 h): viagem do modelo 0,8 km/1,2 min → 3,5 km/3,5 min (nível 20) → 6,8 km/6 min (nível
+  40); engajado: 1ª compra 75 s, intervalo mediano 7,7 min (p90 16), mundos 0,73/1,59/2,61/3,47/4,36 h; casual até
+  7,2 h; expert 2,6 h (viagem ~7 min: pilotar bem rende). Avisos: esperas de 7–12 min perto de 0,9 h. Script
+  `balance/sims/2026-10-11-v25-final.py`.

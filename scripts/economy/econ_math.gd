@@ -364,7 +364,10 @@ static func track_cans(planet_id: String, x_max: float) -> Array[float]:
 
 ## Gas de um galao (fracao do tanque; quem chama nao deixa passar do tanque cheio).
 static func track_can_gas(stats: Dictionary) -> float:
-	return float(spec["contracts"]["track"].get("can_frac", 0.0)) * float(stats["tank"])
+	var t: Dictionary = spec["contracts"]["track"]
+	if t.has("can_gas"):                                       # v25: fixo (fracao do tanque nunca acabava)
+		return float(t["can_gas"])
+	return float(t.get("can_frac", 0.0)) * float(stats["tank"])
 
 
 ## v22: ouro ACUMULADO voando para a frente de x0 ate x1 (placar "a receber"; nunca cai): integral de
