@@ -113,6 +113,9 @@ func _process(delta: float) -> void:
 	var tank := float(l.params.get("tank", 0.0))
 	var frac := l.gas / tank if tank > 0.0 else 0.0
 	_gas.text = EconMath.fmt(l.gas)
+	var gm := flight.track_gas_mult()
+	if gm >= 1.05:                                             # v24 pista: o gasto cresce com a distancia
+		_gas.text = "gasto %s  %s" % [UiKit.mult_text(gm), EconMath.fmt(l.gas)]
 	_gas_bar.value = frac * 100.0
 	_gas_bar.theme_type_variation = &"GasBar" if frac > 0.35 else (&"WarnBar" if frac > 0.15 else &"DangerBar")
 	_update_need_mark(l, tank)

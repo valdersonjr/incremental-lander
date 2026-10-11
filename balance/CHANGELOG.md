@@ -57,3 +57,9 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   modelo também arremessa: 1 pouso de ~950 m) — medido (screen 6 h, engajado): 1º voo 1 pouso/944 m → 2 pousos/779 m;
   1ª compra ~90 s; intervalo mediano 3,6 min; run 194 s; mundos 0,51/1,11/1,77/2,46/3,15 h (casual 0,9–4,6 h; expert
   0,29–1,86 h). Script `balance/sims/2026-10-11-v22b-ceiling.py`.
+- v24 (2026-10-11) — sai o teto de voo (`ceiling_m`); o jogo passa a aplicar o `rough_scale` no GASTO de gás
+  (eficiência ÷ `track_rough(x)` na posição da nave; HUD "gasto ×N"), que é o que o modelo já supunha desde a v21 —
+  motivo: usuário achou o teto horrível ("não poder sair de perto do chão") e pediu "aumentar o gasto de gasolina";
+  no jogo só o relevo crescia, e o arremesso (2,9 km com 51 de gás) não pagava esse custo — medido (screen 6 h, igual
+  à linha "sem teto" do script v22b): engajado 1ª compra 80 s, intervalo mediano 5,8 min, run 273 s, mundos
+  0,68/1,65/2,57/3,38/4,27 h; 1º voo do modelo: 1 pouso ~950 m, ~570 moedas.

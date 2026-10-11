@@ -1699,50 +1699,17 @@ func _marker_node(m: float, flag: bool = false) -> Node2D:
 	return node
 
 
-## Teto de voo (economia v23 track.ceiling_m): ceiling_m acima do ponto mais alto do relevo ao redor (+-CEIL_SPAN_M).
-## Acima dele o motor nao sobe e um vento empurra para baixo (sem "arremesso" de km por quase nada de gas). A linha
-## tracejada aparece quando a nave chega perto.
-const CEIL_SPAN_M := 160.0
-const CEIL_SHOW_M := 35.0
-var _ceil_line: Node2D = null
-var _ceil_warned := false
-
-
-func _tick_ceiling() -> void:
-	var cm := float(EconMath.track_spec(planet_id).get("ceiling_m", 0.0))
-	if cm <= 0.0:
-		return
-	var x := lander.global_position.x
-	var span := WorldConfig.m_to_px(CEIL_SPAN_M)
-	var top := TerrainGen.highest_between(terrain.ridge, x - span, x + span) - WorldConfig.m_to_px(cm)
-	var over := WorldConfig.px_to_m(top - lander.global_position.y)   # > 0 = acima do teto (y cresce para baixo)
-	if lander.state == Lander.State.FLYING and over > 0.0:
-		lander.env_accel = Vector2(0.0, float(stats["thrust"]) * 1.15 + over * 0.6)
-		if not _ceil_warned:
-			_ceil_warned = true
-			_float_text("teto! voe mais baixo", lander.global_position + Vector2(0, 22))
-	else:
-		lander.env_accel = Vector2.ZERO
-	if _ceil_line == null:
-		_ceil_line = CeilLine.new()
-		add_child(_ceil_line)
-	var near := clampf((over + CEIL_SHOW_M) / CEIL_SHOW_M, 0.0, 1.0) if lander.state == Lander.State.FLYING else 0.0
-	_ceil_line.modulate.a = near * 0.8
-	_ceil_line.position = Vector2(x, top)
-	_ceil_line.queue_redraw()
-
-
-## Linha tracejada do teto (centrada na nave).
-class CeilLine extends Node2D:
-	func _draw() -> void:
-		draw_dashed_line(Vector2(-180.0, 0.0), Vector2(180.0, 0.0), UiKit.color("white"), 1.0, 6.0)
+## v24: o GASTO de gas cresce com a distancia do comeco (eficiencia / EconMath.track_rough(x)): ir longe custa cada
+## vez mais, inclusive no "arremesso" alto (o modelo da economia ja supunha isso). O HUD mostra "gasto xN".
+func track_gas_mult() -> float:
+	return EconMath.track_rough(planet_id, maxf(0.0, WorldConfig.px_to_m(lander.global_position.x))) if track else 1.0
 
 
 ## A cada passo: distancia alcancada, galoes, moedas e marcos novos.
 func _tick_track() -> void:
 	if not track:
 		return
-	_tick_ceiling()
+	lander.params["efficiency"] = float(stats["efficiency"]) / track_gas_mult()
 	if lander.state != Lander.State.FLYING:
 		return
 	var pos := lander.global_position
