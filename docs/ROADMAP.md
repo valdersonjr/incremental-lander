@@ -112,6 +112,21 @@
       Plataforma) → escolhido A "Vitrine" v3 (gatinho herói acenando no morro de queijo, logo de doce, frase da proposta,
       Jogar com 3 estados, parallax/nuvens/estrelas) (2026-10-06)
 
+## Fase 19 — Mais longe (2026-10-11) · skills: `economy-balance`, `godot-dev`, `pixel-art`, `sound-design`
+> Auditoria de clareza (https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): um jogador experiente não entendeu o loop.
+> Usuário escolheu a opção C: caminho contínuo só para a frente, distância = pontuação (estilo Hill Climb Racing).
+- [x] 19.1 Regras abertas aprovadas pelo usuário (2026-10-11, "pode ser": galões no caminho, moedas no ar, pagamento
+      pela distância + bônus de pulo, marcos de 1ª vez + bandeira do recorde, estrela = nota do pouso, mundo = pista
+      própria, ratinhos/minijogos voltam depois como trechos, Reputação sai, batida acaba a viagem)
+- [x] 19.2 Economia v21 (2026-10-11): `contracts.track` no simulador + espelho `EconMath.track_*` (paridade 48);
+      relevo crescente encerra a viagem; MC 3×3: mundos 0,4–2,5 h (engajado), run ~250 s, 1ª compra ~110 s
+      (`balance/reports/2026-10-11-v21-track/`)
+- [ ] 19.3 Voo: caminho contínuo por mundo com plataformas em sequência, sem cartão; HUD com distância/recorde;
+      bandeira do recorde e marcos no chão; fim da viagem → NAVE
+- [ ] 19.4 Progressão: estrelas de pouso → barra do próximo mundo; mundos na NAVE; Estrada/Mapa/Reputação recolhidos
+- [ ] 19.5 Conteúdo de volta, um de cada vez (ratinhos e minijogos no caminho), arte e sons novos
+- [ ] 19.6 Reteste com o amigo: "o que é uma viagem e o que você ganha?"
+
 ## Fase 18 — Mundos novos (2026-10-07) · skills: `pixel-art`, `economy-balance`, `godot-dev`, `sound-design`
 > Pedido do usuário: "ser sempre a Lua de queijo deixa desinteressante?" → pesquisa (novidade moderada; Hill Climb
 > Racing 2: mapas paralelos com recorde próprio e bônus por bater a marca; Clash Royale: arenas como paradas grandes

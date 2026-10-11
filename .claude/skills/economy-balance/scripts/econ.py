@@ -704,6 +704,191 @@ class RunResult:
     total_distance: float
     crashed: bool
     gas_left_pct: float
+    stars: float = -1.0          # v21 (pista): estrelas de pouso do run; -1 = 1 por entrega (modelo antigo)
+
+
+# ---------------------------------------------------------------------------
+# v21 — pista "Mais longe" (contracts.track; padrao Hill Climb Racing). Espelho GDScript: EconMath.track_*.
+# A viagem vai so para a frente: plataformas em sequencia com vaos que crescem com a distancia; cada pouso paga
+# pela distancia DO COMECO (x); pular uma plataforma e pousar na seguinte paga +skip_bonus; galoes de gas no
+# caminho (cada vez mais espacados); moedas no ar (coin_frac do pagamento-base, coletadas na fracao da habilidade);
+# marcos a cada marker_every m pagam marker_mult x pagamento-base na 1a vez (por mundo); estrelas = nota do pouso
+# (1 + bom + perfeito). Sem cansaco do run, sem presentes, sem bonus de recorde de dinheiro.
+# ---------------------------------------------------------------------------
+
+def is_track(E: dict) -> bool:
+    return bool(E["contracts"].get("track"))
+
+
+def track_spec(E: dict, planet: dict | None = None) -> dict:
+    """Regras da pista (contracts.track) com o override do mundo (planets[].track)."""
+    T = dict(E["contracts"].get("track") or {})
+    if planet and planet.get("track"):
+        T.update(planet["track"])
+    return T
+
+
+def track_gap(T: dict, x: float, u: float) -> float:
+    """Vao ate a proxima plataforma saindo de x (u em [0,1)): cresce com a distancia do comeco."""
+    lo, hi = T["gap"]
+    return (lo + (hi - lo) * u) * (1.0 + x / T.get("gap_scale", 1e12))
+
+
+_TRACK_CACHE: dict = {}
+
+
+def track_pads(E: dict, planet: dict, n: int = 300) -> list[tuple[float, str]]:
+    """Plataformas da pista do mundo (x do centro, tipo), fixas por mundo (seed + indice do mundo). O jogo usa a mesma
+    regra de vao e sorteio de tipos, mas o proprio gerador (a posicao exata nao precisa bater com o modelo)."""
+    T = track_spec(E, planet)
+    key = (id(E), planet["id"], json.dumps(T, sort_keys=True), n)
+    if key not in _TRACK_CACHE:
+        idx = [p["id"] for p in E["planets"]].index(planet["id"]) if planet["id"] in [p["id"] for p in E["planets"]] else 0
+        rng = random.Random(T.get("seed", 1) * 1000 + idx)
+        x, out = 0.0, []
+        for _ in range(n):
+            x += track_gap(T, x, rng.random())
+            out.append((x, _draw_tier(E, rng)))
+        _TRACK_CACHE[key] = out
+    return _TRACK_CACHE[key]
+
+
+def track_base(E: dict, planet: dict, x: float, stats: dict) -> float:
+    """Pagamento-base da pista em x: pay_base x (pay_fixed + (x/pay_unit)^distance_exp) x mundo x nave
+    (pay_unit proprio da pista: x acumula ao longo da viagem, entao cresce mais devagar que a distancia de entrega)."""
+    C = E["contracts"]
+    u = track_spec(E, planet).get("pay_unit", C.get("distance_unit", 100.0))
+    return C["pay_base"] * (C.get("pay_fixed", 0.0) + (x / u) ** C["distance_exp"]) \
+        * planet.get("pay_mult", 1.0) * stats.get("pay_mult", 1.0)
+
+
+def track_rough(E: dict, planet: dict, x: float) -> float:
+    """Relevo da pista: o salto que passa por x custa x (1 + x/rough_scale) de delta-v (morros mais altos e
+    plataformas mais altas/baixas quanto mais longe). E o que faz a viagem acabar: salto longo gasta menos gas por
+    metro (sqrt(d)), entao sem isso a nave forte voaria para sempre."""
+    return 1.0 + x / track_spec(E, planet).get("rough_scale", 1e12)
+
+
+def track_cans(T: dict, x_max: float) -> list[float]:
+    """Posicoes dos galoes de gas ate x_max: o primeiro em can_first, depois a cada can_every x (1 + x/can_scale)."""
+    out, c = [], T.get("can_first", 0.0)
+    while c and c <= x_max:
+        out.append(c)
+        c += T["can_every"] * (1.0 + c / T.get("can_scale", 1e12))
+    return out
+
+
+def track_can_gas(E: dict, stats: dict) -> float:
+    """Gas que um galao devolve (fracao do tanque)."""
+    return E["contracts"]["track"].get("can_frac", 0.0) * stats["tank"]
+
+
+def track_pay(E: dict, planet: dict, x: float, stats: dict, q: float, tier_id: str = "normal", skipped: int = 0) -> float:
+    """Pagamento de um pouso na plataforma a x metros do comeco: base(x) x qualidade x plataforma x (1 + pulo)."""
+    C = E["contracts"]
+    q = min(1.0, max(0.0, q))
+    sk = track_spec(E, planet).get("skip_bonus", 0.0) * min(max(skipped, 0), 1)
+    return track_base(E, planet, x, stats) * (1 + C.get("quality_bonus", 0.5) * q ** C.get("quality_exp", 1.0)) \
+        * pad_tier(E, tier_id)["mult"] * (1.0 + sk)
+
+
+def track_coins(E: dict, planet: dict, x: float, stats: dict, frac: float) -> float:
+    """Moedas no ar de um salto que termina em x, coletando a fracao frac delas."""
+    return track_spec(E, planet).get("coin_frac", 0.0) * track_base(E, planet, x, stats) * min(max(frac, 0.0), 1.0)
+
+
+def track_markers(E: dict, planet: dict, x0: float, x1: float) -> list[float]:
+    """Marcos (m) com x0 < m <= x1."""
+    ev = track_spec(E, planet).get("marker_every", 0.0)
+    if ev <= 0 or x1 <= x0:
+        return []
+    k0 = int(math.floor(x0 / ev)) + 1
+    return [k * ev for k in range(k0, int(math.floor(x1 / ev)) + 1)]
+
+
+def track_marker_bonus(E: dict, planet: dict, m: float, stats: dict) -> float:
+    """Bonus do marco m (so na 1a vez naquele mundo): marker_mult x pagamento-base em m."""
+    return track_spec(E, planet).get("marker_mult", 0.0) * track_base(E, planet, m, stats)
+
+
+def landing_stars(E: dict, q: float) -> int:
+    """Estrelas de um pouso: 1 + (q >= good) + (q >= perfect)."""
+    S = E["contracts"]["track"].get("stars", {})
+    return 1 + int(q >= S.get("good", 0.6)) + int(q >= S.get("perfect", 0.85))
+
+
+def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
+                  log: list | None) -> RunResult:
+    """Viagem na pista: em cada plataforma o piloto escolhe pousar na proxima ou pular uma (maior valor esperado por
+    gas, pesando o risco de bater); acaba quando nenhuma das duas cabe no gas (ou bateu)."""
+    T = track_spec(E, planet)
+    S = T.get("stars", {})
+    pads = track_pads(E, planet)
+    cans = track_cans(T, pads[-1][0])
+    C = E["contracts"]
+    qbonus, qexp = C.get("quality_bonus", 0.5), C.get("quality_exp", 1.0)
+    eff, tank = stats["efficiency"], stats["tank"]
+    gas = tank
+    can_p = min(1.0, T.get("can_pick", 0.5) + (1 - T.get("can_pick", 0.5)) * prof.skill)
+    i, x, t, n, stars, ci = -1, 0.0, 0.0, 0, 0.0, 0
+    total = {k: 0.0 for k in planet.get("rewards", {"credits": 1.0})}
+    crashed = False
+    fails = 0
+    while True:
+        best = None
+        for skip in (0, 1):
+            j = i + 1 + skip
+            if j >= len(pads):
+                break
+            xj, tid = pads[j]
+            tier = pad_tier(E, tid)
+            g_need = hop_dv(planet, xj - x, stats, prof) * track_rough(E, planet, (x + xj) / 2) / eff
+            if g_need > gas:
+                continue
+            q_mu = _q_on_tier(prof.skill, tier, prof.skill)
+            pc = min(0.95, crash_prob(planet, stats, q_mu) * tier.get("crash_mult", 1.0))
+            ev = track_pay(E, planet, xj, stats, q_mu, tid, skip) * (1 - pc) ** CRASH_RISK_K
+            if best is None or ev / g_need > best[0]:
+                best = (ev / g_need, j, xj - x, g_need, tier, skip)
+        if best is None:
+            break
+        _, j, d, g_need, tier, skip = best
+        gas -= g_need
+        t += hop_time(planet, d, stats, prof)
+        while ci < len(cans) and cans[ci] <= pads[j][0]:          # galoes no caminho
+            got = can_p if expected else (1.0 if rng.random() < can_p else 0.0)
+            gas = min(tank, gas + got * track_can_gas(E, stats))
+            ci += 1
+        q = prof.skill if expected else min(1.0, max(0.0, rng.gauss(prof.skill, prof.skill_sd)))
+        q = _q_on_tier(q, tier, prof.skill)
+        pc = min(0.95, crash_prob(planet, stats, q) * tier.get("crash_mult", 1.0))
+        pay = track_pay(E, planet, pads[j][0], stats, q, tier["id"], skip) + track_coins(E, planet, pads[j][0], stats, prof.skill)
+        if expected:
+            pay *= (1 - pc)
+            st_ = 1 + _p_good(prof, tier, S.get("good", 0.6)) + _p_good(prof, tier, S.get("perfect", 0.85))
+        else:
+            if prof.crash_extra > 0:
+                pc = min(0.95, pc + prof.crash_extra * math.exp(-prof.attempts / prof.learn_hops))
+                prof.attempts += 1
+            if rng.random() < pc:
+                if prof.delivered < prof.apprentice:               # aprendiz: o mesmo salto de novo
+                    gas += g_need
+                    t += prof.retry_s
+                    fails += 1
+                    continue
+                crashed = True
+                break
+            prof.delivered += 1
+            st_ = landing_stars(E, q)
+        if log is not None:
+            log.append((d, tier["id"], q, 1.0, "track", skip))
+        for k, w in total.items():
+            total[k] += pay * planet.get("rewards", {"credits": 1.0})[k]
+        n += 1
+        stars += st_
+        x, i = pads[j][0], j
+    t += prof.run_overhead_s
+    return RunResult(total, t, n, x, x, crashed, 100 * gas / tank, stars)
 
 
 _STREAM_CACHE: dict = {}
@@ -736,6 +921,8 @@ def do_run(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random
     expected=True usa valores medios (sem sorte) - para ROI. stream (so com expected) = ofertas
     pre-sorteadas (_offer_stream). log (opcional) recebe (distancia, tipo, q, combo) de cada entrega feita.
     missions = {kind: estrela} liberadas (v12; None = so Simples); boost = {kind: runs} recem-liberados."""
+    if is_track(E):
+        return _do_run_track(E, planet, stats, prof, rng, expected, log)
     if mission_kinds(E, planet["id"]):
         return _do_run_missions(E, planet, stats, prof, rng, expected, stream, log, missions, rep)
     gas = stats["tank"]
@@ -1152,6 +1339,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     planets = {p["id"]: p for p in E["planets"]}
     unlocked = {p["id"] for p in E["planets"] if not p.get("unlock") and not p.get("road")}
     world_rec: dict = {}   # v16: recorde de dinheiro do run por mundo (bonus de recorde)
+    world_best: dict = {}  # v21: maior distancia (m) por mundo (marcos da pista)
     world_stars: dict = {}  # v17: estrelas feitas em cada mundo (andam a Estrada dele)
     done: set = set()       # v17: mundos completos
     world_runs: dict = {}  # runs jogados em cada mundo (relatorio)
@@ -1217,7 +1405,15 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         last_run_s[0] = max(30.0, r.time_s)
         world_runs[current] = world_runs.get(current, 0) + 1
         rm = r.rewards.get("credits", 0.0)
-        rb = record_bonus(E, rm, world_rec.get(current, 0.0))
+        rb = 0.0 if is_track(E) else record_bonus(E, rm, world_rec.get(current, 0.0))
+        if is_track(E):                            # v21: marcos novos da pista pagam na 1a vez (por mundo)
+            prev = world_best.get(current, 0.0)
+            for m in track_markers(E, planets[current], prev, r.max_distance):
+                mb = track_marker_bonus(E, planets[current], m, stats)
+                money["credits"] = money.get("credits", 0.0) + mb
+                lifetime["credits"] = lifetime.get("credits", 0.0) + mb
+                res.events.append({"t": t, "type": "marker", "id": current, "value": mb, "m": m, "gap_s": 0.0})
+            world_best[current] = max(prev, r.max_distance)
         if rb > 0.0:
             money["credits"] = money.get("credits", 0.0) + rb
             lifetime["credits"] = lifetime.get("credits", 0.0) + rb
@@ -1225,10 +1421,11 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
         world_rec[current] = max(world_rec.get(current, 0.0), rm)
         if MS:
             boost = {k: v - 1 for k, v in boost.items() if v > 1}
-            stars += r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
+            got = r.stars if r.stars >= 0 else r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
+            stars += got
             cost = MS.get("stars", {}).get("unlock_cost", 3)
             per_world = bool((E.get("progression") or {}).get("roads"))
-            world_stars[current] = world_stars.get(current, 0) + r.deliveries * MS.get("stars", {}).get("per_delivery", 1)
+            world_stars[current] = world_stars.get(current, 0) + got
             for stop in road_reached_now(E, world_stars[current] if per_world else stars, reached,
                                          current if per_world else None):
                 reached.add(stop["id"])
@@ -1425,7 +1622,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             if goal.get("stop", True):
                 break
     res.final = {"t_h": t / 3600, "runs": runs, "levels": levels, "unlocked": sorted(unlocked), "shop": shop,
-                 "world_runs": world_runs, "world_rec": world_rec, "world_stars": world_stars, "done": sorted(done),
+                 "world_runs": world_runs, "world_rec": world_rec, "world_best": world_best, "world_stars": world_stars, "done": sorted(done),
                  "missions": sorted(owned) if MS else [], "stars": stars if MS else 0, "reputation": {k: reputation_level(E, v) for k, v in rep_pts.items()},
                  "money": money, "lifetime": lifetime, "prestige_points": ppoints, "stats": stats_now()}
     return res

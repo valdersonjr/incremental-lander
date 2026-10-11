@@ -316,6 +316,94 @@ static func run_fatigue_mult(n: int) -> float:
 	return pow(float(spec["contracts"].get("run_fatigue", 1.0)), n)
 
 
+# ---------------------------------------------------------------- v21: pista "Mais longe"
+## Pista so para a frente (contracts.track; padrao Hill Climb Racing): plataformas em sequencia, pouso paga pela
+## distancia DO COMECO, pular uma paga +skip_bonus, relevo sobe com a distancia, galoes de gas, moedas no ar,
+## marcos na 1a vez por mundo, estrelas = nota do pouso. Espelho de econ.py track_*.
+static func is_track() -> bool:
+	return not spec["contracts"].get("track", {}).is_empty()
+
+
+## Regras da pista com o override do mundo (planets[].track).
+static func track_spec(planet_id: String) -> Dictionary:
+	var t: Dictionary = spec["contracts"].get("track", {}).duplicate(true)
+	t.merge(_find("planets", planet_id).get("track", {}), true)
+	return t
+
+
+## Vao ate a proxima plataforma saindo de x (u em [0,1)).
+static func track_gap(planet_id: String, x: float, u: float) -> float:
+	var t := track_spec(planet_id)
+	var g: Array = t["gap"]
+	return (float(g[0]) + (float(g[1]) - float(g[0])) * u) * (1.0 + x / float(t.get("gap_scale", 1e12)))
+
+
+## Pagamento-base da pista em x (sem qualidade): pay_base x (pay_fixed + (x/pay_unit)^distance_exp) x mundo x nave.
+static func track_base(planet_id: String, x: float, stats: Dictionary) -> float:
+	var c: Dictionary = spec["contracts"]
+	var u := float(track_spec(planet_id).get("pay_unit", c.get("distance_unit", 100.0)))
+	return float(c["pay_base"]) * (float(c.get("pay_fixed", 0.0)) + pow(x / u, float(c["distance_exp"]))) \
+			* float(_find("planets", planet_id).get("pay_mult", 1.0)) * float(stats.get("pay_mult", 1.0))
+
+
+## Relevo: o salto que passa por x custa x (1 + x/rough_scale) de delta-v (o terreno usa para a altura dos morros).
+static func track_rough(planet_id: String, x: float) -> float:
+	return 1.0 + x / float(track_spec(planet_id).get("rough_scale", 1e12))
+
+
+## Posicoes dos galoes ate x_max: can_first, depois a cada can_every x (1 + x/can_scale).
+static func track_cans(planet_id: String, x_max: float) -> Array[float]:
+	var t := track_spec(planet_id)
+	var out: Array[float] = []
+	var c := float(t.get("can_first", 0.0))
+	while c > 0.0 and c <= x_max:
+		out.append(c)
+		c += float(t["can_every"]) * (1.0 + c / float(t.get("can_scale", 1e12)))
+	return out
+
+
+## Gas de um galao (fracao do tanque; quem chama nao deixa passar do tanque cheio).
+static func track_can_gas(stats: Dictionary) -> float:
+	return float(spec["contracts"]["track"].get("can_frac", 0.0)) * float(stats["tank"])
+
+
+## Pouso na plataforma a x m do comeco: base(x) x qualidade x plataforma x (1 + skip_bonus se pulou uma).
+static func track_pay(planet_id: String, x: float, stats: Dictionary, quality: float, tier_id: String = "normal",
+		skipped: int = 0) -> float:
+	var c: Dictionary = spec["contracts"]
+	var q := clampf(quality, 0.0, 1.0)
+	var sk := float(track_spec(planet_id).get("skip_bonus", 0.0)) * clampi(skipped, 0, 1)
+	return track_base(planet_id, x, stats) * (1.0 + float(c.get("quality_bonus", 0.5)) * pow(q, float(c.get("quality_exp", 1.0)))) \
+			* float(pad_tier(tier_id)["mult"]) * (1.0 + sk)
+
+
+## Moedas no ar de um salto que termina em x, coletando a fracao frac.
+static func track_coins(planet_id: String, x: float, stats: Dictionary, frac: float) -> float:
+	return float(track_spec(planet_id).get("coin_frac", 0.0)) * track_base(planet_id, x, stats) * clampf(frac, 0.0, 1.0)
+
+
+## Marcos (m) com x0 < m <= x1.
+static func track_markers(planet_id: String, x0: float, x1: float) -> Array[float]:
+	var ev := float(track_spec(planet_id).get("marker_every", 0.0))
+	var out: Array[float] = []
+	if ev <= 0.0 or x1 <= x0:
+		return out
+	for k in range(int(floor(x0 / ev)) + 1, int(floor(x1 / ev)) + 1):
+		out.append(k * ev)
+	return out
+
+
+## Bonus do marco m na 1a vez naquele mundo.
+static func track_marker_bonus(planet_id: String, m: float, stats: Dictionary) -> float:
+	return float(track_spec(planet_id).get("marker_mult", 0.0)) * track_base(planet_id, m, stats)
+
+
+## Estrelas de um pouso: 1 + (q >= good) + (q >= perfect).
+static func landing_stars(quality: float) -> int:
+	var s: Dictionary = spec["contracts"]["track"].get("stars", {})
+	return 1 + int(quality >= float(s.get("good", 0.6))) + int(quality >= float(s.get("perfect", 0.85)))
+
+
 ## v17: bonus do minijogo do mundo (planets[].mission_bonus x pagamento-base) pela fracao cumprida (0..1).
 static func minigame_pay(planet_id: String, distance: float, stats: Dictionary, frac: float, star: int = 1) -> float:
 	return mission_bonus_at(planet_id, star) * contract_pay(planet_id, distance, stats, 0.0) * clampf(frac, 0.0, 1.0)
