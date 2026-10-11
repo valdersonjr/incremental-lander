@@ -4,12 +4,20 @@
   "px_per_m": 1.0,
   "time_scale": 4.5,
   "rotate_speed": 4.0,
+  "rotation": {
+    "notes": "Giro do jogador (2026-10-11, auditoria do voo): rampa — toque gira devagar (start_speed rad/s, ajuste fino), segurar acelera ate max_speed em ramp_s; ima do em pe: soltando as teclas a menos de snap_rad da vertical, assenta em 0 a snap_speed rad/s. rotate_speed (acima) segue para o piloto automatico e o Estabilizador. Antes: 4 rad/s fixo — um toque de 0,1 s ja passava dos 20 graus de tolerancia.",
+    "start_speed": 1.5,
+    "max_speed": 4.2,
+    "ramp_s": 0.22,
+    "snap_rad": 0.1,
+    "snap_speed": 2.5
+  },
   "landing": {
-    "notes": "Tolerancias de pouso em m/s e rad do modelo (na tela: x time_scale = px de arte por segundo; 7 m/s ~ 31 px/s). 2026-10-04: 3/2/0,2 -> 7/5/0,35 (usuario: 'a velocidade vertical e horizontal precisa ser muito baixa'; telemetria humana: ~33 de 40 entregas bateram). Trem de pouso multiplica por gear^gear_exp.",
+    "notes": "Tolerancias de pouso em m/s e rad do modelo (na tela: x time_scale = px de arte por segundo; 7 m/s ~ 31 px/s). 2026-10-04: 3/2/0,2 -> 7/5/0,35 (usuario: 'a velocidade vertical e horizontal precisa ser muito baixa'; telemetria humana: ~33 de 40 entregas bateram). Trem de pouso multiplica por gear^gear_exp. 2026-10-11 (auditoria do voo): gear_exp 0,5 -> 0,25 (Resistencia no fim ampliava as tolerancias x1,84 e o pouso ficava impossivel de errar; agora x1,36 — a Resistencia vale mais no casco, ver scrape).",
     "max_vy": 7.0,
     "max_vx": 5.0,
     "max_tilt": 0.35,
-    "gear_exp": 0.5,
+    "gear_exp": 0.25,
     "weights": {
       "vy": 0.35,
       "vx": 0.25,
@@ -20,6 +28,20 @@
       "notes": "Pouso perfeito = Reputacao (+10% na proxima entrega; economy.json > contracts.reputation). 2026-10-07: reto (|inclinacao| <= tilt_frac x max_tilt) e macio (V.vert <= vy_frac x max_vy), sem o bonus do trem de pouso. Calibrar jogando.",
       "vy_frac": 0.4,
       "tilt_frac": 0.25
+    },
+    "hard": {
+      "notes": "Pouso duro (2026-10-11): na plataforma, passar das tolerancias ate mult x elas vale como pouso (nota baixa, tum forte) em vez de explosao — margem escondida a favor do jogador (Celeste).",
+      "mult": 1.25
+    },
+    "scrape": {
+      "notes": "Raspao (2026-10-11): fora da plataforma, contato com velocidade CONTRA o chao (componente na normal) <= max_mps x gear^gear_exp quica (restitution na normal, friction no resto, sai no minimo min_out_mps) e conta 1 amassado; per_hop amassados por salto, o seguinte explode. Contatos ate grace_s depois de um raspao so quicam (nao contam). Mais forte que o limite = batida. Telemetria: batidas fora da plataforma eram 2 de cada 3, mediana 13 m/s.",
+      "max_mps": 9.0,
+      "per_hop": 2,
+      "restitution": 0.45,
+      "friction": 0.8,
+      "min_out_mps": 2.5,
+      "grace_s": 0.35,
+      "gear_exp": 0.5
     }
   },
   "lander": {
@@ -28,8 +50,21 @@
   },
   "ship_parts": {
     "notes": "pecas que crescem no desenho da nave (arte art/src/sprites/lander_parts.py; ROADMAP 16.5): versao 0-3 a partir do degrau (nivel / 10). stage_to_tier[d] para Motor/Gasolina/Eficiencia (degrau >= ultimo indice = ultima versao); gear_stage_to_tier para a Resistencia (3 degraus). So visual: nao muda fisica nem economia.",
-    "stage_to_tier": [0, 1, 1, 2, 2, 2, 3],
-    "gear_stage_to_tier": [0, 1, 2, 3]
+    "stage_to_tier": [
+      0,
+      1,
+      1,
+      2,
+      2,
+      2,
+      3
+    ],
+    "gear_stage_to_tier": [
+      0,
+      1,
+      2,
+      3
+    ]
   },
   "terrain": {
     "step_m": 16.0,

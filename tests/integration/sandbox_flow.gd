@@ -19,6 +19,7 @@ func _ready() -> void:
 	for f: String in ["save.json", "save.bak", "settings.json"]:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path("user://itest_sandbox".path_join(f)))
 	GameState.reset()
+	Telemetry.enabled = true                                   # jogo de verdade grava (testes desligam; aqui nao ha voo)
 	GameState.runs_done = 5                                    # o "jogo verdadeiro"
 	GameState.resources["credits"] = 123.0
 	SaveManager.save_game()

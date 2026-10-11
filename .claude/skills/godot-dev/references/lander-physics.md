@@ -18,7 +18,16 @@ colisão = move_and_collide(v * dt)
 ```
 - `thrust` (m/s²), `tank` (gás), `efficiency` (m/s de Δv por gás) vêm de `EconMath.ship_stats()`; gravidade,
   arrasto e distâncias vêm do planeta na spec. Converter m ↔ px com `WorldConfig.PX_PER_M` (`data/world.json`).
-- Rotação: velocidade angular fixa por input (sem inércia no início; decidir no protótipo e registrar).
+- Rotação (2026-10-11, auditoria do voo): **rampa** para o jogador (toque = ajuste fino ~1,5 rad/s; segurar → 4,2 rad/s
+  em 0,22 s) + **ímã do em pé** ao soltar perto da vertical (`world.json > rotation`). Giro fixo e rápido (4 rad/s)
+  fazia um toque de 0,1 s passar da tolerância de inclinação. Piloto automático e Estabilizador usam `rotate_speed` fixo.
+- **Empuxo sentido** (economia `physics.feel`): o voo usa `EconMath.felt_thrust(cru / carga, g)` = g + teto suave da
+  aceleração líquida; o Turbo multiplica depois. Sem isso, motor de fim de jogo (TWR 20+) zera 7 m/s em 3 quadros.
+  Regras de decolagem (Pesada, folga) usam o empuxo cru. Mudou um? Mude `econ.felt_thrust` e rode a paridade.
+- **Tolerância a favor do jogador** (padrão Celeste): raspão fora da plataforma quica (`LandingRules.scrape_bounce`,
+  `landing.scrape`, impacto = componente CONTRA a normal do contato), pouso duro até `landing.hard.mult`× vale (nota
+  baixa). Carência após um raspão: contatos seguidos só quicam (senão um toque vira 3 amassados no mesmo quadro).
+  Teste com a Flight real: `tests/integration/flight_feel` (pula a chegada matando os tweens).
 - Sem gás: propulsor desliga, o lander cai (run termina ao pousar/bater).
 - Decolagem exige `thrust > gravidade` — o modelo econômico usa a mesma regra (a > 1,05 g).
 

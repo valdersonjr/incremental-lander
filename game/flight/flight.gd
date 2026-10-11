@@ -135,6 +135,7 @@ func _ready() -> void:
 	lander.landed.connect(_on_lander_landed)
 	lander.crashed.connect(_on_lander_crashed)
 	lander.rested.connect(_on_lander_rested)
+	lander.scraped.connect(_on_lander_scraped)
 	var coach := Coach.new()                                   # dicas sem texto + medidor de descida (comeco do jogo)
 	coach.name = "Coach"
 	coach.flight = self
@@ -525,6 +526,20 @@ func _on_lander_rested(info: Dictionary) -> void:
 		stranded.emit()
 
 
+## Raspao (Lander.scraped): quicou no chao fora da plataforma. Pancada, poeira e a nave pisca vermelho; o ultimo
+## amassado que ainda aguenta pisca mais forte (o proximo explode).
+func _on_lander_scraped(count: int, at: Vector2) -> void:
+	var last := count >= int(WorldConfig.load_config()["landing"]["scrape"]["per_hop"])
+	Sound.sfx("bump", 0.0, 0.85 if last else 1.0)
+	shake(0.55 if last else 0.4)
+	_spawn_fx(DUST_FRAMES, &"puff", at - Vector2(24.0, 15.0), false)
+	var tw := lander.create_tween()
+	for i in (3 if last else 1):
+		tw.tween_property(lander, "modulate", Color(1.0, 0.45, 0.45), 0.06)
+		tw.tween_property(lander, "modulate", Color.WHITE, 0.12)
+	Telemetry.event("scrape", str(count))
+
+
 ## Pouso com a forca da descida k (0 = pena, 1 = no limite): mais alto e mais grave; forte = camada de pancada.
 func _landing_sound(k: float) -> void:
 	Sound.sfx("landing", lerpf(LAND_DB.x, LAND_DB.y, k), lerpf(LAND_PITCH.x, LAND_PITCH.y, k))
@@ -595,6 +610,8 @@ func _finish(crashed: bool, quality: float, reason: String, info: Dictionary) ->
 		"vy": snappedf(float(info.get("vy", 0.0)), 0.01),
 		"vx": snappedf(float(info.get("vx", 0.0)), 0.01),
 		"tilt": snappedf(float(info.get("tilt", 0.0)), 0.001),
+		"scrapes": int(info.get("scrapes", 0)),
+		"hard": bool(info.get("hard", false)),
 	}
 	Telemetry.record_delivery(result)
 	_clear_mission()

@@ -64,6 +64,7 @@ P = {
     "slots": mission_slots(E, {"simple": 1, "tow": 2, "heavy": 1}),
     "mission_kinds_luna": len(mission_kinds(E, "luna")),
     "dv_luna": hop_dv(planets["luna"], 5000.0, st, Profile("x", skill=1.0, waste=1.0, hover_s=0.0)),
+    "felt": [felt_thrust(E, 4.0, 1.62), felt_thrust(E, 28.0, 1.62), felt_thrust(E, 46.0, 4.9)],
     "fleet": 1e6 * st["drones"] * st["autopilot"],
     "bulk_tank": bulk_cost(u["tank"]["cost"]["credits"], 5, 10),
     "maxaff_tank": max_affordable(u["tank"]["cost"]["credits"], 5, 1e5),

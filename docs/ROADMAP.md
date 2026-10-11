@@ -244,6 +244,11 @@
         dos 6 mundos, 3 desafios ativos (estilo Jetpack Joyride) com protótipo de tela antes
 - [x] 16.8 Passeios da 1ª vez (2026-10-09): Mapa, NAVE, AJUDAS e REPUTAÇÃO explicados na 1ª aparição (opção A do
       protótipo `art/previews/map_tour/index.html`); revisão das dicas: só apontam ação possível
+- [x] 16.9 Auditoria do voo (2026-10-11; usuário: "a mecânica principal é o controle e o pouso, tem que ser divertido";
+  relatório https://claude.ai/artifact/WueWN5jGevt2U69BmCSQz3): giro com rampa + ímã do em pé, empuxo sentido com teto
+  (economia v20 `physics.feel`), raspão que quica (2 amassados por salto), pouso duro (1,25×), Resistência ^0,25 nas
+  tolerâncias, peças só melhoram no degrau (v20 `effect.step`), telemetria sem os testes. **Pendente**: o usuário jogar;
+  ideia "Socorro!" (abort do arcade de 1979) como habilidade.
 - [ ] 16.6 Aprovação do usuário jogando → depois, fase de economia (estrelas por parada, preços sem o upgrade de
       Reputação, Gasolina/Eficiência pouco compradas, marcos alinhados aos degraus)
 

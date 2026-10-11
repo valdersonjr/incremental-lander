@@ -13,6 +13,7 @@ func _init() -> void:
 		"stats": st,
 		"pay_luna": EconMath.contract_pay("luna", 3500.0, st, 0.8),
 		"dv_luna": EconMath.estimated_hop_dv("luna", 5000.0, st),
+		"felt": [EconMath.felt_thrust(4.0, 1.62), EconMath.felt_thrust(28.0, 1.62), EconMath.felt_thrust(46.0, 4.9)],
 		"pay_tight_rep": EconMath.delivery_pay("luna", 4200.0, st, 0.7, "tight", 2),
 		"pay_narrow_norep": EconMath.delivery_pay("luna", 900.0, st, 0.95, "narrow", 0),
 		"pay_tow2_fail": EconMath.delivery_pay("luna", 1200.0, st, 0.8, "tight", 3,

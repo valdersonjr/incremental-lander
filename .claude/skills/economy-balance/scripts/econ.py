@@ -37,9 +37,11 @@ from typing import Any, Callable
 # ---------------------------------------------------------------------------
 
 def load(path: str) -> dict:
+    global _FEEL
     with open(path) as f:
         E = json.load(f)
     validate(E)
+    _FEEL = E
     return E
 
 
@@ -170,8 +172,12 @@ def max_affordable(spec: dict, level: int, money: float) -> int:
 def effect_value(eff: dict, level: int) -> float:
     """Contribuicao de um upgrade no nivel `level`.
     op: add (value*level), mult (value^level), hyper (max*level/(level+k): retorno decrescente
-    com teto), milestone (multiplica `value` a cada `every` niveis - estilo AdCap x2 em 25/50/100)."""
+    com teto), milestone (multiplica `value` a cada `every` niveis - estilo AdCap x2 em 25/50/100).
+    step (opcional, ex.: 10): o efeito so muda ao completar o degrau (nivel efetivo = floor(nivel/step)*step);
+    os niveis do meio sao parcelas do proximo degrau (padrao Clash Royale: a barra enche, a carta sobe)."""
     op = eff["op"]
+    if eff.get("step"):
+        level = (level // int(eff["step"])) * int(eff["step"])
     if op == "add":
         return eff["value"] * level
     if op == "mult":
@@ -311,6 +317,22 @@ def profile_from(E: dict, name: str) -> Profile:
 # Fisica do salto (modelo do run)
 # ---------------------------------------------------------------------------
 
+def felt_thrust(E: dict | None, a: float, g: float) -> float:
+    """Empuxo que o voo usa (physics.feel): a aceleracao liquida a - g passa por um teto suave
+    (ate `knee` m/s2 igual; depois se aproxima de `max`), para o motor forte nao virar 'toquinho de 1 quadro'.
+    O jogo usa a mesma funcao (EconMath.felt_thrust); regras de decolagem (a > g x twr) usam o empuxo cru."""
+    F = ((E or {}).get("physics") or {}).get("feel")
+    net = a - g
+    if not F or net <= F["knee"]:
+        return a
+    span = F["max"] - F["knee"]
+    return g + F["knee"] + span * (1.0 - math.exp(-(net - F["knee"]) / span))
+
+
+# spec cuja physics.feel vale para hop_dv/hop_time/_heavy_factor (load() e simulate() atualizam)
+_FEEL: dict | None = None
+
+
 def hop_dv(planet: dict, d: float, stats: dict, prof: Profile) -> float:
     """Delta-v para uma entrega de distancia d.
     Salto balistico otimo (45 graus): v0 = sqrt(g*d); acelerar + frear = 2*v0.
@@ -321,6 +343,7 @@ def hop_dv(planet: dict, d: float, stats: dict, prof: Profile) -> float:
     a = stats["thrust"]
     if a <= g * 1.05:
         return math.inf
+    a = felt_thrust(_FEEL, a, g)
     v0 = math.sqrt(g * d)
     dv = 2 * v0 * (1 + 0.707 * g / a)
     dv *= (1 + planet.get("drag", 0.0)) * prof.waste
@@ -332,6 +355,7 @@ def hop_dv(planet: dict, d: float, stats: dict, prof: Profile) -> float:
 
 def hop_time(planet: dict, d: float, stats: dict, prof: Profile) -> float:
     g, a = planet["gravity"], stats["thrust"]
+    a = felt_thrust(_FEEL, a, g)
     v0 = math.sqrt(g * d)
     return math.sqrt(2) * v0 / g + 2 * v0 / a + prof.hop_overhead_s
 
@@ -539,7 +563,7 @@ def _heavy_factor(planet: dict, stats: dict, div: float, twr: float = 1.05) -> f
     g, a = planet["gravity"], stats["thrust"]
     if a / div <= g * twr:
         return math.inf
-    return (1 + 0.707 * g / (a / div)) / (1 + 0.707 * g / a)
+    return (1 + 0.707 * g / felt_thrust(_FEEL, a / div, g)) / (1 + 0.707 * g / felt_thrust(_FEEL, a, g))
 
 
 def mission_expect(E: dict, planet: dict, prof: Profile, stats: dict, unlocked: dict | None,
@@ -1115,7 +1139,9 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     """Joga o jogo por `hours` com um perfil. Loop: run -> recebe -> compra (estrategia) -> talvez
     desbloqueie planeta / prestigie. Termina cedo se o objetivo final (targets.goal) for atingido."""
     prof = profile_from(E, prof) if isinstance(prof, str) else copy.deepcopy(prof)
+    global _FEEL
     prof.attempts = prof.delivered = 0                         # contadores do novato: jogo novo
+    _FEEL = E                                                  # physics.feel desta spec (teto do empuxo sentido)
     _INCOME_CACHE.clear()
     rng = random.Random(seed)
     res = SimResult(prof.name, seed)
@@ -1262,7 +1288,8 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
                 # olha alguns niveis a frente: ganhos de alcance sao 'degraus' (1 nivel pode nao bastar
                 # para alcancar a proxima entrega). Valor = melhor ganho/custo entre k niveis, por nivel.
                 best_ratio = 0.0
-                for k in (1, 2, 4, 8):
+                step = int(u["effect"].get("step", 0) or 0)   # degraus: olhar tambem ate completar o degrau
+                for k in sorted({1, 2, 4, 8} | ({step - lv % step} if step else set())):
                     if lv + k > u.get("max_level", 10 ** 9):
                         break
                     lv2 = dict(levels)

@@ -61,7 +61,8 @@ static func upgrade_rows(resources: Dictionary, levels: Dictionary) -> Array[Dic
 		if not EconMath.upgrade_available(id, lv, levels):
 			continue
 		var nxt_levels := levels.duplicate()
-		nxt_levels[id] = lv + 1
+		var step := int(u["effect"].get("step", 0))               # degraus (v20): "next" = valor no proximo degrau
+		nxt_levels[id] = mini((lv / step + 1) * step if step > 0 else lv + 1, int(u.get("max_level", lv + 1)))
 		var nxt := EconMath.ship_stats(nxt_levels)
 		var stat: String = u["effect"]["stat"]
 		var cost := EconMath.upgrade_cost(id, lv)

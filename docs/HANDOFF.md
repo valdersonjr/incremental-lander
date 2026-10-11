@@ -3,7 +3,20 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-09)
+## Estado atual (2026-10-11)
+- **Auditoria do voo aplicada (ROADMAP 16.9; economia v20)** — usuário: o controle e o pouso são o foco e têm que
+  ser divertidos; pediu validação profissional + pesquisa ("faz o que precisar") e que **a nave só evolua quando o
+  degrau sobe**. Relatório: https://claude.ai/artifact/WueWN5jGevt2U69BmCSQz3. Feito: giro com rampa + ímã do em pé
+  (`world.json > rotation`); empuxo sentido com teto (`economy.json > physics.feel`, `EconMath.felt_thrust` =
+  `econ.felt_thrust`); raspão que quica fora da plataforma (2 amassados por salto, pisca vermelho, som `bump`,
+  `LandingRules.scrape_bounce`, `Lander.scraped`); pouso duro até 1,25×; `gear_exp` 0,25; peças só no degrau
+  (`effect.step` 10; `Purchases.upgrade_rows` mostra o próximo degrau); testes/`--dev_*`/`--no_save` não gravam
+  entregas (o CSV ganhou `scrapes`/`hard` → o arquivo poluído vira `deliveries_old*.csv` na próxima gravação).
+  Medido (v20, 6 h): mundos ~15% mais tarde, paredes ≤ 10 min, 1ª compra igual. Verificado: check (106), 122 testes,
+  17 integrações (nova `flight_feel`: raspão, 3º explode, forte explode, pouso duro vale, muito duro bate), paridade 44,
+  demo (Lua/Sorvete com nave forte entregam). Já existia antes: o demo no Jardim com nave forte aceita 12,7 km Pesada
+  e fica sem gás (só o piloto do demo). **Para o usuário**: jogar e dizer se o giro/raspão estão bons (números em
+  `world.json`); ideia pendente "Socorro!" (abort de 1979) como habilidade.
 - **Estrada das Estrelas só no Mapa** — usuário: a barra aparecia em todos os menus (alto da NAVE, nas 4 abas, + Mapa).
   Agora só no Mapa: balão da parada (`scripts/ui/stop_balloon.gd`, acima da parada), navezinha andando até as estrelas
   novas e festa das paradas novas (o Mapa já tinha `_celebrate_news`). NAVE: `SHOW_ROAD = false` esconde o painel e não

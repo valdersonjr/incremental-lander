@@ -40,13 +40,15 @@ func test_linhas_do_hangar_mostram_proximo_valor() -> void:
 	var tank_eff: Dictionary = EconMath._find("upgrades", "tank")["effect"]   # efeito do proximo nivel, pela spec
 	for r: Dictionary in rows:
 		if r["id"] == "tank":
-			var want: float = r["current"] + tank_eff["value"] if tank_eff["op"] == "add" else r["current"] * tank_eff["value"]
+			var steps := float(tank_eff.get("step", 1))           # v20: o valor muda no proximo degrau
+			var want: float = r["current"] + tank_eff["value"] * steps if tank_eff["op"] == "add" \
+					else r["current"] * pow(tank_eff["value"], steps)
 			assert_almost(r["next"], want, 1e-6)
 
 
 func test_alcance_cresce_com_tanque() -> void:
 	var s0 := EconMath.ship_stats({})
-	var s5 := EconMath.ship_stats({"tank": 5})
+	var s5 := EconMath.ship_stats({"tank": 10})               # v20: a Gasolina melhora no degrau
 	var r0 := Purchases.max_reach_m("luna", s0, float(s0["tank"]))
 	var r5 := Purchases.max_reach_m("luna", s5, float(s5["tank"]))
 	assert_true(r0 > 100.0)

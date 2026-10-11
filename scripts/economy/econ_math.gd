@@ -65,7 +65,10 @@ static func max_affordable(c: Dictionary, level: int, money: float) -> int:
 	return n
 
 
+## step (opcional, ex.: 10): o efeito so muda ao completar o degrau (as bolinhas do meio sao parcelas).
 static func effect_value(e: Dictionary, level: int) -> float:
+	if int(e.get("step", 0)) > 0:
+		level = (level / int(e["step"])) * int(e["step"])
 	match e["op"]:
 		"add":
 			return e["value"] * level
@@ -618,6 +621,17 @@ static func _pick(weights: Array[float], rng: RandomNumberGenerator) -> int:
 	return weights.size() - 1
 
 
+## Empuxo SENTIDO no voo (physics.feel, v20): a aceleracao liquida a - g passa por um teto suave (ate knee igual;
+## depois se aproxima de max) — motor forte continua controlavel. Regras de decolagem usam o empuxo cru.
+static func felt_thrust(a: float, g: float) -> float:
+	var f: Dictionary = spec.get("physics", {}).get("feel", {})
+	var net := a - g
+	if f.is_empty() or net <= float(f["knee"]):
+		return a
+	var span := float(f["max"]) - float(f["knee"])
+	return g + float(f["knee"]) + span * (1.0 - exp(-(net - float(f["knee"])) / span))
+
+
 ## Estimativa de delta-v de um salto (a mesma do simulador, sem desperdicio do piloto).
 ## Util para a UI mostrar "alcance estimado" e para validar a fisica real contra o modelo.
 static func estimated_hop_dv(planet_id: String, distance: float, stats: Dictionary) -> float:
@@ -626,6 +640,7 @@ static func estimated_hop_dv(planet_id: String, distance: float, stats: Dictiona
 	var a: float = stats["thrust"]
 	if a <= g * 1.05:
 		return INF
+	a = felt_thrust(a, g)
 	var v0 := sqrt(g * distance)
 	return 2.0 * v0 * (1.0 + 0.707 * g / a) * (1.0 + pl.get("drag", 0.0))
 

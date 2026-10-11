@@ -11,7 +11,7 @@ const DIR := "user://telemetry"
 const DELIVERIES := "user://telemetry/deliveries.csv"
 const HEADER := ["planet", "distance", "thrust", "efficiency", "tank", "gas_used", "hop_time_s", "quality",
 		"crashed", "pilot", "tier", "gift", "vy", "vx", "tilt", "reason", "mission", "star", "failed", "mg_got",
-		"mg_total", "mg_extra"]
+		"mg_total", "mg_extra", "scrapes", "hard"]
 
 const SESSION := "user://telemetry/session.csv"
 const SESSION_HEADER := ["session", "t_s", "event", "detail", "stars", "runs", "credits", "play_s"]
@@ -30,13 +30,16 @@ func _ready() -> void:
 	if "--demo" in args:
 		pilot = "demo"
 		enabled = "--telemetry" in args
-	_session_on = enabled and not "--no_save" in args
-	for a in args:                                             # atalhos de dev nao entram no funil
+	var test_run := "--no_save" in args
+	for a in args:                                             # atalhos de dev nao sao jogo de verdade
 		if a.begins_with("--dev_"):
-			_session_on = false
-	for a in OS.get_cmdline_args():                            # tests/ (previas, testes) nunca entram no funil
+			test_run = true
+	for a in OS.get_cmdline_args():                            # tests/ (previas, testes) idem
 		if a.begins_with("res://tests/"):
-			_session_on = false
+			test_run = true
+	_session_on = enabled and not test_run
+	if test_run and not "--telemetry" in args:                 # 2026-10-11: testes gravavam entregas como "human"
+		enabled = false
 	_session = str(int(Time.get_unix_time_from_system()))
 	Events.upgrade_bought.connect(func(id: String, level: int) -> void: event("buy", "%s:%d" % [id, level]))
 	event("boot")

@@ -48,3 +48,18 @@ static func is_perfect(vy: float, tilt: float, landing: Dictionary) -> bool:
 		return false
 	return maxf(vy, 0.0) <= float(landing["max_vy"]) * float(p["vy_frac"]) \
 			and absf(tilt) <= float(landing["max_tilt"]) * float(p["tilt_frac"])
+
+
+## Raspao (world.json landing.scrape): {"ok": bool, "velocity": Vector2}. vel em m/s (y para baixo), normal unitaria
+## saindo do chao. Impacto = velocidade contra o chao; quica se impacto <= max_mps x gear^gear_exp e (dentro da
+## carencia ou amassados < per_hop). Quicar: normal x restitution (no minimo min_out_mps), resto x friction.
+static func scrape_bounce(vel: Vector2, normal: Vector2, gear: float, scrapes: int, grace: bool,
+		sc: Dictionary) -> Dictionary:
+	var vn := vel.dot(normal)
+	var impact := maxf(-vn, 0.0)
+	var limit := float(sc["max_mps"]) * pow(maxf(gear, 0.01), float(sc["gear_exp"]))
+	if impact > limit or (not grace and scrapes >= int(sc["per_hop"])):
+		return {"ok": false, "velocity": vel}
+	var tangent := (vel - normal * vn) * float(sc["friction"])
+	var out := maxf(impact * float(sc["restitution"]), float(sc["min_out_mps"]))
+	return {"ok": true, "velocity": tangent + normal * out}

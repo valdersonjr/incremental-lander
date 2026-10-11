@@ -41,3 +41,24 @@ func test_ar_denso_perto_do_chao() -> void:
 	assert_true(low > high * 5.0, "rente ao chao o arrasto e bem maior")
 	assert_almost(high, 0.3 * float(cfg["drag_scale"]), 1e-4, "no alto ~ o arrasto de sempre")
 	assert_eq(LanderPhysics.drag_at(0.0, 0.0, cfg), 0.0, "sem ar (Lua) nao ha arrasto")
+
+
+func test_giro_com_rampa_toque_fino() -> void:
+	var rc: Dictionary = WorldConfig.load_config()["rotation"]
+	assert_almost(Lander.rotation_speed(0.0, rc), float(rc["start_speed"]))
+	assert_almost(Lander.rotation_speed(10.0, rc), float(rc["max_speed"]))
+	# toque de 0,1 s gira menos que a tolerancia de inclinacao (antes: 0,4 rad > 0,35)
+	var ang := 0.0
+	var t := 0.0
+	for i in 6:
+		t += 1.0 / 60.0
+		ang += Lander.rotation_speed(t, rc) / 60.0
+	assert_true(ang < float(WorldConfig.load_config()["landing"]["max_tilt"]) * 0.75, "toque curto = ajuste fino")
+
+
+func test_empuxo_sentido_tem_teto() -> void:
+	var f: Dictionary = EconMath.spec["physics"]["feel"]
+	assert_almost(EconMath.felt_thrust(4.0, 1.62), 4.0, 1e-9, "nave de serie igual")
+	var big := EconMath.felt_thrust(50.0, 1.62) - 1.62
+	assert_true(big <= float(f["max"]) + 1e-6 and big > float(f["knee"]), "motor forte sente no maximo max")
+	assert_true(EconMath.felt_thrust(16.0, 1.62) > EconMath.felt_thrust(10.0, 1.62), "degrau maior ainda sente mais")

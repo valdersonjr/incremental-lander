@@ -98,6 +98,16 @@ pousar na plataforma (qualidade 0..1) → receber → próxima entrega … até 
 - Controles (teclado): girar esquerda/direita, propulsor; Esc pausa o voo (volumes + lista de controles). (Detalhes finais na skill `godot-dev`/Fase 1.)
 - Gravidade do planeta, arrasto/vento, gás consumido por Δv (`efficiency` = m/s por unidade de gás).
 - Pouso: velocidade vertical/horizontal, ângulo e distância ao centro da plataforma → **qualidade q (0..1)**.
+- **Sensação do voo (auditoria do voo, 2026-10-11)** — o pouso é o centro do jogo e tem que ser gostoso do começo ao fim:
+  - **Giro com rampa**: toque gira devagar (ajuste fino, ~1,5 rad/s), segurar acelera até 4,2 rad/s em 0,22 s.
+    **Ímã do em pé**: soltando as teclas a menos de ~6° da vertical, a nave assenta reta (ajuda escondida).
+  - **Empuxo sentido com teto**: o voo usa `g + teto suave(a − g)` (até 3,5 m/s² igual, depois tende a 8). Motor forte
+    não vira "toquinho de 1 quadro"; o Motor continua valendo para decolar em mundos pesados, carga Pesada e marcos.
+    Turbo (×2) é o "força total" quando o jogador quer.
+  - **Raspão quica**: encostar fora da plataforma devagar (até 9 m/s contra o chão × Resistência^0,5) quica, pisca e
+    conta um amassado; 2 por salto, o 3º (ou um forte) explode.
+  - **Pouso duro**: na plataforma, até 1,25× as tolerâncias vale como pouso (nota baixa, "tum" forte).
+  - **Resistência** amplia as tolerâncias só ×gear^0,25 (máx ~×1,36; antes ×1,84) e vale mais no casco (raspão).
 - O modelo econômico assume salto balístico: `Δv ≈ 2·sqrt(g·d)·(1 + 0.707·g/a)·(1+drag)·desperdício + 2·g·pairar`
   (ver `.claude/skills/economy-balance/references/run-model.md`). O jogo real deve **exportar telemetria**
   para calibrar esse modelo (Fase 10).
@@ -131,17 +141,18 @@ A tela entre runs (antes "Oficina") mostra **toda a progressão desde o início*
   traz, quanto falta). Ao voltar do voo a navezinha anda e cada parada nova faz festa (ratinho ★1 = "Novo amiguinho!").
   Estrelas por parada = **rascunho** (`economy.json > progression.road`).
 - **Moedas compram só as 4 peças da nave** (Motor, Gasolina, Eficiência, Resistência) em **degraus de 10** (I, II, III…:
-  10 bolinhas, festinha e a peça **cresce no desenho** da nave). Seletor ×1 / ×10 / MÁX.
+  10 bolinhas, festinha e a peça **cresce no desenho** da nave). Seletor ×1 / ×10 / MÁX. **A nave só evolui quando o
+  degrau sobe** (v20, pedido do usuário): as bolinhas são parcelas do próximo degrau; o efeito vem inteiro ao completar.
 - Abas NAVE · AJUDAS (ligar/desligar; as que faltam mostram o lugar na estrada) · FROTA (cadeado até a parada). A aba
   PEDIDOS saiu (os ratinhos estão na estrada).
 
 ## 6. Upgrades (créditos)
 | Upgrade | Efeito | Observação |
 |---|---|---|
-| Motor | +0,6 m/s² por nível | vence gravidades maiores, menos perda por gravidade |
-| Gasolina (tanque) | +8 de gás por nível (v19; era ×1,12: o gás virava infinito) | alcance e entregas por run |
-| Eficiência (bocais) | +0,15 Δv por gás por nível (v19; era ×1,07) | alcance |
-| Resistência (trem de pouso) | reduz batidas (retorno decrescente) | — |
+| Motor | +6 m/s² por degrau (0,6 × 10; v20: só no degrau) | vence gravidades maiores; no voo, empuxo sentido com teto |
+| Gasolina (tanque) | +80 de gás por degrau (v19: +8/nível; v20: só no degrau) | alcance e entregas por run |
+| Eficiência (bocais) | +1,5 Δv por gás por degrau (v19: +0,15/nível; v20: só no degrau) | alcance |
+| Resistência (trem de pouso) | casco: raspão mais forte quica; tolerâncias um pouco maiores (retorno decrescente) | só no degrau |
 | Estabilizador (habilidade) | segurar S/↓: nave volta a ficar de pé | vem pela Estrada (v13) |
 | Turbo (habilidade) | segurar Shift: empuxo ×2 | vem pela Estrada (v13) |
 | Frota de drones | cada drone rende uma fração (8% → ~17% com o Piloto automático) da **sua** renda média | 8M créditos (v11), liberada pela Estrada (v13); até 10 |
