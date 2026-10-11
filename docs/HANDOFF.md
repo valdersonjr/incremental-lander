@@ -22,6 +22,8 @@
   (`ShipView._draw`: ternário com Array[Rect2] — bug antigo, só aparece com tela; teste novo `buy_flow` + captura).
   **Ouro acumulado (v22)**: o painel de cima mostra "+N a receber" crescendo com o chão novo (fronteira paga
   `track_banked_m`), o pouso paga acumulado × nota × plataforma; plaquinhas mostram o acumulado ao chegar em cada uma.
+  **Teto de voo (v23)** contra o arremesso (2,9 km com 51 de gás no teste do usuário) e fim do "tente de novo"
+  infinito (máx. 2 por salto). Demo: 4 pousos/661 m/847 de ouro no 1º voo. Calibrar com o próximo teste do usuário.
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

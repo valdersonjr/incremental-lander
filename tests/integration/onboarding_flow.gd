@@ -63,6 +63,20 @@ func _ready() -> void:
 			flight.lander.gas, gas0])
 	_check(absf(flight.lander.global_position.x - float(flight.terrain.pads[0]["x"])) < 2.0,
 			"aprendiz: de volta na ultima plataforma")
+	# bug 2026-10-11 ("sem gasolina e o jogo fica me dando tente de novo"): passou das tentativas = fim da viagem
+	var tries := int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
+	var saved_retries: int = main._retries
+	main._retries = tries
+	var over := [false]
+	flight.lander.state = Lander.State.FLYING
+	flight.lander.crash_now("vertical_rapido")
+	await _until(func() -> bool: return main._run.over)
+	_check(main._run.over, "aprendiz: depois de %d tentativas a viagem acaba (nao repete para sempre)" % tries)
+	main._summary.visible = false
+	main._on_launch_requested()                                   # viagem nova para seguir o teste
+	await _frames(3)
+	flight = main._flight
+	main._retries = saved_retries * 0
 	# pouso numa plataforma a frente: paga pela distancia do comeco e da as estrelas da nota
 	var info := {"gas_used": 10.0, "flight_time_m": 20.0, "vy": 1.0, "tilt": 0.0}
 	flight._track_landed(flight.terrain.pads[1], 0.7, info)

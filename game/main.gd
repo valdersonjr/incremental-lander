@@ -368,6 +368,7 @@ func _begin_track() -> void:
 	_flight.lander.took_off.connect(func() -> void: _hop_gas = _flight.lander.gas)
 	_hop_gas = _flight.lander.gas
 	_hop_safe = true
+	_retries = 0
 	_set_pending(0.0)
 	_flight.apprentice = _apprentice_hop()
 	_flight.lander.ground_rest = _flight.apprentice             # aprendiz: pouso devagar fora da plataforma nao bate
@@ -388,6 +389,7 @@ func _on_track_reached(result: Dictionary) -> void:
 	var rewards := _run.complete_track_landing(float(result["from_m"]), float(result["distance"]), int(result["skipped"]),
 			float(result["quality"]), str(result["tier"]), float(result["gas_used"]), bool(result["perfect"]))
 	var entry: Dictionary = _run.deliveries[-1]
+	_retries = 0                                               # pousou: o proximo salto tem as tentativas de novo
 	if _pending > 0.0:                                         # moedas no ar + marcos: pagos agora, no pouso
 		var extra := _run.add_bonus(_pending)
 		GameState.add_rewards(extra)
@@ -526,8 +528,13 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	_log("DELIVERY_RESULT ", JSON.stringify(result))  # verificacao automatica (gdtool run/capture)
 	if result["crashed"]:
 		Telemetry.event("crash", str(result["reason"]))
-		if _flight.track and _apprentice_hop():                  # pista: o aprendiz volta para a ultima plataforma
-			_retry_track(str(result["reason"]))
+		if _flight.track and _apprentice_hop() \
+				and _retries < int(WorldConfig.load_config()["onboarding"]["retries_per_hop"]):
+			_retry_track(str(result["reason"]))                  # pista: o aprendiz volta para a ultima plataforma
+			return
+		if _flight.track:                                        # pista: passou das tentativas (ou veterano) = fim
+			_run.crash(str(result["reason"]))
+			_end_run()
 			return
 		if _apprentice_hop():                                     # aprendiz: tenta o mesmo salto de novo (C2)
 			_retry_hop(str(result["reason"]))
@@ -804,6 +811,7 @@ func _retry_hop(reason: String) -> void:
 
 ## Pista (aprendiz): bateu -> a tela escurece e a nave volta para a ultima plataforma paga com o gas do comeco do salto.
 func _retry_track(reason: String) -> void:
+	_retries += 1
 	var fade_s := float(WorldConfig.load_config()["onboarding"]["retry_fade_s"])
 	var flight := _flight
 	await get_tree().create_timer(0.5, false).timeout

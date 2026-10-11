@@ -836,6 +836,26 @@ def landing_stars(E: dict, q: float) -> int:
     return 1 + int(q >= S.get("good", 0.6)) + int(q >= S.get("perfect", 0.85))
 
 
+def track_hop(E: dict, planet: dict, d: float, stats: dict, prof: Profile) -> tuple[float, float]:
+    """(delta-v, tempo) de um salto de d metros na pista. v22b: TETO de voo (track.ceiling_m acima do chao): o arco de
+    45 graus sobe d/4; se passar do teto, a nave sobe so ate o teto e o resto e velocidade horizontal (custo ~linear em
+    d: acaba com o "arremesso" de km por quase nada de gas, medido no jogo em 2026-10-11)."""
+    H = track_spec(E, planet).get("ceiling_m", 0.0)
+    if H <= 0 or d <= 4 * H:
+        return hop_dv(planet, d, stats, prof), hop_time(planet, d, stats, prof)
+    g, a = planet["gravity"], stats["thrust"]
+    if a <= g * 1.05:
+        return math.inf, math.inf
+    a = felt_thrust(_FEEL, a, g)
+    vy = math.sqrt(2 * g * H)
+    t_air = 2 * vy / g
+    v0 = math.hypot(d / t_air, vy)
+    dv = 2 * v0 * (1 + 0.707 * g / a) * (1 + planet.get("drag", 0.0)) * prof.waste
+    dv *= 1 + planet.get("hazard", {}).get("dv", 0.0) * (1 - min(prof.skill, 1.0)) * 2
+    dv += 2 * g * prof.hover_s
+    return dv, t_air + 2 * v0 / a + prof.hop_overhead_s
+
+
 def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random.Random | None, expected: bool,
                   log: list | None) -> RunResult:
     """Viagem na pista: em cada plataforma o piloto escolhe pousar na proxima ou pular uma (maior valor esperado por
@@ -855,13 +875,13 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
     fails = 0
     while True:
         best = None
-        for skip in (0, 1):
+        for skip in range(6):                                # v22b: arremesso longo tambem e opcao
             j = i + 1 + skip
             if j >= len(pads):
                 break
             xj, tid = pads[j]
             tier = pad_tier(E, tid)
-            g_need = hop_dv(planet, xj - x, stats, prof) * track_rough(E, planet, (x + xj) / 2) / eff
+            g_need = track_hop(E, planet, xj - x, stats, prof)[0] * track_rough(E, planet, (x + xj) / 2) / eff
             if g_need > gas:
                 continue
             q_mu = _q_on_tier(prof.skill, tier, prof.skill)
@@ -873,7 +893,7 @@ def _do_run_track(E: dict, planet: dict, stats: dict, prof: Profile, rng: random
             break
         _, j, d, g_need, tier, skip = best
         gas -= g_need
-        t += hop_time(planet, d, stats, prof)
+        t += track_hop(E, planet, d, stats, prof)[1]
         while ci < len(cans) and cans[ci] <= pads[j][0]:          # galoes no caminho
             got = can_p if expected else (1.0 if rng.random() < can_p else 0.0)
             gas = min(tank, gas + got * track_can_gas(E, stats))

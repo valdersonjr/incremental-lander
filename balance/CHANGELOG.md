@@ -51,3 +51,9 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   5,0 → 4,8 min; run 252 → 290 s; mundos (engajado) 0,37/0,89/1,42/1,95/2,46 → 0,43/1,1/1,71/2,27/2,85 h; o piloto do
   modelo pula mais (~1/3 → ~5/6 dos pousos: salto longo gasta menos gás por metro; as estrelas por pouso e o risco
   seguram no jogo — observar na telemetria). Script `balance/sims/2026-10-11-v21b-accum.py`.
+- v23 (2026-10-11) — teto de voo `track.ceiling_m` 60 m (acima do ponto mais alto ao redor) + modelo do salto com teto
+  (`track_hop`) e piloto que mira até 6 plataformas à frente — motivo: jogando, o usuário arremessou 2,9 km com 51 de
+  gás (136 s no ar) e fez ~8 mil no 1º voo; o modelo só olhava 1 plataforma à frente e não via o arremesso (sem teto o
+  modelo também arremessa: 1 pouso de ~950 m) — medido (screen 6 h, engajado): 1º voo 1 pouso/944 m → 2 pousos/779 m;
+  1ª compra ~90 s; intervalo mediano 3,6 min; run 194 s; mundos 0,51/1,11/1,77/2,46/3,15 h (casual 0,9–4,6 h; expert
+  0,29–1,86 h). Script `balance/sims/2026-10-11-v22b-ceiling.py`.
