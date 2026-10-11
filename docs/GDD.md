@@ -24,8 +24,8 @@ Auditoria de clareza (https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): um jog
 - Plataformas em sequência; pousar em qualquer uma à frente paga **pela distância do começo** (× qualidade × tamanho);
   pular uma e pousar na seguinte = +25%. Para trás não paga.
 - O **relevo sobe** quanto mais longe (morros mais altos = cada salto custa mais gás): é o que encerra a viagem.
-- **Galões** no ar pelo caminho (35% do tanque, cada vez mais espaçados), **moedas no ar** entre as plataformas,
-  **placas a cada 250 m** que pagam na 1ª vez em cada mundo, **bandeira do recorde** no chão.
+- **Galões** no ar pelo caminho (12 de gás, cada vez mais espaçados), **moedas no ar** entre as plataformas,
+  **placas a cada 1 km** que pagam na 1ª vez em cada mundo, **bandeira do recorde** no chão.
 - **Estrela = nota do pouso** (1 ok · 2 bom · 3 perfeito); as estrelas andam na Estrada do mundo e abrem o próximo.
 - Batida acaba a viagem (o ganho fica); o aprendiz (< 10 estrelas) volta para a última plataforma.
 - Fora no modo pista: cartão de missões, ratinhos/regras, minijogos, Reputação, presentes, cansaço 2×, bônus de
@@ -171,7 +171,7 @@ A tela entre runs (antes "Oficina") mostra **toda a progressão desde o início*
 | Turbo (habilidade) | segurar Shift: empuxo ×2 | vem pela Estrada (v13) |
 | Frota de drones | cada drone rende uma fração (8% → ~17% com o Piloto automático) da **sua** renda média | 8M créditos (v11), liberada pela Estrada (v13); até 10 |
 | Piloto automático | melhora a fração da frota | 16M; liberado pela Estrada e pede 1 drone |
-| **Marcos** | a cada **degrau** (10 níveis) de Motor/Gasolina/Eficiência: pagamento ×1,25 (v19) — o salto visível junto da peça crescendo no desenho; cada nível sozinho rende pouco | estilo AdVenture Capitalist |
+| ~~Marcos~~ (saíram na v29: o pagamento não sobe com o degrau das peças) | a cada **degrau** (10 níveis) de Motor/Gasolina/Eficiência: pagamento ×1,25 (v19) — o salto visível junto da peça crescendo no desenho; cada nível sozinho rende pouco | estilo AdVenture Capitalist |
 
 ## 6b. Painel de bordo — árvore de ajudas de voo (v9, 2026-10-05)
 Compras **de informação**, não de potência: mostram, não pilotam (o pouso continua na mão do jogador; o pagamento não

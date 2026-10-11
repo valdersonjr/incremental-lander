@@ -94,3 +94,8 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   "pousar seguido" (k ≤ 5) a partir do meio do jogo (+0,25 e +0,5 por pouso ainda perdiam para o cruzeiro); engajado
   1ª compra 75 s, intervalo mediano 8,8 min, viagem 4,5 min, 7 pousos/viagem, mundos 0,69/1,42/2,4/3,32/3,92 h;
   casual até 7,2 h; expert 2,35 h (11 pousos, ~8 min). Script `balance/sims/2026-10-11-v28-flat.py`.
+- v29 (2026-10-11) — pedido do usuário: placas a cada 1 km (`marker_every` 250 → 1000) e "o pagamento não pode
+  aumentar por causa do degrau das peças" (saem os marcos `pay_mult` ×1,25 por degrau de Motor/Gasolina/Eficiência)
+  — medido (screen 10 h): quase igual, porque o multiplicador de pousos domina a renda; engajado intervalo mediano
+  8,8 → 7,1 min (p90 16,7 → 20), viagem 4,5 → 3 min, mundos 0,69–3,92 → 0,84–4,01 h; casual até 7,9 h; expert 2,5 h.
+  Custos mantidos (reduzir o crescimento não melhorava o ritmo). Script `balance/sims/2026-10-11-v29-no-milestone.py`.
