@@ -4,6 +4,13 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
+- **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
+  o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).
+  Página `art/previews/clareza/index.html` (publicada: https://claude.ai/artifact/FxVbgBPYA478S6mdTL3rhT): diagnóstico
+  (viagem sem começo/fim, cansaço 2× invisível, "estrela" com 3 sentidos, escolhas antes de entender, 20+ conceitos
+  em 10 min) + 3 propostas com mini-protótipo jogável (A arrumar o atual · **B viagem contínua, recomendada** · C mais
+  longe/distância). **Próximo**: o usuário escolhe → `economy-balance` simula a proposta → implementar em etapas →
+  reteste com o amigo.
 - **Destaque "Aceite!" deixa ler a missão** — usuário: a tela escurecia o cartão e o balão cobria as opções, sem dar
   para ver o que estava aceitando. `Spotlight.point(..., area)`: a luz cobre o cartão inteiro (`OfferPanel.card()`),
   dá para ler e escolher distância/plataforma; o botão ganha só a moldura dourada e a maozinha (sem balão). Verificado:
