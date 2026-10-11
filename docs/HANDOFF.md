@@ -26,6 +26,8 @@
   teto (v23) e gasto por distância (v24) rejeitados; **v25**: tanque base 45, peças Gasolina/Eficiência a 30%, galão
   fixo 12, arremesso aceito como habilidade. Demo: 2 pousos/340 m/~350 de ouro no 1º voo. Modelo: viagem 0,8 → 6,8 km
   no jogo todo, compras a cada ~7,7 min (esperas de 7–12 min perto de 0,9 h). Calibrar com o próximo teste.
+  Sem gás para a próxima plataforma (estimativa do piloto ideal + galões no caminho, folga 10%) = fim da viagem na
+  hora ("O GÁS NÃO DÁ!"), e o aprendiz só repete o salto se o gás do começo dele alcança (`Flight.track_can_reach`).
   Dica: o log da sessão de jogo fica em `~/Library/Application Support/IncrementalLander/logs/`.
 - **Auditoria de clareza (aguardando escolha do usuário)** — um amigo (jogador experiente) testou a web e não entendeu
   o loop ("planeta tem vários mapas, mapa tem missão"; só entendeu "1 tanque = 1 run, pontuação = moedas" pelo chat).

@@ -526,7 +526,7 @@ func _on_lander_rested(info: Dictionary) -> void:
 	_landing_sound(0.2)
 	_float_text("decole de novo!", lander.global_position - Vector2(0.0, 26.0))
 	rested.emit(info)
-	if lander.gas <= 0.001:
+	if lander.gas <= 0.001 or (track and not track_can_reach(lander.gas, lander.global_position.x)):
 		stranded.emit()
 
 
@@ -1593,8 +1593,29 @@ func _track_landed(pad: Dictionary, quality: float, info: Dictionary) -> void:
 		_refresh_pay_tags()
 		track_reached.emit(result)
 		_track_autopilot()
-	if lander.gas <= 0.001:
-		stranded.emit()
+	if lander.gas <= 0.001 or not track_can_reach(lander.gas, lander.global_position.x):
+		stranded.emit()                                        # sem gas para a proxima: fim da viagem
+
+
+## O gas alcanca a proxima plataforma a frente saindo de from_px? Estimativa do piloto IDEAL (EconMath.estimated_hop_dv,
+## sem desperdicio) com folga de 10%, somando os galoes ainda nao pegos no caminho. Falso = impossivel de verdade:
+## a viagem acaba em vez de oferecer "tente de novo" (bug 2026-10-11: tanque quase vazio repetia o salto).
+func track_can_reach(gas: float, from_px: float) -> bool:
+	var target: Dictionary = terrain.pads[mini(_track_last + 1, terrain.pads.size() - 1)]
+	var tx := float(target["x"])
+	var d_m := absf(WorldConfig.px_to_m(tx - from_px))
+	var need := EconMath.estimated_hop_dv(planet_id, d_m, stats) / float(lander.params["efficiency"])
+	var lo := minf(from_px, tx)
+	var hi := maxf(from_px, tx)
+	for c: Dictionary in _cans:
+		if not c["got"] and (c["pos"] as Vector2).x > lo and (c["pos"] as Vector2).x < hi:
+			gas += EconMath.track_can_gas(stats)
+	return gas >= need * 0.9
+
+
+## x (px) da ultima plataforma paga (de onde o aprendiz recomeca).
+func track_last_px() -> float:
+	return float(terrain.pads[_track_last]["x"])
 
 
 ## Galoes no ar sobre o relevo (EconMath.track_cans), 3 moedas em arco em cada trecho, placas de marco e a bandeira.

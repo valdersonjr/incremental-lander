@@ -63,6 +63,28 @@ func _ready() -> void:
 			flight.lander.gas, gas0])
 	_check(absf(flight.lander.global_position.x - float(flight.terrain.pads[0]["x"])) < 2.0,
 			"aprendiz: de volta na ultima plataforma")
+	# bug 2026-10-11 (2): gas do comeco do salto nao alcanca a proxima plataforma -> bater acaba a viagem (sem repetir)
+	main._hop_gas = 0.5
+	var r0: int = main._retries
+	flight.lander.state = Lander.State.FLYING
+	flight.lander.crash_now("vertical_rapido")
+	await _until(func() -> bool: return main._run.over)
+	_check(main._run.over and main._retries == r0, "sem gas para a proxima: nao oferece tente de novo")
+	main._summary.visible = false
+	main._on_launch_requested()
+	await _frames(3)
+	flight = main._flight
+	# pousou com gas que nao alcanca a proxima plataforma: a viagem acaba sozinha
+	flight.lander.gas = 0.3
+	var info0 := {"gas_used": 10.0, "flight_time_m": 20.0, "vy": 1.0, "tilt": 0.0}
+	flight._track_landed(flight.terrain.pads[1], 0.7, info0)
+	await _until(func() -> bool: return main._run.over and main._summary.visible)
+	_check(main._run.over and main._run.end_reason == "sem_gas", "pousou sem gas para a proxima: fim da viagem (%s)" % main._run.end_reason)
+	main._summary.visible = false
+	main._on_launch_requested()
+	await _frames(3)
+	flight = main._flight
+	GameState.stars = 0
 	# bug 2026-10-11 ("sem gasolina e o jogo fica me dando tente de novo"): passou das tentativas = fim da viagem
 	var tries := int(WorldConfig.load_config()["onboarding"]["retries_per_hop"])
 	var saved_retries: int = main._retries
