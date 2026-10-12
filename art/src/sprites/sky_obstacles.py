@@ -9,7 +9,8 @@ ratinhos, Terra dormindo):
   C estrela — estrelinhas dorminhocas (rostinho dormindo, bochecha rosa, "z"), balançam de leve
 Cada família: grande 28–32 px, média ~20–24, pequena ~14–16 (o tamanho do sprite = área que bate na nave).
 Prévias: art/previews/sky_obstacles/ (atlas ampliado + cena do jogo com a densidade subindo).
-Escolhida pelo usuário (2026-10-11): B, satélites dos ratinhos ("ficaram bons"; A e C confundem com moedas/estrelas).
+Escolhida pelo usuário (2026-10-11): B, satélites dos ratinhos ("ficaram bons"; A e C confundem com moedas/estrelas);
+depois "meio feio" -> rodada 2 (asteroides/minas, prévias) -> "faz em formato de cachorrinhos" (G, exportada).
 Export (--export): assets/sprites/sky_obstacles.png + .json — células CELL_W x CELL_H numa linha, sprite centrado,
 nomes em EXPORT (on/off = luz vermelha acesa/apagada, alterna no jogo). Áreas de batida em data/world.json > sky_obstacles.
 Rodar da raiz: python3 art/src/sprites/sky_obstacles.py [--export]
@@ -243,6 +244,90 @@ def mine(size: str, light: bool = True) -> Canvas:
     return finish(h)
 
 
+# --- rodada 3 (2026-10-11): usuário: "faz em formato de cachorrinhos" ----------------------------------------------
+FUR = ["white", "white", "mist", "steel"]
+EAR = ["copper", "terracotta", "rust", "wine"]
+
+
+def puppy_face(k: Canvas, cx: int, cy: int, big: bool) -> None:
+    """Rostinho do cachorrinho em resolução final: olhos redondos com brilho, focinho, boquinha 'w', língua e bochecha."""
+    gap = 4 if big else 3
+    for ex in (cx - gap - 1, cx + gap - 1):
+        k.rect(ex, cy, 2, 2 if not big else 3, "ink")
+        k.px(ex, cy, "white")
+    ny = cy + (3 if big else 2)
+    k.hline(cx - 1, cx, ny, "ink"); k.hline(cx - 2, cx + 1, ny - 1, "ink") if big else k.px(cx - 1, ny - 1, "ink")
+    k.px(cx - 2, ny + 1, "ink"); k.px(cx + 1, ny + 1, "ink"); k.px(cx - 1, ny + 1, "ink") if not big else None
+    if big:
+        k.px(cx - 1, ny + 2, "pink"); k.px(cx, ny + 2, "pink")         # linguinha
+    k.px(cx - gap - 2, ny, "pink"); k.px(cx + gap + 1, ny, "pink")
+
+
+def puppy_head_half(h: Canvas, cx: float, cy: float, r: float, patch: bool = True) -> None:
+    """Cabeça (meia resolução): bola branca, mancha marrom num olho (beagle), orelhas caídas marrons dos lados."""
+    sphere(h, cx, cy, r, r * 0.92, FUR)
+    if patch:
+        sphere(h, cx + r * 0.45, cy - r * 0.25, r * 0.42, r * 0.38, EAR)
+    for side in (-1, 1):
+        ex = cx + side * (r - 0.2)
+        sphere(h, ex, cy + r * 0.25, r * 0.38, r * 0.72, EAR)
+
+
+def helmet(k: Canvas, cx: float, cy: float, r: float) -> None:
+    """Capacete-bolha em resolução final: anel claro (vidro) + 2 brilhos; o miolo fica transparente (só o anel)."""
+    for y in range(int(cy - r) - 2, int(cy + r) + 3):
+        for x in range(int(cx - r) - 2, int(cx + r) + 3):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+            if r - 1.0 <= d < r and k.get(x, y) is None:
+                k.px(x, y, "ice" if (x - cx) + (y - cy) < 0 else "sea")
+    k.px(int(cx - r * 0.55), int(cy - r * 0.6), "white"); k.px(int(cx - r * 0.45), int(cy - r * 0.7), "white")
+    k.px(int(cx - r * 0.7), int(cy - r * 0.4), "white")
+
+
+def puppy_head(size: str) -> Canvas:
+    r, n = {"mid": (4.6, 15), "small": (3.3, 11)}[size]
+    h = Canvas(n, n)
+    c = n / 2
+    puppy_head_half(h, c, c + 0.5, r, patch=size == "mid")
+
+    def post(k: Canvas) -> None:
+        cx = k.w // 2
+        puppy_face(k, cx, k.h // 2, size == "mid")
+        helmet(k, k.w / 2, k.h / 2 + 0.5, k.w / 2 - 0.5)
+    return finish(h, post)
+
+
+def puppy_float(tail_up: bool = True) -> Canvas:
+    """Cachorrinho inteiro flutuando (patinhas abertas como quem nada no espaço), rabinho, cabeça no capacete."""
+    h = Canvas(25, 22)
+    sphere(h, 15, 16.5, 5.2, 3.6, FUR)                                 # corpinho
+    sphere(h, 17.5, 15.5, 1.8, 1.4, EAR)                               # mancha nas costas
+    for px_, py_ in ((10.5, 19.5), (13, 20.5), (17, 20.5), (19.5, 19.5)):   # patinhas
+        sphere(h, px_, py_, 1.3, 1.2, FUR)
+    if tail_up:                                                        # rabinho abanando (2 quadros)
+        h.line(20, 15, 23, 12, "copper"); h.px(23, 11, "white")
+    else:
+        h.line(20, 15, 23, 14, "copper"); h.px(24, 14, "white")
+    puppy_head_half(h, 11.5, 9.5, 4.6)
+
+    def post(k: Canvas) -> None:
+        puppy_face(k, 24, 19, True)
+        helmet(k, 24.0, 20.0, 12.0)
+    return finish(h, post)
+
+
+def bone() -> Canvas:
+    h = Canvas(10, 6)
+    h.rect(2, 2, 6, 2, "white")
+    for x, y in ((1.5, 1.8), (1.5, 4.2), (8.5, 1.8), (8.5, 4.2)):
+        sphere(h, x, y, 1.4, 1.4, FUR)
+    h.hline(2, 7, 3, "mist")
+    return finish(h)
+
+
+FAMILIES3 = {
+    "G": ("Cachorrinhos astronautas", [puppy_float(), puppy_head("mid"), bone()]),
+}
 FAMILIES2 = {
     "D": ("Asteroides de pedra", [asteroid("big"), asteroid("mid"), asteroid("small")]),
     "E": ("Asteroides emburrados", [asteroid("big", True), asteroid("mid", True), asteroid("small")]),
@@ -292,9 +377,11 @@ def scene(sprites: list, bg_path: str, out: str) -> None:
     bg.save(out)
 
 
-CELL_W, CELL_H = 48, 28
-EXPORT = [("sat_on", lambda: satellite(True)), ("sat_off", lambda: satellite(False)),
-          ("probe_on", lambda: probe(True)), ("probe_off", lambda: probe(False)), ("bolt", bolt)]
+# 2026-10-11: usuário trocou os satélites por cachorrinhos ("faz em formato de cachorrinhos"). on/off = 2 quadros
+# (rabinho abanando) que o jogo alterna; sem par = estático.
+CELL_W, CELL_H = 54, 48
+EXPORT = [("puppy_on", lambda: puppy_float(True)), ("puppy_off", lambda: puppy_float(False)),
+          ("head", lambda: puppy_head("mid")), ("bone", bone)]
 
 
 def export() -> None:
@@ -316,7 +403,7 @@ if __name__ == "__main__":
         export()
     import os
     os.makedirs(OUT, exist_ok=True)
-    for fam, (name, sprites) in (FAMILIES2 if "--v2" in sys.argv else FAMILIES).items():
+    for fam, (name, sprites) in (FAMILIES3 if "--v3" in sys.argv else FAMILIES2 if "--v2" in sys.argv else FAMILIES).items():
         a = atlas(sprites)
         a.save(f"{OUT}/{fam}_atlas.png")
         print(fam, name, [f"{s.w}x{s.h}" for s in sprites], "cores", len(a.colors_used()))

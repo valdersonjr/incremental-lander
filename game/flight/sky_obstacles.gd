@@ -1,4 +1,4 @@
-## Satelites dos ratinhos no ceu da pista (world.json > sky_obstacles; regra em SkyField; arte
+## Cachorrinhos astronautas (eram satelites) no ceu da pista (world.json > sky_obstacles; regra em SkyField; arte
 ## assets/sprites/sky_obstacles.png, skill pixel-art). So existem as celulas perto da camera: follow() cria as que
 ## entram na tela e solta as que saem. A Flight chama follow() todo quadro e hit() para a batida.
 class_name SkyObstacles

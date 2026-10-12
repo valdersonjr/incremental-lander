@@ -23,3 +23,8 @@
 - Usuário escolheu a família B (satélites dos ratinhos): "ficaram bons". Export `--export` → assets/sprites/sky_obstacles.png
   (+ .json; células 48x28: sat_on/off, probe_on/off, bolt). Áreas de batida em world.json > sky_obstacles.kinds.circles.
 - No jogo (captura a 725 m): o branco + turquesa lê bem contra o céu rosa e as colinas; denso no alto.
+- Depois: satélites "meio feios" → rodada 2 (asteroides de pedra / emburrados / minas, só prévias) → usuário pediu
+  **cachorrinhos** (família G, exportada): cachorrinho inteiro de capacete-bolha (rabinho 2 quadros), cabeça no
+  capacete, ossinho. Capacete = só o anel (ice em cima-esquerda, sea embaixo) + 3 brilhos; miolo transparente (sem
+  semi-transparência). Mancha marrom num olho (beagle) e orelhas caídas `copper/terracotta/rust` = lê "cachorro" a 32 px.
+- Bater explode a nave na hora (usuário).

@@ -893,7 +893,7 @@
     "guide": false
   },
   "sky_obstacles": {
-    "notes": "Obstaculos do ceu (2026-10-11; arte assets/sprites/sky_obstacles.png, skill pixel-art): contra o arremesso por cima. Grade fixa de celulas cell_m (mundo absoluto, mesma pista = mesmos satelites); altura de cada celula = acima do ponto MAIS ALTO do relevo em +-ref_span_m (atravessar morros nao conta). Abaixo de free_m: nada; de free_m a full_m a chance por celula sobe ate max_p (curva exp); acima de full_m fica max_p. Bater = explode na hora (usuario 2026-10-11). circles = areas de batida [dx, dy, r] em px a partir do centro da celula do atlas. Gerados so perto da camera.",
+    "notes": "Obstaculos do ceu (2026-10-11; arte assets/sprites/sky_obstacles.png, skill pixel-art): contra o arremesso por cima. Grade fixa de celulas cell_m (mundo absoluto, mesma pista = mesmos cachorrinhos (eram satelites)); altura de cada celula = acima do ponto MAIS ALTO do relevo em +-ref_span_m (atravessar morros nao conta). Abaixo de free_m: nada; de free_m a full_m a chance por celula sobe ate max_p (curva exp); acima de full_m fica max_p. Bater = explode na hora (usuario 2026-10-11). circles = areas de batida [dx, dy, r] em px a partir do centro da celula do atlas. Gerados so perto da camera.",
     "worlds": [
       "luna"
     ],
@@ -906,63 +906,53 @@
     "jitter": 0.3,
     "lander_r_m": 11.0,
     "bob_px": 2.0,
-    "blink_s": 0.6,
+    "blink_s": 0.3,
     "kinds": [
       {
-        "name": "sat",
+        "name": "puppy",
         "weight": 0.35,
         "circles": [
           [
-            0,
-            3,
-            10
-          ],
-          [
-            -18,
-            4,
-            6
-          ],
-          [
-            17,
-            4,
-            6
-          ],
-          [
+            -2,
             -4,
-            -5,
-            4
+            11
           ],
           [
             5,
-            -5,
-            4
+            10,
+            8
           ]
         ]
       },
       {
-        "name": "probe",
+        "name": "head",
         "weight": 0.4,
         "circles": [
           [
-            4,
-            1,
-            7
-          ],
-          [
-            -8,
-            1,
-            4
+            0,
+            0,
+            14
           ]
         ]
       },
       {
-        "name": "bolt",
+        "name": "bone",
         "weight": 0.25,
         "circles": [
           [
+            -6,
+            0,
+            5
+          ],
+          [
+            6,
+            0,
+            5
+          ],
+          [
             0,
             0,
-            6
+            4
           ]
         ]
       }
