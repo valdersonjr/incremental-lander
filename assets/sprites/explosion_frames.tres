@@ -1,6 +1,6 @@
-[gd_resource type="SpriteFrames" load_steps=11 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://bjsj1ltyoi5v1"]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/explosion.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://bd4t2pgnbqhkb" path="res://assets/sprites/explosion.png" id="1_tex"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1"]
 atlas = ExtResource("1_tex")
@@ -41,34 +41,34 @@ region = Rect2(512, 0, 64, 64)
 [resource]
 animations = [{
 "frames": [{
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_1")
 }, {
-"duration": 1.250,
+"duration": 1.25,
 "texture": SubResource("AtlasTexture_2")
 }, {
-"duration": 1.500,
+"duration": 1.5,
 "texture": SubResource("AtlasTexture_3")
 }, {
-"duration": 1.500,
+"duration": 1.5,
 "texture": SubResource("AtlasTexture_4")
 }, {
-"duration": 1.750,
+"duration": 1.75,
 "texture": SubResource("AtlasTexture_5")
 }, {
-"duration": 2.250,
+"duration": 2.25,
 "texture": SubResource("AtlasTexture_6")
 }, {
-"duration": 2.750,
+"duration": 2.75,
 "texture": SubResource("AtlasTexture_7")
 }, {
-"duration": 3.250,
+"duration": 3.25,
 "texture": SubResource("AtlasTexture_8")
 }, {
-"duration": 3.750,
+"duration": 3.75,
 "texture": SubResource("AtlasTexture_9")
 }],
-"loop": false,
+"loop": 0,
 "name": &"boom",
-"speed": 25.000
+"speed": 25.0
 }]

@@ -1,6 +1,6 @@
-[gd_resource type="SpriteFrames" load_steps=9 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://cds1p63j03lwa"]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/landing_pad_narrow.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://c47xfwbprlkgi" path="res://assets/sprites/landing_pad_narrow.png" id="1_tex"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1"]
 atlas = ExtResource("1_tex")
@@ -33,12 +33,12 @@ region = Rect2(280, 28, 56, 28)
 [resource]
 animations = [{
 "frames": [{
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_1")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
-"speed": 2.000
+"speed": 2.0
 }, {
 "frames": [{
 "duration": 1.333,
@@ -47,10 +47,10 @@ animations = [{
 "duration": 1.167,
 "texture": SubResource("AtlasTexture_3")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_4")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_5")
 }, {
 "duration": 1.167,
@@ -59,7 +59,7 @@ animations = [{
 "duration": 2.167,
 "texture": SubResource("AtlasTexture_7")
 }],
-"loop": true,
+"loop": 1,
 "name": &"target",
 "speed": 8.333
 }]

@@ -1,6 +1,6 @@
-[gd_resource type="SpriteFrames" load_steps=10 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://dgqwdln3ondma"]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/lander.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://faaukjq5jjqt" path="res://assets/sprites/lander.png" id="1_tex"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1"]
 atlas = ExtResource("1_tex")
@@ -40,33 +40,33 @@ animations = [{
 "duration": 18.462,
 "texture": SubResource("AtlasTexture_1")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_2")
 }, {
 "duration": 8.462,
 "texture": SubResource("AtlasTexture_3")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_4")
 }],
-"loop": true,
+"loop": 1,
 "name": &"idle",
 "speed": 7.692
 }, {
 "frames": [{
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_5")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_6")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_7")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_8")
 }],
-"loop": true,
+"loop": 1,
 "name": &"thrust",
 "speed": 14.286
 }]

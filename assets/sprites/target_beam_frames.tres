@@ -1,6 +1,6 @@
-[gd_resource type="SpriteFrames" load_steps=6 format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://gq5f8yoas181"]
 
-[ext_resource type="Texture2D" path="res://assets/sprites/target_beam.png" id="1_tex"]
+[ext_resource type="Texture2D" uid="uid://cvwymbhqumvxs" path="res://assets/sprites/target_beam.png" id="1_tex"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1"]
 atlas = ExtResource("1_tex")
@@ -21,19 +21,19 @@ region = Rect2(192, 0, 64, 84)
 [resource]
 animations = [{
 "frames": [{
-"duration": 1.200,
+"duration": 1.2,
 "texture": SubResource("AtlasTexture_1")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_2")
 }, {
-"duration": 1.200,
+"duration": 1.2,
 "texture": SubResource("AtlasTexture_3")
 }, {
-"duration": 1.000,
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_4")
 }],
-"loop": true,
+"loop": 1,
 "name": &"pulse",
 "speed": 6.667
 }]
