@@ -407,7 +407,13 @@ func _on_track_reached(result: Dictionary) -> void:
 	GameState.add_stars(int(entry["stars"]))
 	get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
+	var was_done := GameState.world_done(GameState.current_planet)
 	_note_records()
+	if not was_done and GameState.world_done(GameState.current_planet):   # v30: pousou depois da linha de chegada
+		var tc := _hud.create_tween()
+		tc.tween_interval(0.6)
+		tc.tween_callback(_hud.show_verb.bind("CHEGADA!", "%s completa!" % str(EconMath._find("planets",
+				GameState.current_planet).get("name", ""))))
 	SaveManager.request_save()
 	_hud.show_delivery(entry)
 	if bool(entry.get("perfect", false)):
@@ -580,7 +586,13 @@ func _on_delivery_finished(result: Dictionary) -> void:
 	if _run.stars > stars_before:                              # estrela de missao: depois do "entregue"
 		get_tree().create_timer(0.55).timeout.connect(Sound.sfx.bind("star"))
 	GameState.add_rewards(rewards)
+	var was_done := GameState.world_done(GameState.current_planet)
 	_note_records()
+	if not was_done and GameState.world_done(GameState.current_planet):   # v30: pousou depois da linha de chegada
+		var tc := _hud.create_tween()
+		tc.tween_interval(0.6)
+		tc.tween_callback(_hud.show_verb.bind("CHEGADA!", "%s completa!" % str(EconMath._find("planets",
+				GameState.current_planet).get("name", ""))))
 	SaveManager.request_save()                                 # entrega paga ja fica salva (crash nao perde o run)
 	_hud.show_delivery(_run.deliveries[-1])
 	if bool(_run.deliveries[-1].get("perfect", false)):        # pouso perfeito: estalo, depois da entrega

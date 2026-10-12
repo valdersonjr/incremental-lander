@@ -1662,6 +1662,23 @@ func _spawn_track_props() -> void:
 			m += every
 	if track_best_m > 0.0:
 		_flag = _marker_node(track_best_m, true)
+	var finish := EconMath.finish_m(planet_id)                 # v30: linha de chegada (pousar depois completa o mundo)
+	if finish > 0.0:
+		var fx := WorldConfig.m_to_px(finish)
+		var line := FinishLine.new()
+		line.name = "FinishLine"
+		line.position = Vector2(fx, TerrainGen.height_at(terrain.ridge, fx))
+		add_child(line)
+		move_child(line, lander.get_index())
+		var l := Label.new()
+		l.theme = UiKit.theme_for(planet_id)
+		l.theme_type_variation = &"MoneyLabel"
+		l.text = "CHEGADA"
+		l.position = Vector2(-30, -FinishLine.HEIGHT - 26)
+		l.size = Vector2(60, 12)
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		line.add_child(l)
+		_marks.append({"m": -1.0, "node": line, "done": true})      # some junto com as placas ao refazer a pista
 
 
 ## Etiqueta "+N" em cima das proximas plataformas (como no prototipo): moedas de um pouso BOM (nota stars.good) nela,

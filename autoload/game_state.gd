@@ -152,7 +152,8 @@ func stars_in(planet: String = "") -> int:
 	return int(world_stars.get(planet if planet != "" else current_planet, 0))
 
 
-## Marca as paradas da Estrada que o total de estrelas ja alcanca e entrega o premio de cada uma: ratinho (no da
+## Marca as paradas da Estrada que o total de estrelas (ou, na parada da chegada, o recorde de distancia: v30) ja
+## alcanca e entrega o premio de cada uma: ratinho (no da
 ## arvore de missoes), habilidade/ajuda (nivel 1), Frota/Piloto (passam a poder ser comprados). quiet = sem festa
 ## (jogo novo, save carregado): a parada ja conta como vista.
 func _check_road(quiet: bool = false) -> void:
@@ -160,7 +161,8 @@ func _check_road(quiet: bool = false) -> void:
 	while changed:                                             # completar um mundo abre o proximo (parada 0 dele)
 		changed = false
 		for w: String in worlds():
-			for stop: Dictionary in EconMath.road_reached_now(stars_in(w), road_reached, w):
+			var best_m := float(world_records(w).get("run_distance", 0.0))   # v30: linha de chegada (distance_m)
+			for stop: Dictionary in EconMath.road_reached_now(stars_in(w), road_reached, w, best_m):
 				_reach_stop(stop, quiet)
 				changed = true
 
@@ -256,6 +258,8 @@ func note_record(key: String, value: float) -> bool:
 	if value <= old:
 		return false
 	rec[key] = value
+	if key == "run_distance":                                  # v30: pousar depois da chegada completa o mundo
+		_check_road()
 	return old > 0.0
 
 

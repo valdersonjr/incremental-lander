@@ -23,19 +23,21 @@ func _ready() -> void:
 	GameState.reset()
 	_check("so_a_lua_no_inicio", GameState.worlds() == ["luna"])
 	_check("mundo_fechado_nao_escolhe", not GameState.select_world("nuvens"))
-	GameState.world_stars["luna"] = int(EconMath.road_stop("complete_luna")["stars"])   # completar a Lua
+	GameState.world_stars["luna"] = int(EconMath.road_stop("complete_luna")["stars"])   # completar a Lua (v30: pela
+	GameState.records["luna"] = {"run_distance": EconMath.finish_m("luna")}               # distancia da chegada)
 	GameState._check_road(true)
 	_check("lua_completa_libera_nuvens", GameState.world_done("luna") and GameState.worlds() == ["luna", "nuvens"])
 	_check("nuvens_comeca_com_o_passageiro", int(GameState.missions_unlocked().get("passenger", 0)) == 1)
 	_check("escolhe_nuvens", GameState.select_world("nuvens") and GameState.current_planet == "nuvens")
 	GameState.note_record("run_money", 500.0)
 	_check("recorde_por_mundo", float(GameState.world_records("nuvens").get("run_money", 0.0)) == 500.0
-			and GameState.world_records("luna").is_empty())
+			and not GameState.world_records("luna").has("run_money"))
 	var b := EconMath.spec["contracts"]["record_bonus"] as Dictionary
 	_check("bonus_primeira_visita", is_equal_approx(EconMath.record_bonus(100.0, 0.0), 100.0 * float(b["first_frac"])))
 	_check("bonus_so_bate_marca", EconMath.record_bonus(400.0, 500.0) == 0.0 and EconMath.record_bonus(600.0, 500.0) > 0.0)
 	SaveManager.load_slot(1)
 	GameState.world_stars["luna"] = int(EconMath.road_stop("complete_luna")["stars"])
+	GameState.records["luna"] = {"run_distance": EconMath.finish_m("luna")}
 	GameState._check_road(true)
 	GameState.select_world("nuvens")
 	GameState.add_stars(2)                                     # estrela feita nas Nuvens anda so a Estrada dela

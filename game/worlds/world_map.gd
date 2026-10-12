@@ -417,8 +417,13 @@ func _select(id: String, click: bool = true) -> void:
 	var rec := float(GameState.world_records(id).get("run_money", 0.0))
 	var road := EconMath.road(id)
 	var total := int(road[-1]["stars"]) if not road.is_empty() else 0
+	var finish := EconMath.finish_m(id)
+	var goal := "%d/%d estrelas" % [mini(GameState.stars_in(id), total), total]
+	if finish > 0.0:                                           # v30: o mundo completa pela distancia
+		var dist := float(GameState.world_records(id).get("run_distance", 0.0))
+		goal = "%s / chegada %s" % [GameState.record_text("run_distance", dist), GameState.record_text("run_distance", finish)]
 	_card_info.text = ("recorde %s · " % EconMath.fmt(rec) if rec > 0.0 else "NOVO! · ") + \
-			("completo!" if GameState.world_done(id) else "%d/%d estrelas" % [mini(GameState.stars_in(id), total), total])
+			("completo!" if GameState.world_done(id) else goal)
 	_road.rebuild(-1, true)
 	for k: String in _nodes:
 		var n: Dictionary = _nodes[k]

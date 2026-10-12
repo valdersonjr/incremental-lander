@@ -99,3 +99,14 @@ Formato: `vN (data) — mudança — motivo — métricas antes → depois`
   — medido (screen 10 h): quase igual, porque o multiplicador de pousos domina a renda; engajado intervalo mediano
   8,8 → 7,1 min (p90 16,7 → 20), viagem 4,5 → 3 min, mundos 0,69–3,92 → 0,84–4,01 h; casual até 7,9 h; expert 2,5 h.
   Custos mantidos (reduzir o crescimento não melhorava o ritmo). Script `balance/sims/2026-10-11-v29-no-milestone.py`.
+- v30 (2026-10-12) — pedido do usuário: "tem que completar por distância, faz uma análise matemática e defina onde deve
+  ser": a parada `complete_luna` passa a valer pela **linha de chegada** (`distance_m` 4000: pousar depois dela; o
+  recorde de distância do mundo ≥ 4 km), não mais por 90 estrelas (`stars` só ordena a parada). Modelo: `stop_ok`/
+  `road_reached_now(..., best_m)` + `finish_m` (espelho EconMath), `world_dist` na simulação. Análise
+  (`balance/sims/2026-10-12-finish-line.py`, Lua presa 6 h, 3 seeds): o recorde cresce em DEGRAUS (peças só melhoram a
+  cada 10 níveis; cada degrau ~4× mais caro) — engajado fica em ~2,9 km de 0,33 h a 0,8 h e salta para ~4,1 km em ~1 h.
+  Com os ossos do céu o alcance por salto fica limitado: cenário "até 5 plataformas" (~1 km): Lua completa em
+  engajado 0,80 h, expert 0,43 h (= ritmo antigo por estrelas, 0,84/0,43), casual ~5,1 h (antes 1,6 h); "até 3":
+  engajado 3,0 h, expert 0,5 h, casual não chega em 8 h; sem limite (modelo antigo): 0,24 / 0,1 / 1,2–5 h. 4 km =
+  o degrau de ~1 h do engajado. PENDENTE: casual lento (platô entre degraus) e calibrar o alcance real com os ossos
+  pela telemetria.

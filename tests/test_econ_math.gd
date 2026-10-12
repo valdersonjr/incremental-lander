@@ -64,6 +64,10 @@ func _init() -> void:
 		"rep_pts": [EconMath.reputation_points(false, true), EconMath.reputation_points(true, false),
 				EconMath.reputation_points(true, true)],
 		"road_now": EconMath.road_reached_now(9, ["start", "heavy1"]).map(func(x: Dictionary) -> String: return x["id"]),
+		"road_finish": [EconMath.road_reached_now(999, [], "luna", 1000.0).map(
+				func(x: Dictionary) -> String: return x["id"]).slice(-1),
+				EconMath.road_reached_now(0, [], "luna", 1e9).map(func(x: Dictionary) -> String: return x["id"]),
+				EconMath.finish_m("luna"), EconMath.finish_m("nuvens")],
 		"road_buy": [EconMath.road_can_buy("fleet", []), EconMath.road_can_buy("fleet", ["fleet"]),
 				EconMath.road_can_buy("turbo", ["turbo"]), EconMath.road_can_buy("thrust", [])],
 		"slots": EconMath.mission_slots({"simple": 1, "tow": 2, "heavy": 1}),

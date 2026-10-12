@@ -28,3 +28,11 @@ Ver `balance/CHANGELOG.md` v21: 1ª compra ~110 s, intervalo mediano ~5 min, run
 ## Fontes
 - https://hillclimbracing2.fandom.com/wiki/Adventures (galões mais espaçados; sacos de distância)
 - https://www.macworld.com/article/671066/how-to-win-at-hill-climb-racing.html (marcos com bônus na 1ª vez; moedas por distância)
+
+## Linha de chegada (v30, 2026-10-12)
+- Completar o mundo pela distância: escolher a distância pelo **degrau** do perfil engajado na hora-alvo — o recorde
+  não cresce contínuo, cresce em degraus (peças com step 10, custo ×~4 por degrau). Colocar a chegada logo depois de
+  um platô cria uma parede; logo no degrau, ela cai no ritmo desejado.
+- Limite de alcance por salto (ossos no alto) muda tudo: medir em cenários (TRACK_STYLES) e decidir com o mais provável.
+- Casual sofre mais com chegada por distância que com estrelas (estrelas acumulam sempre; distância exige a peça).
+

@@ -61,6 +61,10 @@ var _combo_shown := 0
 var _combo_bar: ColorRect = null                 # risco colorido embaixo do numero (cor da faixa)
 var _combo_t := 0.0
 var _spark_t := 0.0
+var _goal_row: HBoxContainer = null             # v30: chegada do mundo (bandeira, km, barra do recorde, faltam X)
+var _goal: Label = null
+var _goal_bar: ProgressBar = null
+var _goal_left: Label = null
 var _end_button: Button = null                   # pista: TERMINAR VIAGEM (so com a nave parada no chao)
 var _end_armed := 0.0                            # > 0: o proximo toque termina (confirmacao, some sozinha)
 const END_CONFIRM_S := 2.5
@@ -280,7 +284,30 @@ func _build_track_row() -> void:
 	_score.move_child(_live_row, 1)
 	_score.move_child(_track_row, 1)
 	_rec_grid.visible = false                                  # a distancia ja esta aqui em destaque
+	_build_goal_row()
 	_build_end_button()
+
+
+## v30 (usuario: "o recorde deveria ficar mostrando junto com a distancia da linha de chegada... quanto falta"):
+## bandeirinha + chegada em km + barra (recorde / chegada) + "faltam X". Some no mundo sem chegada.
+func _build_goal_row() -> void:
+	_goal_row = HBoxContainer.new()
+	_goal_row.add_theme_constant_override(&"separation", 3)
+	_goal_row.add_child(FinishFlagIcon.new())
+	_goal = Label.new()
+	_goal.theme_type_variation = &"ValueLabel"
+	_goal_row.add_child(_goal)
+	_goal_bar = ProgressBar.new()
+	_goal_bar.show_percentage = false
+	_goal_bar.theme_type_variation = &"GasBar"
+	_goal_bar.custom_minimum_size = Vector2(44, 7)
+	_goal_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_goal_row.add_child(_goal_bar)
+	_goal_left = Label.new()
+	_goal_left.theme_type_variation = &"DimLabel"
+	_goal_row.add_child(_goal_left)
+	_score.add_child(_goal_row)
+	_score.move_child(_goal_row, _track_row.get_index() + 1)
 
 
 ## Pista (2026-10-11): o jogador decide quando parar (no lugar do fim automatico por "o gas nao da", que errava).
@@ -334,12 +361,25 @@ func _update_track() -> void:
 	_track_dist.text = GameState.record_text("run_distance", dist)
 	_track_dist.theme_type_variation = &"MoneyLabel" if best > 0.0 and dist > best else &"ValueLabel"
 	_track_best.text = GameState.record_text("run_distance", best) if best > 0.0 else "-"
+	_update_goal(maxf(best, dist))
 	var live := _pending + flight.track_live_gain()
 	_live_row.modulate.a = 1.0 if live >= 1.0 else 0.0
 	_live.text = "+" + (str(int(live)) if live < 1000.0 else EconMath.fmt(live))
 	var combo := EconMath.track_combo_mult(run.track_streak) if run != null else 1.0
 	_live_hint.text = "a receber %s: pouse!" % UiKit.mult_text(combo)   # v28: x plataformas pousadas na viagem
 	_update_combo_badge()
+
+
+func _update_goal(best: float) -> void:
+	var finish := EconMath.finish_m(flight.planet_id)
+	_goal_row.visible = finish > 0.0
+	if finish <= 0.0:
+		return
+	_goal.text = GameState.record_text("run_distance", finish)
+	_goal_bar.value = clampf(best / finish, 0.0, 1.0) * 100.0
+	var left := finish - best
+	_goal_left.text = "chegou!" if left <= 0.0 else "faltam " + GameState.record_text("run_distance", left)
+	_goal_left.theme_type_variation = &"MoneyLabel" if left <= 0.0 else &"DimLabel"
 
 
 ## Recordes no inicio do run (o placar compara com eles; 0 = ainda sem recorde: so mostra o numero do run).

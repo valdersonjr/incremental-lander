@@ -84,9 +84,15 @@ func rebuild(from_stars: int = -1, recenter: bool = false) -> void:
 	_place_avatar()
 	if next_i >= 0 and not GameState.road_reached.has(road[next_i]["id"]):
 		var need := Label.new()
-		need.text = "faltam %d" % (int(road[next_i]["stars"]) - GameState.stars_in())
 		need.theme_type_variation = &"MoneyLabel"
-		var row := _with_star(need, 12)
+		var row: HBoxContainer
+		if (road[next_i] as Dictionary).has("distance_m"):          # v30: chegada por distancia
+			var left := float(road[next_i]["distance_m"]) - float(GameState.world_records().get("run_distance", 0.0))
+			need.text = "faltam " + GameState.record_text("run_distance", maxf(left, 0.0))
+			row = _with_flag(need)
+		else:
+			need.text = "faltam %d" % (int(road[next_i]["stars"]) - GameState.stars_in())
+			row = _with_star(need, 12)
 		row.position = Vector2(X0 + next_i * SPACING - 34, 72)
 		row.custom_minimum_size = Vector2(68, 0)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -206,9 +212,14 @@ func _make_stop(stop: Dictionary, reached: bool, is_next: bool) -> Control:
 			stop_pressed.emit(id))
 	if not reached and str(stop["type"]) != "start":            # estrelas que a parada pede
 		var th := Label.new()
-		th.text = "%d" % int(stop["stars"])
 		th.theme_type_variation = &"MoneyLabel" if is_next else &"DimLabel"
-		var row := _with_star(th, 10)
+		var row: HBoxContainer
+		if stop.has("distance_m"):                                 # v30: a chegada pede distancia (pousar alem dela)
+			th.text = GameState.record_text("run_distance", float(stop["distance_m"]))
+			row = _with_flag(th)
+		else:
+			th.text = "%d" % int(stop["stars"])
+			row = _with_star(th, 10)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		row.size = Vector2(SPACING, 12)
 		row.position = Vector2(0, 0)
@@ -274,6 +285,17 @@ func _make_stop(stop: Dictionary, reached: bool, is_next: bool) -> Control:
 		tw.tween_property(bubble, "modulate", Color(1.3, 1.3, 1.1), 0.5).set_trans(Tween.TRANS_SINE)
 		tw.tween_property(bubble, "modulate", Color.WHITE, 0.5).set_trans(Tween.TRANS_SINE)
 	return box
+
+
+## Texto + bandeirinha quadriculada (parada da linha de chegada, v30).
+func _with_flag(label: Label) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 2)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(FinishFlagIcon.new())
+	row.add_child(label)
+	return row
 
 
 func _with_star(label: Label, px: int) -> HBoxContainer:

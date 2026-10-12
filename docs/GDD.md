@@ -149,7 +149,7 @@ deixar com história forte... a ideia era só algo passando de fundo mesmo").
 ## 5b. PROGRESSÃO — Estrada das Estrelas (v13, 2026-10-07)
 A tela entre runs (antes "Oficina") mostra **toda a progressão desde o início** (padrão Trophy Road / passe de batalha).
 - **Estrada da Lua** no topo: 29 paradas em ordem (Mineiro → ratinhos ★1–★3 e Dupla, Estabilizador, Turbo, 7 ajudas,
-  Frota, Piloto automático → "Lua completa!"). **Cada entrega dá 1 ⭐; as estrelas não se gastam**: andam com a
+  Frota, Piloto automático → "Lua completa!"; desde v30 a Lua completa ao **pousar depois da linha de chegada (4 km)**, não pelas estrelas). **Cada entrega dá 1 ⭐; as estrelas não se gastam**: andam com a
   navezinha e cada parada libera sozinha o prêmio (ratinho = tipo de pedido; habilidade/ajuda = já vem pronta;
   Frota/Piloto = passam a poder ser comprados). Próxima parada pulsa com "faltam N"; clicar abre balão (figura, o que
   traz, quanto falta). Ao voltar do voo a navezinha anda e cada parada nova faz festa (ratinho ★1 = "Novo amiguinho!").

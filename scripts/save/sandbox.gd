@@ -35,6 +35,11 @@ static func begin(planet_id: String, strong: bool) -> void:
 		var road := EconMath.road(str(p["id"]))
 		if not road.is_empty():
 			GameState.world_stars[str(p["id"])] = int(road[-1]["stars"])
+			var finish := EconMath.finish_m(str(p["id"]))            # v30: chegada por distancia
+			if finish > 0.0:
+				if not GameState.records.has(str(p["id"])):
+					GameState.records[str(p["id"])] = {}
+				GameState.records[str(p["id"])]["run_distance"] = finish
 	GameState._check_road(true)
 	GameState.current_planet = planet_id
 	top_up()

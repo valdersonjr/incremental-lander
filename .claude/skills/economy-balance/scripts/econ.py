@@ -1395,10 +1395,27 @@ def world_of_stop(stop: dict) -> str:
     return str(stop["id"])[6:] if stop.get("type") == "world" else ""
 
 
-def road_reached_now(E: dict, stars_total: float, reached: set, planet: str | None = None) -> list[dict]:
-    """Paradas que o total de estrelas alcanca e ainda nao foram marcadas (na ordem da estrada). v17: planet = a
-    Estrada daquele mundo (estrelas feitas nele)."""
-    return [s for s in road_spec(E, planet) if s["id"] not in reached and stars_total >= s["stars"]]
+def stop_ok(stop: dict, stars_total: float, best_m: float = 0.0) -> bool:
+    """v30: parada com distance_m (linha de chegada) vale pelo recorde de distancia do mundo (pousou depois dela);
+    as outras pelas estrelas."""
+    if "distance_m" in stop:
+        return best_m >= stop["distance_m"]
+    return stars_total >= stop["stars"]
+
+
+def road_reached_now(E: dict, stars_total: float, reached: set, planet: str | None = None,
+                     best_m: float = 0.0) -> list[dict]:
+    """Paradas que o total de estrelas (ou o recorde de distancia, v30) alcanca e ainda nao foram marcadas (na ordem
+    da estrada). v17: planet = a Estrada daquele mundo (estrelas feitas nele)."""
+    return [s for s in road_spec(E, planet) if s["id"] not in reached and stop_ok(s, stars_total, best_m)]
+
+
+def finish_m(E: dict, planet: str) -> float:
+    """Distancia da linha de chegada do mundo (m; 0 = completa por estrelas). Espelho de EconMath.finish_m."""
+    for s in road_spec(E, planet):
+        if s["type"] == "complete":
+            return float(s.get("distance_m", 0.0))
+    return 0.0
 
 
 def next_world(E: dict, planet: str) -> str:
@@ -1442,6 +1459,7 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
     world_rec: dict = {}   # v16: recorde de dinheiro do run por mundo (bonus de recorde)
     world_best: dict = {}  # v21: maior distancia (m) por mundo (marcos da pista)
     world_stars: dict = {}  # v17: estrelas feitas em cada mundo (andam a Estrada dele)
+    world_dist: dict = {}   # v30: recorde de distancia (pousou) em cada mundo -> parada com distance_m
     done: set = set()       # v17: mundos completos
     world_runs: dict = {}  # runs jogados em cada mundo (relatorio)
     current = E["planets"][0]["id"]
@@ -1527,8 +1545,9 @@ def simulate(E: dict, prof: Profile | str, hours: float = 30.0, seed: int = 0, m
             cost = MS.get("stars", {}).get("unlock_cost", 3)
             per_world = bool((E.get("progression") or {}).get("roads"))
             world_stars[current] = world_stars.get(current, 0) + got
+            world_dist[current] = max(world_dist.get(current, 0.0), r.max_distance)   # v30: chegada por distancia
             for stop in road_reached_now(E, world_stars[current] if per_world else stars, reached,
-                                         current if per_world else None):
+                                         current if per_world else None, world_dist.get(current, 0.0)):
                 reached.add(stop["id"])
                 if stop["type"] == "mission":
                     owned.add(stop["id"])

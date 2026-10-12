@@ -3,7 +3,10 @@
 > Atualizar ao **fim de toda sessão/etapa** (antes do commit). Uma sessão nova deve conseguir continuar
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
-## Estado atual (2026-10-11)
+## Estado atual (2026-10-12)
+- **Lua completa pela distância (v30)**: linha de chegada a 4 km (pousar depois); HUD mostra chegada, barra e
+  "faltam X"; Estrada/Mapa em km. **Pendências**: casual lento no modelo (~5 h; platô entre degraus das peças) e
+  calibrar o alcance real com os ossos (telemetria). Save com recorde ≥ 4 km completa a Lua ao carregar (sem festa).
 - **Ossos de pedra no céu da Lua + cachorrinho que derruba a nave** (eram satélites, depois cachorrinhos) (contra o arremesso por cima, 5 km num salto): faixa livre 150 m acima do relevo,
   densidade sobe até 550 m; bater num osso = o cachorrinho vem, leva o osso e derruba a nave (~1,5 s). Som do latido: A (agudo) no jogo, B (oitava abaixo) em prévia — usuário escolhe. **Pendências**: ajustar free_m/full_m/max_p jogando; o modelo da
   economia ainda supõe o arremesso livre (`track_hop` com vmax) — calibrar com a próxima telemetria; voar BAIXO

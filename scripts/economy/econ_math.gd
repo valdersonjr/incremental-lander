@@ -245,12 +245,28 @@ static func next_world(planet: String) -> String:
 
 
 ## Paradas que stars_total alcanca e ainda nao estao em reached (na ordem da estrada; v17: a Estrada do planeta).
-static func road_reached_now(stars_total: int, reached: Array, planet: String = "") -> Array:
+static func road_reached_now(stars_total: int, reached: Array, planet: String = "", best_m: float = 0.0) -> Array:
 	var out: Array = []
 	for s: Dictionary in road(planet):
-		if not reached.has(s["id"]) and stars_total >= int(s["stars"]):
+		if not reached.has(s["id"]) and stop_ok(s, stars_total, best_m):
 			out.append(s)
 	return out
+
+
+## v30: parada com distance_m (linha de chegada) vale pelo recorde de distancia do mundo (pousou depois dela); as
+## outras pelas estrelas. Espelha econ.py stop_ok.
+static func stop_ok(stop: Dictionary, stars_total: int, best_m: float = 0.0) -> bool:
+	if stop.has("distance_m"):
+		return best_m >= float(stop["distance_m"])
+	return stars_total >= int(stop["stars"])
+
+
+## Distancia da linha de chegada do mundo (m; 0 = o mundo completa por estrelas).
+static func finish_m(planet: String) -> float:
+	for s: Dictionary in road(planet):
+		if str(s["type"]) == "complete":
+			return float(s.get("distance_m", 0.0))
+	return 0.0
 
 
 ## Com estrada: 'grant' nunca se compra (vem pronto); 'unlock' so depois da parada; o resto, sempre.

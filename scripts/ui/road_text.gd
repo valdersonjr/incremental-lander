@@ -109,9 +109,12 @@ static func stop_desc(stop: Dictionary) -> String:
 			return "Novo mundo! Voe em %s: cada mundo tem os seus recordes." % stop_name(stop)
 		"complete":
 			var nxt := EconMath.next_world(id.substr(9))
+			var how := ""
+			if stop.has("distance_m"):                             # v30: chegada por distancia
+				how = "Pouse depois da linha de chegada (%s). " % GameState.record_text("run_distance", float(stop["distance_m"]))
 			if nxt == "":
-				return "Você completou a viagem inteira!"
-			return "Mundo completo! Abre: %s." % str(EconMath._find("planets", nxt).get("name", nxt))
+				return how + "Você completou a viagem inteira!"
+			return how + "Mundo completo! Abre: %s." % str(EconMath._find("planets", nxt).get("name", nxt))
 		"landscape":
 			var d := str(_land(id).get("desc", ""))
 			return "Nova paisagem! " + d.left(1).to_upper() + d.substr(1)
