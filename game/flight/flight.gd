@@ -1495,6 +1495,7 @@ var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
 var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
 var _marks: Array[Dictionary] = []                   # {m, x, node, done}
 var _flag: Node2D = null
+var _sky: SkyObstacles = null                         # satelites no alto (world.json > sky_obstacles), so na pista
 var _vmax_warned := false
 var _pay_tags: Dictionary = {}                       # indice da plataforma -> etiqueta "+N" (moedas de um pouso bom)
 const PAY_TAGS_AHEAD := 6
@@ -1529,6 +1530,7 @@ func start_track(p_planet_id: String, p_stats: Dictionary, demo: bool, best_m: f
 	lander.can_takeoff = true
 	_place_on_start_pad()
 	_spawn_track_props()
+	_setup_sky()
 	_refresh_pay_tags()
 	_track_autopilot()
 
@@ -1735,6 +1737,7 @@ func _marker_node(m: float, flag: bool = false) -> Node2D:
 func _tick_track() -> void:
 	if not track:
 		return
+	_tick_sky()
 	if lander.state != Lander.State.FLYING:
 		return
 	var vmax := float(lander.params.get("vmax", 0.0))
@@ -1765,6 +1768,36 @@ func _tick_track() -> void:
 			Sound.jingle("milestone")
 			_float_text("%d m! pouse: +%s" % [int(mk["m"]), EconMath.fmt(bonus)], (mk["node"] as Node2D).position + Vector2(0, -52))
 			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
+
+
+## Satelites do ceu (2026-10-11, contra o arremesso por cima): so nos mundos de sky_obstacles.worlds. Mesma pista
+## = mesmos satelites (seed do mapa).
+func _setup_sky() -> void:
+	if _sky != null:
+		_sky.queue_free()
+		_sky = null
+	var cfg: Dictionary = WorldConfig.load_config().get("sky_obstacles", {})
+	if cfg.is_empty() or not planet_id in (cfg["worlds"] as Array):
+		return
+	_sky = SkyObstacles.new()
+	_sky.name = "SkyObstacles"
+	add_child(_sky)
+	move_child(_sky, lander.get_index())                       # atras da nave
+	_sky.setup(cfg, _seed)
+
+
+## Cria/solta os satelites perto da camera e confere a batida (amassado igual ao raspao; Lander.bump).
+func _tick_sky() -> void:
+	if _sky == null:
+		return
+	_sky.follow(camera.get_screen_center_position(), get_viewport_rect().size / camera.zoom, terrain.ridge)
+	if lander.state != Lander.State.FLYING:
+		return
+	var r := WorldConfig.m_to_px(float(WorldConfig.load_config()["sky_obstacles"]["lander_r_m"]))
+	var h := _sky.hit(lander.global_position, r)
+	if not h.is_empty():
+		Telemetry.event("obstacle")
+		lander.bump(h["normal"], h["at"])
 
 
 ## Ouro acumulado desde o ultimo pouso (chao novo alem da fronteira; so cresce): o HUD mostra isso + moedas/marcos.

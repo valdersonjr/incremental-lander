@@ -1,0 +1,12 @@
+{
+  "cell_w": 48,
+  "cell_h": 28,
+  "names": [
+    "sat_on",
+    "sat_off",
+    "probe_on",
+    "probe_off",
+    "bolt"
+  ],
+  "notes": "Gerado por art/src/sprites/sky_obstacles.py (pixel-art). Sprite centrado na c\u00e9lula."
+}

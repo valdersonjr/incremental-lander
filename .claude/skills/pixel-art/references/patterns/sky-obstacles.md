@@ -1,0 +1,25 @@
+# Obstáculos do céu da Lua (contra o arremesso por cima)
+
+- **Slug**: sky-obstacles
+- **Tipo**: sprites (16–46 px), 3 famílias em avaliação (2026-10-11)
+- **Fonte**: `art/src/sprites/sky_obstacles.py` · prévias `art/previews/sky_obstacles/index.html`
+
+## Características (pesquisa + revisão)
+- Obstáculo precisa contrastar com o céu E com tudo que se pega: na Lua moedas, galões e estrelas são
+  amarelo/dourado → obstáculo amarelo (queijo, estrela) se confunde com prêmio. Branco + turquesa (satélite) lê como "coisa".
+- Estrela é o prêmio do jogo: nunca usar como perigo.
+- Tamanho do sprite = área de batida (o que se vê é o que bate, igual world-hazards).
+- Desenho em meia resolução + Scale2x + rosto em resolução final (função `post` antes do contorno) + contorno ink.
+- Partes que precisam ficar separadas (orelha × cabeça) com 1 px de folga em meia resolução viram buraco grande;
+  encostar e separar pelo tom (sombra da orelha × luz da cabeça).
+- Estrela por fórmula (polígono de 10 pontos em meia resolução) virou "casinha"; desenhar à mão em ASCII.
+
+## Fontes
+- https://forum.makecode.com/t/engineers-toolbox/44798 — asteroide 16x16: contorno aleatório, 3 tons, bordas irregulares
+- https://bugnet.io/blog/how-to-design-environmental-hazards-that-are-fair — perigo legível e evitável
+- https://itch.io/post/6890305 — altitude como risco sem recompensa (equilíbrio risco/recompensa ao subir)
+
+## Decisão (2026-10-11)
+- Usuário escolheu a família B (satélites dos ratinhos): "ficaram bons". Export `--export` → assets/sprites/sky_obstacles.png
+  (+ .json; células 48x28: sat_on/off, probe_on/off, bolt). Áreas de batida em world.json > sky_obstacles.kinds.circles.
+- No jogo (captura a 725 m): o branco + turquesa lê bem contra o céu rosa e as colinas; denso no alto.

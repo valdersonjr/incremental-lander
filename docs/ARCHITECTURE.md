@@ -144,6 +144,10 @@ game/background/war_fx.gd     # WarFx (filho do Backdrop, logo após "mid"): gue
                               # abates, clarões); coordenadas da camada mid; contrato meta "war" (opcional por planeta)
 scripts/world/cargo_tow.gd    # CargoTow (puro): queijao rebocado — ponto com massa + cabo de comprimento maximo (impulso
                               # dividido pelas massas), quica/rola no chao, damaged se bater acima de break_speed (Lua)
+scripts/world/sky_field.gd    # SkyField (puro): chance(alt) por celula, cell(i, j, seed, ref_y), hit_normal(); satelites do ceu
+game/flight/sky_obstacles.gd  # SkyObstacles (Node2D da Flight, so na pista dos mundos de world.json > sky_obstacles):
+                              # cria/solta celulas perto da camera (follow), anima, hit() -> Lander.bump() (amassado;
+                              # passou de landing.scrape.per_hop = crash "obstaculo"). Arte assets/sprites/sky_obstacles.png
 scripts/world/cargo_art.gd    # CargoArt: atlas assets/sprites/cargo.png (+ .json): tex(nome), icon(carga, falhou)
                               # Flight: set_target(d, tier, dir, cargo) + target_position_m (desvia de plataformas antigas);
                               # cargas: _setup_cargo/_tick_cargo/_judge_cargo; resultado ganha dir/cargo/cargo_ok;

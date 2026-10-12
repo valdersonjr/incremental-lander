@@ -358,6 +358,23 @@ func _on_touch(normal: Vector2 = Vector2.UP, at: Vector2 = Vector2.ZERO) -> void
 		crashed.emit(reason, inf)
 
 
+## Bateu num obstaculo do ceu (Flight/SkyObstacles): amassado igual ao raspao (conta em scrapes; passou de per_hop
+## = explode, motivo "obstaculo"). normal sai do obstaculo; at = ponto do toque (px). Na carencia so empurra.
+func bump(normal: Vector2, at: Vector2) -> void:
+	if state != State.FLYING:
+		return
+	var sc: Dictionary = WorldConfig.load_config()["landing"]["scrape"]
+	var grace := _scrape_t < float(sc["grace_s"])
+	if not grace and scrapes >= int(sc["per_hop"]):
+		crash_now("obstaculo")
+		return
+	vel_m = LandingRules.obstacle_bounce(vel_m, normal, sc)
+	if not grace:
+		scrapes += 1
+		_scrape_t = 0.0
+		scraped.emit(scrapes, at)
+
+
 ## Raspao fora da plataforma: quica se o impacto contra o chao cabe no casco e ainda ha amassado sobrando.
 ## Retorna true se quicou (o voo segue). Regra pura em LandingRules.scrape_bounce.
 func _try_scrape(normal: Vector2, at: Vector2, cfg: Dictionary) -> bool:

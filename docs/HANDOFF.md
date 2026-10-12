@@ -4,6 +4,10 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
+- **Satélites no céu da Lua** (contra o arremesso por cima, 5 km num salto): faixa livre 150 m acima do relevo,
+  densidade sobe até 550 m; bater = amassado (2/salto). **Pendências**: ajustar free_m/full_m/max_p jogando; o modelo da
+  economia ainda supõe o arremesso livre (`track_hop` com vmax) — calibrar com a próxima telemetria; voar BAIXO
+  rente aos morros continua possível (custa mais gás e exige pilotar). Chegada da pista (~10 km) ainda não decidida.
 - **Música da Lua trocada** pela "Passeio no queijo" (`flight_luna.wav`; `Sound.music("flight", mundo)` usa
   `flight_<mundo>.wav` quando existe, senão base + camada). Outros mundos seguem com o voo antigo + camada.
 - **Fase 19 "Mais longe" — jogável (usuário escolheu a opção C e aprovou as regras: "pode ser, faz que eu analiso")**.

@@ -891,5 +891,81 @@
       "land_level"
     ],
     "guide": false
+  },
+  "sky_obstacles": {
+    "notes": "Obstaculos do ceu (2026-10-11; arte assets/sprites/sky_obstacles.png, skill pixel-art): contra o arremesso por cima. Grade fixa de celulas cell_m (mundo absoluto, mesma pista = mesmos satelites); altura de cada celula = acima do ponto MAIS ALTO do relevo em +-ref_span_m (atravessar morros nao conta). Abaixo de free_m: nada; de free_m a full_m a chance por celula sobe ate max_p (curva exp); acima de full_m fica max_p. Bater = amassado (conta junto com o raspao: landing.scrape.per_hop; o seguinte explode), quica sem limite de velocidade. circles = areas de batida [dx, dy, r] em px a partir do centro da celula do atlas. Gerados so perto da camera.",
+    "worlds": [
+      "luna"
+    ],
+    "cell_m": 56.0,
+    "free_m": 150.0,
+    "full_m": 550.0,
+    "max_p": 0.75,
+    "exp": 1.4,
+    "ref_span_m": 220.0,
+    "jitter": 0.3,
+    "lander_r_m": 11.0,
+    "bob_px": 2.0,
+    "blink_s": 0.6,
+    "kinds": [
+      {
+        "name": "sat",
+        "weight": 0.35,
+        "circles": [
+          [
+            0,
+            3,
+            10
+          ],
+          [
+            -18,
+            4,
+            6
+          ],
+          [
+            17,
+            4,
+            6
+          ],
+          [
+            -4,
+            -5,
+            4
+          ],
+          [
+            5,
+            -5,
+            4
+          ]
+        ]
+      },
+      {
+        "name": "probe",
+        "weight": 0.4,
+        "circles": [
+          [
+            4,
+            1,
+            7
+          ],
+          [
+            -8,
+            1,
+            4
+          ]
+        ]
+      },
+      {
+        "name": "bolt",
+        "weight": 0.25,
+        "circles": [
+          [
+            0,
+            0,
+            6
+          ]
+        ]
+      }
+    ]
   }
 }
