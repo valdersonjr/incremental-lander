@@ -1,6 +1,6 @@
-## Teste de integracao dos satelites do ceu (world.json > sky_obstacles), numa pasta propria (user://itest_sky):
-## viagem na Lua -> perto do chao nao ha satelite -> la no alto ha varios -> encostar num satelite explode a nave
-## (motivo "obstaculo"). Imprime SKY_TEST OK ou FALHOU.
+## Teste de integracao dos ossos do ceu (world.json > sky_obstacles), numa pasta propria (user://itest_sky):
+## viagem na Lua -> perto do chao nao ha osso -> la no alto ha varios -> encostar num osso: o cachorrinho vem, leva o
+## osso e a nave explode (motivo "obstaculo"). Imprime SKY_TEST OK ou FALHOU.
 ## Com --hold (gdtool capture) fica parado no alto alguns segundos para a captura.
 extends Node
 
@@ -52,15 +52,19 @@ func _ready() -> void:
 			l.global_position = Vector2(x, top - WorldConfig.m_to_px(float(cfg["full_m"]) + 100.0))
 			l.vel_m = Vector2.ZERO
 			await get_tree().physics_frame
-	# encostar num satelite: explode na hora
+	# encostar num osso: o cachorrinho vem buscar, leva o osso e derruba a nave
 	var reason := [""]
 	l.crashed.connect(func(r: String, _i: Dictionary) -> void: reason[0] = r)
 	var target := _nearest(sky, l.global_position)
+	var key: Variant = sky._cells.find_key(target)
 	l.vel_m = Vector2(5.0, 0.0)
-	l.global_position = (target["pos"] as Vector2) + Vector2(-4.0, 0.0)
+	l.global_position = target["pos"] as Vector2
 	await get_tree().physics_frame
 	await get_tree().physics_frame
-	_check(reason[0] == "obstaculo", "bater num satelite explode a nave (%s)" % reason[0])
+	_check(flight.dog_busy and reason[0] == "", "bateu no osso: o cachorrinho vem (a nave ainda nao explodiu)")
+	await _until(func() -> bool: return reason[0] != "", 240)
+	_check(reason[0] == "obstaculo", "o cachorrinho derruba a nave (%s)" % reason[0])
+	_check((sky._cells.get(key, {}) as Dictionary).is_empty(), "o osso foi levado")
 	_end()
 
 

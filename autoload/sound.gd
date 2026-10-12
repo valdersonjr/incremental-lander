@@ -54,6 +54,8 @@ const STREAMS := {
 	"boing_2": "res://assets/audio/sfx/boing_2.wav",
 	"boing_3": "res://assets/audio/sfx/boing_3.wav",
 	"bump": "res://assets/audio/sfx/bump.wav",
+	"dog_bark": "res://assets/audio/sfx/dog_bark.wav",              # cachorrinho vem buscar o osso (ceu da Lua)
+	"dog_bump": "res://assets/audio/sfx/dog_bump.wav",              # encontrao que derruba a nave
 	"sheep_1": "res://assets/audio/sfx/sheep_1.wav",
 	"sheep_2": "res://assets/audio/sfx/sheep_2.wav",
 	"sheep_3": "res://assets/audio/sfx/sheep_3.wav",

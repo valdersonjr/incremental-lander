@@ -16,12 +16,12 @@ const BUS_NAMES := {"Master": "Geral", "Music": "Música", "Ambience": "Ambiente
 ## Motivo da batida (LandingRules.crash_reason) em texto de jogador.
 const CRASH_TEXT := {"mar": "caiu no mar (splash!)", "atingido": "atingido por um brinquedo", "fora_da_plataforma": "fora da plataforma", "vertical_rapido": "desceu rápido demais",
 		"horizontal_rapido": "rápido demais de lado", "inclinado": "pousou inclinado",
-		"obstaculo": "bateu num cachorrinho"}
+		"obstaculo": "o cachorrinho derrubou você!"}
 ## Como acertar da proxima vez (aprendiz e resumo da batida; auditoria dos primeiros minutos A4).
 const CRASH_TIP := {"vertical_rapido": "segure o motor perto do chão para descer devagar",
 		"fora_da_plataforma": "pouse em cima da plataforma", "horizontal_rapido": "pare de ir de lado antes de pousar",
 		"inclinado": "deixe a nave reta antes de tocar o chão", "sem_gas": "voe em arco, sem ficar parado no ar",
-		"obstaculo": "voe mais baixo: lá no alto tem muitos cachorrinhos"}
+		"obstaculo": "voe mais baixo: lá no alto tem muitos ossos"}
 ## Estados de interface dentro da paleta (bloqueado, silhueta, escurecer): ver set_locked/silhouette/dim_rect.
 const FX_SHADER := preload("res://game/screen/palette_fx.gdshader")
 

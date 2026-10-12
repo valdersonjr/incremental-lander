@@ -1,6 +1,7 @@
-## Cachorrinhos astronautas (eram satelites) no ceu da pista (world.json > sky_obstacles; regra em SkyField; arte
-## assets/sprites/sky_obstacles.png, skill pixel-art). So existem as celulas perto da camera: follow() cria as que
-## entram na tela e solta as que saem. A Flight chama follow() todo quadro e hit() para a batida.
+## Ossos de pedra (asteroides em formato de osso) no ceu da pista (world.json > sky_obstacles; regra em SkyField; arte
+## e areas de batida em assets/sprites/sky_obstacles.png/.json, skill pixel-art). So existem as celulas perto da camera:
+## follow() cria as que entram na tela e solta as que saem. A Flight chama follow() todo quadro, hit() para a batida e
+## take() quando o cachorrinho leva o osso.
 class_name SkyObstacles
 extends Node2D
 
@@ -37,21 +38,19 @@ func setup(cfg: Dictionary, seed_value: int) -> void:
 		at.atlas = sheet
 		at.region = Rect2(i * w, 0.0, w, h)
 		_tex[str(names[i])] = at
+	var meta_circles: Dictionary = meta.get("circles", {})
 	for k: Dictionary in cfg["kinds"]:
-		_circles[str(k["name"])] = k["circles"]
+		_circles[str(k["name"])] = k.get("circles", meta_circles.get(str(k["name"]), []))
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	var bob := float(_cfg.get("bob_px", 0.0))
-	var blink := float(_cfg.get("blink_s", 0.6))
 	for c: Dictionary in _cells.values():
 		if c.is_empty():
 			continue
 		var sp: Sprite2D = c["sprite"]
-		var ph := float(c["phase"])
-		sp.position = (c["pos"] as Vector2) + Vector2(0.0, roundf(sin((_t * BOB_HZ + ph) * TAU) * bob))
-		sp.texture = _texture(str(c["kind"]), int(floorf(_t / blink + ph * 2.0)) % 2 == 0)
+		sp.position = (c["pos"] as Vector2) + Vector2(0.0, roundf(sin((_t * BOB_HZ + float(c["phase"])) * TAU) * bob))
 
 
 ## Cria as celulas visiveis (centro/tamanho da tela em px) e solta as que ficaram longe.
@@ -75,15 +74,29 @@ func follow(center: Vector2, view: Vector2, ridge: PackedVector2Array) -> void:
 			_cells.erase(key)
 
 
-## Primeira batida da nave (centro p, raio r px): {"normal", "at"} ou {} se nao encosta em nada.
+## Primeira batida da nave (centro p, raio r px): {"key", "pos", "normal", "at"} ou {} se nao encosta em nada.
 func hit(p: Vector2, r: float) -> Dictionary:
-	for c: Dictionary in _cells.values():
+	for key: Vector2i in _cells.keys():
+		var c: Dictionary = _cells[key]
 		if c.is_empty() or (c["pos"] as Vector2).distance_squared_to(p) > 70.0 * 70.0:
 			continue
 		var n := SkyField.hit_normal(p, r, c["pos"], _circles[c["kind"]])
 		if n != Vector2.ZERO:
-			return {"normal": n, "at": p - n * r}
+			return {"key": key, "pos": (c["sprite"] as Sprite2D).position, "normal": n, "at": p - n * r}
 	return {}
+
+
+## O cachorrinho levou o osso da celula key: some (a celula fica vazia ate sair da tela).
+func take(key: Vector2i) -> void:
+	var c: Dictionary = _cells.get(key, {})
+	if not c.is_empty():
+		(c["sprite"] as Node).queue_free()
+	_cells[key] = {}
+
+
+## Textura do atlas pelo nome (ossos e quadros do cachorrinho: dog_0, dog_1, dog_bone).
+func texture(name_: String) -> Texture2D:
+	return _tex.get(name_)
 
 
 ## Quantos obstaculos existem agora (testes).
@@ -98,17 +111,11 @@ func _spawn(c: Dictionary) -> Dictionary:
 	if c.is_empty():
 		return c
 	var sp := Sprite2D.new()
-	sp.texture = _texture(str(c["kind"]), true)
+	sp.texture = _tex.get(str(c["kind"]))
 	sp.position = c["pos"]
 	add_child(sp)
 	c["sprite"] = sp
 	return c
-
-
-func _texture(kind: String, light: bool) -> Texture2D:
-	if _tex.has(kind):
-		return _tex[kind]
-	return _tex.get("%s_%s" % [kind, "on" if light else "off"])
 
 
 func _ref_y(i: int, ridge: PackedVector2Array) -> float:

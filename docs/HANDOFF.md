@@ -4,8 +4,8 @@
 > lendo só este arquivo + CLAUDE.md + ROADMAP.
 
 ## Estado atual (2026-10-11)
-- **Cachorrinhos astronautas no céu da Lua** (eram satélites) (contra o arremesso por cima, 5 km num salto): faixa livre 150 m acima do relevo,
-  densidade sobe até 550 m; bater = explode na hora. Arte: cachorrinhos (pedido do usuário). **Pendências**: ajustar free_m/full_m/max_p jogando; o modelo da
+- **Ossos de pedra no céu da Lua + cachorrinho que derruba a nave** (eram satélites, depois cachorrinhos) (contra o arremesso por cima, 5 km num salto): faixa livre 150 m acima do relevo,
+  densidade sobe até 550 m; bater num osso = o cachorrinho vem, leva o osso e derruba a nave (~1,5 s). Som do latido: A (agudo) no jogo, B (oitava abaixo) em prévia — usuário escolhe. **Pendências**: ajustar free_m/full_m/max_p jogando; o modelo da
   economia ainda supõe o arremesso livre (`track_hop` com vmax) — calibrar com a próxima telemetria; voar BAIXO
   rente aos morros continua possível (custa mais gás e exige pilotar). Chegada da pista (~10 km) ainda não decidida.
 - **Música da Lua trocada** pela "Passeio no queijo" (`flight_luna.wav`; `Sound.music("flight", mundo)` usa

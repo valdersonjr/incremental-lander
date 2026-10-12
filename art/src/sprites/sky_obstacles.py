@@ -325,6 +325,122 @@ def bone() -> Canvas:
     return finish(h)
 
 
+# --- rodada 4 (2026-10-11): usuário: "asteroides em formato de osso e, se bater no osso, um cachorro vem e derruba
+# a gente" ---------------------------------------------------------------------------------------------------------
+
+def shade_prims(h: Canvas, prims: list, ramp: list) -> None:
+    """Volume por primitivas (cápsulas e círculos): cada pixel usa a primitiva mais 'dentro' para achar a normal e
+    acende como esfera (luz de cima-esquerda). prims: ("c", cx, cy, r) | ("s", ax, ay, bx, by, r)."""
+    for y in range(h.h):
+        for x in range(h.w):
+            px_, py_ = x + 0.5, y + 0.5
+            best = None
+            for pr in prims:
+                if pr[0] == "c":
+                    vx, vy, r = px_ - pr[1], py_ - pr[2], pr[3]
+                else:
+                    ax, ay, bx, by, r = pr[1:]
+                    dx, dy = bx - ax, by - ay
+                    t = max(0.0, min(1.0, ((px_ - ax) * dx + (py_ - ay) * dy) / (dx * dx + dy * dy)))
+                    vx, vy = px_ - (ax + t * dx), py_ - (ay + t * dy)
+                d = math.hypot(vx, vy) / r
+                if d <= 1 and (best is None or d < best[0]):
+                    best = (d, vx / r, vy / r)
+            if best is None:
+                continue
+            d, nx, ny = best
+            nz = math.sqrt(max(0.0, 1 - d * d))
+            i = -0.5 * nx - 0.6 * ny + 0.62 * nz
+            h.px(x, y, ramp[0] if i > 0.85 else ramp[1] if i > 0.5 else ramp[2] if i > 0.08 else ramp[3])
+
+
+def bone_rock(length: float, angle_deg: float, seed: int) -> Canvas:
+    """Asteroide em formato de osso: haste (cápsula) + 2 bolotas em cada ponta, pedra cinza-lilás com crateras."""
+    a = math.radians(angle_deg)
+    ux, uy = math.cos(a), math.sin(a)
+    t = max(1.2, length * 0.13)
+    kr = t * 1.25
+    ko = t * 0.95
+    n = int(length + 4 * kr + 4)
+    h = Canvas(n, n)
+    c = n / 2
+    ax, ay = c - ux * length / 2, c - uy * length / 2
+    bx, by = c + ux * length / 2, c + uy * length / 2
+    prims = [("s", ax, ay, bx, by, t)]
+    for ex, ey in ((ax, ay), (bx, by)):
+        for side in (-1, 1):
+            prims.append(("c", ex - uy * ko * side, ey + ux * ko * side, kr))
+    shade_prims(h, prims, ROCK)
+    rnd = random.Random(seed)
+    for _ in range(max(1, int(length / 6))):                           # crateras na haste
+        f = rnd.uniform(-0.3, 0.3)
+        x, y = int(c + ux * length * f), int(c + uy * length * f)
+        if h.get(x, y) is not None and h.get(x + 1, y + 1) is not None:
+            crater(h, x, y, 2 if length > 10 else 1)
+    ex, ey = int(bx + uy * ko * 0.2), int(by - ux * ko * 0.2)
+    if length > 10 and h.get(ex, ey) is not None:
+        crater(h, ex, ey, 1)
+    k = scale2x(h)
+    box = k.opaque()
+    xs = [p[0] for p in box]; ys = [p[1] for p in box]
+    out = Canvas(max(xs) - min(xs) + 3, max(ys) - min(ys) + 3)
+    ox, oy = 1 - min(xs), 1 - min(ys)
+    out.stamp(k, ox, oy)
+    out.outline("ink")
+    # áreas de batida (px da imagem final): círculos ao longo da haste + as 4 bolotas (meia resolução x2 + deslocamento)
+    full = lambda x, y: (x * 2 + ox, y * 2 + oy)
+    circles = []
+    steps = max(2, int(length / (t * 1.2)))
+    for i in range(steps + 1):
+        f = i / steps
+        cx_, cy_ = full(ax + (bx - ax) * f, ay + (by - ay) * f)
+        circles.append([cx_, cy_, t * 2])
+    for pr in prims[1:]:
+        cx_, cy_ = full(pr[1], pr[2])
+        circles.append([cx_, cy_, pr[3] * 2])
+    out.circles = circles
+    return out
+
+
+def flying_dog(frame: int = 0, with_bone: bool = False) -> Canvas:
+    """Cachorrinho voando de lado (olha para a direita, patinhas da frente esticadas), feliz. Montado em peças com
+    contorno próprio (corpo, depois cabeça por cima) para a cabeça se destacar. frame 0/1 = orelha e rabinho
+    para cima/baixo; with_bone = ossinho de pedra atravessado na boca."""
+    up = frame == 0
+    body = Canvas(21, 10)
+    shade_prims(body, [("s", 13, 6.5, 18.2, 8.6, 1.1), ("s", 12, 7.3, 16.6, 9.2, 1.0),             # patas da frente
+                       ("s", 6.5, 6.5, 2.0, 8.6, 1.1), ("s", 8, 7.3, 3.6, 9.2, 1.0)], FUR)          # patas de trás
+    shade_prims(body, [("s", 5.5, 4.8, 14, 4.8, 3.1)], FUR)                                     # corpo
+    shade_prims(body, [("c", 8.5, 3.6, 1.9)], EAR)                                              # mancha
+    shade_prims(body, [("s", 3.2, 3.6, 0.9, 0.6 if up else 4.6, 0.85)], EAR)                    # rabinho
+    head = Canvas(12, 10)
+    shade_prims(head, [("c", 5.2, 5.0, 3.7)], FUR)
+    shade_prims(head, [("c", 9.2, 6.0, 2.0)], FUR)                                              # focinho
+    shade_prims(head, [("s", 3.6, 2.6, 0.9, 1.0 if up else 5.6, 1.35)], EAR)                    # orelha caída/voando
+
+    def face(k: Canvas) -> None:
+        k.rect(12, 7, 2, 3, "ink"); k.px(12, 7, "white")               # olho com brilho
+        k.rect(20, 10, 2, 2, "ink")                                    # nariz na ponta
+        k.px(9, 12, "pink"); k.px(10, 12, "pink")                      # bochecha
+        if not with_bone:
+            k.px(15, 13, "ink"); k.px(16, 14, "ink"); k.px(17, 14, "ink"); k.px(18, 13, "ink")   # sorriso
+            k.px(16, 15, "pink"); k.px(17, 15, "pink")                 # linguinha
+    b_ = finish(body)
+    h_ = finish(head, face)
+    out = Canvas(56, 34)
+    out.stamp(b_, 0, 12)
+    out.stamp(h_, 28, 3)
+    if with_bone:                                                      # ossinho por cima, atravessado na boca
+        out.paint([".iii.......iii.", "immsi.....immsi", "imsssiiiiimsssi", ".issssssssssli.", ".issllllllllli.",
+                   "isslliiiiissll i".replace(" ", ""), ".iii.......iii."],
+                  {"i": "ink", "m": "mist", "s": "steel", "l": "lilac_grey"}, x=40, y=17)
+    return out
+
+
+FAMILIES4 = {
+    "H": ("Ossos de pedra", [bone_rock(18, -20, 1), bone_rock(13, 25, 2), bone_rock(8, 0, 3)]),
+    "I": ("Cachorrinho que vem buscar", [flying_dog(0), flying_dog(1), flying_dog(0, True)]),
+}
 FAMILIES3 = {
     "G": ("Cachorrinhos astronautas", [puppy_float(), puppy_head("mid"), bone()]),
 }
@@ -379,20 +495,43 @@ def scene(sprites: list, bg_path: str, out: str) -> None:
 
 # 2026-10-11: usuário trocou os satélites por cachorrinhos ("faz em formato de cachorrinhos"). on/off = 2 quadros
 # (rabinho abanando) que o jogo alterna; sem par = estático.
-CELL_W, CELL_H = 54, 48
-EXPORT = [("puppy_on", lambda: puppy_float(True)), ("puppy_off", lambda: puppy_float(False)),
-          ("head", lambda: puppy_head("mid")), ("bone", bone)]
+# 2026-10-11 (rodada 4, aprovada: "pode ser, gostei"): ossos de pedra (3 tamanhos x 2 inclinações) + cachorrinho que
+# vem buscar (dog_0/dog_1 voando, dog_bone com o osso na boca). Áreas de batida dos ossos no .json ("circles", px a
+# partir do centro da célula).
+CELL_W, CELL_H = 56, 36
+
+
+def flipped(make):
+    def f():
+        k = make()
+        o = Canvas(k.w, k.h)
+        for x, y in k.opaque():
+            o.px(k.w - 1 - x, y, k.get(x, y))
+        o.circles = [[k.w - c[0], c[1], c[2]] for c in k.circles]
+        return o
+    return f
+
+
+BONES = [("bone_big", lambda: bone_rock(18, -20, 1)), ("bone_mid", lambda: bone_rock(13, 25, 2)),
+         ("bone_small", lambda: bone_rock(8, 0, 3))]
+EXPORT = BONES + [(n + "_b", flipped(m)) for n, m in BONES[:2]] + [
+    ("dog_0", lambda: flying_dog(0)), ("dog_1", lambda: flying_dog(1)), ("dog_bone", lambda: flying_dog(0, True))]
 
 
 def export() -> None:
     sheet = Canvas(CELL_W * len(EXPORT), CELL_H)
-    for i, (_, make) in enumerate(EXPORT):
+    circles = {}
+    for i, (name, make) in enumerate(EXPORT):
         k = make()
-        sheet.stamp(k, i * CELL_W + (CELL_W - k.w) // 2, (CELL_H - k.h) // 2)
+        px_, py_ = (CELL_W - k.w) // 2, (CELL_H - k.h) // 2
+        sheet.stamp(k, i * CELL_W + px_, py_)
+        if hasattr(k, "circles"):
+            circles[name] = [[round(cx + px_ - CELL_W / 2, 1), round(cy + py_ - CELL_H / 2, 1), round(r, 1)]
+                             for cx, cy, r in k.circles]
     sheet.save("art/previews/sky_obstacles_sheet.png")
     sheet.save("assets/sprites/sky_obstacles.png", preview=False)
     with open("assets/sprites/sky_obstacles.json", "w") as f:
-        json.dump({"cell_w": CELL_W, "cell_h": CELL_H, "names": [n for n, _ in EXPORT],
+        json.dump({"cell_w": CELL_W, "cell_h": CELL_H, "names": [n for n, _ in EXPORT], "circles": circles,
                    "notes": "Gerado por art/src/sprites/sky_obstacles.py (pixel-art). Sprite centrado na célula."}, f,
                   indent=2)
     print("exportado assets/sprites/sky_obstacles.png")
@@ -403,7 +542,7 @@ if __name__ == "__main__":
         export()
     import os
     os.makedirs(OUT, exist_ok=True)
-    for fam, (name, sprites) in (FAMILIES3 if "--v3" in sys.argv else FAMILIES2 if "--v2" in sys.argv else FAMILIES).items():
+    for fam, (name, sprites) in (FAMILIES4 if "--v4" in sys.argv else FAMILIES3 if "--v3" in sys.argv else FAMILIES2 if "--v2" in sys.argv else FAMILIES).items():
         a = atlas(sprites)
         a.save(f"{OUT}/{fam}_atlas.png")
         print(fam, name, [f"{s.w}x{s.h}" for s in sprites], "cores", len(a.colors_used()))

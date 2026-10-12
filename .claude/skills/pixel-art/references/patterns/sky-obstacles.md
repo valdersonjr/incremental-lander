@@ -28,3 +28,9 @@
   capacete, ossinho. Capacete = só o anel (ice em cima-esquerda, sea embaixo) + 3 brilhos; miolo transparente (sem
   semi-transparência). Mancha marrom num olho (beagle) e orelhas caídas `copper/terracotta/rust` = lê "cachorro" a 32 px.
 - Bater explode a nave na hora (usuário).
+- Cachorrinhos de capacete: "ficou ruim". Usuário propôs **ossos de pedra** + cachorrinho que vem buscar (aprovado).
+  Osso = cápsula + 4 bolotas sombreadas por primitivas (`shade_prims`: normal da primitiva mais "dentro", luz de
+  esfera) → volume limpo. Áreas de batida geradas das mesmas primitivas (json "circles").
+- Cachorrinho voando: desenhado como UMA peça virou "bolo" (cabeça sumia no corpo); **montar em peças com contorno
+  próprio** (corpo, depois cabeça por cima) separou a cabeça. Osso na boca desenhado por cima de tudo, em tons de pedra
+  (mist no branco do focinho sumia).

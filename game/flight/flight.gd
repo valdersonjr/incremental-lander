@@ -1495,7 +1495,8 @@ var _cans: Array[Dictionary] = []                    # {pos, sprite, got}
 var _coins: Array[Dictionary] = []                   # {pos, sprite, got, value}
 var _marks: Array[Dictionary] = []                   # {m, x, node, done}
 var _flag: Node2D = null
-var _sky: SkyObstacles = null                         # satelites no alto (world.json > sky_obstacles), so na pista
+var _sky: SkyObstacles = null                         # ossos no alto (world.json > sky_obstacles), so na pista
+var dog_busy := false                                 # cachorrinho levando o osso (a batida ja aconteceu; o Coach se cala)
 var _vmax_warned := false
 var _pay_tags: Dictionary = {}                       # indice da plataforma -> etiqueta "+N" (moedas de um pouso bom)
 const PAY_TAGS_AHEAD := 6
@@ -1770,8 +1771,8 @@ func _tick_track() -> void:
 			track_pickup.emit("marker", bonus, (mk["node"] as Node2D).position)
 
 
-## Satelites do ceu (2026-10-11, contra o arremesso por cima): so nos mundos de sky_obstacles.worlds. Mesma pista
-## = mesmos satelites (seed do mapa).
+## Ossos do ceu (2026-10-11, contra o arremesso por cima): so nos mundos de sky_obstacles.worlds. Mesma pista
+## = mesmos ossos (seed do mapa).
 func _setup_sky() -> void:
 	if _sky != null:
 		_sky.queue_free()
@@ -1779,6 +1780,7 @@ func _setup_sky() -> void:
 	var cfg: Dictionary = WorldConfig.load_config().get("sky_obstacles", {})
 	if cfg.is_empty() or not planet_id in (cfg["worlds"] as Array):
 		return
+	dog_busy = false
 	_sky = SkyObstacles.new()
 	_sky.name = "SkyObstacles"
 	add_child(_sky)
@@ -1786,18 +1788,64 @@ func _setup_sky() -> void:
 	_sky.setup(cfg, _seed)
 
 
-## Cria/solta os satelites perto da camera e confere a batida (amassado igual ao raspao; Lander.bump).
+## Cria/solta os ossos perto da camera e confere a batida (bateu = o cachorrinho vem buscar e derruba a nave).
 func _tick_sky() -> void:
 	if _sky == null:
 		return
 	_sky.follow(camera.get_screen_center_position(), get_viewport_rect().size / camera.zoom, terrain.ridge)
-	if lander.state != Lander.State.FLYING:
+	if lander.state != Lander.State.FLYING or dog_busy:
 		return
 	var r := WorldConfig.m_to_px(float(WorldConfig.load_config()["sky_obstacles"]["lander_r_m"]))
 	var h := _sky.hit(lander.global_position, r)
 	if not h.is_empty():
 		Telemetry.event("obstacle")
-		lander.bump(h["normal"], h["at"])
+		_dog_takes_bone(h)
+
+
+## Bateu num osso (usuario 2026-10-11): a nave para, um cachorrinho entra voando pela borda da tela latindo, pega o
+## osso e da um encontrao; a nave cai rodopiando e explode (Lander.bump -> crash "obstaculo"). Tempos em
+## world.json > sky_obstacles (dog_in_s, dog_hit_s, fall_s, fall_px, spin_turns, dog_out_s).
+func _dog_takes_bone(h: Dictionary) -> void:
+	dog_busy = true
+	var cfg: Dictionary = WorldConfig.load_config()["sky_obstacles"]
+	var dir := 1.0 if lander.vel_m.x >= 0.0 else -1.0                # vem de tras da nave, na direcao em que ela ia
+	lander.thrusting = false
+	lander.set_physics_process(false)
+	var view := get_viewport_rect().size / camera.zoom
+	var bone_pos: Vector2 = h["pos"]
+	var dog := Sprite2D.new()
+	dog.texture = _sky.texture("dog_0")
+	dog.flip_h = dir < 0.0
+	dog.position = Vector2(camera.get_screen_center_position().x - dir * (view.x * 0.5 + 40.0), bone_pos.y - 24.0)
+	add_child(dog)
+	Sound.sfx("dog_bark")
+	var t_in := float(cfg["dog_in_s"])
+	var tw := create_tween()
+	tw.tween_property(dog, "position", bone_pos - Vector2(dir * 18.0, 6.0), t_in).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_method(func(v: float) -> void: dog.texture = _sky.texture("dog_0" if int(v) % 2 == 0 else "dog_1"),
+			0.0, t_in * 10.0, t_in)                                 # orelha e rabinho abanando
+	tw.tween_callback(func() -> void:
+		_sky.take(h["key"])
+		dog.texture = _sky.texture("dog_bone"))
+	tw.tween_property(dog, "position", lander.global_position - Vector2(dir * 20.0, 4.0), float(cfg["dog_hit_s"]))
+	tw.tween_callback(_dog_knock.bind(dog, dir, cfg))
+
+
+func _dog_knock(dog: Sprite2D, dir: float, cfg: Dictionary) -> void:
+	Sound.sfx("dog_bump")
+	shake(0.6)
+	var fall: Array = cfg["fall_px"]
+	var t_fall := float(cfg["fall_s"])
+	var tw := create_tween().set_parallel()
+	tw.tween_property(lander, "global_position", lander.global_position + Vector2(dir * float(fall[0]), float(fall[1])),
+			t_fall).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(lander, "rotation", lander.rotation + dir * TAU * float(cfg["spin_turns"]), t_fall)
+	tw.tween_property(dog, "position", dog.position + Vector2(dir * get_viewport_rect().size.x, -90.0),
+			float(cfg["dog_out_s"]))
+	tw.chain().tween_callback(func() -> void:
+		dog.queue_free()
+		lander.set_physics_process(true)
+		lander.bump(Vector2.UP, lander.global_position))
 
 
 ## Ouro acumulado desde o ultimo pouso (chao novo alem da fronteira; so cresce): o HUD mostra isso + moedas/marcos.

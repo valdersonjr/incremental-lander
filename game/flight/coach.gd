@@ -41,7 +41,7 @@ func _process(delta: float) -> void:
 	var l := flight.lander
 	var cfg: Dictionary = WorldConfig.load_config()
 	var onb: Dictionary = cfg.get("onboarding", {})
-	var coaching := GameState.apprentice() and l.autopilot == null
+	var coaching := GameState.apprentice() and l.autopilot == null and not flight.dog_busy
 	var thrust_now := Input.is_action_pressed(&"thrust")
 	var rotate_now := Input.is_action_pressed(&"rotate_left") or Input.is_action_pressed(&"rotate_right")
 	if coaching and thrust_now and l.state == Lander.State.FLYING:
