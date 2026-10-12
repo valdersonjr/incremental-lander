@@ -1845,7 +1845,8 @@ func _dog_knock(dog: Sprite2D, dir: float, cfg: Dictionary) -> void:
 	tw.chain().tween_callback(func() -> void:
 		dog.queue_free()
 		lander.set_physics_process(true)
-		lander.bump(Vector2.UP, lander.global_position))
+		lander.bump(Vector2.UP, lander.global_position)
+		dog_busy = false)                                       # bug 2026-10-11: ficava preso e o "tente de novo" nao batia mais
 
 
 ## Ouro acumulado desde o ultimo pouso (chao novo alem da fronteira; so cresce): o HUD mostra isso + moedas/marcos.

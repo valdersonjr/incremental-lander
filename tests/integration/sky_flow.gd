@@ -65,6 +65,21 @@ func _ready() -> void:
 	await _until(func() -> bool: return reason[0] != "", 240)
 	_check(reason[0] == "obstaculo", "o cachorrinho derruba a nave (%s)" % reason[0])
 	_check((sky._cells.get(key, {}) as Dictionary).is_empty(), "o osso foi levado")
+	# bug 2026-10-11: depois do 1o cachorrinho (aprendiz: tente de novo na mesma viagem) as batidas eram ignoradas
+	await _until(func() -> bool: return l.state == Lander.State.LANDED and l.visible and not main._run.over, 400)
+	_check(not flight.dog_busy, "depois da batida o cachorrinho fica livre de novo")
+	reason[0] = ""
+	l.state = Lander.State.FLYING
+	l.global_position = Vector2(x, top - WorldConfig.m_to_px(float(cfg["full_m"]) + 100.0))
+	l.vel_m = Vector2.ZERO
+	await _frames(3)
+	var again := _nearest(sky, l.global_position)
+	l.global_position = again["pos"] as Vector2
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(flight.dog_busy, "2a batida (tente de novo): o cachorrinho vem de novo")
+	await _until(func() -> bool: return reason[0] != "", 240)
+	_check(reason[0] == "obstaculo", "2a batida derruba a nave (%s)" % reason[0])
 	_end()
 
 
