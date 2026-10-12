@@ -63,12 +63,3 @@ static func scrape_bounce(vel: Vector2, normal: Vector2, gear: float, scrapes: i
 	var tangent := (vel - normal * vn) * float(sc["friction"])
 	var out := maxf(impact * float(sc["restitution"]), float(sc["min_out_mps"]))
 	return {"ok": true, "velocity": tangent + normal * out}
-
-
-## Batida num obstaculo do ceu (sky_obstacles): sempre quica (sem limite de velocidade; o limite e o numero de
-## amassados, conferido pela nave). Mesma resposta do raspao: normal x restitution (minimo min_out_mps), resto x friction.
-static func obstacle_bounce(vel: Vector2, normal: Vector2, sc: Dictionary) -> Vector2:
-	var vn := vel.dot(normal)
-	var impact := maxf(-vn, 0.0)
-	var tangent := (vel - normal * vn) * float(sc["friction"])
-	return tangent + normal * maxf(impact * float(sc["restitution"]), float(sc["min_out_mps"]))

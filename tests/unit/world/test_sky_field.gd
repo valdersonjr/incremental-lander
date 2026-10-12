@@ -1,4 +1,4 @@
-## Obstaculos do ceu (SkyField + LandingRules.obstacle_bounce).
+## Obstaculos do ceu (SkyField).
 extends TestCase
 
 var cfg: Dictionary
@@ -42,10 +42,3 @@ func test_batida_devolve_normal_para_fora() -> void:
 	assert_eq(SkyField.hit_normal(Vector2(30, 0), 10.0, Vector2.ZERO, circles), Vector2.ZERO, "longe: nada")
 	var n := SkyField.hit_normal(Vector2(12, 0), 10.0, Vector2.ZERO, circles)
 	assert_almost(n.x, 1.0, 1e-6, "normal aponta da area para a nave")
-
-
-func test_batida_no_obstaculo_sempre_quica() -> void:
-	var sc: Dictionary = WorldConfig.load_config()["landing"]["scrape"]
-	var v := LandingRules.obstacle_bounce(Vector2(-45.0, 0.0), Vector2.RIGHT, sc)   # rapido demais p/ raspao
-	assert_true(v.x > 0.0, "volta para tras")
-	assert_almost(v.x, 45.0 * float(sc["restitution"]), 1e-6)

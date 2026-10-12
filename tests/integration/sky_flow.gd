@@ -1,6 +1,6 @@
 ## Teste de integracao dos satelites do ceu (world.json > sky_obstacles), numa pasta propria (user://itest_sky):
-## viagem na Lua -> perto do chao nao ha satelite -> la no alto ha varios -> encostar num satelite amassa (quica e
-## conta como raspao) -> passou dos amassados do salto = explode com motivo "obstaculo". Imprime SKY_TEST OK ou FALHOU.
+## viagem na Lua -> perto do chao nao ha satelite -> la no alto ha varios -> encostar num satelite explode a nave
+## (motivo "obstaculo"). Imprime SKY_TEST OK ou FALHOU.
 ## Com --hold (gdtool capture) fica parado no alto alguns segundos para a captura.
 extends Node
 
@@ -52,22 +52,15 @@ func _ready() -> void:
 			l.global_position = Vector2(x, top - WorldConfig.m_to_px(float(cfg["full_m"]) + 100.0))
 			l.vel_m = Vector2.ZERO
 			await get_tree().physics_frame
-	# encostar: amassa e quica (2 vezes), a 3a explode
-	var per_hop := int(WorldConfig.load_config()["landing"]["scrape"]["per_hop"])
-	l.scrapes = 0
+	# encostar num satelite: explode na hora
 	var reason := [""]
 	l.crashed.connect(func(r: String, _i: Dictionary) -> void: reason[0] = r)
-	for k in per_hop + 1:
-		var target := _nearest(sky, l.global_position)
-		l._scrape_t = 1e9                                       # fora da carencia
-		l.vel_m = Vector2(30.0, 0.0)
-		l.global_position = (target["pos"] as Vector2) + Vector2(-4.0, 0.0)
-		await get_tree().physics_frame
-		await get_tree().physics_frame
-		if k < per_hop:
-			_check(l.state == Lander.State.FLYING and l.scrapes == k + 1,
-					"batida %d: amassa e segue voando (amassados=%d)" % [k + 1, l.scrapes])
-	_check(reason[0] == "obstaculo", "depois de %d amassados o satelite explode a nave (%s)" % [per_hop, reason[0]])
+	var target := _nearest(sky, l.global_position)
+	l.vel_m = Vector2(5.0, 0.0)
+	l.global_position = (target["pos"] as Vector2) + Vector2(-4.0, 0.0)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	_check(reason[0] == "obstaculo", "bater num satelite explode a nave (%s)" % reason[0])
 	_end()
 
 

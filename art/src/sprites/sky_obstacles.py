@@ -167,6 +167,87 @@ def zz(cv: Canvas, x: int, y: int) -> None:
     cv.paint(["ccc", "..c", ".c.", "c..", "ccc"], {"c": "white"}, x=x, y=y)
 
 
+# --- rodada 2 (2026-10-11): usuário achou os satélites "meio feios" -------------------------------------------------
+ROCK = ["mist", "steel", "lilac_grey", "slate"]
+MINE = ["pale_sky", "sky", "blue", "indigo"]
+
+
+def blob(cv: Canvas, cx: float, cy: float, r: float, seed: int, ramp: list, lumps: float = 0.2) -> list:
+    """Pedra irregular: contorno polar com 2 ondas (sem pontas), volume de esfera recortado pelo contorno."""
+    rnd = random.Random(seed)
+    p1, p2 = rnd.uniform(0, 6.3), rnd.uniform(0, 6.3)
+    pts = []
+    for k in range(28):
+        a = k / 28 * math.tau
+        rr = r * (1 + lumps * math.sin(2 * a + p1) + lumps * 0.6 * math.sin(3 * a + p2))
+        pts.append((round(cx + rr * math.cos(a)), round(cy + rr * 0.95 * math.sin(a))))
+    mask = Canvas(cv.w, cv.h)
+    mask.polygon(pts, "ink")
+    inside = set(mask.opaque())
+    sphere(cv, cx, cy, r * 1.2, r * 1.08, ramp, clip=lambda x, y: (x, y) in inside)
+    return pts
+
+
+def crater(cv: Canvas, x: int, y: int, w: int) -> None:
+    """Cratera côncava (meia resolução): miolo escuro e borda de baixo clara (a luz de cima-esquerda bate na parede de
+    baixo-direita); w = 1 (furinho) | 2 | 3."""
+    shape = {1: ["d"], 2: ["dd", "lm"], 3: [".dd", "ddd", "lmm"]}[w]
+    cv.paint(shape, {"d": "slate", "l": "lilac_grey", "m": "mist"}, x=x, y=y)
+
+
+def asteroid(size: str, face: bool = False) -> Canvas:
+    r, n, seed = {"big": (8.0, 20, 3), "mid": (5.6, 15, 8), "small": (3.4, 10, 5)}[size]
+    h = Canvas(n, n)
+    c = n / 2
+    blob(h, c, c, r, seed, ROCK)
+    if size == "big":
+        crater(h, int(c + 1), int(c - 5), 3); crater(h, int(c - 6), int(c + 1), 2); crater(h, int(c + 3), int(c + 3), 2)
+        crater(h, int(c - 2), int(c + 5), 1)
+    elif size == "mid":
+        crater(h, int(c + 1), int(c - 3), 2); crater(h, int(c - 4), int(c + 1), 2); crater(h, int(c + 2), int(c + 3), 1)
+    else:
+        crater(h, int(c), int(c - 1), 1)
+
+    def post(k: Canvas) -> None:
+        if not face:
+            return
+        cx = k.w // 2
+        cy = k.h // 2 + (1 if size == "big" else 0)
+        gap = 4 if size == "big" else 3
+        for ex in (cx - gap - 1, cx + gap - 1):                        # olhos 2x3 com brilho + sobrancelha brava
+            k.rect(ex, cy - 1, 2, 3, "ink")
+            k.px(ex, cy - 1, "white")
+        k.line(cx - gap - 2, cy - 4, cx - gap + 1, cy - 3, "ink")
+        k.line(cx + gap - 2, cy - 3, cx + gap + 1, cy - 4, "ink")
+        k.hline(cx - 2, cx + 1, cy + 4, "ink")                         # boca reta (emburrado)
+        k.px(cx - gap - 2, cy + 3, "rose"); k.px(cx + gap + 1, cy + 3, "rose")
+    return finish(h, post)
+
+
+def mine(size: str, light: bool = True) -> Canvas:
+    """Mina espacial fofa: bola azul com espetos curtos e GROSSOS (cone de base larga, ponta clara) — lê "não encoste";
+    luz vermelha no topo (pisca no jogo)."""
+    r, n, spikes = {"big": (5.6, 21, 6), "mid": (4.2, 17, 6), "small": (3.0, 13, 4)}[size]
+    h = Canvas(n, n)
+    c = n / 2
+    for k in range(spikes):
+        a = k / spikes * math.tau + math.pi / spikes
+        tip = (c + (r + 2.8) * math.cos(a), c + (r + 2.8) * math.sin(a))
+        b1 = (c + r * 0.8 * math.cos(a - 0.55), c + r * 0.8 * math.sin(a - 0.55))
+        b2 = (c + r * 0.8 * math.cos(a + 0.55), c + r * 0.8 * math.sin(a + 0.55))
+        h.polygon([tuple(map(round, tip)), tuple(map(round, b1)), tuple(map(round, b2))], "steel")
+        h.px(round(tip[0]), round(tip[1]), "mist")
+    sphere(h, c, c, r, r, MINE)
+    h.px(int(c), int(c - r) - 1, "lilac_grey")
+    h.px(int(c), int(c - r) - 2, "red" if light else "maroon")
+    return finish(h)
+
+
+FAMILIES2 = {
+    "D": ("Asteroides de pedra", [asteroid("big"), asteroid("mid"), asteroid("small")]),
+    "E": ("Asteroides emburrados", [asteroid("big", True), asteroid("mid", True), asteroid("small")]),
+    "F": ("Minas espaciais", [mine("big"), mine("mid"), mine("small")]),
+}
 FAMILIES = {
     "A": ("Lascas de queijo da mina", [cheese_wedge(), cheese_chunk(), cheese_crumb()]),
     "B": ("Satélites dos ratinhos", [satellite(), probe(), bolt()]),
@@ -235,8 +316,9 @@ if __name__ == "__main__":
         export()
     import os
     os.makedirs(OUT, exist_ok=True)
-    for fam, (name, sprites) in FAMILIES.items():
+    for fam, (name, sprites) in (FAMILIES2 if "--v2" in sys.argv else FAMILIES).items():
         a = atlas(sprites)
         a.save(f"{OUT}/{fam}_atlas.png")
         print(fam, name, [f"{s.w}x{s.h}" for s in sprites], "cores", len(a.colors_used()))
         scene(sprites, f"{OUT}/game_bg.png", f"{OUT}/{fam}_scene.png")
+        a.save(f"{OUT}/{fam}_atlas.png")
